@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CreativeAsset",
+  "type": "object",
+  "required": [
+    "identity",
+    "source",
+    "content",
+    "version",
+    "provenance"
+  ],
+  "properties": {
+    "identity": {
+      "$ref": "./identity.schema.json"
+    },
+    "source": {
+      "$ref": "./source.schema.json"
+    },
+    "content": {
+      "$ref": "./content.schema.json"
+    },
+    "visual": {
+      "$ref": "./visual.schema.json"
+    },
+    "pixel": {
+      "$ref": "./pixel.schema.json"
+    },
+    "style": {
+      "$ref": "./style.schema.json"
+    },
+    "animation": {
+      "$ref": "./animation.schema.json"
+    },
+    "engine": {
+      "$ref": "./engine.schema.json"
+    },
+    "quality": {
+      "$ref": "./quality.schema.json"
+    },
+    "provenance": {
+      "$ref": "./provenance.schema.json"
+    },
+    "version": {
+      "$ref": "./version.schema.json"
+    }
+  }
+}

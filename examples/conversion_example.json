@@ -1,0 +1,15 @@
+{
+  "input": {
+    "provider": "windup",
+    "prompt": "pixel fire mage"
+  },
+  "output": {
+    "identity": {
+      "type": "character"
+    },
+    "source": {
+      "source_type": "ai_generation",
+      "provider": "windup"
+    }
+  }
+}

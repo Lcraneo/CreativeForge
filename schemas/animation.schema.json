@@ -1,0 +1,18 @@
+{
+  "title": "AnimationState",
+  "type": "object",
+  "properties": {
+    "frames": {
+      "type": "array"
+    },
+    "anchor": {
+      "type": "object"
+    },
+    "motion": {
+      "type": "object"
+    },
+    "action": {
+      "type": "object"
+    }
+  }
+}
