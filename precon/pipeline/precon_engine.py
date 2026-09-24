@@ -1,7 +1,7 @@
-from .grid import infer_grid
-from .palette import reconstruct_palette
-from .contour import repair_contour
-from .quality import evaluate_pixel
+from ..grid import infer_grid
+from ..palette import reconstruct_palette
+from ..contour import repair_contour
+from ..quality import evaluate_pixel
 
 
 class PReConEngine:

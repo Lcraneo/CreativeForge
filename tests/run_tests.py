@@ -1,0 +1,726 @@
+"""Runnable contract tests for CreativeForge (Phases 3-7).
+
+Run from the repository root:
+
+    python tests/run_tests.py
+
+Each check mirrors the markdown contract docs in tests/.
+"""
+
+import os
+import sys
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+
+CHECKS = []
+
+
+def check(group, name):
+    def decorator(func):
+        CHECKS.append((group, name, func))
+        return func
+    return decorator
+
+
+def make_asset(action="walk", count=4):
+    return {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "source": {"width": 64, "height": 64, "prompt": "fire mage"},
+        "animation": {
+            "action": action,
+            "fps": 12,
+            "loop": True,
+            "frames": [
+                {
+                    "id": index,
+                    "image": "frame{}.png".format(index),
+                    "action": action,
+                    "anchor": {
+                        "root": {"x": 32 + index, "y": 60},
+                        "feet": {"x": 32, "y": 64}
+                    }
+                }
+                for index in range(count)
+            ]
+        }
+    }
+
+
+# ---------------------------------------------------------------
+# FAlign (Phase 4)
+# ---------------------------------------------------------------
+
+@check("falign", "frame extraction normalizes frames and preserves hints")
+def _():
+    from falign.extraction.frame_extractor import FrameExtractor
+
+    frames = [
+        {"image": "a.png", "action": "walk", "anchor": {"root": {"x": 1, "y": 2}}},
+        {"id": 7, "image": "b.png"}
+    ]
+    result = FrameExtractor().process(frames)
+
+    assert len(result) == 2
+    assert result[0]["id"] == 0
+    assert result[1]["id"] == 7
+    assert result[0]["action"] == "walk"
+    assert result[0]["anchor"] == {"root": {"x": 1, "y": 2}}
+    assert result[1].get("action") is None
+
+
+@check("falign", "anchor detection returns stable keypoints per frame")
+def _():
+    from falign.anchor.anchor_detector import AnchorDetector
+
+    anchors = AnchorDetector().detect(make_asset()["animation"]["frames"])
+
+    assert len(anchors) == 4
+    for anchor in anchors:
+        assert set(("root", "feet", "center", "head")) <= set(anchor)
+    assert anchors[0]["root"]["x"] == 32
+    assert anchors[3]["root"]["x"] == 35
+    assert anchors[0]["feet"]["y"] == 64
+
+
+@check("falign", "phase alignment maps frames onto the motion phase track")
+def _():
+    from falign.phase.phase_alignment import PhaseAligner
+
+    result = PhaseAligner().align(make_asset()["animation"]["frames"], [])
+
+    assert result["action"] == "walk"
+    assert result["aligned"] is True
+    track = result["phase"]
+    assert len(track) == 4
+    assert track[0] == 0.0
+    assert track[-1] == 1.0
+
+
+@check("falign", "root motion correction fixes drift")
+def _():
+    from falign.motion.root_motion import RootMotionCorrector
+
+    frames = make_asset()["animation"]["frames"]
+    anchors = [{"root": {"x": 32 + index, "y": 60}} for index in range(4)]
+    result = RootMotionCorrector().correct(frames, anchors)
+
+    assert result["drift_corrected"] is True
+    assert result["real_motion"] is False
+    assert result["root_dx"] == 0
+    assert result["root_dy"] == 0
+    assert len(result["corrections"]) == 4
+
+
+@check("falign", "root motion correction keeps real motion")
+def _():
+    from falign.motion.root_motion import RootMotionCorrector
+
+    frames = make_asset()["animation"]["frames"]
+    anchors = [{"root": {"x": 10 * index, "y": 60}} for index in range(4)]
+    result = RootMotionCorrector().correct(frames, anchors)
+
+    assert result["real_motion"] is True
+    assert result["drift_corrected"] is False
+    assert result["root_dx"] == 30
+
+
+@check("falign", "temporal analysis outputs jitter score and smooth verdict")
+def _():
+    from falign.temporal.temporal_consistency import TemporalAnalyzer
+
+    frames = [
+        {"id": 0, "image": "a.png"},
+        {"id": 1, "image": "b.png", "difference": 0.2},
+        {"id": 2, "image": "c.png", "difference": 0.1}
+    ]
+    result = TemporalAnalyzer().analyze(frames)
+
+    assert result["jitter_score"] == 0.15
+    assert result["smooth"] is False
+    assert result["differences"] == [0.2, 0.1]
+
+    single = TemporalAnalyzer().analyze([{"id": 0, "image": "a.png"}])
+    assert single["smooth"] is True
+    assert single["jitter_score"] == 0.0
+
+
+@check("falign", "animation evaluator writes the quality score")
+def _():
+    from falign.quality.animation_quality import AnimationEvaluator
+
+    quality = AnimationEvaluator().evaluate(
+        [{"root": {"x": 32, "y": 60}}],
+        {"root_dx": 0, "root_dy": 0, "drift_corrected": True},
+        {"jitter_score": 0.04}
+    )
+
+    assert quality["anchor_score"] == 1.0
+    assert quality["motion_score"] == 1.0
+    assert 0.0 < quality["temporal_score"] <= 1.0
+    assert 0.0 < quality["overall"] <= 1.0
+
+
+@check("falign", "FAlignEngine returns CreativeAsset-compatible output")
+def _():
+    from falign.pipeline.falign_engine import FAlignEngine
+
+    result = FAlignEngine().process(make_asset()["animation"]["frames"])
+
+    assert set(("frames", "anchor", "phase", "motion")) <= set(result["animation"])
+    assert result["animation"]["phase"]["action"] == "walk"
+    assert 0.0 < result["quality"]["animation"]["overall"] <= 1.0
+
+
+@check("falign", "CreativeAssetAdapter writes animation + quality back")
+def _():
+    from adapters.creative_asset_adapter import CreativeAssetAdapter
+
+    asset = make_asset()
+    asset["animation"].pop("anchor", None)
+    result = CreativeAssetAdapter().export_asset(asset)
+
+    assert result["animation"]["anchor"]
+    assert result["animation"]["motion"]["drift_corrected"] is True
+    assert 0.0 < result["quality"]["animation"]["overall"] <= 1.0
+
+
+# ---------------------------------------------------------------
+# GImport (Phase 5)
+# ---------------------------------------------------------------
+
+@check("gimport", "manifest generator emits the asset ID card")
+def _():
+    from gimport.manifest.manifest_generator import ManifestGenerator
+
+    manifest = ManifestGenerator().generate({"id": "hero001", "type": "character"})
+
+    assert manifest["asset_id"] == "hero001"
+    assert manifest["type"] == "character"
+    assert manifest["resources"]["texture"] == "hero001.png"
+    assert manifest["resources"]["animation"] == "hero001.anim"
+    assert manifest["resources"]["prefab"] == "hero001.prefab"
+    assert manifest["valid"] is True
+
+
+@check("gimport", "manifest schema validation catches missing fields")
+def _():
+    from gimport.manifest.schema import validate_manifest
+
+    verdict = validate_manifest({"type": "character", "resources": {}})
+    assert verdict["valid"] is False
+    assert "asset_id" in verdict["missing"]
+
+
+@check("gimport", "atlas builder packs frames with layout rects")
+def _():
+    from gimport.atlas.sprite_atlas_builder import SpriteAtlasBuilder
+
+    atlas = SpriteAtlasBuilder().build(make_asset(count=10))["atlas"]
+
+    assert atlas["name"] == "mage001"
+    assert atlas["image"] == "mage001_sprite_atlas.png"
+    assert len(atlas["frames"]) == 10
+    assert len(atlas["layout"]) == 10
+    assert atlas["size"] == {"width": 512, "height": 128}
+    assert atlas["layout"][9]["rect"] == {"x": 64, "y": 64, "w": 64, "h": 64}
+
+
+@check("gimport", "animation clip generator emits unity and cocos clips")
+def _():
+    from gimport.animation.animation_clip_generator import AnimationClipGenerator
+
+    generator = AnimationClipGenerator()
+    asset = make_asset()
+
+    unity = generator.generate(asset, "unity")["clip"]
+    assert unity["name"] == "walk"
+    assert unity["fps"] == 12
+    assert unity["loop"] is True
+    assert unity["frame_count"] == 4
+
+    cocos = generator.generate(asset, "cocos")["animation"]
+    assert cocos["name"] == "walk"
+    assert cocos["duration"] == 0.33
+    assert cocos["loop"] is True
+
+
+@check("gimport", "prefab generator emits the character entity")
+def _():
+    from gimport.prefab.prefab_generator import PrefabGenerator
+
+    prefab = PrefabGenerator().generate({"id": "hero001"})["prefab"]
+
+    assert prefab["name"] == "hero001.prefab"
+    assert prefab["root"] == "hero001"
+    assert prefab["components"] == [
+        "SpriteRenderer", "Animator", "Collider", "Script", "AnimationController"
+    ]
+
+
+@check("gimport", "engine adapters map resources to engine paths")
+def _():
+    from gimport.adapters.cocos_adapter import CocosAdapter
+    from gimport.adapters.unity_adapter import UnityAdapter
+    from gimport.adapters.godot_adapter import GodotAdapter
+
+    asset = {"id": "hero001"}
+
+    cocos = CocosAdapter().import_asset(asset)
+    assert cocos["engine"] == "cocos"
+    assert cocos["resources"]["atlas"] == "assets/atlas/hero001_sprite_atlas.plist"
+
+    unity = UnityAdapter().import_asset(asset)
+    assert unity["resources"]["Prefab"] == "Assets/Prefab/hero001.prefab"
+
+    godot = GodotAdapter().import_asset(asset)
+    assert godot["resources"]["scenes"] == "scenes/hero001.tscn"
+
+
+@check("gimport", "runtime validator checks the full import result")
+def _():
+    from gimport.pipeline.gimport_engine import GImportEngine
+
+    result = GImportEngine().process(make_asset(), "cocos")
+    validation = result["validation"]
+
+    assert validation["status"] == "success"
+    assert validation["score"] == 1.0
+    assert all(item["passed"] for item in validation["checks"])
+
+
+@check("gimport", "GImportEngine end-to-end for cocos and unity")
+def _():
+    from gimport.pipeline.gimport_engine import GImportEngine
+
+    engine = GImportEngine()
+    asset = make_asset()
+
+    for target in ("cocos", "unity"):
+        result = engine.process(asset, target)
+        assert result["manifest"]["asset_id"] == "mage001"
+        assert result["animation"]["clip" if target == "unity" else "animation"]
+        assert result["engine"]["engine"] == target
+        assert result["validation"]["status"] == "success"
+
+
+@check("gimport", "one-click export produces the game asset package")
+def _():
+    from gimport.exporter.one_click_export import OneClickExporter
+
+    export = OneClickExporter().export(make_asset(), "cocos")
+
+    assert export["package"] == "FireMageGameAsset.zip"
+    assert export["engine"] == "cocos"
+    assert export["contents"] == ["Character", "Animation", "Prefab", "Config"]
+    assert export["result"]["validation"]["status"] == "success"
+
+
+# ---------------------------------------------------------------
+# Creative Agent (Phase 6)
+# ---------------------------------------------------------------
+
+@check("agent", "intent analyzer detects engine and static goals")
+def _():
+    from agent.planner.intent_analyzer import IntentAnalyzer
+
+    analyzer = IntentAnalyzer()
+
+    intent = analyzer.analyze("制作角色并导入Unity")
+    assert intent["engine"] == "unity"
+    assert intent["requires"]["animation_alignment"] is True
+
+    static = analyzer.analyze("生成一张静态角色立绘")
+    assert static["requires"]["animation_alignment"] is False
+
+    assert analyzer.analyze("做一个cocos小怪")["engine"] == "cocos"
+
+
+@check("agent", "planner emits capability-based task plans")
+def _():
+    from agent.planner.planner import Planner
+
+    plan = Planner().plan("制作一个像素RPG火焰法师")
+    capabilities = [task["capability"] for task in plan["tasks"]]
+
+    assert capabilities == ["generation", "PReCon", "FAlign", "GImport"]
+    assert plan["tasks"][3]["engine"] == "cocos"
+
+    static_plan = Planner().plan("生成一张静态图标")
+    assert "FAlign" not in [task["capability"] for task in static_plan["tasks"]]
+
+
+@check("agent", "capability registry resolves planner capabilities")
+def _():
+    from agent.capability.capability_registry import build_default_registry
+
+    registry = build_default_registry()
+
+    for name in ("generation", "PReCon", "FAlign", "GImport"):
+        capability = registry.find(name)
+        assert capability is not None
+        assert capability.handler is not None
+
+
+@check("agent", "task executor raises on unknown capability")
+def _():
+    from agent.executor.task_executor import TaskExecutor
+
+    try:
+        TaskExecutor().execute({"capability": "Nope"}, None)
+    except LookupError:
+        pass
+    else:
+        raise AssertionError("unknown capability accepted")
+
+
+@check("agent", "task memory stores checkpoints, versions and errors")
+def _():
+    from agent.memory.task_memory import TaskMemory
+
+    memory = TaskMemory()
+    memory.save_goal("make hero")
+    memory.save_checkpoint("task1", {"id": "hero001"})
+    memory.record_error("task2", "boom")
+
+    assert memory.completed_steps == ["task1"]
+    assert memory.asset_versions[0]["asset"]["id"] == "hero001"
+    assert memory.errors == [{"task": "task2", "message": "boom"}]
+
+    task_id, snapshot = memory.latest_checkpoint()
+    assert task_id == "task1"
+    assert snapshot == {"id": "hero001"}
+
+    snapshot["id"] = "mutated"
+    assert memory.latest_checkpoint()[1]["id"] == "hero001"
+
+
+@check("agent", "quality gate flags sections below threshold")
+def _():
+    from agent.monitor.quality_gate import QualityGate
+
+    gate = QualityGate()
+
+    assert gate.check({})["status"] == "PENDING"
+
+    passing = gate.check({"quality": {
+        "pixel": {"overall": 0.94},
+        "animation": {"overall": 0.95},
+        "engine": {"overall": 0.96}
+    }})
+    assert passing["status"] == "PASS"
+    assert passing["retry"] == []
+
+    failing = gate.check({"quality": {
+        "pixel": {"overall": 0.5},
+        "animation": {"overall": 0.95}
+    }})
+    assert failing["status"] == "RETRY"
+    assert failing["retry"] == ["pixel"]
+
+
+class ScriptedExecutor:
+
+    def __init__(self, fail_engines=("unity",)):
+        self.fail_engines = fail_engines
+        self.calls = []
+
+    def execute(self, task, asset):
+        self.calls.append(task.get("engine"))
+        if task.get("engine") in self.fail_engines:
+            raise ValueError("engine failure")
+        return asset
+
+
+@check("agent", "recovery manager falls back from unity to cocos")
+def _():
+    from agent.recovery.recovery_manager import RecoveryManager
+
+    executor = ScriptedExecutor()
+    asset, recovery = RecoveryManager(max_retries=1).recover(
+        {"id": "t1", "capability": "GImport", "engine": "unity"},
+        ValueError("first failure"),
+        executor,
+        {"id": "hero001"}
+    )
+
+    assert asset == {"id": "hero001"}
+    assert recovery["strategy"] == "fallback"
+    assert "cocos" in executor.calls
+
+
+@check("agent", "recovery manager escalates to human-in-loop")
+def _():
+    from agent.recovery.recovery_manager import RecoveryManager
+
+    asset, recovery = RecoveryManager(max_retries=1).recover(
+        {"id": "t1", "capability": "GImport", "engine": "unity"},
+        ValueError("first failure"),
+        ScriptedExecutor(fail_engines=("unity", "cocos")),
+        {"id": "hero001"}
+    )
+
+    assert asset is None
+    assert recovery["strategy"] == "human-in-loop"
+    assert "reason" in recovery
+
+
+@check("agent", "workflow engine completes plans and resumes from checkpoints")
+def _():
+    from agent.workflow.workflow_engine import WorkflowEngine
+    from agent.planner.planner import Planner
+
+    workflow = WorkflowEngine()
+    plan = Planner().plan("制作一个像素RPG火焰法师")
+
+    first = workflow.run(plan)
+    assert first["workflow"]["state"] == "success"
+    assert all(step["status"] == "success" for step in first["workflow"]["steps"])
+    assert first["asset"]["engine"]["target"] == "cocos"
+
+    resumed = workflow.run(plan, resume=True)
+    assert resumed["workflow"]["state"] == "success"
+    assert all(step["status"] == "skipped" for step in resumed["workflow"]["steps"])
+    assert resumed["asset"]["id"] == first["asset"]["id"]
+
+
+@check("agent", "CreativeAgent.run returns the full production record")
+def _():
+    from agent.creative_agent import CreativeAgent
+
+    result = CreativeAgent().run(
+        "创建一个像素风RPG火焰法师角色，包含待机、攻击动画，并导入Cocos项目"
+    )
+
+    assert result["workflow"]["state"] == "success"
+    capabilities = [task["capability"] for task in result["plan"]["tasks"]]
+    assert capabilities == ["generation", "PReCon", "FAlign", "GImport"]
+
+    asset = result["asset"]
+    assert asset["pixel"]["grid"]["confidence"] > 0
+    assert asset["animation"]["anchor"]
+    assert asset["engine"]["target"] == "cocos"
+    assert result["quality"]["status"] == "PASS"
+    assert len(result["memory"]["completed_steps"]) == 4
+
+
+# ---------------------------------------------------------------
+# Multi-Agent System (Phase 7)
+# ---------------------------------------------------------------
+
+@check("multi-agent", "agent messages serialize and the bus routes them")
+def _():
+    from protocol.message import AgentMessage, MessageBus
+
+    message = AgentMessage("ArtAgent", "AnimationAgent", "ASSET_READY", {"asset_id": "mage001"})
+    assert message.to_dict() == {
+        "from": "ArtAgent",
+        "to": "AnimationAgent",
+        "type": "ASSET_READY",
+        "payload": {"asset_id": "mage001"}
+    }
+
+    bus = MessageBus()
+    bus.register("ArtAgent")
+    bus.register("AnimationAgent")
+    bus.send(message)
+    bus.send(AgentMessage("ArtAgent", "ArtAgent", "TASK_RESULT"))
+
+    assert len(bus.receive("AnimationAgent")) == 1
+    assert bus.receive("AnimationAgent") == []
+    assert len(bus.receive("ArtAgent")) == 1
+    assert len(bus.history) == 2
+
+
+@check("multi-agent", "agent state machine rejects invalid transitions")
+def _():
+    from protocol.state import AgentState
+
+    state = AgentState()
+    assert state.to_dict()["state"] == "CREATED"
+    state.transition("RUNNING")
+    state.transition("SUCCESS")
+    assert state.history == ["CREATED", "RUNNING", "SUCCESS"]
+
+    broken = AgentState()
+    try:
+        broken.transition("WARP")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("invalid state accepted")
+
+
+@check("multi-agent", "supervisor planner assigns specialist agents")
+def _():
+    from agents.supervisor.planner import SupervisorPlanner
+
+    plan = SupervisorPlanner().plan(
+        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
+    )
+
+    assignments = [(task["agent"], task["action"]) for task in plan["tasks"]]
+    assert assignments == [
+        ("ArtAgent", "create_character"),
+        ("ArtAgent", "pixel_reconstruction"),
+        ("AnimationAgent", "create_animation"),
+        ("EngineAgent", "export_unity")
+    ]
+    assert plan["intent"]["engine"] == "unity"
+
+
+@check("multi-agent", "task router dispatches and rejects unknown agents")
+def _():
+    from agents.supervisor.task_router import TaskRouter
+    from agents.art_agent.art_agent import ArtAgent
+
+    router = TaskRouter()
+    router.register(ArtAgent())
+
+    try:
+        router.route({"agent": "GhostAgent", "action": "boo"})
+    except LookupError:
+        pass
+    else:
+        raise AssertionError("unknown agent accepted")
+
+    try:
+        router.route({"agent": "ArtAgent", "action": "boo"})
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("unknown action accepted")
+
+    asset = router.dispatch(
+        {"agent": "ArtAgent", "action": "create_character", "goal": "火焰法师"},
+        None
+    )
+    assert asset["id"] == "mage001"
+
+
+@check("multi-agent", "each specialist agent handles its own actions")
+def _():
+    from agents.art_agent.art_agent import ArtAgent
+    from agents.animation_agent.animation_agent import AnimationAgent
+    from agents.engine_agent.engine_agent import EngineAgent
+    from agents.qa_agent.qa_agent import QAAgent
+    from agents.memory_agent.memory_agent import MemoryAgent
+
+    art = ArtAgent()
+    assert art.can_handle("create_character")
+    asset = art.handle({"action": "create_character", "goal": "火焰法师Boss"}, None)
+    pixel_asset = art.handle({"action": "pixel_reconstruction"}, asset)
+    assert pixel_asset["pixel"]["grid"]["size"] == 8
+
+    animation = AnimationAgent().handle({"action": "create_animation"}, pixel_asset)
+    assert animation["animation"]["anchor"]
+
+    engine = EngineAgent()
+    assert engine.can_handle("export_unity")
+    assert engine.can_handle("export_godot")
+    engine_asset = engine.handle({"action": "export_unity"}, animation)
+    assert engine_asset["engine"]["target"] == "unity"
+
+    qa_asset = QAAgent().handle({"action": "quality_check"}, engine_asset)
+    assert qa_asset["quality"]["report"]["status"] in ("PASS", "RETRY", "PENDING")
+
+    memory_asset = MemoryAgent().handle(
+        {"action": "save_checkpoint", "id": "M01", "goal": "demo"}, qa_asset
+    )
+    assert memory_asset["memory"]["user_style"]["style"] == "pixel"
+
+
+@check("multi-agent", "supervisor hands off assets between agents")
+def _():
+    from agents.supervisor.supervisor import SupervisorAgent
+
+    result = SupervisorAgent().run(
+        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
+    )
+
+    types = [message["type"] for message in result["messages"]]
+    assert types.count("ASSET_READY") >= 2
+    assert "QUALITY_REPORT" in types
+
+    handoffs = [
+        message for message in result["messages"]
+        if message["type"] == "ASSET_READY"
+    ]
+    assert handoffs[0]["from"] == "ArtAgent"
+    assert handoffs[0]["to"] == "AnimationAgent"
+
+
+@check("multi-agent", "supervisor runs QA, repair and memory checkpoint")
+def _():
+    from agents.supervisor.supervisor import SupervisorAgent
+
+    result = SupervisorAgent().run(
+        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
+    )
+
+    supervisor = result["supervisor"]
+    assert supervisor["status"] == "PASS"
+    assert all(
+        step["status"] in ("success", "recovered")
+        for step in supervisor["steps"]
+    )
+
+    asset = result["asset"]
+    assert asset["quality"]["report"]["status"] == "PASS"
+    assert asset["memory"]["checkpoint"]["goal"].startswith("生成")
+    assert asset["memory"]["user_style"]["engine"] == "unity"
+    assert asset["engine"]["target"] == "unity"
+    assert asset["pixel"]["palette"]["max_colors"] == 16
+
+
+@check("multi-agent", "supervisor end-to-end produces an engine-ready asset")
+def _():
+    from agents.supervisor.supervisor import SupervisorAgent
+
+    result = SupervisorAgent().run(
+        "创建一个像素风RPG火焰法师角色，包含待机、攻击动画，并导入Cocos项目"
+    )
+
+    asset = result["asset"]
+    assert result["supervisor"]["status"] == "PASS"
+    assert asset["id"] == "mage001"
+    assert asset["pixel"]["grid"]["confidence"] > 0
+    assert asset["animation"]["phase"]["aligned"] is True
+    assert asset["animation"]["motion"]["drift_corrected"] is True
+    assert asset["engine"]["manifest"]["valid"] is True
+    assert asset["engine"]["validation"]["status"] == "success"
+    assert asset["quality"]["report"]["status"] == "PASS"
+
+
+def main():
+    failures = []
+    current_group = None
+
+    for group, name, func in CHECKS:
+        if group != current_group:
+            print("== {} ==".format(group))
+            current_group = group
+        try:
+            func()
+        except AssertionError as error:
+            failures.append((group, name, str(error)))
+            print("  FAIL {}".format(name))
+            if str(error):
+                print("       {}".format(error))
+        except Exception as error:
+            failures.append((group, name, "{}: {}".format(type(error).__name__, error)))
+            print("  ERROR {} ({}: {})".format(name, type(error).__name__, error))
+        else:
+            print("  ok   {}".format(name))
+
+    total = len(CHECKS)
+    print()
+    print("{} checks, {} failed".format(total, len(failures)))
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
