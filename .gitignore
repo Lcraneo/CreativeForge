@@ -3,3 +3,4 @@ __pycache__/
 benchmark/results/
 studio/backend/exports/
 tests/release/_tmp_runtime/
+.workbuddy/

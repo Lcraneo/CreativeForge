@@ -44,10 +44,10 @@ export default function Workspace() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-10">
+    <div className="mx-auto max-w-6xl px-8 py-14">
       <header className="mb-8">
-        <h1 className="pixel-title text-2xl font-bold">
-          <span className="text-sky-400">CreativeForge</span> Studio
+        <h1 className="text-5xl font-black tracking-tight">
+          <span className="text-sky-400">CreativeForge AI</span><br/>Generate · Reconstruct · Animate · Deploy
         </h1>
         <p className="mt-2 text-sm text-zinc-400">
           描述你的游戏创意，智能体团队自主规划并产出可导入引擎的资产
@@ -59,7 +59,7 @@ export default function Workspace() {
           value={goal}
           onChange={(event) => setGoal(event.target.value)}
           rows={4}
-          className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-100 outline-none focus:border-amber-400/60"
+          className="w-full resize-none rounded-lg border border-zinc-700 bg-zinc-950 p-3 text-sm text-zinc-100 outline-none focus:border-cyan-400/60"
           placeholder="创建一个像素风火焰法师Boss：需要 Idle 动画、Attack 动画、Unity 导出"
         />
         <div className="mt-3 flex flex-wrap gap-2">
@@ -67,7 +67,7 @@ export default function Workspace() {
             <button
               key={example}
               onClick={() => setGoal(example)}
-              className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-amber-400/50 hover:text-amber-300"
+              className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-400 transition-colors hover:border-cyan-400/50 hover:text-cyan-300"
             >
               {example.length > 26 ? example.slice(0, 26) + "…" : example}
             </button>
@@ -81,7 +81,7 @@ export default function Workspace() {
           <button
             onClick={generate}
             disabled={busy || !goal.trim()}
-            className="rounded-lg bg-amber-400 px-6 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-300 disabled:opacity-40"
+            className="rounded-lg bg-cyan-400 px-6 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300 disabled:opacity-40"
           >
             {busy ? "创建中…" : "Generate ⚡"}
           </button>
@@ -105,7 +105,7 @@ export default function Workspace() {
                       ? "green"
                       : task.status === "failed"
                         ? "red"
-                        : "amber"
+                        : "cyan"
                   }
                 >
                   {task.status}

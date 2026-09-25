@@ -26,7 +26,7 @@ interface Pixel {
 function buildSprite(seed: string): Pixel[][] {
   const random = seeded(seed);
   const palette = [
-    "#09090b", "#f4d58d", "#f59e0b", "#b45309", "#dc2626", "#7f1d1d",
+    "#09090b", "#f4d58d", "#38bdf8", "#b45309", "#dc2626", "#7f1d1d",
     "#0ea5e9", "#075985", "#16a34a", "#14532d", "#e4e4e7", "#71717a",
     "#a16207", "#fb923c", "#fde68a", "#3f3f46",
   ];
@@ -61,7 +61,7 @@ function shiftColor(hex: string, delta: number): string {
 }
 
 const PALETTE_DISPLAY = [
-  "#09090b", "#f4d58d", "#f59e0b", "#b45309", "#dc2626", "#7f1d1d",
+  "#09090b", "#f4d58d", "#38bdf8", "#b45309", "#dc2626", "#7f1d1d",
   "#0ea5e9", "#075985", "#16a34a", "#14532d", "#e4e4e7", "#71717a",
   "#a16207", "#fb923c", "#fde68a", "#3f3f46",
 ];
@@ -84,7 +84,7 @@ export default function PixelStudio() {
           <button
             onClick={() => setShowRaw(false)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-              !showRaw ? "bg-amber-400 text-zinc-950" : "border border-zinc-700 text-zinc-400"
+              !showRaw ? "bg-cyan-400 text-zinc-950" : "border border-zinc-700 text-zinc-400"
             }`}
           >
             After · PReCon
@@ -92,7 +92,7 @@ export default function PixelStudio() {
           <button
             onClick={() => setShowRaw(true)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-              showRaw ? "bg-amber-400 text-zinc-950" : "border border-zinc-700 text-zinc-400"
+              showRaw ? "bg-cyan-400 text-zinc-950" : "border border-zinc-700 text-zinc-400"
             }`}
           >
             Before · AI 原图
@@ -143,7 +143,7 @@ export default function PixelStudio() {
             <Badge tone={showRaw ? "red" : "green"}>
               {showRaw ? "64 colors" : "16 colors"}
             </Badge>
-            <Badge tone={showRaw ? "amber" : "blue"}>
+            <Badge tone={showRaw ? "cyan" : "blue"}>
               grid {showRaw ? "off-grid" : "aligned"}
             </Badge>
           </div>
@@ -163,7 +163,7 @@ export default function PixelStudio() {
             </div>
             <div className="mt-3 space-y-1">
               <KV label="outline" value="#09090b" />
-              <KV label="base" value="#f59e0b" />
+              <KV label="base" value="#38bdf8" />
               <KV label="shadow" value="#7f1d1d" />
               <KV label="highlight" value="#fde68a" />
             </div>
@@ -180,7 +180,7 @@ export default function PixelStudio() {
                         x={16 + j * 28}
                         y={16 + i * 28}
                         radius={4}
-                        fill={i === 1 && j === 1 ? "#fbbf24" : "#52525b"}
+                        fill={i === 1 && j === 1 ? "#38bdf8" : "#52525b"}
                       />
                     )),
                   )}

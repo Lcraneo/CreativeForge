@@ -30,13 +30,13 @@ export function Badge({
   tone = "zinc",
   children,
 }: {
-  tone?: "zinc" | "green" | "amber" | "red" | "blue";
+  tone?: "zinc" | "green" | "cyan" | "red" | "blue";
   children: ReactNode;
 }) {
   const tones: Record<string, string> = {
     zinc: "bg-zinc-700/40 text-zinc-300",
     green: "bg-emerald-500/15 text-emerald-300",
-    amber: "bg-amber-400/15 text-amber-300",
+    cyan: "bg-cyan-400/15 text-cyan-300",
     red: "bg-red-500/15 text-red-300",
     blue: "bg-sky-500/15 text-sky-300",
   };
@@ -62,7 +62,7 @@ export function ScoreBar({
   const tone =
     threshold === undefined || value >= threshold
       ? "bg-emerald-400"
-      : "bg-amber-400";
+      : "bg-cyan-400";
   return (
     <div>
       <div className="mb-1 flex items-center justify-between text-xs">

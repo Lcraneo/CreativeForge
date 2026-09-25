@@ -14,9 +14,9 @@ function FrameFigure({ phase, active }: { phase: number; active: boolean }) {
       <circle cx={46 + swing / 2} cy={12} r={3.5} fill="#fb923c" />
       {/* head */}
       <circle cx={32} cy={16} r={9} fill="#f4d58d" />
-      <path d={`M23 14 L32 4 L41 14 Z`} fill="#f59e0b" />
+      <path d={`M23 14 L32 4 L41 14 Z`} fill="#38bdf8" />
       {/* body */}
-      <line x1="32" y1="25" x2="32" y2="50" stroke="#f59e0b" strokeWidth="7" strokeLinecap="round" />
+      <line x1="32" y1="25" x2="32" y2="50" stroke="#38bdf8" strokeWidth="7" strokeLinecap="round" />
       {/* arms */}
       <line x1="32" y1="32" x2="44" y2={34 + arm / 2} stroke="#f4d58d" strokeWidth="3.4" strokeLinecap="round" />
       <line x1="32" y1="32" x2="20" y2={34 - arm / 2} stroke="#f4d58d" strokeWidth="3.4" strokeLinecap="round" />
@@ -99,7 +99,7 @@ export default function AnimationStudio() {
             right={
               <button
                 onClick={() => setPlaying((value) => !value)}
-                className="rounded-lg bg-amber-400 px-3 py-1 text-xs font-semibold text-zinc-950 hover:bg-amber-300"
+                className="rounded-lg bg-cyan-400 px-3 py-1 text-xs font-semibold text-zinc-950 hover:bg-cyan-300"
               >
                 {playing ? "暂停" : "播放"}
               </button>
@@ -126,7 +126,7 @@ export default function AnimationStudio() {
                   }}
                   className={`flex flex-col items-center rounded-lg border px-2 py-2 transition-colors ${
                     index === current
-                      ? "border-amber-400/70 bg-amber-400/10"
+                      ? "border-cyan-400/70 bg-cyan-400/10"
                       : "border-zinc-800 hover:border-zinc-600"
                   }`}
                 >

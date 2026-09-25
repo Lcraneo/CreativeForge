@@ -36,7 +36,7 @@ function nodeStyle(status: NodeStatus, active: boolean): React.CSSProperties {
     width: 168,
   };
   if (active) {
-    return { ...base, borderColor: "#fbbf24", boxShadow: "0 0 18px rgba(251,191,36,.35)" };
+    return { ...base, borderColor: "#38bdf8", boxShadow: "0 0 18px rgba(56,189,248,.35)" };
   }
   if (status === "success" || status === "recovered")
     return { ...base, borderColor: "#34d399" };
@@ -131,7 +131,7 @@ export default function AgentDashboard() {
         </p>
         <Link
           to="/"
-          className="mt-6 inline-block rounded-lg bg-amber-400 px-5 py-2 text-sm font-semibold text-zinc-950 hover:bg-amber-300"
+          className="mt-6 inline-block rounded-lg bg-cyan-400 px-5 py-2 text-sm font-semibold text-zinc-950 hover:bg-cyan-300"
         >
           去创建任务
         </Link>
@@ -152,7 +152,7 @@ export default function AgentDashboard() {
           <span className="font-mono text-xs text-zinc-500">{taskId}</span>
           <Badge
             tone={
-              status === "pass" ? "green" : status === "failed" ? "red" : "amber"
+              status === "pass" ? "green" : status === "failed" ? "red" : "cyan"
             }
           >
             {status === "running" ? `运行中 ${progress}%` : status}
@@ -215,11 +215,34 @@ export default function AgentDashboard() {
             </motion.div>
           </Card>
 
+          <Card title="Agent Timeline / 执行轨迹">
+            <div className="relative space-y-3 pl-4">
+              <div className="absolute left-[7px] top-2 bottom-2 w-px bg-zinc-700" />
+              {(events.length ? events.slice(-8) : []).map((event, index) => (
+                <motion.div
+                  key={`timeline-${index}`}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative flex items-start gap-3 text-xs"
+                >
+                  <span className="relative z-10 mt-1 h-2 w-2 rounded-full bg-cyan-400 ring-4 ring-cyan-400/10" />
+                  <div>
+                    <div className="font-medium text-zinc-200">{event.type}</div>
+                    <div className="text-zinc-500">
+                      {event.agent ?? "Agent System"} · {new Date((event.at ?? 0) * 1000).toLocaleTimeString([], { minute: "2-digit", second: "2-digit" })}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+              {events.length === 0 && <p className="text-zinc-600">等待 Agent 状态变化…</p>}
+            </div>
+          </Card>
+
           <Card title="质量报告 / QA">
             {status === "pass" ? (
               <div className="space-y-2 text-xs">
                 <p className="text-emerald-300">全部检查通过 ✓</p>
-                <Link to="/asset" className="inline-block text-amber-300 hover:underline">
+                <Link to="/asset" className="inline-block text-cyan-300 hover:underline">
                   查看资产 Inspector →
                 </Link>
               </div>

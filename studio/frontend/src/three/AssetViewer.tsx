@@ -75,7 +75,7 @@ function Grid() {
   );
 }
 
-export default function AssetViewer({ accent = "#f59e0b" }: { accent?: string }) {
+export default function AssetViewer({ accent = "#38bdf8" }: { accent?: string }) {
   return (
     <Canvas
       camera={{ position: [3.2, 2.2, 4.2], fov: 45 }}

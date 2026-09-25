@@ -10,7 +10,7 @@ export default function AssetInspector() {
     return (
       <div className="mx-auto max-w-3xl px-8 py-16 text-center text-sm text-zinc-400">
         还没有资产。先到
-        <Link to="/" className="mx-1 text-amber-300 hover:underline">
+        <Link to="/" className="mx-1 text-cyan-300 hover:underline">
           工作台
         </Link>
         生成一个。
@@ -114,7 +114,7 @@ export default function AssetInspector() {
           {report ? (
             <>
               <div className="mb-3 flex items-center gap-2">
-                <Badge tone={report.status === "PASS" ? "green" : "amber"}>
+                <Badge tone={report.status === "PASS" ? "green" : "cyan"}>
                   {report.status}
                 </Badge>
                 <span className="text-xs text-zinc-500">

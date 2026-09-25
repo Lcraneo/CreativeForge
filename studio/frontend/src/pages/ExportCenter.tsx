@@ -45,7 +45,7 @@ export default function ExportCenter() {
       {!asset ? (
         <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-12 text-center text-sm text-zinc-400">
           还没有资产。先到
-          <Link to="/" className="mx-1 text-amber-300 hover:underline">
+          <Link to="/" className="mx-1 text-cyan-300 hover:underline">
             工作台
           </Link>
           生成一个。
@@ -75,7 +75,7 @@ export default function ExportCenter() {
                       onClick={() => setEngine(item.id)}
                       className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                         engine === item.id
-                          ? "bg-amber-400 text-zinc-950"
+                          ? "bg-cyan-400 text-zinc-950"
                           : "border border-zinc-700 text-zinc-400 hover:border-zinc-500"
                       }`}
                     >

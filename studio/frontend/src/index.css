@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 :root {
+  --cf-bg:#09090b;
+  --cf-surface:#18181b;
+  --cf-border:#27272a;
+  --cf-primary:#38bdf8;
+  --cf-action:#2563eb;
+
   color-scheme: dark;
 }
 

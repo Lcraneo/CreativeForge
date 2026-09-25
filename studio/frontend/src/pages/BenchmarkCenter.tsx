@@ -31,7 +31,7 @@ function CompareRow({
       <div className="flex items-center gap-2">
         <div className="h-1.5 flex-1 rounded-full bg-zinc-800">
           <motion.div
-            className={`h-full rounded-full ${improved ? "bg-emerald-400" : "bg-amber-400"}`}
+            className={`h-full rounded-full ${improved ? "bg-emerald-400" : "bg-cyan-400"}`}
             initial={{ width: 0 }}
             animate={{ width: "100%" }}
           />
@@ -40,7 +40,7 @@ function CompareRow({
           {format(method)}
         </span>
       </div>
-      <Badge tone={improved ? "green" : "amber"}>
+      <Badge tone={improved ? "green" : "cyan"}>
         {betterDown
           ? `-${Math.round((1 - method / baseline) * 100)}%`
           : `+${Math.round((method / baseline - 1) * 100)}%`}
@@ -95,7 +95,7 @@ export default function BenchmarkCenter() {
                 cy="50"
                 r="42"
                 fill="none"
-                stroke="#fbbf24"
+                stroke="#38bdf8"
                 strokeWidth="9"
                 strokeLinecap="round"
                 strokeDasharray={2 * Math.PI * 42}
@@ -191,7 +191,7 @@ export default function BenchmarkCenter() {
               <div className="mt-1 text-[11px] text-zinc-500">导入成功率</div>
             </div>
             <div>
-              <div className="text-2xl font-bold text-amber-300">
+              <div className="text-2xl font-bold text-cyan-300">
                 {data.gimport.time_comparison.speedup}x
               </div>
               <div className="mt-1 text-[11px] text-zinc-500">
