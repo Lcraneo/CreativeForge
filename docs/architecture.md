@@ -195,6 +195,62 @@ Modules:
 - `agents/memory_agent/` — user style, asset versions, task history,
   checkpoints (keeps style consistent across tasks)
 
+## Layer 8 — CreativeForge Studio (product platform, Phase 8)
+
+`studio/` — the product layer: an AI asset factory console.
+
+```text
+frontend (React 18 + TS + Vite)
+  Workspace -> Agent Command Center (React Flow task graph)
+            -> Asset Inspector (R3F 3D viewer) -> Pixel Studio (Konva)
+            -> Animation Studio -> Benchmark Center -> Export Center
+  Zustand stores + WebSocket event stream (staggered replay)
+
+backend (FastAPI)
+  POST /api/tasks            create a production task (202 + stream_url)
+  GET  /api/tasks/{id}       plan / events / supervisor record
+  WS   /ws/tasks/{id}/stream PLAN_CREATED | AGENT_START | AGENT_DONE |
+                            QUALITY_REPORT | TASK_COMPLETE | ASSET_UPDATE
+  GET  /api/assets/{id}      CreativeAsset
+  POST /api/export           real zip engine package (download_url)
+  GET  /api/benchmark        live Phase 9 evaluation
+```
+
+- `studio/backend/agent_runtime/runtime.py` — runs the Supervisor in a
+  background thread and streams lifecycle events into the task store
+- `studio/backend/export_service/service.py` — CreativeAsset -> real zip
+  (Character / Animation / Prefab / Config), served for download
+- entry: `python -m studio.backend.main` (also serves `frontend/dist`)
+
+## Layer 9 — Benchmark System (Phase 9)
+
+`benchmark/` — proves the self-developed layer with data:
+
+```text
+Dataset (12 assets / 6 categories)
+  -> PReCon metrics   PCS / palette efficiency / contour accuracy
+                     vs naive pixelate baseline
+  -> FAlign metrics   root drift / foot sliding / temporal smoothness
+                     vs raw AI frames baseline
+  -> GImport metrics  ISR / pipeline time / manual steps vs 12-step manual
+  -> Agent metrics    completion / planning accuracy / recovery / time
+  -> CF Score         weighted (pixel .3 / animation .3 / engine .25 / agent .15)
+```
+
+Entry: `python -m benchmark.run_benchmark` — writes
+`benchmark/results/benchmark_report.{json,md}` with the real engines.
+
+## Layer 10 — Release & Demo (Phase 10)
+
+- `examples/competition_demo/run_demo.py` — the fixed, deterministic
+  competition demo: goal -> source/ (intent + task graph) ->
+  intermediate/ (steps + messages + asset) -> output/ (real zip) ->
+  report/ (quality + benchmark summary)
+- `tests/release/run_release_tests.py` — four-layer release validation:
+  L1 Contract / L2 Pipeline / L3 Runtime (exported zip opens, clip plays,
+  prefab wires) / L4 Performance (timings, memory, thresholds)
+- `docker-compose.yml` + `docker/Dockerfile` — one-command deployment
+
 ## Phase spec -> merged location mapping
 
 The original phase packages were standalone; the merged repo consolidates
@@ -207,12 +263,17 @@ them:
 | 5 | `gimport/` (standalone package) | `gimport/` (same layout; adapters under `gimport/adapters/`) |
 | 6 | `planner/ executor/ memory/ capability/ workflow/ monitor/ recovery/` | `agent/planner/ agent/executor/ agent/memory/ agent/capability/ agent/workflow/ agent/monitor/ agent/recovery/` + `agent/creative_agent.py` |
 | 7 | `agents/` + `protocol/` + `workflow/` + `registry/` | `agents/` + `protocol/`; workflow execution and checkpointing reuse `agent/workflow/` + `agent/memory/`; capability registry reused from `agent/capability/` (agents bind via `Capability.agent`) |
+| 8 | `phase8.md` | `studio/frontend/` + `studio/backend/` (7 pages, REST + WS event stream, real zip export) |
+| 9 | `phase9.md` | `benchmark/` (dataset + metrics + CF score + report CLI) |
+| 10 | `phase10.md` | `examples/competition_demo/` + `tests/release/` + `docker-compose.yml` |
 
 ## Verification
 
 ```text
-python tests/run_tests.py      # 36 contract checks (Phases 3-7)
-python tests/dump_examples.py  # regenerate examples/*.json from real runs
+python tests/run_tests.py                  # 36 contract checks (Phases 3-7)
+python tests/release/run_release_tests.py  # 12 release checks (4 layers, Phase 10)
+python -m benchmark.run_benchmark          # Phase 9 evaluation report
+python tests/dump_examples.py              # regenerate examples/*.json from real runs
 ```
 
 Contract docs: `tests/test_precon.md`, `tests/test_adapter_contract.md`,

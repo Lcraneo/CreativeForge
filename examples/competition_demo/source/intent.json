@@ -1,0 +1,13 @@
+{
+  "goal": "创建一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+  "style": "pixel",
+  "asset_type": "character",
+  "engine": "unity",
+  "requires": {
+    "generation": true,
+    "pixel_reconstruction": true,
+    "animation_alignment": true,
+    "engine_import": true
+  },
+  "needs_animation": true
+}

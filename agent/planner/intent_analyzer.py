@@ -4,7 +4,11 @@ ENGINE_KEYWORDS = {
     "godot": ("godot",)
 }
 
-STATIC_KEYWORDS = ("静态", "static", "单张", "still")
+STATIC_KEYWORDS = (
+    "静态", "static", "单张", "still",
+    "道具", "图标", "图块", "背景", "立绘", "头像",
+    "icon", "tileset", "background", "item"
+)
 
 ANIMATION_KEYWORDS = (
     "动画", "animation", "待机", "idle", "攻击", "attack", "行走", "walk"

@@ -1,0 +1,67 @@
+{
+  "package": "FireMageGameAsset.zip",
+  "engine": "unity",
+  "asset_id": "mage001",
+  "contents": [
+    "Character",
+    "Animation",
+    "Prefab",
+    "Config"
+  ],
+  "files": [
+    "Character/mage001.manifest.json",
+    "Animation/mage001.anim.json",
+    "Prefab/mage001.prefab.json",
+    "Config/atlas.json",
+    "Config/controller.json",
+    "Config/validation.json",
+    "README.md"
+  ],
+  "size_bytes": 1797,
+  "validation": {
+    "status": "success",
+    "score": 1.0,
+    "checks": [
+      {
+        "name": "resource:texture",
+        "passed": true,
+        "detail": "mage001.png"
+      },
+      {
+        "name": "resource:animation",
+        "passed": true,
+        "detail": "mage001.anim"
+      },
+      {
+        "name": "resource:prefab",
+        "passed": true,
+        "detail": "mage001.prefab"
+      },
+      {
+        "name": "manifest:contract",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "name": "animation:frame_count",
+        "passed": true,
+        "detail": 4
+      },
+      {
+        "name": "animation:loop",
+        "passed": true,
+        "detail": true
+      },
+      {
+        "name": "engine:unity",
+        "passed": true,
+        "detail": [
+          "Texture",
+          "Animation",
+          "Prefab",
+          "Controller"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "precon": {
+    "baseline_pixel_score": 0.8092,
+    "method_pixel_score": 0.9,
+    "improvement": 0.0908
+  },
+  "falign": {
+    "baseline_root_drift": 2.25,
+    "method_root_drift": 0.0,
+    "drift_reduction": 1.0
+  },
+  "gimport": {
+    "import_success_rate": 1.0
+  },
+  "agent": {
+    "task_completion_rate": 1.0,
+    "planning_accuracy": 1.0,
+    "recovery_success_rate": 1.0
+  },
+  "cf_score": {
+    "weights": {
+      "pixel": 0.3,
+      "animation": 0.3,
+      "engine": 0.25,
+      "agent": 0.15
+    },
+    "components": {
+      "pixel": 0.9,
+      "animation": 0.9867,
+      "engine": 1.0,
+      "agent": 1.0
+    },
+    "overall": 0.966
+  }
+}
