@@ -1,20 +1,35 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAssetLoader } from "../stores/assetStore";
 import { useExportStore } from "../stores/exportStore";
 import { api } from "../api/client";
-import { Badge, Card, KV } from "../components/ui";
+import { toast } from "../stores/toastStore";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  KV,
+  PageHeader,
+  Segmented,
+  Stepper,
+} from "../components/ui";
+import { Icon } from "../components/icons";
+import type { ExportResult } from "../types";
 
 const ENGINES = [
-  { id: "unity", label: "Unity" },
-  { id: "cocos", label: "Cocos" },
-  { id: "godot", label: "Godot" },
+  { id: "unity", label: "Unity", icon: "cube" as const },
+  { id: "cocos", label: "Cocos", icon: "cube" as const },
+  { id: "godot", label: "Godot", icon: "cube" as const },
 ];
+
+type EngineId = (typeof ENGINES)[number]["id"];
 
 export default function ExportCenter() {
   const asset = useAssetLoader();
+  const navigate = useNavigate();
   const { exports, busy, error, add, setBusy, setError } = useExportStore();
-  const [engine, setEngine] = useState("unity");
+  const [engine, setEngine] = useState<EngineId>("unity");
 
   async function runExport() {
     if (!asset || busy) return;
@@ -23,131 +38,182 @@ export default function ExportCenter() {
     try {
       const result = await api.exportAsset(asset.id, engine);
       add(result);
+      toast({
+        tone: "success",
+        title: `已导出 ${result.package}`,
+        description: `${result.engine} · ${(result.size_bytes / 1024).toFixed(1)} KB · 校验 ${result.validation.status}`,
+      });
     } catch (cause) {
       setError(String(cause));
+      toast({ tone: "danger", title: "导出失败", description: String(cause) });
     } finally {
       setBusy(false);
     }
   }
 
-  const latest = exports[0];
+  if (!asset) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
+        <Card>
+          <EmptyState
+            icon="package"
+            title="还没有可导出的资产"
+            description="先在工作台生成一个资产，GImport 会将其编译为可导入引擎的工程包。"
+            action={
+              <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+                去生成资产
+              </Button>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
+  const latest: ExportResult | undefined = exports[0];
+  const stage = (done: boolean) => (done ? "done" : "pending") as "done" | "pending";
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-6">
-      <header className="mb-5">
-        <h1 className="pixel-title text-sm font-semibold text-zinc-200">Export Center</h1>
-        <p className="mt-1 text-xs text-zinc-500">
-          GImport 一键导出：CreativeAsset → Manifest → Atlas → Animation → Prefab →
-          引擎工程包
-        </p>
-      </header>
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
+      <PageHeader
+        overline="Export Center"
+        title="导出中心"
+        description="GImport 一键导出：CreativeAsset → Manifest → Atlas → Animation → Prefab → 引擎工程包"
+        actions={
+          <Segmented options={ENGINES} value={engine} onChange={setEngine} />
+        }
+      />
 
-      {!asset ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 px-6 py-12 text-center text-sm text-zinc-400">
-          还没有资产。先到
-          <Link to="/" className="mx-1 text-cyan-300 hover:underline">
-            工作台
-          </Link>
-          生成一个。
-        </div>
-      ) : (
-        <div className="grid grid-cols-[1fr_360px] gap-4">
-          <div className="space-y-4">
-            <Card title="导出流程 / Pipeline">
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                {["CreativeAsset", "Manifest", "Atlas", "Animation", "Prefab", "Engine Package"].map(
-                  (step, index, all) => (
-                    <span key={step} className="flex items-center gap-2">
-                      <span className="rounded-lg border border-zinc-700 px-2.5 py-1 text-zinc-300">
-                        {step}
-                      </span>
-                      {index < all.length - 1 && <span className="text-zinc-600">→</span>}
-                    </span>
-                  ),
-                )}
-              </div>
-
-              <div className="mt-5 flex items-center gap-3">
-                <div className="flex gap-2">
-                  {ENGINES.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setEngine(item.id)}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                        engine === item.id
-                          ? "bg-cyan-400 text-zinc-950"
-                          : "border border-zinc-700 text-zinc-400 hover:border-zinc-500"
-                      }`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={runExport}
-                  disabled={busy}
-                  className="rounded-lg bg-emerald-400 px-6 py-2 text-sm font-semibold text-zinc-950 transition-colors hover:bg-emerald-300 disabled:opacity-40"
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-8">
+          <Card
+            title="导出流程"
+            icon="activity"
+            iconClassName="text-gimport"
+            right={
+              <Badge tone={latest ? "gimport" : "neutral"}>
+                {latest ? "4 / 4 完成" : "等待导出"}
+              </Badge>
+            }
+          >
+            <Stepper
+              steps={[
+                { id: "asset", label: "Asset", state: "done" },
+                { id: "manifest", label: "Manifest", state: stage(Boolean(latest)) },
+                { id: "atlas", label: "Atlas", state: stage(Boolean(latest)) },
+                { id: "animation", label: "Animation", state: stage(Boolean(latest)) },
+                { id: "prefab", label: "Prefab", state: stage(Boolean(latest)) },
+                { id: "package", label: "Package", state: latest ? "running" : "pending" },
+              ]}
+            />
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Button variant="primary" size="lg" icon="download" loading={busy} onClick={runExport}>
+                {busy ? "导出中…" : `导出 ${ENGINES.find((e) => e.id === engine)?.label} 工程包`}
+              </Button>
+              {latest && (
+                <a
+                  href={latest.download_url}
+                  className="inline-flex h-10 items-center gap-2 rounded-md border border-line bg-surface-2 px-5 text-sm font-semibold text-ink transition-colors hover:bg-surface-3"
                 >
-                  {busy ? "导出中…" : "导出 ⬇"}
-                </button>
-              </div>
-              {error && <p className="mt-3 text-xs text-red-400">{error}</p>}
-            </Card>
+                  <Icon name="download" className="h-4 w-4" />
+                  下载 {latest.package}
+                </a>
+              )}
+              <span className="text-[11.5px] text-ink-3">
+                {latest
+                  ? `${(latest.size_bytes / 1024).toFixed(1)} KB · ${latest.files.length} files · zip`
+                  : "选择引擎后点击导出，产出真实 zip 工程包"}
+              </span>
+            </div>
+            {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+          </Card>
 
-            {latest && (
-              <Card
-                title={`包内容 / ${latest.package}`}
-                right={
-                  <a
-                    href={latest.download_url}
-                    className="rounded-lg bg-sky-500 px-3 py-1 text-xs font-semibold text-zinc-950 hover:bg-sky-400"
-                  >
-                    下载 zip
-                  </a>
-                }
-              >
-                <div className="mb-3 flex gap-2">
-                  <Badge tone={latest.validation.status === "success" ? "green" : "red"}>
+          {latest && (
+            <Card
+              title="包内容"
+              icon="terminal"
+              iconClassName="text-gimport"
+              right={
+                <>
+                  <Badge tone={latest.validation.status === "success" ? "success" : "danger"}>
                     {latest.validation.status}
                   </Badge>
-                  <Badge>{(latest.size_bytes / 1024).toFixed(1)} KB</Badge>
-                  <Badge tone="blue">{latest.engine}</Badge>
-                </div>
-                <pre className="overflow-x-auto rounded-lg border border-zinc-800 bg-zinc-950 p-3 font-mono text-[11px] leading-relaxed text-zinc-300">
-                  {renderTree(latest.files)}
-                </pre>
-              </Card>
-            )}
-          </div>
-
-          <div className="space-y-4">
-            <Card title="资产 / Asset">
-              <KV label="id" value={asset.id} />
-              <KV label="name" value={asset.name ?? "—"} />
-              <KV label="type" value={asset.type ?? "character"} />
-              <KV label="frames" value={asset.animation?.frames.length ?? 0} />
+                  <Badge tone="primary">{latest.engine}</Badge>
+                </>
+              }
+              bodyClassName="p-4"
+            >
+              <pre className="cf-scroll overflow-x-auto rounded-md border border-line-subtle bg-[#0a0e15] p-4 font-mono text-[11.5px] leading-[21px] text-ink-2">
+                {renderTree(latest.files)}
+              </pre>
             </Card>
-
-            {latest && (
-              <Card title="导入校验 / Runtime Validation">
-                <ul className="space-y-1">
-                  {latest.validation.checks.map((check) => (
-                    <li key={check.name} className="flex items-center gap-2 text-xs">
-                      <span className={check.passed ? "text-emerald-400" : "text-red-400"}>
-                        {check.passed ? "✓" : "×"}
-                      </span>
-                      <span className="font-mono text-zinc-400">{check.name}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-3 border-t border-zinc-800 pt-3">
-                  <KV label="score" value={latest.validation.score} />
-                </div>
-              </Card>
-            )}
-          </div>
+          )}
         </div>
-      )}
+
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-4">
+          <Card title="资产摘要" icon="cube">
+            <KV label="id / name" value={`${asset.id} / ${asset.name ?? "—"}`} />
+            <KV label="type / role" value={`${asset.type ?? "character"} / ${asset.role ?? "—"}`} />
+            <KV label="frames / fps" value={`${asset.animation?.frames.length ?? 0} / ${asset.animation?.fps ?? "—"}`} />
+            <KV label="pixel score" value={asset.quality?.pixel?.overall ?? "—"} />
+            <KV label="animation score" value={asset.quality?.animation?.overall ?? "—"} />
+          </Card>
+
+          {latest && (
+            <Card
+              title="运行时校验"
+              icon="check"
+              right={<Badge tone="success">score {latest.validation.score}</Badge>}
+            >
+              {latest.validation.checks.map((check) => (
+                <div
+                  key={check.name}
+                  className="flex items-center gap-2.5 border-b border-white/[.04] py-1.5 text-[12.5px] text-ink-2 last:border-0"
+                >
+                  <Icon
+                    name={check.passed ? "check" : "x"}
+                    className={check.passed ? "h-4 w-4 text-success" : "h-4 w-4 text-danger"}
+                  />
+                  <span className="truncate font-mono text-[11.5px]">{check.name}</span>
+                  <span className="ml-auto text-[11px] text-ink-3">
+                    {check.passed ? "pass" : "fail"}
+                  </span>
+                </div>
+              ))}
+            </Card>
+          )}
+
+          <Card title="导出历史" icon="clock">
+            {exports.length === 0 ? (
+              <p className="text-xs text-ink-3">还没有导出记录。</p>
+            ) : (
+              <ol className="relative space-y-4 pl-1">
+                <span className="absolute bottom-2 left-[10px] top-2 w-0.5 rounded-sm bg-line-subtle" />
+                {exports.slice(0, 5).map((item, index) => (
+                  <li key={`${item.package}-${index}`} className="relative flex gap-3.5">
+                    <span className="relative z-10 mt-1 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2 border-success bg-canvas text-success">
+                      <Icon name="check" className="h-3 w-3" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12.5px] font-medium">{item.package}</div>
+                      <div className="text-[11.5px] text-ink-3">
+                        {item.engine} · {(item.size_bytes / 1024).toFixed(1)} KB
+                      </div>
+                    </div>
+                    <a
+                      href={item.download_url}
+                      className="text-ink-3 transition-colors hover:text-primary"
+                      title="重新下载"
+                    >
+                      <Icon name="download" className="h-4 w-4" />
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

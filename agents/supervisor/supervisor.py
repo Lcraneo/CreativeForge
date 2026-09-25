@@ -46,13 +46,15 @@ class SupervisorAgent:
         self.recovery = RecoveryManager(max_retries=1)
         self.executor = AgentExecutorAdapter(self.router)
 
-    def run(self, goal, asset=None, on_event=None):
+    def run(self, goal, asset=None, on_event=None, overrides=None):
         """Run the full production loop.
 
         on_event: optional callback receiving live lifecycle events
         (PLAN_CREATED / AGENT_START / AGENT_DONE / PROGRESS / TASK_FAILED /
         QUALITY_REPORT / TASK_COMPLETE) as dicts — used by the Studio
         runtime to stream the agent graph to the frontend.
+        overrides: optional user parameter overrides (gender / hair / build …)
+        applied to the generated CharacterSpec.
         """
 
         def emit(event_type, payload):
@@ -88,7 +90,7 @@ class SupervisorAgent:
 
         previous_agent = None
         for task in plan["tasks"]:
-            task = dict(task, goal=plan["goal"])
+            task = dict(task, goal=plan["goal"], overrides=overrides)
             emit("AGENT_START", {
                 "task": task["id"],
                 "agent": task["agent"],

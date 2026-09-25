@@ -1,6 +1,7 @@
 from precon.pipeline.precon_engine import PReConEngine
 from adapters.creative_asset_adapter import CreativeAssetAdapter
 from gimport.pipeline.gimport_engine import GImportEngine
+from agent.generation.builder import build_asset
 
 
 class Capability:
@@ -45,66 +46,28 @@ class CapabilityRegistry:
 
 
 def generate_asset(asset, task):
-    """Skeleton generation capability: in production this calls the Windup
-    generation adapter (adapters/windup/generation_mapper.py)."""
+    """Prompt-driven generation.
+
+    Different goals produce different characters (id / name / palette /
+    animation / seed); the canonical fire-mage prompt keeps its historical
+    ``mage001`` / ``FireMage`` identity so the demo and benchmarks stay stable.
+    """
     if asset:
         return asset
-
-    goal = str((task or {}).get("goal", ""))
-    text = goal.lower()
-    if "fire" in text or "火焰" in text:
-        asset_id, name = "mage001", "FireMage"
-    else:
-        asset_id, name = "hero001", "Hero"
-
-    action = "idle"
-    for keyword, action_name in (
-        ("攻击", "attack"),
-        ("attack", "attack"),
-        ("行走", "walk"),
-        ("walk", "walk"),
-        ("待机", "idle"),
-        ("idle", "idle")
-    ):
-        if keyword in text:
-            action = action_name
-            break
-
-    asset = {
-        "id": asset_id,
-        "name": name,
-        "type": "character",
-        "source": {
-            "prompt": goal,
-            "width": 64,
-            "height": 64
-        },
-        "animation": {
-            "action": action,
-            "fps": 12,
-            "loop": True,
-            "frames": [
-                {
-                    "id": index,
-                    "image": "frame{}.png".format(index),
-                    "action": action,
-                    "anchor": {
-                        "root": {"x": 32 + index, "y": 60},
-                        "feet": {"x": 32, "y": 64}
-                    }
-                }
-                for index in range(4)
-            ]
-        }
-    }
-    if "boss" in text:
-        asset["role"] = "boss"
-    return asset
+    goal = (task or {}).get("goal", "")
+    return build_asset(goal, task)
 
 
 def run_precon(asset, task):
-    image = asset.get("source") or {"width": 64, "height": 64}
-    result = PReConEngine().process(image)
+    source = dict(asset.get("source") or {"width": 64, "height": 64})
+    character = asset.get("character") or {}
+
+    if source.get("seed") is None and character.get("seed") is not None:
+        source["seed"] = character["seed"]
+    if not source.get("palette") and character.get("palette"):
+        source["palette"] = character["palette"]
+
+    result = PReConEngine().process(source)
     asset["pixel"] = result["pixel"]
     asset.setdefault("quality", {})["pixel"] = result["quality"]
     return asset

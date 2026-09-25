@@ -2,5 +2,6 @@ __pycache__/
 *.pyc
 benchmark/results/
 studio/backend/exports/
+studio/backend/data/
 tests/release/_tmp_runtime/
 .workbuddy/

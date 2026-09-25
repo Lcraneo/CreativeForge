@@ -1,33 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useAssetLoader } from "../stores/assetStore";
-import { Badge, Card, ScoreBar } from "../components/ui";
-
-/** Frame card: stick figure posed by phase (FAlign 对齐结果的可视化). */
-function FrameFigure({ phase, active }: { phase: number; active: boolean }) {
-  const swing = Math.sin(phase * Math.PI * 2) * 10;
-  const arm = Math.cos(phase * Math.PI * 2) * 22;
-  return (
-    <svg viewBox="0 0 64 80" className={`h-20 w-16 ${active ? "opacity-100" : "opacity-60"}`}>
-      {/* staff */}
-      <line x1={46 + swing / 2} y1={14} x2={50 + swing} y2={66} stroke="#a16207" strokeWidth="2.5" />
-      <circle cx={46 + swing / 2} cy={12} r={3.5} fill="#fb923c" />
-      {/* head */}
-      <circle cx={32} cy={16} r={9} fill="#f4d58d" />
-      <path d={`M23 14 L32 4 L41 14 Z`} fill="#38bdf8" />
-      {/* body */}
-      <line x1="32" y1="25" x2="32" y2="50" stroke="#38bdf8" strokeWidth="7" strokeLinecap="round" />
-      {/* arms */}
-      <line x1="32" y1="32" x2="44" y2={34 + arm / 2} stroke="#f4d58d" strokeWidth="3.4" strokeLinecap="round" />
-      <line x1="32" y1="32" x2="20" y2={34 - arm / 2} stroke="#f4d58d" strokeWidth="3.4" strokeLinecap="round" />
-      {/* legs */}
-      <line x1="32" y1="50" x2={26 - swing / 3} y2="70" stroke="#3f3f46" strokeWidth="4" strokeLinecap="round" />
-      <line x1="32" y1="50" x2={38 + swing / 3} y2="70" stroke="#3f3f46" strokeWidth="4" strokeLinecap="round" />
-      {/* anchor point (root) — stable after FAlign */}
-      {active && <circle cx="32" cy="72" r="2.4" fill="#34d399" />}
-    </svg>
-  );
-}
+import { Badge, Button, Card, PageHeader, ScoreBar, cx } from "../components/ui";
+import { Icon } from "../components/icons";
+import { FrameFigure } from "../components/FrameFigure";
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
@@ -46,12 +22,31 @@ export default function AnimationStudio() {
     return () => clearInterval(timer);
   }, [playing, frames.length, asset?.animation?.fps]);
 
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.code === "Space") {
+        event.preventDefault();
+        setPlaying((value) => !value);
+      }
+      if (event.key === "ArrowLeft") {
+        setPlaying(false);
+        setCurrent((index) => Math.max(0, index - 1));
+      }
+      if (event.key === "ArrowRight") {
+        setPlaying(false);
+        setCurrent((index) => Math.min(frames.length - 1, index + 1));
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [frames.length]);
+
   const rootTrack = asset?.animation?.motion?.root_track ?? [];
   const corrections = asset?.animation?.motion?.corrections ?? [];
   const trackPath = useMemo(() => {
     if (rootTrack.length === 0) return "";
-    const width = 260;
-    const height = 70;
+    const width = 640;
+    const height = 90;
     return rootTrack
       .map((point, index) => {
         const x = (index / Math.max(1, rootTrack.length - 1)) * width;
@@ -63,8 +58,14 @@ export default function AnimationStudio() {
 
   if (frames.length === 0) {
     return (
-      <div className="mx-auto max-w-3xl px-8 py-16 text-center text-sm text-zinc-400">
-        暂无动画数据，请先生成一个带动画的资产。
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
+        <Card>
+          <PageHeader
+            overline="Animation Studio"
+            title="动画工作台"
+            description="暂无动画数据，请先生成一个带动画的资产。"
+          />
+        </Card>
       </div>
     );
   }
@@ -72,51 +73,70 @@ export default function AnimationStudio() {
   const quality = asset?.quality?.animation;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-6">
-      <header className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="pixel-title text-sm font-semibold text-zinc-200">
-            Animation Studio
-          </h1>
-          <p className="mt-1 text-xs text-zinc-500">
-            FAlign 切帧对齐：锚点检测 → 运动相位对齐 → 根运动纠偏 → 时序一致性
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge tone="blue">{asset?.animation?.action}</Badge>
-          <Badge>{frames.length} frames</Badge>
-          <Badge>{asset?.animation?.fps} fps</Badge>
-          {asset?.animation?.motion?.drift_corrected && (
-            <Badge tone="green">drift corrected</Badge>
-          )}
-        </div>
-      </header>
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
+      <PageHeader
+        overline="Animation Studio"
+        title="动画工作台"
+        description="FAlign 切帧对齐：锚点检测 → 运动相位对齐 → 根运动纠偏 → 时序一致性"
+        actions={
+          <>
+            <Badge tone="falign">{asset?.animation?.action}</Badge>
+            <Badge tone="neutral">{frames.length} frames</Badge>
+            <Badge tone="neutral">{asset?.animation?.fps} fps</Badge>
+            {asset?.animation?.motion?.drift_corrected && (
+              <Badge tone="success" icon="check">
+                drift corrected
+              </Badge>
+            )}
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-[1fr_320px] gap-4">
-        <div className="space-y-4">
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-8">
           <Card
-            title="动作预览 / Motion Preview"
+            title="动作预览 Motion Preview"
+            icon="play"
+            iconClassName="text-falign"
             right={
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={playing ? "pause" : "play"}
                 onClick={() => setPlaying((value) => !value)}
-                className="rounded-lg bg-cyan-400 px-3 py-1 text-xs font-semibold text-zinc-950 hover:bg-cyan-300"
               >
                 {playing ? "暂停" : "播放"}
-              </button>
+              </Button>
             }
           >
-            <div className="flex items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 py-6">
-              <motion.div key={current} initial={{ scale: 0.96 }} animate={{ scale: 1 }}>
+            <div className="flex h-[230px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(167,139,250,.14),transparent_70%),#0a0e15]">
+              <motion.div
+                key={current}
+                initial={{ scale: 0.96, opacity: 0.7 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.18 }}
+              >
                 <FrameFigure
                   phase={phases?.[current] ?? current / Math.max(1, frames.length - 1)}
                   active
+                  className="h-44 w-36"
                 />
               </motion.div>
             </div>
+            <div className="mt-2.5 flex items-center gap-3 text-[11px] text-ink-3">
+              <span>
+                空格 播放/暂停 · ←→ 逐帧 · 当前 #{frames[current]?.id}
+              </span>
+            </div>
           </Card>
 
-          <Card title="帧时间轴 / Frame Timeline">
-            <div className="flex gap-2 overflow-x-auto pb-2">
+          <Card
+            title="帧时间轴 Frame Timeline"
+            icon="film"
+            iconClassName="text-falign"
+            right={<Badge tone="neutral">当前 #{frames[current]?.id}</Badge>}
+          >
+            <div className="cf-scroll flex gap-2.5 overflow-x-auto pb-1">
               {frames.map((frame, index) => (
                 <button
                   key={frame.id}
@@ -124,69 +144,93 @@ export default function AnimationStudio() {
                     setPlaying(false);
                     setCurrent(index);
                   }}
-                  className={`flex flex-col items-center rounded-lg border px-2 py-2 transition-colors ${
+                  className={cx(
+                    "flex w-[92px] shrink-0 flex-col items-center rounded-[10px] border p-2 transition-all duration-150 ease-standard",
                     index === current
-                      ? "border-cyan-400/70 bg-cyan-400/10"
-                      : "border-zinc-800 hover:border-zinc-600"
-                  }`}
+                      ? "-translate-y-0.5 border-falign/60 bg-falign/[.08]"
+                      : "border-line-subtle bg-surface-1 hover:border-line",
+                  )}
                 >
                   <FrameFigure
                     phase={phases?.[index] ?? index / Math.max(1, frames.length - 1)}
                     active={index === current}
+                    className="h-16 w-14"
                   />
-                  <span className="mt-1 font-mono text-[10px] text-zinc-500">
-                    #{frame.id}
+                  <span className="mt-1 font-mono text-[10px] text-ink-4">
+                    #{frame.id} · {(phases?.[index] ?? index / Math.max(1, frames.length - 1)).toFixed(2)}
                   </span>
                 </button>
               ))}
             </div>
           </Card>
 
-          <Card title="根运动轨迹 / Root Motion（漂移 → 纠偏）">
-            <svg viewBox="0 0 260 70" className="w-full">
-              <line x1="0" y1="35" x2="260" y2="35" stroke="#27272a" strokeDasharray="4 4" />
-              <path d={trackPath} fill="none" stroke="#f87171" strokeWidth="2" />
-              {rootTrack.map((_, index) => {
+          <Card
+            title="根运动轨迹 Root Motion（漂移 → 纠偏）"
+            icon="activity"
+            iconClassName="text-falign"
+            right={<Badge tone="success">0.00 px/frame</Badge>}
+          >
+            <svg viewBox="0 0 640 90" className="h-[90px] w-full">
+              <line x1="0" y1="45" x2="640" y2="45" stroke="#2a3444" strokeDasharray="5 5" />
+              <path d={trackPath} fill="none" stroke="#fb7185" strokeWidth="2" />
+              {rootTrack.map((point, index) => {
                 const corrected = corrections[index];
-                if (!corrected) return null;
-                const x = (index / Math.max(1, rootTrack.length - 1)) * 260;
-                const y = 35 - (rootTrack[index].dx + corrected.dx) * 6;
-                return <circle key={index} cx={x} cy={y} r="3" fill="#34d399" />;
+                const x = (index / Math.max(1, rootTrack.length - 1)) * 640;
+                const y = 45 - (point.dx + (corrected?.dx ?? 0)) * 6;
+                return (
+                  <circle key={index} cx={x} cy={y} r="3.5" fill="#34d399">
+                    <title>{`frame ${index} · dx ${point.dx.toFixed(2)}`}</title>
+                  </circle>
+                );
               })}
             </svg>
-            <div className="mt-2 flex gap-4 text-[11px] text-zinc-500">
-              <span><span className="text-red-400">—</span> 对齐前（漂移）</span>
-              <span><span className="text-emerald-400">●</span> FAlign 纠偏后</span>
+            <div className="mt-1.5 flex gap-4 text-[11px] text-ink-3">
+              <span>
+                <span className="text-danger">—</span> 对齐前（漂移）
+              </span>
+              <span>
+                <span className="text-success">●</span> FAlign 纠偏后（根位置稳定）
+              </span>
             </div>
           </Card>
         </div>
 
-        <Card title="质量评分 / Quality">
-          {quality ? (
-            <div className="space-y-3">
-              <ScoreBar label="Anchor 锚点稳定" value={quality.anchor_score ?? 0} />
-              <ScoreBar label="Motion 根运动" value={quality.motion_score ?? 0} />
-              <ScoreBar label="Temporal 时序平滑" value={quality.temporal_score ?? 0} />
-              <ScoreBar label="Overall" value={quality.overall ?? 0} threshold={0.85} />
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-4">
+          <Card
+            title="质量评分 Quality"
+            icon="gauge"
+            iconClassName="text-falign"
+            right={<Badge tone={(quality?.overall ?? 0) >= 0.85 ? "success" : "warning"}>{(quality?.overall ?? 0) >= 0.85 ? "PASS" : "RETRY"}</Badge>}
+          >
+            <div className="space-y-3.5">
+              <ScoreBar label="Anchor 锚点稳定" value={quality?.anchor_score ?? 0} tone="falign" />
+              <ScoreBar label="Motion 根运动" value={quality?.motion_score ?? 0} tone="gimport" />
+              <ScoreBar label="Temporal 时序平滑" value={quality?.temporal_score ?? 0} tone="falign" />
+              <ScoreBar
+                label="Overall · 阈值 0.85"
+                value={quality?.overall ?? 0}
+                threshold={0.85}
+              />
             </div>
-          ) : (
-            <p className="text-xs text-zinc-500">暂无评分</p>
-          )}
-          <div className="mt-4 space-y-2 text-xs text-zinc-400">
-            <p>
-              <span className="text-emerald-400">✓</span> 锚点检测：root / feet /
-              center / head 四点稳定
-            </p>
-            <p>
-              <span className="text-emerald-400">✓</span> 相位对齐：
-              {asset?.animation?.phase?.phase.map((p) => p.toFixed(2)).join(" / ")}
-            </p>
-            <p>
-              <span className="text-emerald-400">✓</span> 漂移纠偏：
-              {corrections.length} 帧校正回 frame-0 根位置
-            </p>
-          </div>
-        </Card>
+          </Card>
+
+          <Card title="对齐详情" icon="check">
+            <ul className="space-y-2.5 text-[12.5px] text-ink-2">
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                锚点检测：root / feet / center / head 四点稳定
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                相位对齐：{(phases ?? []).map((p) => p.toFixed(2)).join(" / ") || "—"}
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                漂移纠偏：{corrections.length} 帧校正回 frame-0 根位置
+              </li>
+            </ul>
+          </Card>
+        </div>
       </div>
     </div>
   );

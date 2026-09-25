@@ -33,6 +33,10 @@ export interface TaskEvent {
     | "QUALITY_REPORT"
     | "TASK_FAILED"
     | "TASK_COMPLETE"
+    | "MODEL_START"
+    | "MODEL_ENHANCE"
+    | "MODEL_IMAGE"
+    | "MODEL_FALLBACK"
     | "STREAM_END"
     | "ERROR";
   at?: number;
@@ -52,11 +56,56 @@ export interface TaskEvent {
   engine?: string;
   scores?: Record<string, number>;
   detail?: string;
+  stage?: string;
+  prompt?: string;
+  url?: string;
 }
 
 export interface Anchor {
   x: number;
   y: number;
+}
+
+export interface CharacterSpec {  goal: string;
+  seed: number;
+  gender: string;
+  gender_label: string;
+  class: string;
+  class_label: string;
+  element: string;
+  element_label: string;
+  role: string;
+  role_label: string;
+  height_cm: number;
+  build: string;
+  build_label: string;
+  hair_color: string;
+  hair_color_hex: string;
+  hair_color_label: string;
+  hair_style: string;
+  hair_style_label: string;
+  hair_length: string;
+  skin: string;
+  skin_hex: string;
+  skin_label: string;
+  eyes: string;
+  eyes_hex: string;
+  eyes_label: string;
+  expression: string;
+  expression_label: string;
+  outfit_hex: string | null;
+  outfit_label: string;
+  accessory: string[];
+  weapon: string;
+  weapon_label: string;
+  action: string;
+  fps: number;
+  frame_count: number;
+  static: boolean;
+  style: string;
+  type: string;
+  summary: string;
+  palette?: Record<string, string>;
 }
 
 export interface AnimationFrame {
@@ -117,6 +166,79 @@ export interface CreativeAsset {
     };
     resources: Record<string, string>;
   };
+  character?: CharacterSpec;
+  image?: GeneratedImage;
+  prompt_enhance?: PromptEnhance;
+  memory?: Record<string, unknown>;
+}
+
+export interface GeneratedImage {
+  file: string;
+  url: string;
+  mime: string;
+  provider: string;
+  model: string;
+  size: string;
+  prompt?: string;
+  elapsed_ms?: number;
+}
+
+export interface ModelSettings {
+  enabled: boolean;
+  provider: string;
+  base_url: string;
+  model: string;
+  chat_model: string;
+  use_chat: boolean;
+  use_image: boolean;
+  size: string;
+  timeout: number;
+  has_key: boolean;
+  key_hint: string;
+  updated_at: number | null;
+  env_override: boolean;
+  capabilities: { chat: boolean; image: boolean; any: boolean };
+}
+
+export interface ProviderPreset {
+  id: string;
+  label: string;
+  base_url: string;
+  chat_model: string;
+  image_model: string;
+  use_chat: boolean;
+  use_image: boolean;
+  note: string;
+}
+
+export interface PromptEnhance {
+  prompt: string;
+  model: string;
+  provider: string;
+  elapsed_ms?: number;
+}
+
+export interface ModelTestResult {
+  ok: boolean;
+  message: string;
+  latency_ms?: number;
+  models?: string[];
+  hint?: string;
+}
+
+export interface GenerationOverrides {
+  gender?: string;
+  class?: string;
+  element?: string;
+  hair_color?: string;
+  hair_style?: string;
+  expression?: string;
+  build?: string;
+  weapon?: string;
+  action?: string;
+  height_cm?: number;
+  role?: string;
+  static?: boolean;
 }
 
 export interface TaskSummary {
@@ -190,3 +312,68 @@ export interface BenchmarkReport {
     overall: number;
   };
 }
+
+export interface HistoryCharacter {
+  summary?: string;
+  seed?: number;
+  gender?: string;
+  gender_label?: string;
+  class?: string;
+  class_label?: string;
+  element?: string;
+  element_label?: string;
+  role?: string;
+  role_label?: string;
+  hair_color?: string;
+  hair_color_hex?: string;
+  hair_color_label?: string;
+  hair_style?: string;
+  hair_style_label?: string;
+  hair_length?: string;
+  skin?: string;
+  skin_hex?: string;
+  skin_label?: string;
+  eyes?: string;
+  eyes_hex?: string;
+  eyes_label?: string;
+  expression?: string;
+  expression_label?: string;
+  build?: string;
+  build_label?: string;
+  height_cm?: number;
+  weapon?: string;
+  weapon_label?: string;
+  accessory?: string[];
+  palette?: Record<string, string>;
+}
+
+export interface HistorySummary {
+  record_id: string;
+  task_id: string;
+  created_at: number;
+  finished_at: number;
+  goal: string;
+  engine: string | null;
+  status: string;
+  report_status: string | null;
+  asset_id: string | null;
+  name: string | null;
+  type: string | null;
+  role: string | null;
+  action: string | null;
+  frames: number | null;
+  fps: number | null;
+  scores: Record<string, number>;
+  qa_rounds: number;
+  elapsed_seconds: number | null;
+  error: string | null;
+  character: HistoryCharacter;
+  palette: string[];
+  image?: GeneratedImage | null;
+  enhanced_prompt?: string | null;
+}
+
+export interface HistoryRecord extends HistorySummary {
+  asset?: CreativeAsset | null;
+}
+

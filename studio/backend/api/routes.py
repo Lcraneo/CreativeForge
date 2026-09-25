@@ -12,11 +12,25 @@ EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 class CreateTaskRequest(BaseModel):
     goal: str
+    overrides: dict | None = None
 
 
 class ExportRequest(BaseModel):
     asset_id: str
     engine: str = "cocos"
+
+
+class ModelSettingsRequest(BaseModel):
+    enabled: bool | None = None
+    provider: str | None = None
+    base_url: str | None = None
+    api_key: str | None = None
+    model: str | None = None
+    chat_model: str | None = None
+    use_chat: bool | None = None
+    use_image: bool | None = None
+    size: str | None = None
+    timeout: int | None = None
 
 
 def build_router(runtime):
@@ -27,7 +41,7 @@ def build_router(runtime):
         goal = request.goal.strip()
         if not goal:
             raise HTTPException(status_code=422, detail="goal is required")
-        task_id = runtime.start_task(goal)
+        task_id = runtime.start_task(goal, overrides=request.overrides)
         return {
             "task_id": task_id,
             "status": "running",
@@ -103,6 +117,64 @@ def build_router(runtime):
 
         report = EvaluationReport().run()
         return report
+
+    @router.get("/history")
+    def list_history(
+        engine: str = None,
+        q: str = None,
+        limit: int = 100,
+    ):
+        records = runtime.history.list(limit=limit, engine=engine, keyword=q)
+        return {"records": records, "total": runtime.history.count()}
+
+    @router.get("/history/{record_id}")
+    def get_history(record_id: str):
+        record = runtime.history.get(record_id)
+        if record is None:
+            raise HTTPException(status_code=404, detail="unknown history record")
+        return record
+
+    @router.delete("/history")
+    def clear_history():
+        runtime.history.clear()
+        return {"status": "cleared"}
+
+    # ------------------------------------------------------------------
+    # third-party image model settings
+    # ------------------------------------------------------------------
+
+    @router.get("/settings/model")
+    def get_model_settings():
+        return runtime.model_settings.public()
+
+    @router.get("/settings/model/presets")
+    def get_model_presets():
+        from studio.backend.model_service.service import PROVIDER_PRESETS
+
+        return {"presets": PROVIDER_PRESETS}
+
+    @router.put("/settings/model")
+    def update_model_settings(request: ModelSettingsRequest):
+        return runtime.model_settings.update(request.model_dump(exclude_unset=True))
+
+    @router.post("/settings/model/test")
+    def test_model_settings():
+        from studio.backend.model_service.service import ImageProvider
+
+        return ImageProvider(runtime.model_settings.effective()).test()
+
+    @router.delete("/settings/model/key")
+    def clear_model_key():
+        return runtime.model_settings.clear_key()
+
+    @router.get("/generated/{name}")
+    def generated_image(name: str):
+        from studio.backend.model_service.service import safe_generated_path
+
+        path = safe_generated_path(name)
+        if path is None:
+            raise HTTPException(status_code=404, detail="unknown image")
+        return FileResponse(path)
 
     @router.get("/health")
     def health():
