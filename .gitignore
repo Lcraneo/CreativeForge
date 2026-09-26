@@ -5,3 +5,13 @@ studio/backend/exports/
 studio/backend/data/
 tests/release/_tmp_runtime/
 .workbuddy/
+
+# backend (Phase 11-15)
+backend/.env
+*.db
+*.log
+
+# frontend (Phase 21)
+node_modules/
+frontend/dist/
+*.tsbuildinfo

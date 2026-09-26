@@ -1,0 +1,50 @@
+@import "tailwindcss";
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/noto-serif-sc/600.css";
+@import "@fontsource/noto-serif-sc/900.css";
+
+@theme {
+  --color-paper: #f5f3ef;
+  --color-panel: #edebe5;
+  --color-ink: #1a1814;
+  --color-ink-2: #55514a;
+  --color-mute: #918c82;
+  --color-line: #e3e0d8;
+  --color-line-2: #d3cfc5;
+  --color-go: #3e7d5a;
+  --color-warn: #a9812f;
+  --color-bad: #a94f3d;
+
+  --font-display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  --font-sans: "Outfit", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: #1a1814;
+  color: #f5f3ef;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #d3cfc5;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
