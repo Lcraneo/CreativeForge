@@ -11,9 +11,9 @@ The MVP demo output (spec 二):
         ├── animations/<clip>.anim
         └── prefab/<Name>.prefab                 (+ collider payloads)
 
-Texture entries are exporter metadata today; the packager renders a valid
-placeholder PNG (pure stdlib) so the archive is openable end to end — swap
-in the real atlas bytes when the pixel engine writes them.
+Texture entries now carry the deterministic character artwork rendered by
+``artgen`` (real PNG bytes), so the archive is openable *and* shows the actual
+character; ``placeholder_png`` remains only as a dependency-free fallback.
 """
 
 import io
@@ -23,6 +23,8 @@ import zipfile
 import zlib
 from typing import Any
 from urllib.parse import quote
+
+from artgen import render_asset_png, render_asset_sheet
 
 from app.core.config import settings
 from app.engines.gimport.exporter.registry import register_default_exporters
@@ -74,9 +76,23 @@ def placeholder_png(size: Any, rgba: tuple[int, int, int, int] = (36, 41, 54, 25
     )
 
 
-def _serialize(path: str, content: Any) -> bytes:
-    if path.lower().endswith(".png") and isinstance(content, dict):
-        return placeholder_png(content)
+def _png_size(content: Any) -> int:
+    if isinstance(content, dict):
+        dims = content.get("size")
+        if isinstance(dims, (list, tuple)) and dims and dims[0]:
+            try:
+                return max(64, min(1024, int(dims[0])))
+            except (TypeError, ValueError):
+                return 512
+    return 512
+
+
+def _serialize(path: str, content: Any, asset: dict[str, Any] | None = None) -> bytes:
+    if path.lower().endswith(".png"):
+        # real character artwork instead of a flat placeholder block
+        if asset:
+            return render_asset_png(asset, size=_png_size(content))
+        return placeholder_png(content if isinstance(content, dict) else 256)
     if isinstance(content, str):
         return content.encode("utf-8")
     return json.dumps(content, ensure_ascii=False, indent=2).encode("utf-8")
@@ -112,7 +128,13 @@ def package_export_zip(asset: dict[str, Any], engine: str) -> tuple[bytes, str]:
                 ),
             )
         for path, content in sorted((resources.get("files") or {}).items()):
-            archive.writestr(f"{root}/{path}", _serialize(path, content))
+            archive.writestr(f"{root}/{path}", _serialize(path, content, asset))
+
+        # three-view reference sheet (front | side | top) for production
+        archive.writestr(
+            f"{root}/textures/{slugify(name)}_views.png",
+            render_asset_sheet(asset, size=384, gap=24),
+        )
     return buffer.getvalue(), f"{slugify(name)}_{engine}_export.zip"
 
 

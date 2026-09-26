@@ -26,6 +26,12 @@ from app.services.export_service import (
     package_export_zip,
     run_export,
 )
+from app.services.image_service import (
+    attach_image_url,
+    normalize_view,
+    render_asset_sheet_image,
+    render_asset_view_image,
+)
 
 router = APIRouter()
 
@@ -88,6 +94,55 @@ async def export_zip(
     )
 
 
+@router.get("/{asset_id}/image.png")
+async def asset_image(
+    asset_id: str,
+    view: str = "front",
+    size: int = 512,
+    db: AsyncSession = Depends(get_db),
+):
+    """2D character artwork in a single orthographic view (front/side/top)."""
+    row = await db.get(Asset, asset_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="asset not found")
+
+    payload = render_asset_view_image(
+        dict(row.metadata_json or {}), view=normalize_view(view), size=size
+    )
+    return Response(
+        content=payload,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Image-Source": "artgen",
+            "X-Image-Style": "2d",
+            "X-Image-View": normalize_view(view),
+        },
+    )
+
+
+@router.get("/{asset_id}/views.png")
+async def asset_views(
+    asset_id: str, size: int = 512, gap: int = 24, db: AsyncSession = Depends(get_db)
+):
+    """Three-view character sheet (front | side | top) as one PNG."""
+    row = await db.get(Asset, asset_id)
+    if row is None:
+        raise HTTPException(status_code=404, detail="asset not found")
+
+    payload = render_asset_sheet_image(dict(row.metadata_json or {}), size=size, gap=gap)
+    return Response(
+        content=payload,
+        media_type="image/png",
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Image-Source": "artgen",
+            "X-Image-Style": "2d",
+            "X-Image-View": "front,side,top",
+        },
+    )
+
+
 @router.get("", response_model=list[AssetSummary])
 async def list_assets(limit: int = 50, db: AsyncSession = Depends(get_db)):
     rows = (
@@ -110,6 +165,7 @@ async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db)):
     row = await db.get(Asset, asset_id)
     if row is None:
         raise HTTPException(status_code=404, detail="asset not found")
+    metadata = attach_image_url(dict(row.metadata_json or {}), asset_id)
     return AssetDetail(
         id=row.id,
         name=row.name,
@@ -117,5 +173,5 @@ async def get_asset(asset_id: str, db: AsyncSession = Depends(get_db)):
         status=row.status or "created",
         created_at=row.created_at,
         project_id=row.project_id or "default",
-        metadata_json=row.metadata_json or {},
+        metadata_json=metadata,
     )

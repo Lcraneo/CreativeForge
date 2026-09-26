@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, exportZipUrl } from "../api";
+import { api, assetSheetUrl, exportZipUrl } from "../api";
+import CharacterImage from "./CharacterImage";
 import type {
   AssetDetail,
   AssetSummary,
@@ -106,6 +107,11 @@ export default function AssetViewer(props: {
   const blueprints = meta.logic?.skills ?? [];
   const atlas = meta.animation?.atlas_detail;
   const spriteCount = atlas?.sprites?.length ?? 0;
+  const VIEWS: { key: "front" | "side" | "back"; label: string }[] = [
+    { key: "front", label: "正视图 · FRONT" },
+    { key: "side", label: "左侧面图 · LEFT" },
+    { key: "back", label: "后视图 · BACK" },
+  ];
 
   const doExport = async () => {
     setBusy(true);
@@ -182,6 +188,46 @@ export default function AssetViewer(props: {
         )}
 
         <div className="mt-10 space-y-9">
+          <Section
+            title="角色形象 · 三视图"
+            aside={meta.content?.image_style === "2d" ? "2D · PNG" : (meta.content?.image_mime ?? "image/png")}
+          >
+            <div className="grid gap-4 sm:grid-cols-3">
+              {VIEWS.map((v) => (
+                <figure
+                  key={v.key}
+                  className="rounded-xl border border-line bg-panel p-3"
+                >
+                  <div className="grid aspect-square place-items-center overflow-hidden rounded-lg bg-paper">
+                    <CharacterImage
+                      assetId={assetId}
+                      view={v.key}
+                      size={512}
+                      alt={`${identity.name ?? asset?.name ?? "character"} ${v.label}`}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <figcaption className="mt-2 text-center text-xs text-mute">
+                    {v.label}
+                  </figcaption>
+                </figure>
+              ))}
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-x-8 gap-y-2">
+              <KV k="格式" v="PNG · 8-bit RGBA · 2D" />
+              <KV k="尺寸" v="512 × 512 px / 视图" />
+              <KV k="调色板" v={`${palette.length} 色`} />
+              <a
+                href={assetSheetUrl(assetId)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-ink-2 underline decoration-line-2 underline-offset-4 transition-colors hover:text-ink hover:decoration-ink"
+              >
+                下载三视图总览 (front | left | back)
+              </a>
+            </div>
+          </Section>
+
           <Section title="Character DNA">
             {dnaBrief ? (
               <div className="space-y-1.5">

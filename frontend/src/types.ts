@@ -156,6 +156,11 @@ export interface AssetMetadata {
   };
   content?: {
     image?: string;
+    image_url?: string;
+    image_mime?: string;
+    image_style?: string;
+    views?: { front?: string; side?: string; top?: string };
+    views_sheet_url?: string;
     layers?: Layer[];
     graph?: { id?: string; children?: unknown[] };
   };

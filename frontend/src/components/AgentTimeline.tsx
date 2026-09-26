@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../api";
 import type { DagNode, Step, TaskDetail } from "../types";
+import CharacterImage from "./CharacterImage";
 
 const NODE_LABELS: Record<string, string> = {
   find_character: "Find DNA",
@@ -157,6 +158,35 @@ export default function AgentTimeline(props: {
         <p className="mt-3 break-all text-sm leading-relaxed text-ink-2">
           {task?.goal}
         </p>
+
+        {/* 生成结果预览：任务产出资产后展示人物图像 */}
+        {task?.asset_id && (
+          <div className="mt-8 flex flex-wrap items-center gap-6 rounded-xl border border-line bg-panel/50 p-4">
+            <div className="grid h-40 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-paper">
+              <CharacterImage
+                assetId={task.asset_id}
+                view="front"
+                size={512}
+                alt={task.goal}
+                className="h-full w-full object-contain"
+              />
+            </div>
+            <div className="min-w-[200px] flex-1">
+              <div className="text-xs uppercase tracking-widest text-mute">
+                生成角色
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-ink">
+                {task.goal}
+              </p>
+              <button
+                onClick={() => props.onOpenAsset(task.asset_id!)}
+                className="mt-3 rounded-lg bg-ink px-4 py-1.5 text-xs text-paper transition-opacity hover:opacity-85"
+              >
+                查看三视图与资产
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* DAG 分层 */}
         <div className="mt-9 space-y-2.5">

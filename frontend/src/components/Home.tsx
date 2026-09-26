@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { api } from "../api";
 import type { AssetSummary, RegistryArtifact } from "../types";
+import CharacterImage from "./CharacterImage";
 import {
   ArchiveIllustration,
   ForgeIllustration,
@@ -190,10 +191,20 @@ export default function Home(props: {
               <li key={asset.id} data-row className="border-b border-line">
                 <button
                   onClick={() => props.onOpen("viewer")}
-                  className="group flex w-full items-center justify-between gap-4 py-4 text-left"
+                  className="group flex w-full items-center gap-4 py-3.5 text-left"
                 >
-                  <div>
-                    <div className="font-medium text-ink">{asset.name}</div>
+                  <span className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-panel">
+                    <CharacterImage
+                      assetId={asset.id}
+                      size={64}
+                      alt={asset.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium text-ink">
+                      {asset.name}
+                    </div>
                     <div className="mt-1 text-xs text-mute">
                       {formatDate(asset.created_at)}
                     </div>

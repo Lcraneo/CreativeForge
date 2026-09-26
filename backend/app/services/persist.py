@@ -23,6 +23,7 @@ from app.models import (
     CharacterVersion,
     Task,
 )
+from app.services.image_service import attach_image_url
 
 
 def _flatten_graph(node: dict, parent_id: str | None = None, rows: list | None = None):
@@ -43,6 +44,7 @@ async def persist_pipeline(
     asset = context.get("asset") or {}
     asset_id = str(uuid.uuid4())
     asset["id"] = asset_id
+    attach_image_url(asset, asset_id)
 
     name = (asset.get("identity") or {}).get("name") or "unnamed"
     db.add(

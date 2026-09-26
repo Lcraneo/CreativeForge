@@ -63,3 +63,21 @@ export const api = {
 export function exportZipUrl(assetId: string, engine: string): string {
   return `/api/v1/assets/${assetId}/export.zip?engine=${encodeURIComponent(engine)}`;
 }
+
+export function assetImageUrl(assetId: string, size = 512): string {
+  return `/api/v1/assets/${encodeURIComponent(assetId)}/image.png?view=front&size=${size}`;
+}
+
+export type CharacterView = "front" | "side" | "back";
+
+export function assetViewUrl(
+  assetId: string,
+  view: CharacterView = "front",
+  size = 512,
+): string {
+  return `/api/v1/assets/${encodeURIComponent(assetId)}/image.png?view=${view}&size=${size}`;
+}
+
+export function assetSheetUrl(assetId: string, size = 768): string {
+  return `/api/v1/assets/${encodeURIComponent(assetId)}/views.png?size=${size}`;
+}

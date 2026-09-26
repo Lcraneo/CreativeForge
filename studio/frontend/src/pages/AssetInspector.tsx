@@ -12,6 +12,7 @@ import {
 } from "../components/ui";
 import { FrameFigure } from "../components/FrameFigure";
 import { CharacterArt } from "../components/CharacterArt";
+import { AiImage } from "../components/AiImage";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import AssetViewer from "../three/AssetViewer";
@@ -231,20 +232,22 @@ export default function AssetInspector() {
           {asset.character ? (
             <div className="grid grid-cols-12 gap-5">
               <div className="col-span-12 flex items-center justify-center overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(120px_120px_at_50%_24%,rgba(76,194,255,.12),transparent_70%),#0a0e15] py-3 md:col-span-2">
-                {asset.image?.url ? (
-                  <img
-                    src={asset.image.url}
-                    alt={asset.name ?? "concept art"}
-                    className="h-[180px] w-[150px] rounded-lg object-cover"
-                  />
-                ) : (
-                  <CharacterArt
-                    spec={asset.character}
-                    palette={asset.pixel?.palette.colors}
-                    view="bust"
-                    className="h-[180px] w-[150px]"
-                  />
-                )}
+                <AiImage
+                  src={
+                    asset.image?.url ||
+                    `/api/assets/${encodeURIComponent(asset.id)}/image.png?size=256`
+                  }
+                  alt={asset.name ?? "concept art"}
+                  className="h-[180px] w-[150px] rounded-lg object-cover"
+                  fallback={
+                    <CharacterArt
+                      spec={asset.character}
+                      palette={asset.pixel?.palette.colors}
+                      view="bust"
+                      className="h-[180px] w-[150px]"
+                    />
+                  }
+                />
               </div>
               <div className="col-span-12 md:col-span-5">
                 <KV label="Gender / Build" value={`${asset.character.gender_label} · ${asset.character.build_label}`} />

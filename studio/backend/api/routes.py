@@ -2,7 +2,7 @@
 
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -87,6 +87,44 @@ def build_router(runtime):
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
         return asset
+
+    @router.get("/assets/{asset_id}/image.png")
+    def asset_image(asset_id: str, view: str = "front", size: int = 512):
+        """Deterministic 2D character artwork (front/side/top view)."""
+        from artgen import render_asset_view
+
+        asset = runtime.assets.get(asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        bounded = max(64, min(1024, int(size)))
+        return Response(
+            content=render_asset_view(asset, view=view, size=bounded),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-Image-Style": "2d",
+                "X-Image-View": view,
+            },
+        )
+
+    @router.get("/assets/{asset_id}/views.png")
+    def asset_views(asset_id: str, size: int = 512, gap: int = 24):
+        """Three-view character sheet (front | side | top)."""
+        from artgen import render_asset_sheet
+
+        asset = runtime.assets.get(asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        bounded = max(64, min(768, int(size)))
+        return Response(
+            content=render_asset_sheet(asset, size=bounded, gap=max(0, int(gap))),
+            media_type="image/png",
+            headers={
+                "Cache-Control": "public, max-age=86400",
+                "X-Image-Style": "2d",
+                "X-Image-View": "front,side,top",
+            },
+        )
 
     @router.post("/export")
     def export_asset(request: ExportRequest):

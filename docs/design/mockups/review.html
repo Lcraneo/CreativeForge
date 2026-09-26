@@ -1,0 +1,1151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CreativeForge Studio · Forge UI 2.0 设计稿评审</title>
+<link rel="stylesheet" href="mockup.css" />
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-spark" viewBox="0 0 20 20"><path d="M10 2.5 11.8 8l5.7.4-4.4 3.7 1.4 5.6L10 14.6l-4.5 3.1 1.4-5.6L2.5 8.4 8.2 8z"/></symbol>
+    <symbol id="i-cube" viewBox="0 0 20 20"><path d="M10 2.6 17 6.4v7.2L10 17.4 3 13.6V6.4z"/><path d="M3 6.4 10 10.2l7-3.8M10 10.2v7.2"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 20 20"><path d="M10 3 17 7l-7 4-7-4z"/><path d="M3 11l7 4 7-4"/><path d="M3 14.5l7 4 7-4"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 20 20"><path d="M3.5 3.5h5v5h-5zM11.5 3.5h5v5h-5zM3.5 11.5h5v5h-5zM11.5 11.5h5v5h-5z"/></symbol>
+    <symbol id="i-film" viewBox="0 0 20 20"><path d="M3.5 5.5h13v9h-13z"/><path d="M6.5 5.5v9M13.5 5.5v9M3.5 10h13"/></symbol>
+    <symbol id="i-package" viewBox="0 0 20 20"><path d="M10 2.8 17 6.5v7L10 17.2 3 13.5v-7z"/><path d="M3 6.5 10 10.3l7-3.8M10 10.3v6.9"/></symbol>
+    <symbol id="i-gauge" viewBox="0 0 20 20"><path d="M4 14.5a7.5 7.5 0 1 1 12 0"/><path d="M10 11l3.2-3.2"/><circle cx="10" cy="14.5" r="1"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 20 20"><path d="M2.5 10h3l2-5 3 10 2.5-5h4.5"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 20 20"><path d="M3.5 4.5h13v11h-13z"/><path d="M6.5 8l2 2-2 2M10.5 12.5h3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 20 20"><path d="M10 3.5 17.5 16.5h-15z"/><path d="M10 8v3.5M10 14h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 20 20"><path d="M8 5l5 5-5 5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.5" cy="8.5" r="4.5"/><path d="M12 12l4 4"/></symbol>
+    <symbol id="i-panel" viewBox="0 0 20 20"><path d="M3.5 4.5h13v11h-13z"/><path d="M8.5 4.5v11"/></symbol>
+    <symbol id="i-download" viewBox="0 0 20 20"><path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12"/></symbol>
+    <symbol id="i-play" viewBox="0 0 20 20"><path d="M7 4.5l8 5.5-8 5.5z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 20 20"><path d="M7.5 4.5v11M12.5 4.5v11"/></symbol>
+    <symbol id="i-book" viewBox="0 0 20 20"><path d="M4 4.5h4.5a2 2 0 0 1 2 2v9a2 2 0 0 0-2-2H4z"/><path d="M16 4.5h-4.5a2 2 0 0 0-2 2v9a2 2 0 0 1 2-2H16z"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 20 20"><path d="M16 10a6 6 0 1 1-1.8-4.3"/><path d="M16.5 3.5v3h-3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 5v10M5 10h10"/></symbol>
+  </defs>
+</svg>
+
+<div class="rv">
+  <nav class="rv-nav">
+    <div class="brand">
+      <div class="brand-row" style="border:0;padding:0;margin:0">
+        <span class="logo">CF</span>
+        <div>
+          <div style="font-weight:700;font-size:14px">Forge UI 2.0</div>
+          <div class="overline" style="font-size:10px">Obsidian Arc · 设计评审</div>
+        </div>
+      </div>
+    </div>
+    <div class="grp overline">评审内容</div>
+    <a class="rv-link" href="#intro"><b>00</b>概览与升级摘要</a>
+    <a class="rv-link" href="#foundation"><b>01</b>视觉基础规范</a>
+    <a class="rv-link" href="#workspace"><b>02</b>工作台</a>
+    <a class="rv-link" href="#agent"><b>03</b>智能体指挥中心</a>
+    <a class="rv-link" href="#asset"><b>04</b>资产检查器</a>
+    <a class="rv-link" href="#pixel"><b>05</b>Pixel / Animation Studio</a>
+    <a class="rv-link" href="#benchmark"><b>06</b>基准中心</a>
+    <a class="rv-link" href="#export"><b>07</b>导出中心</a>
+    <a class="rv-link" href="#responsive"><b>08</b>响应式适配</a>
+    <a class="rv-link" href="#tech"><b>09</b>技术中心与动效</a>
+    <div class="grp overline">配套文档</div>
+    <a class="rv-link" href="../01-audit-and-proposal.md"><b>MD</b>设计审计与方案</a>
+    <a class="rv-link" href="../02-visual-spec.md"><b>MD</b>视觉规范</a>
+    <a class="rv-link" href="../03-key-screens.md"><b>MD</b>关键界面说明</a>
+  </nav>
+
+  <main class="rv-main">
+
+    <!-- ================= 00 INTRO ================= -->
+    <header id="intro" class="rv-sec" style="margin-top:0">
+      <div class="overline" style="color:var(--primary)">CREATIVEFORGE STUDIO · DESIGN REVIEW</div>
+      <h1 class="t-display-xl" style="margin-top:10px">Forge UI 2.0 <span class="grad-text">曜石弧光</span></h1>
+      <p class="t-body t-sec" style="max-width:720px;margin-top:12px">
+        面向「AI 资产生产控制台」的全面视觉升级：建立统一的 Design Tokens、组件规格与交互反馈体系。
+        本页为高保真设计稿，所有色值 / 字号 / 间距 / 圆角均与
+        <a href="../02-visual-spec.md" class="t-pri" style="text-decoration:underline">《02 视觉规范》</a> 一一对应，可直接用于评审与实施验收。
+      </p>
+      <div class="note-grid">
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-spark"/></svg>色彩与品牌 <span class="tag">P1</span></h4><p>曜石蓝黑底 + 弧光青主色 + 余烬橙强调；PReCon 青 / FAlign 紫 / GImport 翠 建立技术三原色。</p></div>
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-grid"/></svg>精致度 <span class="tag">P2</span></h4><p>4 级表面 + 顶部内高光 + 1px 冷色描边；圆角/字距/描边全量 token 化，取代硬编码工具类。</p></div>
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-layers"/></svg>排版层级 <span class="tag">P3</span></h4><p>11 级字号阶梯；正文 14/22，标题 600 字重，数据 tabular-nums；中英主副标规范。</p></div>
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-activity"/></svg>布局与响应式 <span class="tag">P4</span></h4><p>统一 Shell：侧栏 240 + 顶栏 56 + 内容 1440；4 档断点，平板图标栏 / 手机底部 Tab。</p></div>
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-check"/></svg>交互反馈 <span class="tag">P5</span></h4><p>120/180/280ms 动效三档；hover / focus / active / loading / disabled 全状态；键盘焦点环。</p></div>
+        <div class="note"><h4><svg class="i sm" style="color:var(--primary)"><use href="#i-book"/></svg>可访问性 <span class="tag">P6</span></h4><p>正文对比度 ≥4.5:1；状态 = 颜色+图标+文案；aria-live 事件流；支持 reduced-motion。</p></div>
+      </div>
+    </header>
+
+    <!-- ================= 01 FOUNDATION ================= -->
+    <section id="foundation" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">01</span><h2 class="t-h1">视觉基础规范</h2><p>Colors / Typography / Radius / Elevation / Components</p></div>
+
+      <h3 class="overline" style="margin-bottom:14px">基础层 · Obsidian</h3>
+      <div class="swatches">
+        <div class="sw"><div class="col" style="background:#07090d"></div><div class="meta"><b>canvas</b><span>#07090D</span></div></div>
+        <div class="sw"><div class="col" style="background:#0e1219"></div><div class="meta"><b>surface-1</b><span>#0E1219</span></div></div>
+        <div class="sw"><div class="col" style="background:#141922"></div><div class="meta"><b>surface-2</b><span>#141922</span></div></div>
+        <div class="sw"><div class="col" style="background:#1b2230"></div><div class="meta"><b>surface-3</b><span>#1B2230</span></div></div>
+        <div class="sw"><div class="col" style="background:#1e2633"></div><div class="meta"><b>line-subtle</b><span>#1E2633</span></div></div>
+        <div class="sw"><div class="col" style="background:#3a4658"></div><div class="meta"><b>line-strong</b><span>#3A4658</span></div></div>
+      </div>
+
+      <h3 class="overline" style="margin:28px 0 14px">品牌与语义层</h3>
+      <div class="swatches">
+        <div class="sw"><div class="col" style="background:#4cc2ff"></div><div class="meta"><b>primary · Arc</b><span>#4CC2FF</span></div></div>
+        <div class="sw"><div class="col" style="background:#ffb454"></div><div class="meta"><b>ember · 锻造</b><span>#FFB454</span></div></div>
+        <div class="sw"><div class="col" style="background:#34d399"></div><div class="meta"><b>success</b><span>#34D399</span></div></div>
+        <div class="sw"><div class="col" style="background:#fbbf24"></div><div class="meta"><b>warning</b><span>#FBBF24</span></div></div>
+        <div class="sw"><div class="col" style="background:#fb7185"></div><div class="meta"><b>danger</b><span>#FB7185</span></div></div>
+        <div class="sw"><div class="col" style="background:#60a5fa"></div><div class="meta"><b>info / supervisor</b><span>#60A5FA</span></div></div>
+      </div>
+
+      <h3 class="overline" style="margin:28px 0 14px">引擎身份色 · 一色一域</h3>
+      <div class="swatches">
+        <div class="sw"><div class="col" style="background:#22d3ee"></div><div class="meta"><b>PReCon</b><span>#22D3EE</span></div></div>
+        <div class="sw"><div class="col" style="background:#a78bfa"></div><div class="meta"><b>FAlign</b><span>#A78BFA</span></div></div>
+        <div class="sw"><div class="col" style="background:#34d399"></div><div class="meta"><b>GImport</b><span>#34D399</span></div></div>
+        <div class="sw"><div class="col" style="background:#fbbf24"></div><div class="meta"><b>QA 质量门</b><span>#FBBF24</span></div></div>
+        <div class="sw"><div class="col" style="background:#94a3b8"></div><div class="meta"><b>Memory</b><span>#94A3B8</span></div></div>
+        <div class="sw"><div class="col" style="background:linear-gradient(135deg,#4cc2ff,#8b7bff)"></div><div class="meta"><b>grad-brand</b><span>135° #4CC2FF→#8B7BFF</span></div></div>
+      </div>
+
+      <div class="g12" style="margin-top:28px">
+        <div class="card c7">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-book"/></svg><span class="t-h3">字体阶梯</span></div><span class="overline">Type Scale</span></div>
+          <div class="card-bd">
+            <div class="spec"><span class="tag">display-xl 40/48</span><span class="t-display-xl">锻造可运行资产</span></div>
+            <div class="spec"><span class="tag">h1 24/32</span><span class="t-h1">页面标题 Page Title</span></div>
+            <div class="spec"><span class="tag">h2 18/26</span><span class="t-h2">区块标题 Section</span></div>
+            <div class="spec"><span class="tag">h3 15/22</span><span class="t-h3">卡片标题 Card</span></div>
+            <div class="spec"><span class="tag">body 14/22</span><span class="t-body">正文：描述你的游戏创意，智能体团队自主规划并产出可导入引擎的资产。</span></div>
+            <div class="spec"><span class="tag">caption 12/18</span><span class="t-cap t-ter">辅助说明 / 时间戳 / 阈值图例</span></div>
+            <div class="spec"><span class="tag">overline 11</span><span class="overline">ASSET PRODUCTION PIPELINE</span></div>
+            <div class="spec" style="border:0"><span class="tag">mono 13</span><span class="mono">mage001 · 96.6% · 0.00 px/frame</span></div>
+          </div>
+        </div>
+        <div class="card c5">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-layers"/></svg><span class="t-h3">圆角与高度</span></div><span class="overline">Radius / Elevation</span></div>
+          <div class="card-bd">
+            <div class="g12" style="gap:12px">
+              <div class="c4"><div class="demo-box" style="border-radius:4px">r-xs 4</div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:6px">r-sm 6</div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:8px">r-md 8</div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:12px">r-lg 12</div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:16px">r-xl 16</div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:999px">full</div></div>
+            </div>
+            <div style="height:1px;background:var(--line-subtle);margin:18px 0"></div>
+            <div class="kv"><span class="k">e0 · 平面卡片</span><span class="v" style="font-family:var(--font-sans)">1px line-subtle</span></div>
+            <div class="kv"><span class="k">e1 · 默认卡片</span><span class="v" style="font-family:var(--font-sans)">e0 + 顶部内高光</span></div>
+            <div class="kv"><span class="k">e3 · 弹层</span><span class="v" style="font-family:var(--font-sans)">0 12px 32px -8px rgba(0,0,0,.7)</span></div>
+            <div class="kv"><span class="k">focus ring</span><span class="v" style="font-family:var(--font-sans)">2px canvas + 4px primary 55%</span></div>
+            <div class="kv"><span class="k">间距栅格</span><span class="v" style="font-family:var(--font-sans)">4 / 8 / 12 / 16 / 20 / 24 / 32</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g12" style="margin-top:20px">
+        <div class="card c6">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-check"/></svg><span class="t-h3">按钮与状态</span></div><span class="overline">Button States</span></div>
+          <div class="card-bd" style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+            <button class="btn btn-primary"><svg class="i sm"><use href="#i-spark"/></svg>生成资产</button>
+            <button class="btn btn-ember">导出工程包</button>
+            <button class="btn btn-secondary"><svg class="i sm"><use href="#i-download"/></svg>下载 zip</button>
+            <button class="btn btn-ghost">次要操作</button>
+            <button class="btn btn-danger">重新运行</button>
+            <button class="btn btn-primary disabled"><span class="spinner"></span>导出中…</button>
+            <button class="btn btn-secondary disabled">禁用</button>
+            <div style="flex-basis:100%;height:1px;background:var(--line-subtle)"></div>
+            <div class="field" style="width:220px"><svg class="i sm"><use href="#i-search"/></svg><span class="ph">搜索资产 / 任务…</span></div>
+            <div class="field focus" style="width:220px">mage001<span class="caret"></span></div>
+          </div>
+        </div>
+        <div class="card c6">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-activity"/></svg><span class="t-h3">数据与进度</span></div><span class="overline">Score / KPI / Steps</span></div>
+          <div class="card-bd">
+            <div class="g12" style="gap:16px">
+              <div class="c6"><div class="score-top"><span>像素一致性 pixel</span><span class="val">90%</span></div><div class="track"><div class="fill ok" style="width:90%"></div><span class="notch" style="left:80%"></span></div></div>
+              <div class="c6"><div class="score-top"><span>根漂移 px/frame</span><span class="val">0.00</span></div><div class="track"><div class="fill ok" style="width:100%"></div><span class="notch" style="left:88%"></span></div></div>
+              <div class="c6"><div class="score-top"><span>时序平滑度</span><span class="val">96%</span></div><div class="track"><div class="fill violet" style="width:96%"></div></div></div>
+              <div class="c6"><div class="score-top"><span>修复轮后 pixel</span><span class="val">78%</span></div><div class="track"><div class="fill bad" style="width:78%"></div><span class="notch" style="left:80%"></span></div></div>
+            </div>
+            <div style="height:1px;background:var(--line-subtle);margin:18px 0"></div>
+            <div class="steps">
+              <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>生成</div>
+              <div class="step-line done"></div>
+              <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>PReCon</div>
+              <div class="step-line done"></div>
+              <div class="step run"><span class="ico"><svg class="i sm"><use href="#i-refresh"/></svg></span>FAlign</div>
+              <div class="step-line"></div>
+              <div class="step"><span class="ico"><svg class="i sm"><use href="#i-package"/></svg></span>GImport</div>
+              <div class="step-line"></div>
+              <div class="step"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>QA</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+              <span class="badge blue"><span class="dot run"></span>running 62%</span>
+              <span class="badge green"><span class="dot ok"></span>PASS</span>
+              <span class="badge amber"><span class="dot warn"></span>warning</span>
+              <span class="badge red"><span class="dot err"></span>failed</span>
+              <span class="badge zinc"><span class="dot idle"></span>idle</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 02 WORKSPACE ================= -->
+    <section id="workspace" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">02</span><h2 class="t-h1">工作台 Workspace</h2><p>输入优先 · 管线可视 · 数据入口</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 / 工作台</span><span class="badge zinc">1440 × 900</span></div>
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand-row"><span class="logo">CF</span><div><div style="font-weight:700;font-size:13.5px">CreativeForge</div><div class="overline" style="font-size:9.5px">AI ASSET FACTORY</div></div></div>
+            <div class="nav-label">生产</div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-spark"/></svg><span>工作台</span><span class="kbd">1</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-layers"/></svg><span>智能体</span><span class="kbd">2</span></div>
+            <div class="nav-label">资产</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg><span>资产检查</span><span class="kbd">3</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-grid"/></svg><span>像素工作台</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg><span>动画工作台</span></div>
+            <div class="nav-label">交付 · 洞察</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg><span>导出中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg><span>基准中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-book"/></svg><span>技术中心</span></div>
+            <div class="side-foot"><span class="t-ter" style="font-size:11px">v1.0 · Studio</span><span style="display:flex;gap:6px"><span class="dot ok" title="Unity"></span><span class="dot ok" title="Cocos"></span><span class="dot ok" title="Godot"></span></span></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar">
+              <div class="crumbs">生产<span>/</span><b>工作台</b></div>
+              <div class="task-pill"><span class="dot run"></span>T0007 火焰法师 Boss 生产 · 62%<svg class="i sm t-ter" style="width:14px;height:14px"><use href="#i-chevron"/></svg></div>
+              <button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button>
+              <button class="icon-btn"><svg class="i sm"><use href="#i-panel"/></svg></button>
+            </div>
+            <div class="content">
+              <div class="g12">
+                <div class="hero c8">
+                  <div class="overline" style="color:var(--primary)">CREATIVEFORGE STUDIO · 目标输入</div>
+                  <h1 class="t-h1" style="margin-top:8px">今天要锻造什么资产？</h1>
+                  <p class="t-sm t-ter" style="margin-top:4px">描述需求，Supervisor 自动规划 Generation → PReCon → FAlign → GImport → QA。</p>
+                  <div class="field-area" style="margin-top:16px">
+                    生成一个像素 RPG 火焰法师 Boss，包含待机与攻击动画，并导入 Unity 工程<span class="caret"></span>
+                  </div>
+                  <div class="example-row">
+                    <span class="example">像素RPG火焰法师Boss + 攻击动画 + Unity</span>
+                    <span class="example">像素洞穴Boss，带受击动画，导入 Cocos</span>
+                    <span class="example">像素火焰剑道具，导入 Unity</span>
+                    <span class="example">NPC 商人 + 待机动画，导入 Godot</span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;flex-wrap:wrap">
+                    <div style="display:flex;align-items:center;gap:8px">
+                      <span class="chip on"><svg class="i sm"><use href="#i-cube"/></svg>Unity</span>
+                      <span class="chip"><svg class="i sm"><use href="#i-cube"/></svg>Cocos</span>
+                      <span class="chip"><svg class="i sm"><use href="#i-cube"/></svg>Godot</span>
+                      <span class="t-ter" style="font-size:11.5px;margin-left:6px">已输入 42 字 · ⌘↵ 提交</span>
+                    </div>
+                    <button class="btn btn-ember lg"><svg class="i sm"><use href="#i-spark"/></svg>生成资产</button>
+                  </div>
+                </div>
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-activity"/></svg><span class="t-h3">生产管线</span></div><span class="badge blue"><span class="dot run"></span>62%</span></div>
+                  <div class="card-bd" style="display:flex;flex-direction:column;gap:14px">
+                    <div class="tl">
+                      <div class="tl-item ok"><span class="pin"></span><div><div class="ttl2">Generation 生成</div><div class="sub2">Art Agent · 0.8s</div></div></div>
+                      <div class="tl-item ok"><span class="pin"></span><div><div class="ttl2">PReCon 像素重建</div><div class="sub2">16 色 · 一致性 90%</div></div></div>
+                      <div class="tl-item"><span class="pin"></span><div><div class="ttl2" style="color:var(--d-falign)">FAlign 切帧对齐</div><div class="sub2">4 帧 · 相位对齐中…</div></div></div>
+                      <div class="tl-item idle"><span class="pin"></span><div><div class="ttl2 t-ter">GImport 引擎导入</div><div class="sub2">等待上游产物</div></div></div>
+                      <div class="tl-item idle"><span class="pin"></span><div><div class="ttl2 t-ter">QA 质量验证</div><div class="sub2">pixel 0.80 / anim 0.85 / engine 0.90</div></div></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="g12">
+                <div class="card c3"><div class="card-bd kpi"><span class="lbl">CF Score 综合评分</span><span class="val t-ember">96.6<small>%</small></span><svg class="spark" viewBox="0 0 120 28"><path d="M0 22 15 20 30 21 45 15 60 16 75 10 90 11 105 5 120 6" fill="none" stroke="#ffb454" stroke-width="1.6"/></svg><span class="t-ter" style="font-size:11px">较上季 +8.2 · 点击查看基准</span></div></div>
+                <div class="card c3"><div class="card-bd kpi"><span class="lbl">PReCon 像素一致性</span><span class="val t-precon">90<small>%</small></span><svg class="spark" viewBox="0 0 120 28"><path d="M0 23 15 21 30 18 45 19 60 14 75 12 90 9 105 8 120 6" fill="none" stroke="#22d3ee" stroke-width="1.6"/></svg><span class="t-ter" style="font-size:11px">baseline 80.9% · +9.1%</span></div></div>
+                <div class="card c3"><div class="card-bd kpi"><span class="lbl">FAlign 根漂移</span><span class="val t-falign">0.00<small>px/f</small></span><svg class="spark" viewBox="0 0 120 28"><path d="M0 4 15 6 30 12 45 16 60 20 75 24 90 25 105 26 120 26" fill="none" stroke="#a78bfa" stroke-width="1.6"/></svg><span class="t-ter" style="font-size:11px">baseline 2.25 → 纠偏 100%</span></div></div>
+                <div class="card c3"><div class="card-bd kpi"><span class="lbl">GImport 导入成功率</span><span class="val t-gimport">100<small>%</small></span><svg class="spark" viewBox="0 0 120 28"><path d="M0 26 20 26 40 26 60 26 80 26 100 26 120 26" fill="none" stroke="#34d399" stroke-width="1.6"/></svg><span class="t-ter" style="font-size:11px">12 步 → 1 步 · 45× 提速</span></div></div>
+              </div>
+
+              <div class="card c12">
+                <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-terminal"/></svg><span class="t-h3">最近任务</span></div><button class="btn btn-ghost sm">全部任务<svg class="i sm"><use href="#i-chevron"/></svg></button></div>
+                <table class="tbl">
+                  <thead><tr><th style="width:90px">任务</th><th>目标</th><th style="width:110px">状态</th><th style="width:110px">资产</th><th style="width:100px">引擎</th><th style="width:90px" class="num">耗时</th></tr></thead>
+                  <tbody>
+                    <tr><td class="mono t-ter">T0007</td><td>像素RPG火焰法师Boss，攻击动画，Unity</td><td><span class="badge blue"><span class="dot run"></span>running</span></td><td class="mono">mage001</td><td><span class="badge zinc">unity</span></td><td class="num t-ter">—</td></tr>
+                    <tr><td class="mono t-ter">T0006</td><td>像素洞穴Boss，受击动画，Cocos</td><td><span class="badge green">pass</span></td><td class="mono">cave_boss</td><td><span class="badge zinc">cocos</span></td><td class="num">4.2s</td></tr>
+                    <tr><td class="mono t-ter">T0005</td><td>像素火焰剑道具，Unity</td><td><span class="badge green">pass</span></td><td class="mono">flame_sword</td><td><span class="badge zinc">unity</span></td><td class="num">2.8s</td></tr>
+                    <tr><td class="mono t-ter">T0004</td><td>NPC 商人，待机动画，Godot</td><td><span class="badge red">failed</span></td><td class="t-ter">—</td><td><span class="badge zinc">godot</span></td><td class="num">6.1s</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="g12">
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-precon)"></span><div class="card-bd"><div style="display:flex;align-items:center;gap:10px"><span class="badge cyan"><svg class="i sm"><use href="#i-grid"/></svg>PReCon</span><span class="t-h3">像素重建</span></div><p class="t-cap t-ter" style="margin-top:10px">网格推断 · 语义 16 色调色板 · 轮廓修复 · 一致性 90%</p><span class="t-pri t-cap" style="display:inline-flex;align-items:center;gap:4px;margin-top:12px">查看技术细节 <svg class="i sm" style="width:14px;height:14px"><use href="#i-chevron"/></svg></span></div></div>
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-falign)"></span><div class="card-bd"><div style="display:flex;align-items:center;gap:10px"><span class="badge violet"><svg class="i sm"><use href="#i-film"/></svg>FAlign</span><span class="t-h3">切帧对齐</span></div><p class="t-cap t-ter" style="margin-top:10px">锚点检测 · 运动相位对齐 · 根运动纠偏 0.00 px/frame</p><span class="t-pri t-cap" style="display:inline-flex;align-items:center;gap:4px;margin-top:12px">查看技术细节 <svg class="i sm" style="width:14px;height:14px"><use href="#i-chevron"/></svg></span></div></div>
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-gimport)"></span><div class="card-bd"><div style="display:flex;align-items:center;gap:10px"><span class="badge green"><svg class="i sm"><use href="#i-package"/></svg>GImport</span><span class="t-h3">引擎导入</span></div><p class="t-cap t-ter" style="margin-top:10px">图集 · 动画剪辑 · Prefab · 运行时校验 · 一键导出 zip</p><span class="t-pri t-cap" style="display:inline-flex;align-items:center;gap:4px;margin-top:12px">查看技术细节 <svg class="i sm" style="width:14px;height:14px"><use href="#i-chevron"/></svg></span></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note-grid">
+        <div class="note"><h4>视觉重心转移</h4><p>品牌口号从 40px 全屏标题降为 Hero 内 overline，主 CTA 使用 Ember 渐变并右置，输入区获得最大权重。</p></div>
+        <div class="note"><h4>新增信息层</h4><p>右上生产管线时间线补足"现在进行到哪一步"；KPI 行把 Benchmark 数据前置为日常入口；技术三卡强化自研叙事。</p></div>
+        <div class="note"><h4>状态语言</h4><p>全局任务胶囊贯穿顶栏；running 使用呼吸点；表格状态「颜色+文案」双表达。</p></div>
+      </div>
+    </section>
+
+    <!-- ================= 03 AGENT ================= -->
+    <section id="agent" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">03</span><h2 class="t-h1">智能体指挥中心</h2><p>任务图 · 事件流 · 质量门</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /agents</span><span class="badge zinc">1440 × 900</span></div>
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand-row"><span class="logo">CF</span><div><div style="font-weight:700;font-size:13.5px">CreativeForge</div><div class="overline" style="font-size:9.5px">AI ASSET FACTORY</div></div></div>
+            <div class="nav-label">生产</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-spark"/></svg><span>工作台</span></div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-layers"/></svg><span>智能体</span></div>
+            <div class="nav-label">资产</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg><span>资产检查</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-grid"/></svg><span>像素工作台</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg><span>动画工作台</span></div>
+            <div class="nav-label">交付 · 洞察</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg><span>导出中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg><span>基准中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-book"/></svg><span>技术中心</span></div>
+            <div class="side-foot"><span class="t-ter" style="font-size:11px">v1.0 · Studio</span><span class="dot run"></span></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar">
+              <div class="crumbs">生产<span>/</span><b>智能体指挥中心</b></div>
+              <div class="task-pill"><span class="dot run"></span>T0007 · 62% · FAlign 第 2 帧</div>
+              <button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button>
+              <button class="icon-btn"><svg class="i sm"><use href="#i-panel"/></svg></button>
+            </div>
+            <div class="content">
+              <div class="page-head">
+                <div>
+                  <h1 class="t-h1">智能体指挥中心</h1>
+                  <p class="sub">「生成一个像素RPG火焰法师Boss，包含待机与攻击动画，并导入 Unity 工程」</p>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                  <span class="mono t-ter">mage001</span>
+                  <span class="badge blue"><span class="dot run"></span>运行中 62%</span>
+                  <button class="btn btn-ghost sm"><svg class="i sm"><use href="#i-refresh"/></svg>重置视图</button>
+                </div>
+              </div>
+              <div class="g12">
+                <div class="card c8">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-layers"/></svg><span class="t-h3">任务图 Task Graph</span></div><div style="display:flex;gap:6px"><span class="badge zinc">7 节点</span><span class="badge zinc">5 边</span></div></div>
+                  <div class="card-bd" style="padding:12px">
+                    <div class="graph">
+                      <div class="bg-grid"></div>
+                      <div style="position:relative;width:720px;height:430px;margin:0 auto">
+                        <svg class="edges" viewBox="0 0 720 430" preserveAspectRatio="none">
+                          <path d="M360 68 C360 100 101 92 101 128" />
+                          <path d="M360 68 C360 96 360 96 360 128" />
+                          <path d="M360 68 C360 100 619 92 619 128" />
+                          <path d="M194 154 L267 154" />
+                          <path d="M453 154 L526 154" />
+                          <path d="M619 180 C619 214 420 198 420 228" />
+                          <path d="M360 280 C360 306 230 300 230 328" />
+                          <path d="M360 280 C360 310 490 300 490 328" />
+                        </svg>
+                        <div class="node run" style="left:267px;top:14px">
+                          <span class="n-ico" style="background:rgba(96,165,250,.14);color:var(--d-supervisor)"><svg class="i sm"><use href="#i-layers"/></svg></span>
+                          <div><div class="n-ttl">Supervisor 规划</div><div class="n-sub">意图分析 · 任务图 · 路由</div></div>
+                          <span class="n-status dot run"></span>
+                        </div>
+                        <div class="node done" style="left:8px;top:128px">
+                          <span class="n-ico"><svg class="i sm"><use href="#i-spark"/></svg></span>
+                          <div><div class="n-ttl">Art Agent</div><div class="n-sub">生成 + PReCon</div></div>
+                          <span class="n-status dot ok"></span>
+                        </div>
+                        <div class="node done" style="left:267px;top:128px">
+                          <span class="n-ico" style="background:rgba(34,211,238,.13);color:var(--d-precon)"><svg class="i sm"><use href="#i-grid"/></svg></span>
+                          <div><div class="n-ttl">PReCon</div><div class="n-sub">像素重建 90%</div></div>
+                          <span class="n-status dot ok"></span>
+                        </div>
+                        <div class="node run" style="left:526px;top:128px">
+                          <span class="n-ico" style="background:rgba(167,139,250,.14);color:var(--d-falign)"><svg class="i sm"><use href="#i-film"/></svg></span>
+                          <div><div class="n-ttl">FAlign</div><div class="n-sub">切帧对齐中…</div></div>
+                          <span class="n-status dot run"></span>
+                        </div>
+                        <div class="node idle" style="left:267px;top:228px">
+                          <span class="n-ico" style="background:rgba(52,211,153,.12);color:var(--d-gimport)"><svg class="i sm"><use href="#i-package"/></svg></span>
+                          <div><div class="n-ttl">GImport</div><div class="n-sub">等待上游产物</div></div>
+                        </div>
+                        <div class="node idle" style="left:137px;top:328px">
+                          <span class="n-ico" style="background:rgba(251,191,36,.12);color:var(--d-qa)"><svg class="i sm"><use href="#i-check"/></svg></span>
+                          <div><div class="n-ttl">QA Agent</div><div class="n-sub">pixel .80 / anim .85</div></div>
+                        </div>
+                        <div class="node idle" style="left:397px;top:328px">
+                          <span class="n-ico" style="background:rgba(148,163,184,.12);color:var(--d-memory)"><svg class="i sm"><use href="#i-cube"/></svg></span>
+                          <div><div class="n-ttl">Memory Agent</div><div class="n-sub">风格 / 版本 / 检查点</div></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card c4">
+                  <div class="card-bd" style="padding:14px 18px 0">
+                    <div class="tabs"><span class="tab on">事件流<span class="cnt">16</span></span><span class="tab">时间线</span><span class="tab">质量</span></div>
+                  </div>
+                  <div class="card-bd">
+                    <div class="stream">
+                      <div class="ln"><span class="ts">10:32:01</span><span class="ev t-pri">PLAN_CREATED</span><span class="t-ter">5 tasks</span></div>
+                      <div class="ln"><span class="ts">10:32:01</span><span class="ev t-pri">AGENT_START</span><span class="t-ter">supervisor</span></div>
+                      <div class="ln"><span class="ts">10:32:02</span><span class="ev t-ok">AGENT_DONE</span><span class="t-ter">art_agent</span></div>
+                      <div class="ln"><span class="ts">10:32:03</span><span class="ev t-ok">ASSET_READY</span><span class="t-ter">precon · 0.90</span></div>
+                      <div class="ln"><span class="ts">10:32:03</span><span class="ev t-pri">AGENT_START</span><span class="t-ter">animation_agent</span></div>
+                      <div class="ln"><span class="ts">10:32:04</span><span class="ev t-falign">FALIGN_PHASE</span><span class="t-ter">frame 2/4</span></div>
+                      <div class="ln"><span class="ts">10:32:05</span><span class="ev t-ok">AGENT_DONE</span><span class="t-ter">animation_agent</span></div>
+                      <div class="ln"><span class="ts">10:32:05</span><span class="ev t-pri">AGENT_START</span><span class="t-ter">engine_agent</span></div>
+                      <div class="ln" style="opacity:.45"><span class="ts">··:··:··</span><span class="ev t-ter">等待事件…<span class="caret"></span></span></div>
+                    </div>
+                    <div style="height:1px;background:var(--line-subtle);margin:16px 0"></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                      <span class="t-cap t-ter">实时事件流 · aria-live polite</span>
+                      <span class="badge zinc">自动滚动</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="g12 c12" style="gap:20px">
+                  <div class="card c4"><div class="card-hd"><div class="ttl"><span class="t-h3">当前节点</span></div><span class="badge violet">FAlign</span></div><div class="card-bd"><div class="kv"><span class="k">耗时</span><span class="v">0.9s</span></div><div class="kv"><span class="k">帧进度</span><span class="v">2 / 4</span></div><div class="kv"><span class="k">相位对齐</span><span class="v">0.25 → 0.50</span></div></div></div>
+                  <div class="card c4"><div class="card-hd"><div class="ttl"><span class="t-h3">质量门预览</span></div><span class="badge amber"><span class="dot warn"></span>待验证</span></div><div class="card-bd"><div class="score-top"><span>pixel · 阈值 0.80</span><span class="val">0.90</span></div><div class="track" style="margin-bottom:12px"><div class="fill ok" style="width:90%"></div><span class="notch" style="left:80%"></span></div><div class="score-top"><span>animation · 阈值 0.85</span><span class="val">—</span></div><div class="track"><div class="fill" style="width:4%"></div><span class="notch" style="left:85%"></span></div></div></div>
+                  <div class="card c4"><div class="card-hd"><div class="ttl"><span class="t-h3">修复与恢复</span></div><span class="badge zinc">0 轮</span></div><div class="card-bd"><p class="t-cap t-ter">失败时自动降级：Unity → Cocos → 人工介入。检查点写入 Memory Agent，可从任务图任意节点恢复。</p><span class="badge zinc" style="margin-top:10px"><svg class="i sm"><use href="#i-refresh"/></svg>checkpoint@precon</span></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note-grid">
+        <div class="note"><h4>节点即身份</h4><p>每个节点带 30px 域色图标块与状态环：idle 灰 / running 青色 glow 脉冲 / done 绿色，连线流动动画体现"正在执行"。</p></div>
+        <div class="note"><h4>三栏信息重构</h4><p>原 340px 纵向堆叠的三个卡片改为 Tabs（事件流/时间线/质量）+ 底部指标行，减少滚动、提高信息密度。</p></div>
+        <div class="note"><h4>可追踪性</h4><p>事件流保留等宽格式，增加事件类型图标色与相对时间；质量门预览显示阈值刻度，修复轮单独成卡。</p></div>
+      </div>
+    </section>
+
+    <!-- ================= 04 ASSET ================= -->
+    <section id="asset" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">04</span><h2 class="t-h1">资产检查器 Asset Inspector</h2><p>CreativeAsset 五段协议一屏全览</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /asset</span><span class="badge zinc">1440 × 980</span></div>
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand-row"><span class="logo">CF</span><div><div style="font-weight:700;font-size:13.5px">CreativeForge</div><div class="overline" style="font-size:9.5px">AI ASSET FACTORY</div></div></div>
+            <div class="nav-label">资产</div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-cube"/></svg><span>资产检查</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-grid"/></svg><span>像素工作台</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg><span>动画工作台</span></div>
+            <div class="nav-label">交付 · 洞察</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg><span>导出中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg><span>基准中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-book"/></svg><span>技术中心</span></div>
+            <div class="side-foot"><span class="t-ter" style="font-size:11px">v1.0</span><span class="dot ok"></span></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar">
+              <div class="crumbs">资产<span>/</span><b>FireMage · mage001</b></div>
+              <div class="task-pill"><span class="dot ok"></span>T0007 · PASS · 4.2s</div>
+              <button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button>
+              <button class="icon-btn"><svg class="i sm"><use href="#i-panel"/></svg></button>
+            </div>
+            <div class="content">
+              <div class="page-head">
+                <div><h1 class="t-h1">资产检查器</h1><p class="sub">CreativeAsset v1.0 统一协议：Identity → Pixel → Animation → Engine → Quality</p></div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-secondary"><svg class="i sm"><use href="#i-refresh"/></svg>重新生成</button>
+                  <button class="btn btn-primary"><svg class="i sm"><use href="#i-package"/></svg>导出工程包</button>
+                </div>
+              </div>
+
+              <div class="g12">
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-cube"/></svg><span class="t-h3">Identity / 身份</span></div><span class="badge blue">unity</span></div>
+                  <div class="card-bd">
+                    <div class="kv"><span class="k">ID</span><span class="v">mage001</span></div>
+                    <div class="kv"><span class="k">Name</span><span class="v">FireMage</span></div>
+                    <div class="kv"><span class="k">Type / Role</span><span class="v">character / boss</span></div>
+                    <div class="kv"><span class="k">Source</span><span class="v">256 × 256</span></div>
+                    <div style="margin-top:14px;border:1px solid var(--line-subtle);border-radius:10px;background:radial-gradient(240px 160px at 50% 20%, rgba(76,194,255,.12), transparent 70%),#0a0e15;height:230px;display:grid;place-items:center;position:relative;overflow:hidden">
+                      <svg viewBox="0 0 200 180" style="width:190px;height:170px">
+                        <ellipse cx="100" cy="152" rx="54" ry="9" fill="rgba(76,194,255,.08)"/>
+                        <path d="M40 152h120M52 140h96M64 128h72" stroke="rgba(76,194,255,.12)" stroke-width="1"/>
+                        <rect x="86" y="30" width="28" height="22" rx="2" fill="#f4d58d"/>
+                        <path d="M80 34 100 8l20 26z" fill="#4cc2ff"/>
+                        <rect x="76" y="54" width="48" height="42" rx="3" fill="#4cc2ff"/>
+                        <rect x="76" y="98" width="18" height="34" rx="2" fill="#3a4658"/>
+                        <rect x="106" y="98" width="18" height="34" rx="2" fill="#3a4658"/>
+                        <rect x="132" y="40" width="5" height="92" rx="2" fill="#a16207"/>
+                        <circle cx="134.5" cy="34" r="8" fill="#ff9d3d"/>
+                        <circle cx="134.5" cy="34" r="14" fill="rgba(255,157,61,.18)"/>
+                      </svg>
+                      <span class="badge zinc" style="position:absolute;left:10px;bottom:10px"><svg class="i sm"><use href="#i-refresh"/></svg>拖拽旋转 · 自动旋转</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card c4">
+                  <span class="domain-bar" style="background:var(--d-precon)"></span>
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-precon"><use href="#i-grid"/></svg><span class="t-h3">Pixel / PReCon 像素重建</span></div><span class="badge cyan">90%</span></div>
+                  <div class="card-bd">
+                    <div class="kv"><span class="k">Grid</span><span class="v">8 × 8 · conf 0.92</span></div>
+                    <div class="kv"><span class="k">Palette Colors</span><span class="v">16</span></div>
+                    <div class="kv"><span class="k">Contour Style</span><span class="v">selective-repair</span></div>
+                    <div class="kv"><span class="k">Repaired Pixels</span><span class="v">12</span></div>
+                    <div style="margin-top:14px"><div class="score-top"><span>pixel overall · 阈值 0.80</span><span class="val">0.90</span></div><div class="track"><div class="fill ok" style="width:90%"></div><span class="notch" style="left:80%"></span></div></div>
+                    <div style="height:1px;background:var(--line-subtle);margin:16px 0"></div>
+                    <div class="overline" style="margin-bottom:8px">SEMANTIC PALETTE</div>
+                    <div class="pal">
+                      <i style="background:#07090d"></i><i style="background:#4cc2ff"></i><i style="background:#22d3ee"></i><i style="background:#f4d58d"></i><i style="background:#ff9d3d"></i><i style="background:#a16207"></i><i style="background:#dc2626"></i><i style="background:#7f1d1d"></i>
+                      <i style="background:#0ea5e9"></i><i style="background:#075985"></i><i style="background:#16a34a"></i><i style="background:#14532d"></i><i style="background:#e4e4e7"></i><i style="background:#a1a1aa"></i><i style="background:#3a4658"></i><i style="background:#1b2230"></i>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card c4">
+                  <span class="domain-bar" style="background:var(--d-falign)"></span>
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-film"/></svg><span class="t-h3">Animation / FAlign 对齐</span></div><span class="badge violet">96%</span></div>
+                  <div class="card-bd">
+                    <div class="kv"><span class="k">Action / FPS</span><span class="v">attack / 12</span></div>
+                    <div class="kv"><span class="k">Frames / Loop</span><span class="v">4 / true</span></div>
+                    <div class="kv"><span class="k">Phase Aligned</span><span class="v">0 / .25 / .5 / .75</span></div>
+                    <div class="kv"><span class="k">Drift Corrected</span><span class="v t-ok">4 frames</span></div>
+                    <div class="film" style="margin-top:14px">
+                      <div class="frame on"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="33" y2="27" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="13" y2="29" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="34" y1="10" x2="36" y2="48" stroke="#a16207" stroke-width="2"/><circle cx="34" cy="8" r="3" fill="#ff9d3d"/></svg><span class="fid">#0</span></div>
+                      <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="35" y2="22" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="11" y2="26" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="36" y1="10" x2="38" y2="48" stroke="#a16207" stroke-width="2"/><circle cx="36" cy="8" r="3" fill="#ff9d3d"/></svg><span class="fid">#1</span></div>
+                      <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="36" y2="30" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="12" y2="18" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="17" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="29" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="37" y1="12" x2="39" y2="50" stroke="#a16207" stroke-width="2"/><circle cx="37" cy="10" r="3" fill="#ff9d3d"/></svg><span class="fid">#2</span></div>
+                      <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="33" y2="33" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="15" y2="14" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="35" y1="8" x2="37" y2="46" stroke="#a16207" stroke-width="2"/><circle cx="35" cy="6" r="3" fill="#ff9d3d"/></svg><span class="fid">#3</span></div>
+                    </div>
+                    <div style="margin-top:14px"><div class="score-top"><span>animation overall · 阈值 0.85</span><span class="val">0.96</span></div><div class="track"><div class="fill violet" style="width:96%"></div><span class="notch" style="left:85%"></span></div></div>
+                  </div>
+                </div>
+
+                <div class="card c6">
+                  <span class="domain-bar" style="background:var(--d-gimport)"></span>
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-gimport"><use href="#i-package"/></svg><span class="t-h3">Engine / GImport 引擎就绪</span></div><span class="badge green"><svg class="i sm"><use href="#i-check"/></svg>success · 1.0</span></div>
+                  <div class="card-bd">
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+                      <span class="badge zinc">texture: mage001.png</span>
+                      <span class="badge zinc">animation: mage001.anim</span>
+                      <span class="badge zinc">prefab: mage001.prefab</span>
+                      <span class="badge zinc">atlas: atlas.json</span>
+                    </div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">resource:texture</span><span class="st t-ok">pass</span></div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">resource:animation</span><span class="st t-ok">pass</span></div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">resource:prefab</span><span class="st t-ok">pass</span></div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">manifest:contract</span><span class="st t-ok">pass</span></div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">animation:frame_count · 4</span><span class="st t-ok">pass</span></div>
+                    <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span class="nm">engine:unity</span><span class="st t-ok">pass</span></div>
+                  </div>
+                </div>
+
+                <div class="card c6">
+                  <span class="domain-bar" style="background:var(--d-qa)"></span>
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-warn"><use href="#i-check"/></svg><span class="t-h3">Quality / QA Gate</span></div><span class="badge green">PASS</span></div>
+                  <div class="card-bd">
+                    <div style="display:flex;gap:16px;align-items:center">
+                      <svg viewBox="0 0 120 120" style="width:132px;height:132px;flex:none">
+                        <circle cx="60" cy="60" r="46" fill="none" stroke="#1b2230" stroke-width="10"/>
+                        <circle cx="60" cy="60" r="46" fill="none" stroke="url(#gradRing)" stroke-width="10" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="10" transform="rotate(-90 60 60)"/>
+                        <defs><linearGradient id="gradRing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc2ff"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs>
+                        <text x="60" y="58" text-anchor="middle" fill="#e9eef6" font-size="26" font-family="JetBrains Mono, monospace" font-weight="600">96.6</text>
+                        <text x="60" y="78" text-anchor="middle" fill="#76839a" font-size="10" font-family="Inter, sans-serif">CF SCORE</text>
+                      </svg>
+                      <div style="flex:1">
+                        <div class="score-top"><span>pixel · 0.80</span><span class="val">0.90</span></div><div class="track" style="margin-bottom:12px"><div class="fill ok" style="width:90%"></div><span class="notch" style="left:80%"></span></div>
+                        <div class="score-top"><span>animation · 0.85</span><span class="val">0.96</span></div><div class="track" style="margin-bottom:12px"><div class="fill violet" style="width:96%"></div><span class="notch" style="left:85%"></span></div>
+                        <div class="score-top"><span>engine · 0.90</span><span class="val">1.00</span></div><div class="track"><div class="fill ok" style="width:100%"></div><span class="notch" style="left:90%"></span></div>
+                      </div>
+                    </div>
+                    <div style="height:1px;background:var(--line-subtle);margin:14px 0"></div>
+                    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                      <span class="badge amber"><svg class="i sm"><use href="#i-refresh"/></svg>修复轮 1 次</span>
+                      <span class="t-cap t-ter">pixel 0.78 → 0.90（轮廓修复 + 调色板收敛）</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note-grid">
+        <div class="note"><h4>协议即布局</h4><p>三列对应 Identity / Pixel / Animation，底部 Engine + Quality，与 CreativeAsset 五段结构完全同构，便于对照数据。</p></div>
+        <div class="note"><h4>引擎域色贯穿</h4><p>三张卡片分别带青/紫/翠左缘条与图标色，用户在不读标题时也能凭色识别模块。</p></div>
+        <div class="note"><h4>质量可解释</h4><p>环形总分 + 三条阈值刻度 + 修复轮记录，把"为什么 PASS"讲清楚。</p></div>
+      </div>
+    </section>
+
+    <!-- ================= 05 PIXEL + ANIMATION ================= -->
+    <section id="pixel" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">05</span><h2 class="t-h1">Pixel Studio 与 Animation Studio</h2><p>PReCon 前后对比 · FAlign 对齐可视化</p></div>
+
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /pixel</span><span class="badge zinc">Pixel Studio</span></div>
+        <div class="app with-rail">
+          <aside class="sidebar rail">
+            <div class="brand-row" style="justify-content:center"><span class="logo">CF</span></div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-grid"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar"><div class="crumbs">资产<span>/</span><b>像素工作台</b></div><div class="task-pill"><span class="dot ok"></span>mage001 · PReCon 90%</div><button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button></div>
+            <div class="content">
+              <div class="page-head">
+                <div><h1 class="t-h1">像素工作台</h1><p class="sub">PReCon 像素重建：AI 原图 → 网格推断 → 语义 16 色调色板 → 轮廓修复</p></div>
+                <div class="seg"><span class="opt on">After · PReCon</span><span class="opt">Before · AI 原图</span></div>
+              </div>
+              <div class="g12">
+                <div class="card c6">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-precon"><use href="#i-grid"/></svg><span class="t-h3">像素资产 · 16 色 · 8×8 网格</span></div><span class="badge zinc">26 px / 格</span></div>
+                  <div class="card-bd">
+                    <div style="display:grid;grid-template-columns:repeat(8,26px);gap:2px;justify-content:center;background:#0a0e15;border:1px solid var(--line-subtle);border-radius:10px;padding:18px">
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px"></i><i style="height:26px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#f4d58d;border-radius:3px"></i><i style="height:26px;background:#f4d58d;border-radius:3px"></i><i style="height:26px;background:#f4d58d;border-radius:3px"></i><i style="height:26px;background:#f4d58d;border-radius:3px"></i><i style="height:26px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#ff9d3d;border-radius:3px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#4cc2ff;border-radius:3px"></i><i style="height:26px;background:#a16207;border-radius:3px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px;background:#a16207;border-radius:3px"></i><i style="height:26px"></i>
+                      <i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px"></i><i style="height:26px"></i><i style="height:26px;background:#3a4658;border-radius:3px"></i><i style="height:26px"></i><i style="height:26px"></i>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:14px">
+                      <span class="badge green">16 colors</span><span class="badge cyan">grid aligned</span><span class="badge zinc">conf 0.92</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="c6" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-precon"><use href="#i-grid"/></svg><span class="t-h3">语义调色板</span></div><span class="badge zinc">点击复制 hex</span></div>
+                    <div class="card-bd">
+                      <div class="pal">
+                        <i style="background:#07090d"></i><i style="background:#4cc2ff"></i><i style="background:#22d3ee"></i><i style="background:#f4d58d"></i><i style="background:#ff9d3d"></i><i style="background:#a16207"></i><i style="background:#dc2626"></i><i style="background:#7f1d1d"></i>
+                        <i style="background:#0ea5e9"></i><i style="background:#075985"></i><i style="background:#16a34a"></i><i style="background:#14532d"></i><i style="background:#e4e4e7"></i><i style="background:#a1a1aa"></i><i style="background:#3a4658"></i><i style="background:#1b2230"></i>
+                      </div>
+                      <div style="margin-top:12px">
+                        <div class="kv"><span class="k">outline</span><span class="v">#07090D</span></div>
+                        <div class="kv"><span class="k">base / robe</span><span class="v">#4CC2FF</span></div>
+                        <div class="kv"><span class="k">shadow</span><span class="v">#7F1D1D</span></div>
+                        <div class="kv"><span class="k">highlight / staff</span><span class="v">#FDE68A · #FF9D3D</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="g12" style="gap:20px">
+                    <div class="card c6"><div class="card-hd"><div class="ttl"><span class="t-h3">网格推断</span></div></div><div class="card-bd"><div class="kv"><span class="k">grid size</span><span class="v">8 × 8</span></div><div class="kv"><span class="k">confidence</span><span class="v">0.92</span></div><div class="kv"><span class="k">colors</span><span class="v">16</span></div></div></div>
+                    <div class="card c6"><div class="card-hd"><div class="ttl"><span class="t-h3">质量</span></div><span class="badge green">PASS</span></div><div class="card-bd"><div class="score-top"><span>pixel overall</span><span class="val">0.90</span></div><div class="track"><div class="fill ok" style="width:90%"></div><span class="notch" style="left:80%"></span></div><p class="t-cap t-ter" style="margin-top:10px">轮廓修复 12 px · 调色板收敛 64 → 16</p></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" style="margin-top:28px">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /animation</span><span class="badge zinc">Animation Studio</span></div>
+        <div class="app with-rail">
+          <aside class="sidebar rail">
+            <div class="brand-row" style="justify-content:center"><span class="logo">CF</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-spark"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg></div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-film"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar"><div class="crumbs">资产<span>/</span><b>动画工作台</b></div><div class="task-pill"><span class="dot ok"></span>mage001 · attack · 4 frames</div><button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button></div>
+            <div class="content">
+              <div class="page-head">
+                <div><h1 class="t-h1">动画工作台</h1><p class="sub">FAlign 切帧对齐：锚点检测 → 运动相位对齐 → 根运动纠偏 → 时序一致性</p></div>
+                <div style="display:flex;gap:8px"><span class="badge violet">attack</span><span class="badge zinc">4 frames</span><span class="badge zinc">12 fps</span><span class="badge green">drift corrected</span></div>
+              </div>
+              <div class="g12">
+                <div class="c8" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-play"/></svg><span class="t-h3">动作预览 Motion Preview</span></div><button class="btn btn-secondary sm"><svg class="i sm"><use href="#i-pause"/></svg>暂停</button></div>
+                    <div class="card-bd">
+                      <div style="height:210px;border:1px solid var(--line-subtle);border-radius:10px;background:radial-gradient(300px 160px at 50% 40%, rgba(167,139,250,.14), transparent 70%),#0a0e15;display:grid;place-items:center">
+                        <svg viewBox="0 0 120 150" style="height:180px">
+                          <line x1="30" y1="140" x2="90" y2="140" stroke="rgba(167,139,250,.25)" stroke-width="2" stroke-dasharray="4 4"/>
+                          <circle cx="60" cy="27" r="14" fill="#f4d58d"/>
+                          <path d="M46 24 60 4l14 20z" fill="#a78bfa"/>
+                          <line x1="60" y1="41" x2="60" y2="88" stroke="#a78bfa" stroke-width="11" stroke-linecap="round"/>
+                          <line x1="60" y1="54" x2="86" y2="62" stroke="#f4d58d" stroke-width="6" stroke-linecap="round"/>
+                          <line x1="60" y1="54" x2="36" y2="64" stroke="#f4d58d" stroke-width="6" stroke-linecap="round"/>
+                          <line x1="60" y1="88" x2="48" y2="126" stroke="#3a4658" stroke-width="8" stroke-linecap="round"/>
+                          <line x1="60" y1="88" x2="74" y2="126" stroke="#3a4658" stroke-width="8" stroke-linecap="round"/>
+                          <line x1="90" y1="26" x2="96" y2="126" stroke="#a16207" stroke-width="4" stroke-linecap="round"/>
+                          <circle cx="90" cy="20" r="8" fill="#ff9d3d"/>
+                          <circle cx="60" cy="140" r="3.5" fill="#34d399"/>
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-film"/></svg><span class="t-h3">帧时间轴 Frame Timeline</span></div><span class="badge zinc">当前 #2</span></div>
+                    <div class="card-bd">
+                      <div class="film">
+                        <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="33" y2="27" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="13" y2="29" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="34" y1="10" x2="36" y2="48" stroke="#a16207" stroke-width="2"/><circle cx="34" cy="8" r="3" fill="#ff9d3d"/></svg><span class="fid">#0 · 0.00</span></div>
+                        <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="35" y2="22" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="11" y2="26" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="36" y1="10" x2="38" y2="48" stroke="#a16207" stroke-width="2"/><circle cx="36" cy="8" r="3" fill="#ff9d3d"/></svg><span class="fid">#1 · 0.25</span></div>
+                        <div class="frame on"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="36" y2="30" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="12" y2="18" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="17" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="29" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="37" y1="12" x2="39" y2="50" stroke="#a16207" stroke-width="2"/><circle cx="37" cy="10" r="3" fill="#ff9d3d"/></svg><span class="fid">#2 · 0.50</span></div>
+                        <div class="frame"><svg class="fig" viewBox="0 0 46 58"><circle cx="23" cy="11" r="6" fill="#f4d58d"/><path d="M17 10 23 2l6 8z" fill="#a78bfa"/><line x1="23" y1="17" x2="23" y2="36" stroke="#a78bfa" stroke-width="5" stroke-linecap="round"/><line x1="23" y1="23" x2="33" y2="33" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="23" x2="15" y2="14" stroke="#f4d58d" stroke-width="2.6" stroke-linecap="round"/><line x1="23" y1="36" x2="18" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="23" y1="36" x2="28" y2="52" stroke="#3a4658" stroke-width="3" stroke-linecap="round"/><line x1="35" y1="8" x2="37" y2="46" stroke="#a16207" stroke-width="2"/><circle cx="35" cy="6" r="3" fill="#ff9d3d"/></svg><span class="fid">#3 · 0.75</span></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-activity"/></svg><span class="t-h3">根运动轨迹 漂移 → 纠偏</span></div><span class="badge green">0.00 px/frame</span></div>
+                    <div class="card-bd">
+                      <svg viewBox="0 0 640 90" style="width:100%;height:90px">
+                        <line x1="0" y1="45" x2="640" y2="45" stroke="#2a3444" stroke-dasharray="5 5"/>
+                        <path d="M20 45 C120 20 200 66 300 34 S520 58 620 42" fill="none" stroke="#fb7185" stroke-width="2"/>
+                        <circle cx="20" cy="45" r="4" fill="#34d399"/><circle cx="220" cy="38" r="4" fill="#34d399"/><circle cx="420" cy="49" r="4" fill="#34d399"/><circle cx="620" cy="45" r="4" fill="#34d399"/>
+                        <text x="20" y="78" fill="#76839a" font-size="11" font-family="JetBrains Mono, monospace">frame 0</text>
+                        <text x="580" y="78" fill="#76839a" font-size="11" font-family="JetBrains Mono, monospace">frame 3</text>
+                      </svg>
+                      <div style="display:flex;gap:16px;font-size:11.5px;color:var(--text-tertiary);margin-top:6px"><span><span style="color:#fb7185">—</span> 对齐前（漂移）</span><span><span style="color:#34d399">●</span> FAlign 纠偏后（根位置稳定）</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="c4" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-gauge"/></svg><span class="t-h3">质量评分</span></div><span class="badge green">PASS</span></div>
+                    <div class="card-bd">
+                      <div class="score-top"><span>Anchor 锚点稳定</span><span class="val">0.94</span></div><div class="track" style="margin-bottom:14px"><div class="fill violet" style="width:94%"></div></div>
+                      <div class="score-top"><span>Motion 根运动</span><span class="val">1.00</span></div><div class="track" style="margin-bottom:14px"><div class="fill ok" style="width:100%"></div></div>
+                      <div class="score-top"><span>Temporal 时序平滑</span><span class="val">0.96</span></div><div class="track" style="margin-bottom:14px"><div class="fill violet" style="width:96%"></div></div>
+                      <div class="score-top"><span>Overall · 阈值 0.85</span><span class="val">0.96</span></div><div class="track"><div class="fill ok" style="width:96%"></div><span class="notch" style="left:85%"></span></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><span class="t-h3">对齐详情</span></div></div>
+                    <div class="card-bd">
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>锚点检测 root / feet / center / head</span></div>
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>相位对齐 0 / .25 / .5 / .75</span></div>
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>漂移纠偏 3 帧回归 frame-0</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note-grid">
+        <div class="note"><h4>对比即叙事</h4><p>Pixel 用 Before/After Segmented 双态；Animation 用红/绿轨迹对照，让技术价值无需阅读文字即可感知。</p></div>
+        <div class="note"><h4>域色氛围</h4><p>FAlign 紫色光晕贯穿预览舞台、选中帧、图表，形成与 Pixel 青色明显的模块身份差异。</p></div>
+        <div class="note"><h4>键盘友好</h4><p>空格播放/暂停、←→ 逐帧；当前帧同时用描边 + 位移 + 标签三重表达。</p></div>
+      </div>
+    </section>
+
+    <!-- ================= 06 BENCHMARK ================= -->
+    <section id="benchmark" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">06</span><h2 class="t-h1">基准中心 Benchmark Center</h2><p>基线 vs 方法 · 真实数据说服力</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /benchmark</span><span class="badge zinc">1440 × 960</span></div>
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand-row"><span class="logo">CF</span><div><div style="font-weight:700;font-size:13.5px">CreativeForge</div><div class="overline" style="font-size:9.5px">AI ASSET FACTORY</div></div></div>
+            <div class="nav-label">洞察</div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-gauge"/></svg><span>基准中心</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-book"/></svg><span>技术中心</span></div>
+            <div class="nav-label">生产</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-spark"/></svg><span>工作台</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-layers"/></svg><span>智能体</span></div>
+            <div class="side-foot"><span class="t-ter" style="font-size:11px">数据集 12 资产</span><span class="badge green">已刷新</span></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar">
+              <div class="crumbs">洞察<span>/</span><b>基准中心</b></div>
+              <div class="task-pill"><span class="dot ok"></span>真实管线评测 · 12/12 完成</div>
+              <button class="kbd-btn"><svg class="i sm"><use href="#i-download"/></svg>导出报告</button>
+            </div>
+            <div class="content">
+              <div class="page-head">
+                <div><h1 class="t-h1">基准中心</h1><p class="sub">12 资产 · 6 类别 · 8 动画 · 实时运行 PReCon / FAlign / GImport / Agent 真实管线</p></div>
+                <span class="badge zinc">生成于 2026-09-25 18:34</span>
+              </div>
+              <div class="g12">
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-ember"><use href="#i-spark"/></svg><span class="t-h3">CF Score 综合评分</span></div><span class="badge amber">+8.2</span></div>
+                  <div class="card-bd" style="display:flex;flex-direction:column;align-items:center">
+                    <svg viewBox="0 0 140 140" style="width:170px;height:170px">
+                      <circle cx="70" cy="70" r="56" fill="none" stroke="#1b2230" stroke-width="12"/>
+                      <circle cx="70" cy="70" r="56" fill="none" stroke="url(#benchGrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="351.8" stroke-dashoffset="12" transform="rotate(-90 70 70)"/>
+                      <defs><linearGradient id="benchGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4cc2ff"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs>
+                      <text x="70" y="66" text-anchor="middle" fill="#e9eef6" font-size="30" font-family="JetBrains Mono, monospace" font-weight="700">96.6</text>
+                      <text x="70" y="88" text-anchor="middle" fill="#76839a" font-size="11">CF SCORE · 100 分制</text>
+                    </svg>
+                    <div style="width:100%;margin-top:10px">
+                      <div class="score-top"><span>pixel · 权重 0.30</span><span class="val">0.93</span></div><div class="track" style="margin-bottom:12px"><div class="fill ok" style="width:93%"></div></div>
+                      <div class="score-top"><span>animation · 权重 0.30</span><span class="val">0.95</span></div><div class="track" style="margin-bottom:12px"><div class="fill violet" style="width:95%"></div></div>
+                      <div class="score-top"><span>engine · 权重 0.25</span><span class="val">1.00</span></div><div class="track" style="margin-bottom:12px"><div class="fill ok" style="width:100%"></div></div>
+                      <div class="score-top"><span>agent · 权重 0.15</span><span class="val">1.00</span></div><div class="track"><div class="fill ok" style="width:100%"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="c8" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-precon"><use href="#i-grid"/></svg><span class="t-h3">PReCon · 像素重建</span></div><span class="badge cyan">一致性 +9.1%</span></div>
+                    <div class="card-bd">
+                      <div class="cmp-hd"><span>指标</span><span>Baseline · Pixelate</span><span>PReCon</span><span style="text-align:right">提升</span></div>
+                      <div class="cmp"><span class="name">像素一致性</span><div class="bar base"><i style="width:81%"></i></div><div class="bar precon"><i style="width:90%"></i></div><span class="v strong">90% <span class="badge green" style="margin-left:6px">+9.1%</span></span></div>
+                      <div class="cmp"><span class="name">轮廓保持</span><div class="bar base"><i style="width:74%"></i></div><div class="bar precon"><i style="width:88%"></i></div><span class="v strong">88% <span class="badge green" style="margin-left:6px">+14</span></span></div>
+                      <div class="cmp"><span class="name">调色板颜色数</span><div class="bar base"><i style="width:100%"></i></div><div class="bar precon"><i style="width:43%"></i></div><span class="v strong">16 <span class="badge green" style="margin-left:6px">-57%</span></span></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-falign"><use href="#i-film"/></svg><span class="t-h3">FAlign · 动画对齐</span></div><span class="badge violet">漂移 -100%</span></div>
+                    <div class="card-bd">
+                      <div class="cmp-hd"><span>指标</span><span>Baseline · 原始帧</span><span>FAlign</span><span style="text-align:right">提升</span></div>
+                      <div class="cmp"><span class="name">根漂移 px/frame</span><div class="bar base"><i style="width:100%"></i></div><div class="bar falign"><i style="width:2%"></i></div><span class="v strong">0.00 <span class="badge green" style="margin-left:6px">-100%</span></span></div>
+                      <div class="cmp"><span class="name">脚步稳定性</span><div class="bar base"><i style="width:72%"></i></div><div class="bar falign"><i style="width:95%"></i></div><span class="v strong">95% <span class="badge green" style="margin-left:6px">+32%</span></span></div>
+                      <div class="cmp"><span class="name">时序平滑度</span><div class="bar base"><i style="width:85%"></i></div><div class="bar falign"><i style="width:96%"></i></div><span class="v strong">96% <span class="badge green" style="margin-left:6px">+13%</span></span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-gimport"><use href="#i-package"/></svg><span class="t-h3">GImport · 一键导入</span></div><span class="badge green">100%</span></div>
+                  <div class="card-bd">
+                    <div class="kpi" style="margin-bottom:16px"><span class="lbl">导入成功率</span><span class="val t-gimport">100<small>%</small></span></div>
+                    <div class="kv"><span class="k">流程耗时</span><span class="v t-ok">1 步 · 秒级</span></div>
+                    <div class="kv"><span class="k">传统流程</span><span class="v">12 步 · 45 分钟</span></div>
+                    <div class="kv"><span class="k">加速比</span><span class="v t-ember">45×</span></div>
+                    <div class="kv"><span class="k">覆盖引擎</span><span class="v">Unity / Cocos / Godot</span></div>
+                    <div style="margin-top:12px;display:flex;gap:6px"><span class="badge zinc">unity</span><span class="badge zinc">cocos</span><span class="badge zinc">godot</span></div>
+                  </div>
+                </div>
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-layers"/></svg><span class="t-h3">Agent · 自主规划</span></div><span class="badge blue">12 / 12</span></div>
+                  <div class="card-bd">
+                    <div class="score-top"><span>任务完成率</span><span class="val">100%</span></div><div class="track" style="margin-bottom:14px"><div class="fill ok" style="width:100%"></div></div>
+                    <div class="score-top"><span>规划正确率</span><span class="val">100%</span></div><div class="track" style="margin-bottom:14px"><div class="fill ok" style="width:100%"></div></div>
+                    <div class="score-top"><span>失败恢复率</span><span class="val">100%</span></div><div class="track" style="margin-bottom:14px"><div class="fill ok" style="width:100%"></div></div>
+                    <div class="kv"><span class="k">平均任务耗时</span><span class="v">4.18s</span></div>
+                    <p class="t-cap t-ter" style="margin-top:8px">全部目标由 Supervisor 自主规划并调度 Art / Animation / Engine / QA 完成，无人工干预。</p>
+                  </div>
+                </div>
+                <div class="card c4">
+                  <div class="card-hd"><div class="ttl"><svg class="i sm" style="color:var(--d-qa)"><use href="#i-check"/></svg><span class="t-h3">方法学</span></div><span class="badge zinc">可复现</span></div>
+                  <div class="card-bd">
+                    <div class="kv"><span class="k">数据集</span><span class="v">12 assets / 6 categories</span></div>
+                    <div class="kv"><span class="k">对比基线</span><span class="v">naive pixelate / raw frames</span></div>
+                    <div class="kv"><span class="k">质量阈值</span><span class="v">.80 / .85 / .90</span></div>
+                    <div class="kv"><span class="k">复现命令</span><span class="v" style="font-size:11.5px">python -m benchmark.run_benchmark</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note-grid">
+        <div class="note"><h4>灰 vs 彩的对比语法</h4><p>基线统一冷灰条、方法按域色/成功色，提升徽章带符号与百分比；一眼看出增益方向与幅度。</p></div>
+        <div class="note"><h4>数据前置</h4><p>CF Score 环形 + 权重标注 + 生成时间戳；KPI 全部 tabular，可直接截图进入 PPT。</p></div>
+        <div class="note"><h4>可复现声明</h4><p>方法学卡片给出数据集、基线、阈值与复现命令，增强评审可信度。</p></div>
+      </div>
+    </section>
+
+    <!-- ================= 07 EXPORT ================= -->
+    <section id="export" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">07</span><h2 class="t-h1">导出中心 Export Center</h2><p>引擎选择 → 导出 → 校验 → 下载</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /export</span><span class="badge zinc">1440 × 860</span></div>
+        <div class="app">
+          <aside class="sidebar">
+            <div class="brand-row"><span class="logo">CF</span><div><div style="font-weight:700;font-size:13.5px">CreativeForge</div><div class="overline" style="font-size:9.5px">AI ASSET FACTORY</div></div></div>
+            <div class="nav-label">交付</div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-package"/></svg><span>导出中心</span></div>
+            <div class="nav-label">资产</div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg><span>资产检查</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-grid"/></svg><span>像素工作台</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg><span>动画工作台</span></div>
+            <div class="side-foot"><span class="t-ter" style="font-size:11px">1 个包待下载</span><span class="dot ok"></span></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar"><div class="crumbs">交付<span>/</span><b>导出中心</b></div><div class="task-pill"><span class="dot ok"></span>FireMageGameAsset.zip · 1.8 KB</div><button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button></div>
+            <div class="content">
+              <div class="page-head">
+                <div><h1 class="t-h1">导出中心</h1><p class="sub">GImport 一键导出：CreativeAsset → Manifest → Atlas → Animation → Prefab → 引擎工程包</p></div>
+                <div class="seg"><span class="opt on"><svg class="i sm"><use href="#i-cube"/></svg>Unity</span><span class="opt"><svg class="i sm"><use href="#i-cube"/></svg>Cocos</span><span class="opt"><svg class="i sm"><use href="#i-cube"/></svg>Godot</span></div>
+              </div>
+              <div class="g12">
+                <div class="c8" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-gimport"><use href="#i-activity"/></svg><span class="t-h3">导出流程</span></div><span class="badge green">4 / 4 完成</span></div>
+                    <div class="card-bd">
+                      <div class="steps">
+                        <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>Asset</div><div class="step-line done"></div>
+                        <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>Manifest</div><div class="step-line done"></div>
+                        <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>Atlas</div><div class="step-line done"></div>
+                        <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>Animation</div><div class="step-line done"></div>
+                        <div class="step done"><span class="ico"><svg class="i sm"><use href="#i-check"/></svg></span>Prefab</div><div class="step-line done"></div>
+                        <div class="step run"><span class="ico"><svg class="i sm"><use href="#i-package"/></svg></span>Package</div>
+                      </div>
+                      <div style="display:flex;gap:12px;align-items:center;margin-top:20px">
+                        <button class="btn btn-primary lg"><svg class="i sm"><use href="#i-download"/></svg>下载 FireMageGameAsset.zip</button>
+                        <button class="btn btn-secondary"><svg class="i sm"><use href="#i-refresh"/></svg>重新导出</button>
+                        <span class="t-ter t-cap">1.8 KB · 7 files · zip</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><svg class="i sm t-gimport"><use href="#i-terminal"/></svg><span class="t-h3">包内容</span></div><div style="display:flex;gap:6px"><span class="badge green">success</span><span class="badge blue">unity</span></div></div>
+                    <div class="card-bd">
+                      <div class="tree">
+<span class="dir">Character/</span><br>
+&nbsp;&nbsp;└── mage001.manifest.json<br>
+<span class="dir">Animation/</span><br>
+&nbsp;&nbsp;└── mage001.anim.json<br>
+<span class="dir">Prefab/</span><br>
+&nbsp;&nbsp;└── mage001.prefab.json<br>
+<span class="dir">Config/</span><br>
+&nbsp;&nbsp;├── atlas.json<br>
+&nbsp;&nbsp;├── controller.json<br>
+&nbsp;&nbsp;└── validation.json<br>
+README.md <span class="dim"># 引擎内使用说明</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="c4" style="display:flex;flex-direction:column;gap:20px">
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><span class="t-h3">运行时校验</span></div><span class="badge green">score 1.0</span></div>
+                    <div class="card-bd">
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>资源完整性 · texture / anim / prefab</span></div>
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>动画完整性 · 4 帧 / loop</span></div>
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>引擎兼容性 · unity</span></div>
+                      <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>协议契约 · manifest</span></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><span class="t-h3">资产摘要</span></div></div>
+                    <div class="card-bd">
+                      <div class="kv"><span class="k">id / name</span><span class="v">mage001 / FireMage</span></div>
+                      <div class="kv"><span class="k">type</span><span class="v">character · boss</span></div>
+                      <div class="kv"><span class="k">frames / fps</span><span class="v">4 / 12</span></div>
+                      <div class="kv"><span class="k">CF Score</span><span class="v t-ember">96.6</span></div>
+                    </div>
+                  </div>
+                  <div class="card">
+                    <div class="card-hd"><div class="ttl"><span class="t-h3">导出历史</span></div></div>
+                    <div class="card-bd">
+                      <div class="tl">
+                        <div class="tl-item ok"><span class="pin"></span><div><div class="ttl2">FireMageGameAsset.zip</div><div class="sub2">unity · 1.8 KB · 刚刚</div></div></div>
+                        <div class="tl-item ok"><span class="pin"></span><div><div class="ttl2">FireMageGameAsset_cocos.zip</div><div class="sub2">cocos · 1.7 KB · 2 分钟前</div></div></div>
+                        <div class="tl-item idle"><span class="pin"></span><div><div class="ttl2 t-ter">godot 导出未运行</div><div class="sub2">选择 Godot 后点击导出</div></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 08 RESPONSIVE ================= -->
+    <section id="responsive" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">08</span><h2 class="t-h1">响应式适配</h2><p>1024 平板 · 390 手机</p></div>
+      <div class="devices">
+        <div class="frame-1024">
+          <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">1024 · 图标栏 + 两栏</span></div>
+          <div class="mini" style="padding:0">
+            <div class="app with-rail" style="min-height:520px">
+              <aside class="sidebar rail">
+                <div class="brand-row" style="justify-content:center;padding-bottom:12px"><span class="logo" style="width:26px;height:26px;font-size:11px">CF</span></div>
+                <div class="nav-item on"><svg class="i sm"><use href="#i-spark"/></svg></div>
+                <div class="nav-item"><svg class="i sm"><use href="#i-layers"/></svg></div>
+                <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg></div>
+                <div class="nav-item"><svg class="i sm"><use href="#i-grid"/></svg></div>
+                <div class="nav-item"><svg class="i sm"><use href="#i-film"/></svg></div>
+                <div class="nav-item"><svg class="i sm"><use href="#i-package"/></svg></div>
+              </aside>
+              <div style="min-width:0">
+                <div class="topbar" style="height:48px;padding:0 16px"><div class="crumbs" style="font-size:12px">生产<span>/</span><b>工作台</b></div><div class="task-pill" style="font-size:11px"><span class="dot run"></span>T0007 · 62%</div></div>
+                <div class="mini">
+                  <div class="card"><div class="card-bd">
+                    <div class="t-h3">今天要锻造什么资产？</div>
+                    <div class="field-area" style="min-height:64px;font-size:13px;margin-top:10px;padding:10px 12px">像素RPG火焰法师Boss，导入 Unity<span class="caret"></span></div>
+                    <div style="display:flex;gap:8px;margin-top:12px"><span class="chip on" style="height:28px">Unity</span><span class="chip" style="height:28px">Cocos</span><button class="btn btn-ember sm" style="margin-left:auto">生成</button></div>
+                  </div></div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                    <div class="card"><div class="card-bd kpi" style="padding:12px"><span class="lbl" style="font-size:11px">CF Score</span><span class="val t-ember" style="font-size:24px;line-height:30px">96.6</span></div></div>
+                    <div class="card"><div class="card-bd kpi" style="padding:12px"><span class="lbl" style="font-size:11px">PReCon</span><span class="val t-precon" style="font-size:24px;line-height:30px">90%</span></div></div>
+                    <div class="card"><div class="card-bd kpi" style="padding:12px"><span class="lbl" style="font-size:11px">FAlign 漂移</span><span class="val t-falign" style="font-size:24px;line-height:30px">0.00</span></div></div>
+                    <div class="card"><div class="card-bd kpi" style="padding:12px"><span class="lbl" style="font-size:11px">GImport</span><span class="val t-gimport" style="font-size:24px;line-height:30px">100%</span></div></div>
+                  </div>
+                  <div class="card"><div class="card-hd" style="padding:9px 12px"><span class="t-h3" style="font-size:13px">最近任务</span></div><div class="card-bd" style="padding:10px 12px"><div class="t-sm t-sec">T0007 · 火焰法师 Boss · <span class="badge blue">running</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="frame-390">
+          <div class="mini" style="padding:0">
+            <div style="background:var(--canvas);display:flex;flex-direction:column;min-height:600px">
+              <div class="topbar" style="height:48px;padding:0 14px"><span class="logo" style="width:24px;height:24px;font-size:10px">CF</span><b style="font-size:13px">工作台</b><span class="task-pill" style="margin-left:auto;font-size:10px;padding:3px 8px"><span class="dot run"></span>62%</span></div>
+              <div style="padding:12px;display:flex;flex-direction:column;gap:10px;flex:1">
+                <div class="card"><div class="card-bd" style="padding:12px">
+                  <div class="t-h3" style="font-size:14px">今天要锻造什么资产？</div>
+                  <div class="field-area" style="min-height:70px;font-size:12.5px;margin-top:8px;padding:9px 11px;line-height:19px">像素RPG火焰法师Boss，导入 Unity<span class="caret"></span></div>
+                  <button class="btn btn-ember" style="width:100%;margin-top:10px"><svg class="i sm"><use href="#i-spark"/></svg>生成资产</button>
+                </div></div>
+                <div class="card"><div class="card-bd" style="padding:12px">
+                  <div class="score-top"><span style="font-size:11px">CF Score</span><span class="val" style="color:var(--ember)">96.6</span></div>
+                  <div class="score-top"><span style="font-size:11px">PReCon 一致性</span><span class="val">90%</span></div><div class="track" style="margin-bottom:10px"><div class="fill ok" style="width:90%"></div></div>
+                  <div class="score-top"><span style="font-size:11px">FAlign 漂移</span><span class="val">0.00</span></div><div class="track" style="margin-bottom:10px"><div class="fill violet" style="width:100%"></div></div>
+                  <div class="score-top"><span style="font-size:11px">GImport</span><span class="val">100%</span></div><div class="track"><div class="fill ok" style="width:100%"></div></div>
+                </div></div>
+                <div class="card"><div class="card-hd" style="padding:9px 12px"><span class="t-h3" style="font-size:13px">任务 T0007</span><span class="badge blue" style="font-size:10px">62%</span></div><div class="card-bd" style="padding:10px 12px"><div class="t-cap t-ter">FAlign 切帧对齐中 · 2/4 帧</div><div class="track" style="margin-top:8px"><div class="fill" style="width:62%"></div></div></div></div>
+              </div>
+              <div class="bottom-tab">
+                <span class="bt on"><svg class="i sm"><use href="#i-spark"/></svg>工作台</span>
+                <span class="bt"><svg class="i sm"><use href="#i-layers"/></svg>智能体</span>
+                <span class="bt"><svg class="i sm"><use href="#i-cube"/></svg>资产</span>
+                <span class="bt"><svg class="i sm"><use href="#i-gauge"/></svg>基准</span>
+                <span class="bt"><svg class="i sm"><use href="#i-package"/></svg>导出</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="flex:0 1 560px;min-width:300px">
+          <div class="card-hd"><div class="ttl"><span class="t-h3">断点行为</span></div><span class="overline">Breakpoints</span></div>
+          <div class="card-bd">
+            <div class="kv"><span class="k">≥1280 桌面 L</span><span class="v" style="font-family:var(--font-sans)">侧栏 240 + 右栏 320 并排</span></div>
+            <div class="kv"><span class="k">1024–1279 桌面</span><span class="v" style="font-family:var(--font-sans)">侧栏 240，右栏落底</span></div>
+            <div class="kv"><span class="k">768–1023 平板</span><span class="v" style="font-family:var(--font-sans)">图标栏 64 + 两栏栅格</span></div>
+            <div class="kv"><span class="k">&lt;768 手机</span><span class="v" style="font-family:var(--font-sans)">单栏 + 底部 Tab + CTA 吸底</span></div>
+            <div class="kv"><span class="k">任务图</span><span class="v" style="font-family:var(--font-sans)">平板全宽 / 手机平移缩放</span></div>
+            <div class="kv"><span class="k">表格</span><span class="v" style="font-family:var(--font-sans)">手机转卡片列表</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="flex:0 1 460px;min-width:300px">
+          <div class="card-hd"><div class="ttl"><span class="t-h3">显示一致性约束</span></div><span class="overline">Consistency / A11y</span></div>
+          <div class="card-bd">
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>正文对比度 ≥ 4.5:1（tertiary #76839A = 4.9:1）</span></div>
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>最小命中区 32px，移动端 44px</span></div>
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>图标 + 文案 + 颜色三重状态表达</span></div>
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>reduced-motion 下禁用位移与脉冲</span></div>
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>数字 tabular-nums，跨设备列对齐</span></div>
+            <div class="check"><svg class="i sm t-ok"><use href="#i-check"/></svg><span>字体回退栈：Inter → 系统中文 → sans-serif</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 09 TECH + MOTION ================= -->
+    <section id="tech" class="rv-sec">
+      <div class="rv-sec-head"><span class="idx">09</span><h2 class="t-h1">技术中心与动效规范</h2><p>品牌页改造 · Motion Tokens</p></div>
+      <div class="screen">
+        <div class="screen-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">127.0.0.1:8600 /technology</span><span class="badge zinc">品牌页</span></div>
+        <div class="app with-rail">
+          <aside class="sidebar rail">
+            <div class="brand-row" style="justify-content:center"><span class="logo">CF</span></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-spark"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-cube"/></svg></div>
+            <div class="nav-item"><svg class="i sm"><use href="#i-gauge"/></svg></div>
+            <div class="nav-item on"><svg class="i sm"><use href="#i-book"/></svg></div>
+          </aside>
+          <div style="min-width:0">
+            <div class="topbar"><div class="crumbs">洞察<span>/</span><b>技术中心</b></div><div class="task-pill"><span class="dot ok"></span>三项自研引擎 · 已接入生产</div><button class="kbd-btn"><svg class="i sm"><use href="#i-search"/></svg>命令 <kbd>⌘K</kbd></button></div>
+            <div class="content">
+              <div class="hero">
+                <div class="overline" style="color:var(--primary)">CREATIVEFORGE ENGINE</div>
+                <h1 class="t-display-xl" style="margin-top:10px">把创意<span class="grad-text">锻造</span>成可运行的资产</h1>
+                <p class="t-body t-sec" style="max-width:620px;margin-top:10px">CreativeAsset 统一协议连接像素重建、动画切帧对齐与引擎自动导入。三项自研引擎，覆盖从描述到工程包的全链路。</p>
+                <div style="display:flex;gap:10px;margin-top:18px"><button class="btn btn-ember lg"><svg class="i sm"><use href="#i-spark"/></svg>立即生成资产</button><button class="btn btn-secondary lg"><svg class="i sm"><use href="#i-gauge"/></svg>查看基准数据</button></div>
+              </div>
+              <div class="g12">
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-precon)"></span><div class="card-bd">
+                  <div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:10px;background:rgba(34,211,238,.13);color:var(--d-precon);display:grid;place-items:center"><svg class="i lg"><use href="#i-grid"/></svg></span><div><div class="t-h2" style="color:var(--d-precon)">PReCon</div><div class="overline">PIXEL RECONSTRUCTION</div></div></div>
+                  <p class="t-sm t-sec" style="margin-top:12px">AI 图片 → 网格推断 → 语义化调色板重建 → 轮廓修复 → 风格一致性。</p>
+                  <div class="kv" style="margin-top:10px"><span class="k">像素一致性</span><span class="v t-precon">90%</span></div>
+                  <div class="kv"><span class="k">调色板</span><span class="v">37 → 16 色</span></div>
+                </div></div>
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-falign)"></span><div class="card-bd">
+                  <div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:10px;background:rgba(167,139,250,.14);color:var(--d-falign);display:grid;place-items:center"><svg class="i lg"><use href="#i-film"/></svg></span><div><div class="t-h2" style="color:var(--d-falign)">FAlign</div><div class="overline">FRAME ALIGNMENT</div></div></div>
+                  <p class="t-sm t-sec" style="margin-top:12px">切帧 → 锚点检测 → 运动相位对齐 → 根运动纠偏 → 时序一致性。</p>
+                  <div class="kv" style="margin-top:10px"><span class="k">根漂移</span><span class="v t-falign">2.25 → 0.00 px/f</span></div>
+                  <div class="kv"><span class="k">时序平滑</span><span class="v">96%</span></div>
+                </div></div>
+                <div class="card c4"><span class="domain-bar" style="background:var(--d-gimport)"></span><div class="card-bd">
+                  <div style="display:flex;align-items:center;gap:12px"><span style="width:40px;height:40px;border-radius:10px;background:rgba(52,211,153,.12);color:var(--d-gimport);display:grid;place-items:center"><svg class="i lg"><use href="#i-package"/></svg></span><div><div class="t-h2" style="color:var(--d-gimport)">GImport</div><div class="overline">ENGINE IMPORT</div></div></div>
+                  <p class="t-sm t-sec" style="margin-top:12px">图集 → 动画剪辑 → Prefab → 引擎适配 → 运行时校验 → 一键导出。</p>
+                  <div class="kv" style="margin-top:10px"><span class="k">导入成功率</span><span class="v t-gimport">100%</span></div>
+                  <div class="kv"><span class="k">流程</span><span class="v">12 步 → 1 步</span></div>
+                </div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="g12" style="margin-top:28px">
+        <div class="card c6">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-activity"/></svg><span class="t-h3">动效 Tokens</span></div><span class="overline">Motion</span></div>
+          <div class="card-bd">
+            <div class="g12" style="gap:12px">
+              <div class="c4"><div class="demo-box" style="border-radius:12px;height:80px;flex-direction:column">120ms<div class="t-cap t-ter">hover / 颜色</div></div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:12px;height:80px;flex-direction:column">180ms<div class="t-cap t-ter">进入 / 数值</div></div></div>
+              <div class="c4"><div class="demo-box" style="border-radius:12px;height:80px;flex-direction:column">280ms<div class="t-cap t-ter">页面 / 抽屉</div></div></div>
+            </div>
+            <div class="kv" style="margin-top:14px"><span class="k">ease-standard</span><span class="v">cubic-bezier(.2,.8,.2,1)</span></div>
+            <div class="kv"><span class="k">进入模式</span><span class="v">opacity + translateY(6px)</span></div>
+            <div class="kv"><span class="k">列表错峰</span><span class="v">40ms × 6</span></div>
+            <div class="kv"><span class="k">运行脉冲</span><span class="v">1.6s 循环</span></div>
+            <div class="kv"><span class="k">reduced-motion</span><span class="v">仅保留透明度过渡</span></div>
+          </div>
+        </div>
+        <div class="card c6">
+          <div class="card-hd"><div class="ttl"><svg class="i sm t-pri"><use href="#i-check"/></svg><span class="t-h3">反馈状态演示</span></div><span class="overline">Feedback</span></div>
+          <div class="card-bd" style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:8px;align-items:center"><span class="badge blue"><span class="dot run"></span>running</span><div class="track" style="flex:1"><div class="fill" style="width:62%"></div></div><span class="mono t-sec">62%</span></div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="badge green"><span class="dot ok"></span>AGENT_DONE</span><span class="t-cap t-ter">art_agent · 0.8s · 资产已交接</span></div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="badge amber"><svg class="i sm"><use href="#i-alert"/></svg>quality warning</span><span class="t-cap t-ter">pixel 0.78 &lt; 0.80，进入修复轮</span></div>
+            <div style="display:flex;gap:8px;align-items:center"><span class="badge red"><svg class="i sm"><use href="#i-x"/></svg>TASK_FAILED</span><span class="t-cap t-ter">godot 适配缺失 → 自动降级 cocos</span></div>
+            <div style="height:1px;background:var(--line-subtle)"></div>
+            <div class="empty" style="padding:10px 0">
+              <span class="eico"><svg class="i"><use href="#i-cube"/></svg></span>
+              <div class="t-h3">还没有生产记录</div>
+              <p class="t-cap t-ter">描述你的第一个游戏创意，智能体团队将自主规划并产出引擎就绪资产。</p>
+              <button class="btn btn-primary sm"><svg class="i sm"><use href="#i-spark"/></svg>生成第一个资产</button>
+            </div>
+            <div style="display:flex;gap:10px">
+              <div class="skl" style="height:14px;flex:2"></div><div class="skl" style="height:14px;flex:1"></div><div class="skl" style="height:14px;width:80px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer-note">
+      <span>CreativeForge Studio · Forge UI 2.0「Obsidian Arc」设计评审稿 · 2026-09</span>
+      <span>配套：01 设计审计与方案 · 02 视觉规范 · 03 关键界面说明</span>
+    </div>
+  </main>
+</div>
+</body>
+</html>
