@@ -18,7 +18,15 @@ async def create_asset(
     engine: str | None = None,
     review: bool | list[str] | None = False,
     user_id: str = "anonymous",
+    provider: str | None = None,
+    model: str | None = None,
 ) -> dict[str, Any]:
     return await get_gateway().submit(
-        goal, db, user_id=user_id, engine=engine, review=review
+        goal,
+        db,
+        user_id=user_id,
+        engine=engine,
+        review=review,
+        provider=provider,
+        model=model,
     )

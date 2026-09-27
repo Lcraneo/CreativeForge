@@ -91,6 +91,9 @@ class AgentRuntime:
                 "image": (image or {}).get("url"),
             })
 
+        if asset:
+            self._generate_design_views(task_id, asset)
+
         self.tasks.finish(task_id, result)
         if asset:
             self.assets.save(asset)
@@ -163,6 +166,72 @@ class AgentRuntime:
                 image = None
 
         return enhanced, image
+
+    def _generate_design_views(self, task_id, asset):
+        """Auto AI turnaround: derives side/back views from the fresh artwork
+        (qwen-image-edit with a self-check + wanx fallback), so an enabled
+        custom model never leaves the design center on deterministic
+        placeholder views. Best-effort: failures keep the placeholders and
+        surface as MODEL_FALLBACK."""
+
+        try:
+            image = asset.get("image") or {}
+            base_url = image.get("url")
+            settings = self.model_settings.effective()
+            if not base_url or not settings.get("enabled") or not settings.get("api_key"):
+                return
+
+            from studio.backend.model_service.service import (
+                ImageEditProvider,
+                generate_turnaround,
+            )
+
+            self.tasks.append_event(task_id, {
+                "type": "MODEL_START",
+                "stage": "views",
+                "provider": settings.get("provider"),
+                "model": ImageEditProvider.EDIT_MODEL,
+            })
+
+            def on_result(view, result):
+                self.tasks.append_event(task_id, {
+                    "type": "MODEL_IMAGE",
+                    "stage": "views",
+                    "view": view,
+                    "id": result.get("file"),
+                    "url": result.get("url"),
+                    "model": result.get("model"),
+                })
+
+            deadline = time.time() + 180.0
+            views, failures = generate_turnaround(
+                settings, base_url, front_image=image,
+                deadline=deadline, on_result=on_result,
+            )
+
+            if failures:
+                self.tasks.append_event(task_id, {
+                    "type": "MODEL_FALLBACK",
+                    "stage": "views",
+                    "detail": "侧/背视图生成失败（{}），对应视角保留确定性示意；可在设计中心重试".format(
+                        "；".join(failures)
+                    ),
+                })
+
+            asset["design_views"] = views
+            self.tasks.append_event(task_id, {
+                "type": "ASSET_UPDATE",
+                "id": asset.get("id"),
+                "name": asset.get("name"),
+                "engine": asset.get("engine", {}).get("target"),
+                "image": base_url,
+            })
+        except Exception as error:  # views are best-effort, never fail the task
+            self.tasks.append_event(task_id, {
+                "type": "MODEL_FALLBACK",
+                "stage": "views",
+                "detail": str(error),
+            })
 
     def _record(self, task_id, goal, result, error, started):
         """Appends one history record (prompt + character + asset snapshot)."""

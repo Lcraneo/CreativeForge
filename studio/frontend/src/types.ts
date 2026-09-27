@@ -57,6 +57,7 @@ export interface TaskEvent {
   scores?: Record<string, number>;
   detail?: string;
   stage?: string;
+  view?: string;
   prompt?: string;
   url?: string;
 }

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
+import type { ProviderSelection } from "../types";
+import ModelPicker from "./ModelPicker";
 
 const EXAMPLES = [
   "创建一个赛博朋克机械猫战士，装备火焰剑，有攻击动画，导入Cocos",
@@ -52,6 +54,10 @@ export default function CreationStudio(props: {
   const [style, setStyle] = useState("自动");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [model, setModel] = useState<ProviderSelection>({
+    provider: "builtin",
+    model: "",
+  });
   const [lastAssetId, setLastAssetId] = useState<string | null>(() =>
     window.localStorage.getItem("cf.lastAssetId"),
   );
@@ -70,6 +76,8 @@ export default function CreationStudio(props: {
         prompt: buildPrompt(),
         engine,
         user_id: "studio",
+        provider: model.provider,
+        model: model.model,
       });
       if (body.asset_id) setLastAssetId(body.asset_id);
       props.onCreated(body.task_id, body.asset_id);
@@ -129,6 +137,8 @@ export default function CreationStudio(props: {
             {busy ? "Agent 执行中…" : "开始生成"}
           </button>
         </div>
+
+        <ModelPicker value={model} onChange={setModel} />
 
         {busy && (
           <div className="mt-6 h-[3px] w-full overflow-hidden rounded bg-line">

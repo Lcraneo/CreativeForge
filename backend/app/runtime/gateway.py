@@ -18,9 +18,17 @@ class TaskGateway:
         user_id: str = "anonymous",
         engine: str | None = None,
         review: bool | list[str] | None = False,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> dict[str, Any]:
         return await get_executor().run_task(
-            goal, db, user_id=user_id, engine=engine, review=review
+            goal,
+            db,
+            user_id=user_id,
+            engine=engine,
+            review=review,
+            provider=provider,
+            model=model,
         )
 
     async def approve(self, task_id: str, db: AsyncSession) -> dict[str, Any]:

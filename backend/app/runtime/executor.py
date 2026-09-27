@@ -86,6 +86,8 @@ class AgentExecutor:
         user_id: str = "anonymous",
         engine: str | None = None,
         review: bool | list[str] | None = False,
+        provider: str | None = None,
+        model: str | None = None,
     ) -> dict[str, Any]:
         task_id = str(uuid.uuid4())
         row = AgentTask(id=task_id, user_id=user_id, goal=goal, status="PLANNING")
@@ -97,6 +99,10 @@ class AgentExecutor:
         plan = planner_runtime.create_plan(goal, intent, preferences)
         if engine:
             plan["engine"] = engine
+        if provider:
+            plan["image_provider"] = provider
+        if model:
+            plan["image_model"] = model
         row.plan = plan
         row.status = "RUNNING"
         await db.commit()
@@ -126,7 +132,7 @@ class AgentExecutor:
             "services": services,
             "plan": plan,
             "intent": intent,
-            "request": {"engine": engine},
+            "request": {"engine": engine, "provider": provider, "model": model},
             "knowledge": knowledge,
             "user_id": user_id,
         }
@@ -154,7 +160,11 @@ class AgentExecutor:
             "services": services,
             "plan": plan,
             "intent": plan.get("intent"),
-            "request": {"engine": plan.get("engine")},
+            "request": {
+                "engine": plan.get("engine"),
+                "provider": plan.get("image_provider"),
+                "model": plan.get("image_model"),
+            },
             "user_id": row.user_id,
             "asset": checkpoint.get("asset"),
             "character": checkpoint.get("character"),

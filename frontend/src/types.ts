@@ -206,3 +206,31 @@ export interface RegistryArtifact {
   metrics?: { before?: Record<string, number>; after?: Record<string, number> };
   config?: Record<string, unknown>;
 }
+
+export interface ProviderInfo {
+  id: string;
+  label: string;
+  vendor: string;
+  models: string[];
+  default_model: string;
+  default_size: string;
+  auth_mode: string;
+  credential_fields: string[];
+  notes: string;
+  builtin: boolean;
+  custom: boolean;
+  configured: boolean;
+  has_key: boolean;
+  key_hint: string;
+}
+
+export interface ProviderListing {
+  selected: { provider: string; model?: string };
+  builtin_provider: string;
+  providers: ProviderInfo[];
+}
+
+export interface ProviderSelection {
+  provider: string;
+  model: string;
+}

@@ -10,7 +10,7 @@ import {
   ScoreBar,
   ScoreRing,
 } from "../components/ui";
-import { FrameFigure } from "../components/FrameFigure";
+import { AnimPreview } from "../components/AnimPreview";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
@@ -233,26 +233,16 @@ export default function AssetInspector() {
                 label="Drift Corrected"
                 value={asset.animation?.motion?.drift_corrected ? "true" : "false"}
               />
-              <div className="mt-3 flex gap-2 overflow-hidden">
-                {frames.slice(0, 4).map((frame, index) => (
-                  <div
-                    key={frame.id}
-                    className="flex w-[88px] shrink-0 flex-col items-center rounded-[10px] border border-line-subtle bg-surface-1 p-2"
-                  >
-                    <FrameFigure
-                      phase={phases[index] ?? index / Math.max(1, frames.length - 1)}
-                      active={index === 0}
-                      className="h-16 w-14"
-                    />
-                    <span className="font-mono text-[10px] text-ink-4">#{frame.id}</span>
-                  </div>
-                ))}
+              <div className="mt-3 grid place-items-center overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(180px_90px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9] p-2">
+                <AnimPreview
+                  assetId={asset.id}
+                  action={asset.animation?.action ?? "walk"}
+                  className="h-[150px] w-auto object-contain"
+                />
               </div>
-              {!frames[0]?.image && (
-                <p className="mt-2 text-[11px] text-ink-3">
-                  帧为时序示意（合成）；真实逐帧序列需接入图生帧模型。
-                </p>
-              )}
+              <p className="mt-2 text-[11px] text-ink-3">
+                AI 生成动画：源图风格 → 人物特征提取 → 帧序列 → 一致性校验。可在动画工作台调整动作/帧率/时长。
+              </p>
               <div className="mt-3">
                 <ScoreBar
                   label="animation overall · 阈值 0.85"

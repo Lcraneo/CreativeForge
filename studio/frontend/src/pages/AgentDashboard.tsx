@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,7 +27,8 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
-import type { Plan, TaskEvent, HistorySummary } from "../types";
+import { GenerationResult } from "../components/GenerationResult";
+import type { CreativeAsset, Plan, TaskEvent, HistorySummary } from "../types";
 
 const KIND_LABEL: Record<string, string> = {
   supervisor: "规划",
@@ -209,16 +210,22 @@ const EVENT_TONE: Record<string, string> = {
   QUALITY_REPORT: "text-warning",
   TASK_COMPLETE: "text-success",
   PROGRESS: "text-falign",
+  MODEL_START: "text-primary",
+  MODEL_ENHANCE: "text-precon",
+  MODEL_IMAGE: "text-success",
+  MODEL_FALLBACK: "text-danger",
 };
 
 export default function AgentDashboard() {
   const { taskId, goal, status, events, agentStatuses, progress } = useAgentStore();
   const { nodes, edges, plan, currentNode } = useWorkflowStore();
+  const asset = useAssetStore((state) => state.asset);
   const setAsset = useAssetStore((sandbox) => sandbox.set);
   const applyAgentEvent = useAgentStore((state) => state.applyEvent);
   const finishAgent = useAgentStore((state) => state.finish);
   const applyWorkflowEvent = useWorkflowStore((state) => state.applyEvent);
   const navigate = useNavigate();
+  const refreshedAsset = useRef<string | null>(null);
 
   useEffect(() => {
     if (!taskId) return;
@@ -234,6 +241,15 @@ export default function AgentDashboard() {
     });
     return stop;
   }, [taskId, applyAgentEvent, applyWorkflowEvent, finishAgent, setAsset]);
+
+  // 任务完成时拉一次最终资产快照：ASSET_UPDATE 的并发取数可能拿到
+  // 不含 design_views 的中间版本，这里保证结果面板拿到完整数据。
+  useEffect(() => {
+    if (status !== "pass" || !taskId || !asset?.id) return;
+    if (refreshedAsset.current === asset.id) return;
+    refreshedAsset.current = asset.id;
+    api.getAsset(asset.id).then(setAsset).catch(() => undefined);
+  }, [status, taskId, asset?.id, setAsset]);
 
   const graphNodes: Node[] = useMemo(() => {
     const positions = layout(nodes);
@@ -344,6 +360,8 @@ export default function AgentDashboard() {
           </>
         }
       />
+
+      {status === "pass" && asset && <GenerationResult asset={asset} />}
 
       <div className="grid grid-cols-12 gap-5">
         <Card

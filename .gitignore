@@ -8,6 +8,7 @@ tests/release/_tmp_runtime/
 
 # backend (Phase 11-15)
 backend/.env
+backend/data/
 *.db
 *.log
 

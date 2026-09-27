@@ -31,6 +31,7 @@ from app.services.image_service import (
     normalize_view,
     render_asset_sheet_image,
     render_asset_view_image,
+    stored_render,
 )
 
 router = APIRouter()
@@ -44,6 +45,8 @@ async def create(data: AssetCreateRequest, db: AsyncSession = Depends(get_db)):
         engine=data.engine,
         review=data.review,
         user_id=data.user_id,
+        provider=data.provider,
+        model=data.model,
     )
     return AssetCreateResponse(
         task_id=result["task_id"],
@@ -106,19 +109,31 @@ async def asset_image(
     if row is None:
         raise HTTPException(status_code=404, detail="asset not found")
 
-    payload = render_asset_view_image(
-        dict(row.metadata_json or {}), view=normalize_view(view), size=size
-    )
-    return Response(
-        content=payload,
-        media_type="image/png",
-        headers={
-            "Cache-Control": "public, max-age=86400",
-            "X-Image-Source": "artgen",
-            "X-Image-Style": "2d",
-            "X-Image-View": normalize_view(view),
-        },
-    )
+    metadata = dict(row.metadata_json or {})
+    view_name = normalize_view(view)
+    headers = {
+        "Cache-Control": "public, max-age=86400",
+        "X-Image-Source": "artgen",
+        "X-Image-Style": "2d",
+        "X-Image-View": view_name,
+    }
+
+    # a hosted image API may have produced the original (front) render
+    if view_name == "front":
+        stored = stored_render(metadata)
+        if stored is not None:
+            payload, mime = stored
+            content = metadata.get("content") or {}
+            headers["X-Image-Source"] = "api"
+            headers["X-Image-Provider"] = str(content.get("image_provider") or "")
+            headers["X-Image-Model"] = str(content.get("image_model") or "")
+            return Response(content=payload, media_type=mime, headers=headers)
+
+    payload = render_asset_view_image(metadata, view=view_name, size=size)
+    content = metadata.get("content") or {}
+    headers["X-Image-Model"] = str(content.get("image_model") or "artgen-2d")
+    headers["X-Image-Provider"] = str(content.get("image_provider") or "builtin")
+    return Response(content=payload, media_type="image/png", headers=headers)
 
 
 @router.get("/{asset_id}/views.png")

@@ -21,6 +21,63 @@ export interface TaskDetail {
   events: TaskEvent[];
 }
 
+export interface StyleProfile {
+  style: string;
+  style_label: string;
+  confidence: number;
+  palette_size: number;
+  edge_density: number;
+  flat_ratio: number;
+  saturation: number;
+  luminance_std: number;
+}
+
+export interface ConsistencyReport {
+  palette: number;
+  color: number;
+  line: number;
+  hash: number;
+  overall: number;
+  passed: boolean;
+  floor: number;
+  frames_checked: number;
+}
+
+export interface AnimationResult {
+  id: string;
+  source: string;
+  action: string;
+  fps: number;
+  duration: number;
+  frame_count: number;
+  size: number;
+  loop: boolean;
+  style: StyleProfile;
+  style_label: string;
+  character: {
+    bbox: number[];
+    size: number[];
+    aspect: number;
+    head_ratio: number;
+    center: number[];
+    palette: string[];
+  };
+  consistency: ConsistencyReport;
+  sheet_size: number[];
+  frames: number;
+  urls: { gif: string; sheet: string; thumb: string };
+  created_at: number;
+}
+
+export interface AnimationRequestPayload {
+  asset_id?: string;
+  image?: string;
+  action?: string;
+  fps?: number;
+  duration?: number;
+  size?: number;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -56,6 +113,18 @@ export const api = {
     }),
 
   latestAsset: () => request<CreativeAsset>("/api/assets/latest"),
+
+  createAnimation: (payload: AnimationRequestPayload) =>
+    request<AnimationResult>("/api/animation", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  analyzeAnimationSource: (image: string) =>
+    request<{ style: StyleProfile; character: AnimationResult["character"]; palette: string[] }>(
+      "/api/animation/analyze",
+      { method: "POST", body: JSON.stringify({ image }) },
+    ),
 
   exportAsset: (assetId: string, engine: string) =>
     request<ExportResult>("/api/export", {

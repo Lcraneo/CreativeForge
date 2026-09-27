@@ -4,6 +4,7 @@ import type {
   CreateResponse,
   DnaDetail,
   ExportResult,
+  ProviderListing,
   RegistryArtifact,
   TaskDetail,
 } from "./types";
@@ -30,8 +31,30 @@ async function get<T>(path: string): Promise<T> {
   return asJson<T>(await fetch(path));
 }
 
+async function put<T>(path: string, body?: unknown): Promise<T> {
+  return asJson<T>(
+    await fetch(path, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    }),
+  );
+}
+
+async function del<T>(path: string): Promise<T> {
+  return asJson<T>(await fetch(path, { method: "DELETE" }));
+}
+
+export interface CreateAssetPayload {
+  prompt: string;
+  engine?: string;
+  user_id?: string;
+  provider?: string;
+  model?: string;
+}
+
 export const api = {
-  createAsset: (payload: { prompt: string; engine?: string; user_id?: string }) =>
+  createAsset: (payload: CreateAssetPayload) =>
     post<CreateResponse>("/api/v1/assets/create", payload),
 
   getTask: (taskId: string) => get<TaskDetail>(`/api/v1/tasks/${taskId}`),
@@ -58,6 +81,39 @@ export const api = {
       "/api/v1/models/train",
       { name },
     ),
+
+  providers: () => get<ProviderListing>("/api/v1/providers"),
+
+  saveProviderSettings: (payload: {
+    provider: string;
+    model?: string;
+    api_key?: string;
+    secret_key?: string;
+    secret_id?: string;
+    app_key?: string;
+  }) => put<ProviderListing>("/api/v1/providers/settings", payload),
+
+  testProvider: (payload: { provider: string; model?: string }) =>
+    post<{ ok: boolean; message: string; provider_label?: string; model?: string }>(
+      "/api/v1/providers/test",
+      payload,
+    ),
+
+  createProvider: (payload: {
+    label: string;
+    endpoint: string;
+    vendor?: string;
+    models?: string[] | string;
+    default_model?: string;
+    default_size?: string;
+    auth?: { mode?: string };
+    credential_fields?: string[];
+    body?: Record<string, unknown>;
+    image_paths?: string[];
+    notes?: string;
+  }) => post<{ provider: string; listing: ProviderListing }>("/api/v1/providers", payload),
+
+  deleteProvider: (id: string) => del<ProviderListing>(`/api/v1/providers/${id}`),
 };
 
 export function exportZipUrl(assetId: string, engine: string): string {

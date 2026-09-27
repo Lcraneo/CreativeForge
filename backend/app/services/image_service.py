@@ -7,9 +7,12 @@ top) plus a combined sheet, so every product surface and the export archive
 carry usable production art.
 """
 
+import os
 from typing import Any
 
 from artgen import VIEWS, render_asset_sheet, render_asset_view
+
+from app.engines.imagegen.store import DATA_DIR
 
 IMAGE_PATH = "/api/v1/assets/{asset_id}/image.png"
 SHEET_PATH = "/api/v1/assets/{asset_id}/views.png"
@@ -122,8 +125,30 @@ def attach_image_url(asset: dict[str, Any], asset_id: str) -> dict[str, Any]:
     content = asset.setdefault("content", {})
     if isinstance(content, dict):
         content["image_url"] = asset_view_url(asset_id, "front")
-        content["image_mime"] = "image/png"
+        content["image_mime"] = content.get("image_render_mime") or "image/png"
         content["image_style"] = "2d"
+        content.setdefault("image_model", "artgen-2d")
+        content.setdefault("image_provider", "builtin")
+        content.setdefault("image_source", "builtin")
         content["views"] = {view: asset_view_url(asset_id, view) for view in VIEWS}
         content["views_sheet_url"] = asset_sheet_url(asset_id)
     return asset
+
+
+def stored_render(asset: dict[str, Any]) -> tuple[bytes, str] | None:
+    """Return the real generated image bytes for this asset, if any.
+
+    Only used for the original (front) rendering produced by a hosted image
+    API; the orthographic side/back views keep using the deterministic
+    built-in renderer.
+    """
+    content = asset.get("content") or {}
+    relative = content.get("image_render") if isinstance(content, dict) else None
+    if not relative:
+        return None
+    path = os.path.normpath(os.path.join(DATA_DIR, relative))
+    if not path.startswith(os.path.normpath(DATA_DIR)) or not os.path.isfile(path):
+        return None
+    with open(path, "rb") as handle:
+        return handle.read(), content.get("image_render_mime") or "image/png"
+

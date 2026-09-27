@@ -1,18 +1,61 @@
 """REST API for the Studio frontend."""
 
+import base64
 import os
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
                            "exports")
+ANIMATION_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                             "data", "animation")
+
+
+def _resolve_asset(runtime, asset_id: str | None) -> dict | None:
+    """Find an asset in the in-memory store, then in persistent history.
+
+    The runtime asset store is empty after a restart, but the workbench can
+    still be showing an image loaded from history — so the animation endpoint
+    must resolve that asset too (otherwise it wrongly reports "no resource")."""
+    if asset_id:
+        asset = runtime.assets.get(asset_id)
+        if asset is not None:
+            return asset
+        record = runtime.history.get(asset_id)
+        if record and isinstance(record.get("asset"), dict):
+            return record["asset"]
+        for record in runtime.history.list(limit=200):
+            candidate = record.get("asset")
+            if isinstance(candidate, dict) and candidate.get("id") == asset_id:
+                return candidate
+        return None
+    asset = runtime.assets.latest()
+    if asset is not None:
+        return asset
+    records = runtime.history.list(limit=1)
+    if records and isinstance(records[0].get("asset"), dict):
+        return records[0]["asset"]
+    return None
 
 
 class CreateTaskRequest(BaseModel):
     goal: str
     overrides: dict | None = None
+
+
+class AnimationRequest(BaseModel):
+    asset_id: str | None = None
+    image: str | None = None  # base64 PNG / JPEG source (optional)
+    action: str = "walk"
+    fps: int = 12
+    duration: float = 1.0
+    size: int = 512
+
+
+class AnalyzeRequest(BaseModel):
+    image: str  # base64 source image
 
 
 class ExportRequest(BaseModel):
@@ -223,8 +266,8 @@ def build_router(runtime):
 
     @router.post("/design/views")
     def generate_design_views(request: dict):
-        """基于资产的 AI 原画生成侧视/背视图（DashScope imageedit）。"""
-        from studio.backend.model_service.service import ImageEditProvider
+        """基于资产的 AI 原画生成侧视/背视图（qwen-image-edit，含相似度自检）。"""
+        from studio.backend.model_service.service import generate_turnaround
 
         asset_id = request.get("asset_id") or ""
         asset = runtime.assets.get(asset_id)
@@ -245,18 +288,75 @@ def build_router(runtime):
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
 
-        editor = ImageEditProvider(settings)
-        views = {"front": {"url": base, "model": (asset.get("image") or {}).get("model")}}
-        try:
-            views["side"] = editor.edit(base, "Same character exactly, rotated 90 degrees to show the LEFT SIDE profile view of the same character, keep identical colors, outfit and proportions, full body, transparent background")
-            views["back"] = editor.edit(base, "Same character exactly, viewed from BEHIND showing its back, keep identical colors, outfit and proportions, full body, transparent background")
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
+        from studio.backend.model_service.service import generate_turnaround
+
+        views, failures = generate_turnaround(settings, base, front_image=asset.get("image"))
+        if not (views.get("side") or views.get("back")):
+            raise HTTPException(status_code=502, detail="；".join(failures) or "generation failed")
 
         asset["design_views"] = views
         runtime.assets.save(asset)
         runtime.history.patch_asset(asset_id, {"design_views": views})
         return views
+
+    # ------------------------------------------------------------------
+    # animation (style-consistent generation from an image)
+    # ------------------------------------------------------------------
+
+    @router.post("/animation")
+    def create_animation(request: AnimationRequest):
+        from studio.backend.animation_service.service import AnimationService
+
+        service = AnimationService(ANIMATION_DIR)
+        image_bytes = None
+        if request.image:
+            try:
+                image_bytes = base64.b64decode(request.image.split(",")[-1])
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=422, detail="image 不是合法的 base64")
+
+        asset = _resolve_asset(runtime, request.asset_id)
+        if asset is None and image_bytes is None:
+            raise HTTPException(
+                status_code=404,
+                detail="没有可用资源：请先在工作台生成资产，或上传一张源图",
+            )
+        return service.create(
+            asset=asset,
+            image_bytes=image_bytes,
+            action=request.action,
+            fps=request.fps,
+            duration=request.duration,
+            size=request.size,
+        )
+
+    @router.post("/animation/analyze")
+    def analyze_animation_source(request: AnalyzeRequest):
+        from studio.backend.animation_service.service import analyze_only
+
+        try:
+            image_bytes = base64.b64decode(request.image.split(",")[-1])
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=422, detail="image 不是合法的 base64")
+        try:
+            return analyze_only(image_bytes)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error))
+
+    @router.get("/animation/{name}")
+    def get_animation_file(name: str):
+        from studio.backend.animation_service.service import AnimationService
+
+        path = AnimationService(ANIMATION_DIR).path(name)
+        if path is None:
+            raise HTTPException(status_code=404, detail="unknown animation file")
+        if name.endswith(".gif"):
+            media = "image/gif"
+        elif name.endswith(".png"):
+            media = "image/png"
+        else:
+            media = "application/octet-stream"
+        return FileResponse(path, media_type=media)
 
     @router.get("/health")
     def health():

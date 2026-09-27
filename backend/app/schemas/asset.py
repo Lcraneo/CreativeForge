@@ -15,6 +15,10 @@ class AssetCreateRequest(BaseModel):
         "or a list of node ids",
     )
     user_id: str = Field("anonymous", description="Owner for preference memory")
+    provider: Optional[str] = Field(
+        None, description="Image provider id (builtin / volcengine / dashscope / ...)"
+    )
+    model: Optional[str] = Field(None, description="Image model id override")
 
 
 class AssetCreateResponse(BaseModel):

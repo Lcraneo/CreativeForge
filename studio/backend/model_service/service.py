@@ -359,16 +359,115 @@ class ImageProvider:
             return {"ok": False, "detail": str(exc)}
 
 
-class ImageEditProvider:
-    """DashScope native image edit (wanx2.1-imageedit): derives new views of
-    an existing AI artwork (turnaround side / back views) via async tasks."""
+TURNAROUND_PROMPTS = {
+    "side": (
+        "把图中角色向左旋转90度，生成同一个角色的正左侧全身侧面像：面朝画面左侧站立，"
+        "可见侧脸轮廓、单只眼睛、身体与手臂的侧面，保持完全相同的角色设计"
+        "（相同的发型、发色、配色、服装细节、体型与比例），单人全身立绘，纯白背景"
+    ),
+    "back": (
+        "把图中角色旋转180度，生成同一个角色的正后方全身背面像：背对镜头站立，"
+        "只可见后脑勺、发型背面、背部与服装背面，完全不可见面部，"
+        "保持完全相同的角色设计（相同的发型、发色、配色、服装细节、体型与比例），"
+        "单人全身立绘，纯白背景"
+    ),
+}
 
-    EDIT_MODEL = "wanx2.1-imageedit"
+# 二次尝试时的强化指令：编辑模型偶尔会原样返回输入图，必须强调视角必须改变
+TURNAROUND_REINFORCE = {
+    "side": TURNAROUND_PROMPTS["side"]
+    + "。注意：这是一次视角变换，必须生成全新的侧面构图，正面朝向的形象不允许出现。",
+    "back": TURNAROUND_PROMPTS["back"]
+    + "。注意：这是一次视角变换，必须生成全新的背面构图，任何面部特征都不允许出现。",
+}
+
+
+class ImageEditProvider:
+    """Image edit for the turnaround views (side / back of the same character).
+
+    Primary model ``qwen-image-edit`` (multimodal-generation, sync): follows
+    viewpoint-change instructions. Falls back to the wanx2.1 description_edit
+    async flow when qwen is unavailable for the account.
+    """
+
+    QWEN_EDIT_MODEL = "qwen-image-edit"
+    WANX_EDIT_MODEL = "wanx2.1-imageedit"
+    EDIT_MODEL = QWEN_EDIT_MODEL
 
     def __init__(self, settings):
         self.settings = settings or {}
 
-    def edit(self, base_image_url, instruction):
+    def edit(self, base_image_url, instruction, poll_timeout=180.0):
+        try:
+            return self._edit_qwen(base_image_url, instruction)
+        except Exception:  # noqa: BLE001 - fall back to the wanx flow
+            return self._edit_wanx(base_image_url, instruction, poll_timeout)
+
+    def _download(self, url):
+        os.makedirs(GENERATED_DIR, exist_ok=True)
+        file_name = "edit_{}.png".format(int(time.time() * 1000))
+        image_response = httpx.get(url, timeout=60)
+        image_response.raise_for_status()
+        with open(os.path.join(GENERATED_DIR, file_name), "wb") as handle:
+            handle.write(image_response.content)
+        return file_name
+
+    def _edit_qwen(self, base_image_url, instruction):
+        """Sync multimodal-generation call; image URL at
+        ``output.choices[0].message.content[i].image``."""
+
+        api_key = self.settings.get("api_key")
+        if not api_key:
+            raise RuntimeError("image edit not configured")
+        timeout = max(120.0, float(self.settings.get("timeout", 60)) * 2)
+        response = httpx.post(
+            DASHSCOPE_HOST + "/api/v1/services/aigc/multimodal-generation/generation",
+            headers={
+                "Authorization": "Bearer " + api_key,
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": self.QWEN_EDIT_MODEL,
+                "input": {
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {"image": base_image_url},
+                                {"text": instruction},
+                            ],
+                        }
+                    ]
+                },
+                "parameters": {"n": 1, "watermark": False},
+            },
+            timeout=timeout,
+        )
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            raise _http_error(exc)
+        body = response.json()
+        choices = (body.get("output") or {}).get("choices") or []
+        content = (choices[0].get("message") or {}).get("content") if choices else []
+        url = next(
+            (item.get("image") for item in content if item.get("image")), None
+        )
+        if not url:
+            raise RuntimeError(
+                "qwen-image-edit: no image in response ({})".format(
+                    str(body.get("code") or body.get("message") or "empty content")[:160]
+                )
+            )
+        return {
+            "file": self._download(url),
+            "url": url,
+            "model": self.QWEN_EDIT_MODEL,
+        }
+
+    def _edit_wanx(self, base_image_url, instruction, poll_timeout):
+        """DashScope wanx2.1-imageedit async task flow (legacy fallback)."""
+
         api_key = self.settings.get("api_key")
         if not api_key:
             raise RuntimeError("image edit not configured")
@@ -383,7 +482,7 @@ class ImageEditProvider:
                 "Content-Type": "application/json",
             },
             json={
-                "model": self.EDIT_MODEL,
+                "model": self.WANX_EDIT_MODEL,
                 "input": {
                     "function": "description_edit",
                     "prompt": instruction,
@@ -401,10 +500,81 @@ class ImageEditProvider:
         if not task_id:
             raise RuntimeError("dashscope: no task_id in response")
 
-        url = poll_dashscope_task(api_key, task_id, 180.0)
-        os.makedirs(GENERATED_DIR, exist_ok=True)
-        file_name = "edit_{}.png".format(int(time.time() * 1000))
-        image_response = httpx.get(url, timeout=60)
-        with open(os.path.join(GENERATED_DIR, file_name), "wb") as handle:
-            handle.write(image_response.content)
-        return {"file": file_name, "url": url, "model": self.EDIT_MODEL}
+        url = poll_dashscope_task(api_key, task_id, poll_timeout)
+        return {
+            "file": self._download(url),
+            "url": url,
+            "model": self.WANX_EDIT_MODEL,
+        }
+
+
+def _near_identical(path_a, path_b, threshold=0.03):
+    """Mean abs diff of two downscaled grayscale images. Returns
+    ``(bool, score)``; any failure yields ``(False, None)`` so the check can
+    never break generation."""
+
+    if not path_a or not path_b:
+        return False, None
+    try:
+        from PIL import Image
+
+        with Image.open(path_a) as handle_a, Image.open(path_b) as handle_b:
+            data_a = handle_a.convert("L").resize((64, 64)).tobytes()
+            data_b = handle_b.convert("L").resize((64, 64)).tobytes()
+        score = sum(abs(a - b) for a, b in zip(data_a, data_b)) / (255.0 * 64 * 64)
+        return score < threshold, score
+    except Exception:  # noqa: BLE001
+        return False, None
+
+
+def generate_turnaround(settings, base_url, front_image=None, deadline=None,
+                        on_result=None):
+    """Derives the side / back views from the base artwork with a self-check:
+    the edit models sometimes echo the input, so each result is compared with
+    the front image and regenerated once with a reinforced instruction when
+    it comes back near-identical.
+
+    Returns ``(views, failures)`` — ``views`` always carries ``front``;
+    a view that failed stays absent (the UI keeps its placeholder).
+    """
+
+    editor = ImageEditProvider(settings)
+    front_path = safe_generated_path((front_image or {}).get("file"))
+    views = {"front": {"url": base_url, "model": (front_image or {}).get("model")}}
+    failures = []
+
+    for view, instruction in TURNAROUND_PROMPTS.items():
+        result = None
+        reason = None
+        for attempt in range(2):
+            if deadline is not None and time.time() >= deadline:
+                reason = reason or "time budget exhausted"
+                break
+            try:
+                prompt = TURNAROUND_REINFORCE[view] if attempt else instruction
+                result = editor.edit(base_url, prompt)
+            except Exception as error:  # noqa: BLE001 - retry once on any error
+                result = None
+                reason = str(error)
+                continue
+            duplicate, score = _near_identical(
+                front_path, safe_generated_path(result.get("file"))
+            )
+            if duplicate:
+                result = None
+                reason = "输出与原图几乎一致（diff={}），未执行视角变换".format(
+                    round(score, 4) if score is not None else "?"
+                )
+                continue
+            reason = None
+            break
+
+        if result:
+            result["view"] = view
+            views[view] = result
+            if on_result:
+                on_result(view, result)
+        else:
+            failures.append("{}: {}".format(view, (reason or "unknown")[:140]))
+
+    return views, failures

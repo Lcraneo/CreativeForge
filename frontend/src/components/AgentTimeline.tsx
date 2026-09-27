@@ -117,6 +117,16 @@ export default function AgentTimeline(props: {
     cls: "text-ink-2",
   };
 
+  const gen = (task?.result as Record<string, unknown> | null)?.generate_asset as
+    | Record<string, unknown>
+    | undefined;
+  const imageModel = typeof gen?.image_model === "string" ? gen.image_model : undefined;
+  const imageProviderLabel =
+    typeof gen?.image_provider_label === "string" ? gen.image_provider_label : undefined;
+  const imageSource = typeof gen?.image_source === "string" ? gen.image_source : undefined;
+  const usedExternal = imageSource === "api";
+  const fellBack = imageSource === "builtin-fallback";
+
   const approve = async () => {
     if (!task) return;
     try {
@@ -160,33 +170,51 @@ export default function AgentTimeline(props: {
         </p>
 
         {/* 生成结果预览：任务产出资产后展示人物图像 */}
-        {task?.asset_id && (
-          <div className="mt-8 flex flex-wrap items-center gap-6 rounded-xl border border-line bg-panel/50 p-4">
-            <div className="grid h-40 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-paper">
-              <CharacterImage
-                assetId={task.asset_id}
-                view="front"
-                size={512}
-                alt={task.goal}
-                className="h-full w-full object-contain"
-              />
-            </div>
-            <div className="min-w-[200px] flex-1">
-              <div className="text-xs uppercase tracking-widest text-mute">
-                生成角色
+          {task?.asset_id && (
+            <div className="mt-8 flex flex-wrap items-center gap-6 rounded-xl border border-line bg-panel/50 p-4">
+              <div className="grid h-40 w-40 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-paper">
+                <CharacterImage
+                  assetId={task.asset_id}
+                  view="front"
+                  size={512}
+                  alt={task.goal}
+                  className="h-full w-full object-contain"
+                />
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-ink">
-                {task.goal}
-              </p>
-              <button
-                onClick={() => props.onOpenAsset(task.asset_id!)}
-                className="mt-3 rounded-lg bg-ink px-4 py-1.5 text-xs text-paper transition-opacity hover:opacity-85"
-              >
-                查看三视图与资产
-              </button>
+              <div className="min-w-[200px] flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs uppercase tracking-widest text-mute">
+                    生成角色
+                  </span>
+                  {imageModel && (
+                    <span
+                      className={`rounded-full border px-2.5 py-0.5 font-mono text-[11px] ${
+                        usedExternal
+                          ? "border-go/40 text-go"
+                          : fellBack
+                            ? "border-warn/50 text-warn"
+                            : "border-line-2 text-ink-2"
+                      }`}
+                      title="该任务使用的图像生成模型"
+                    >
+                      模型 · {imageProviderLabel ? `${imageProviderLabel} / ` : ""}
+                      {imageModel}
+                      {fellBack ? "（已回退内置）" : ""}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm leading-relaxed text-ink">
+                  {task.goal}
+                </p>
+                <button
+                  onClick={() => props.onOpenAsset(task.asset_id!)}
+                  className="mt-3 rounded-lg bg-ink px-4 py-1.5 text-xs text-paper transition-opacity hover:opacity-85"
+                >
+                  查看三视图与资产
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* DAG 分层 */}
         <div className="mt-9 space-y-2.5">

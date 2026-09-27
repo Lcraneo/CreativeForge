@@ -7440,5 +7440,4813 @@
       }
     },
     "id": "T0001-5"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790485462.89721,
+    "finished_at": 1790485483.83429,
+    "goal": "创建一个像素RPG火焰法师Boss，带攻击动画，导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9248,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 20.937,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#43110a",
+      "#7a1f12",
+      "#99401a",
+      "#d15723",
+      "#ff6a2b",
+      "#ff8b5a",
+      "#ffd23f",
+      "#ffe98a",
+      "#bfaf68",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": {
+      "file": "img_1790485483026.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260927/77c9ad12/fce5a4df-7dd5-4b37-a408-3691659128823438156046.png?Expires=1790571882&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=NotqKQUNXA1z44o6ADUfJz0FsU4%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790485483026.png"
+    },
+    "enhanced_prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss角色设计与动画规范\n\n—\n\n📌 项目名称：像素RPG火焰法师Boss角色资产  \n🎯 目标平台：Unity引擎（支持导入与动画系统集成）  \n🎨 风格基调：复古像素艺术（Pixel Art） × 高燃魔法特效 × RPG史诗Boss气质  \n⏱️ 交付内容：完整角色模型 + 攻击动画序列 + 导出为Unity可导入格式（推荐Sprite Sheet或Animated Sprite）  \n🧩 适用游戏类型：2D像素风RPG / 动作冒险 / 城堡Boss战 / 魔法主题\n\n—\n\n🎨 一、角色视觉设计规范\n\n1. 角色定位：\n   - 作为中后期Boss，需具备压迫感、魔法威严与视觉冲击力\n   - 体型略高于普通角色（建议1.5~2倍标准像素角色高度），强调“高大”、“威严”、“掌控火焰”的气质\n   - 服装/装备需体现“火焰法师”身份：长袍、法杖、火焰纹饰、燃烧边缘、熔岩质感等\n\n2. 色彩方案：\n   - 主色调：炽热红、橙、金、暗褐（代表火焰与熔岩）\n   - 辅助色：黑、深灰（用于阴影与轮廓，增强立体感）\n   - 高光/特效色：亮黄、白（用于火焰粒子、魔法光效）\n   - 禁用：冷色调（如蓝、绿）除非用于魔法反噬或环境互动\n\n3. 像素风格细节：\n   - 分辨率建议：16x16 或 32x32 像素基础单位（可扩展至64x64用于高分辨率适配）\n   - 线条清晰，边缘锐利，避免模糊或半透明过渡（像素艺术核心）\n   - 服装纹理：使用像素化火焰纹、熔岩流动、魔法符文等细节，避免纯色块\n   - 面部表情：可选“冷酷”、“狂热”、“怒吼”等表情，配合攻击时情绪爆发\n\n4. 角色结构（建议分层）：\n   - 头部（带火焰冠/法帽/头饰）\n   - 身体（长袍+法杖+火焰特效）\n   - 脚部（可带火焰拖尾或熔岩脚印）\n   - 可选：魔法阵/火焰环绕特效（静态或动态）\n\n—\n\n⚡ 二、攻击动画设计规范\n\n1. 动画类型（至少包含）：\n   - 攻击前摇（法师抬手、法杖蓄力、火焰聚集）\n   - 攻击释放（法杖挥动、火焰喷射、火球投掷、范围爆炸）\n   - 攻击后摇（能量回流、喘息、火焰余烬飘散）\n   - 可选：死亡动画（火焰崩解、化为灰烬、残影消散）\n\n2. 动画帧数建议：\n   - 前摇：4~8帧\n   - 攻击释放：6~12帧（含特效爆发）\n   - 后摇：4~6帧\n   - 总动画序列建议：20~30帧（可循环或单次播放）\n\n3. 动画风格要求：\n   - 动作流畅，符合物理惯性（如法杖挥动有弧线、火焰有抛物线）\n   - 特效粒子需与角色动作同步（如火焰喷射时角色脚部有火光、法杖尖端有火花）\n   - 攻击动画需有“视觉冲击力”，建议加入“屏幕震动”、“火焰扩散”、“音效同步提示”等设计（Unity中可由脚本触发）\n\n4. 动画导入格式：\n   - 推荐：Sprite Sheet（带帧编号与时间轴）\n   - 或：单帧PNG序列（命名规范：FireMage_Attack_001.png, FireMage_Attack_002.png...）\n   - 导入Unity后需支持Animation Clip或Sprite Animator组件\n\n—\n\n⚙️ 三、技术实现与Unity集成要求\n\n1. 导出格式：\n   - PNG（透明背景，带Alpha通道）\n   - 支持Unity Sprite Importer设置（Pivot点居中、Pixels Per Unit = 16或32）\n   - 动画序列建议打包为“Animator Controller”或“Sprite Animation”资源包\n\n2. 文件命名规范：\n   - 角色主图：FireMage_Boss_SpriteSheet.png\n   - 攻击动画：FireMage_Attack_Animation_SpriteSheet.png\n   - 文件夹结构：\n     ```\n     Assets/\n     └── Characters/\n         └── FireMage/\n             ├── SpriteSheet.png\n             ├── AttackAnimation/\n             │   ├── Frame_001.png\n             │   ├── Frame_002.png\n             │   └── ...\n             └── AnimatorController.controller\n     ```\n\n3. Unity兼容性：\n   - 支持2D Sprite Renderer + Animator组件\n   - 支持Unity 2020+版本（推荐2022 LTS）\n   - 支持导入后可拖入场景，绑定动画控制器，支持事件触发（如“FireAttackStart”、“FireAttackEnd”）\n\n—\n\n🌟 四、附加创意建议（可选）\n\n- 可加入“火焰形态变化”：攻击时角色身体部分“燃烧化形”，如火焰翅膀、熔岩护甲等\n- 攻击命中时可有“火焰特效粒子”（Unity Particle System可配合使用）\n- 可设计“环境互动”：攻击时地面出现火焰纹路、角色脚下有热浪波纹\n- 可加入“Boss血条”UI联动设计（非美术资产，但需预留视觉空间）\n\n—\n\n✅ 交付验收标准：\n\n- 角色模型完整、无错位、无穿模\n- 攻击动画流畅、帧数合理、特效同步\n- 导出文件可直接导入Unity并正常播放动画\n- 无版权风险，可商用\n- 提供设计说明文档（可选，含色彩、帧数、动画逻辑说明）\n\n—\n\n📬 联系方式（如需沟通）：\n- 项目负责人：[填写]\n- 预期交付时间：[填写]\n- 优先级：高（Boss角色，影响战斗体验核心）\n\n—\n\n🔥 最终目标：打造一个视觉震撼、动作流畅、魔法感爆棚的像素火焰法师Boss，让玩家在战斗中感受到“火焰吞噬一切”的压迫与快感！\n\n—— 本简报适用于美术外包团队、独立开发者或Unity项目组，确保艺术与技术无缝衔接。",
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790485483026.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260927/77c9ad12/fce5a4df-7dd5-4b37-a408-3691659128823438156046.png?Expires=1790571882&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=NotqKQUNXA1z44o6ADUfJz0FsU4%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790485483026.png"
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.954,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9248
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9248,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.308,
+          "phase_y": 0.147,
+          "confidence": 0.954
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#43110a",
+            "#7a1f12",
+            "#99401a",
+            "#d15723",
+            "#ff6a2b",
+            "#ff8b5a",
+            "#ffd23f",
+            "#ffe98a",
+            "#bfaf68",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 8
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "创建一个像素RPG火焰法师Boss，带攻击动画，导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss角色设计与动画规范\n\n—\n\n📌 项目名称：像素RPG火焰法师Boss角色资产  \n🎯 目标平台：Unity引擎（支持导入与动画系统集成）  \n🎨 风格基调：复古像素艺术（Pixel Art） × 高燃魔法特效 × RPG史诗Boss气质  \n⏱️ 交付内容：完整角色模型 + 攻击动画序列 + 导出为Unity可导入格式（推荐Sprite Sheet或Animated Sprite）  \n🧩 适用游戏类型：2D像素风RPG / 动作冒险 / 城堡Boss战 / 魔法主题\n\n—\n\n🎨 一、角色视觉设计规范\n\n1. 角色定位：\n   - 作为中后期Boss，需具备压迫感、魔法威严与视觉冲击力\n   - 体型略高于普通角色（建议1.5~2倍标准像素角色高度），强调“高大”、“威严”、“掌控火焰”的气质\n   - 服装/装备需体现“火焰法师”身份：长袍、法杖、火焰纹饰、燃烧边缘、熔岩质感等\n\n2. 色彩方案：\n   - 主色调：炽热红、橙、金、暗褐（代表火焰与熔岩）\n   - 辅助色：黑、深灰（用于阴影与轮廓，增强立体感）\n   - 高光/特效色：亮黄、白（用于火焰粒子、魔法光效）\n   - 禁用：冷色调（如蓝、绿）除非用于魔法反噬或环境互动\n\n3. 像素风格细节：\n   - 分辨率建议：16x16 或 32x32 像素基础单位（可扩展至64x64用于高分辨率适配）\n   - 线条清晰，边缘锐利，避免模糊或半透明过渡（像素艺术核心）\n   - 服装纹理：使用像素化火焰纹、熔岩流动、魔法符文等细节，避免纯色块\n   - 面部表情：可选“冷酷”、“狂热”、“怒吼”等表情，配合攻击时情绪爆发\n\n4. 角色结构（建议分层）：\n   - 头部（带火焰冠/法帽/头饰）\n   - 身体（长袍+法杖+火焰特效）\n   - 脚部（可带火焰拖尾或熔岩脚印）\n   - 可选：魔法阵/火焰环绕特效（静态或动态）\n\n—\n\n⚡ 二、攻击动画设计规范\n\n1. 动画类型（至少包含）：\n   - 攻击前摇（法师抬手、法杖蓄力、火焰聚集）\n   - 攻击释放（法杖挥动、火焰喷射、火球投掷、范围爆炸）\n   - 攻击后摇（能量回流、喘息、火焰余烬飘散）\n   - 可选：死亡动画（火焰崩解、化为灰烬、残影消散）\n\n2. 动画帧数建议：\n   - 前摇：4~8帧\n   - 攻击释放：6~12帧（含特效爆发）\n   - 后摇：4~6帧\n   - 总动画序列建议：20~30帧（可循环或单次播放）\n\n3. 动画风格要求：\n   - 动作流畅，符合物理惯性（如法杖挥动有弧线、火焰有抛物线）\n   - 特效粒子需与角色动作同步（如火焰喷射时角色脚部有火光、法杖尖端有火花）\n   - 攻击动画需有“视觉冲击力”，建议加入“屏幕震动”、“火焰扩散”、“音效同步提示”等设计（Unity中可由脚本触发）\n\n4. 动画导入格式：\n   - 推荐：Sprite Sheet（带帧编号与时间轴）\n   - 或：单帧PNG序列（命名规范：FireMage_Attack_001.png, FireMage_Attack_002.png...）\n   - 导入Unity后需支持Animation Clip或Sprite Animator组件\n\n—\n\n⚙️ 三、技术实现与Unity集成要求\n\n1. 导出格式：\n   - PNG（透明背景，带Alpha通道）\n   - 支持Unity Sprite Importer设置（Pivot点居中、Pixels Per Unit = 16或32）\n   - 动画序列建议打包为“Animator Controller”或“Sprite Animation”资源包\n\n2. 文件命名规范：\n   - 角色主图：FireMage_Boss_SpriteSheet.png\n   - 攻击动画：FireMage_Attack_Animation_SpriteSheet.png\n   - 文件夹结构：\n     ```\n     Assets/\n     └── Characters/\n         └── FireMage/\n             ├── SpriteSheet.png\n             ├── AttackAnimation/\n             │   ├── Frame_001.png\n             │   ├── Frame_002.png\n             │   └── ...\n             └── AnimatorController.controller\n     ```\n\n3. Unity兼容性：\n   - 支持2D Sprite Renderer + Animator组件\n   - 支持Unity 2020+版本（推荐2022 LTS）\n   - 支持导入后可拖入场景，绑定动画控制器，支持事件触发（如“FireAttackStart”、“FireAttackEnd”）\n\n—\n\n🌟 四、附加创意建议（可选）\n\n- 可加入“火焰形态变化”：攻击时角色身体部分“燃烧化形”，如火焰翅膀、熔岩护甲等\n- 攻击命中时可有“火焰特效粒子”（Unity Particle System可配合使用）\n- 可设计“环境互动”：攻击时地面出现火焰纹路、角色脚下有热浪波纹\n- 可加入“Boss血条”UI联动设计（非美术资产，但需预留视觉空间）\n\n—\n\n✅ 交付验收标准：\n\n- 角色模型完整、无错位、无穿模\n- 攻击动画流畅、帧数合理、特效同步\n- 导出文件可直接导入Unity并正常播放动画\n- 无版权风险，可商用\n- 提供设计说明文档（可选，含色彩、帧数、动画逻辑说明）\n\n—\n\n📬 联系方式（如需沟通）：\n- 项目负责人：[填写]\n- 预期交付时间：[填写]\n- 优先级：高（Boss角色，影响战斗体验核心）\n\n—\n\n🔥 最终目标：打造一个视觉震撼、动作流畅、魔法感爆棚的像素火焰法师Boss，让玩家在战斗中感受到“火焰吞噬一切”的压迫与快感！\n\n—— 本简报适用于美术外包团队、独立开发者或Unity项目组，确保艺术与技术无缝衔接。"
+      },
+      "image": {
+        "file": "img_1790485483026.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260927/77c9ad12/fce5a4df-7dd5-4b37-a408-3691659128823438156046.png?Expires=1790571882&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=NotqKQUNXA1z44o6ADUfJz0FsU4%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790485483026.png"
+      }
+    },
+    "id": "T0001-6"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790485972.4487953,
+    "finished_at": 1790485994.2636755,
+    "goal": "2D横版动作游戏角色，角色序列帧，全身，手绘厚轮廓，赛璐璐，干净色块，硬阴影，\n男性忍者，黑色束发，红色眼纹，黑色紧身忍服，灰色护腕，手里剑袋，\n包含待机、走路、跳跃、攻击4套动作，统一人设统一配色，透明背景，角色拆分素材，游戏美术资产，高细节，线条干净，无畸变，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast00665",
+    "name": "2d横版动作游戏角色_角色序列帧_全身_手绘厚轮",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9081,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 21.814,
+    "character": {
+      "id": "ast00665",
+      "name": "2d横版动作游戏角色_角色序列帧_全身_手绘厚轮",
+      "type": "character",
+      "role": "npc",
+      "seed": 1553300665,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#843024",
+        "base": "#ee6328",
+        "highlight": "#ffd344",
+        "accent": "#ffea91",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#491a14",
+      "#843024",
+      "#8f3b18",
+      "#c35121",
+      "#ee6328",
+      "#f28557",
+      "#ffd344",
+      "#ffea91",
+      "#bfb06d",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#7c5a56",
+      "#a66a61",
+      "#ae7259",
+      "#d4825f",
+      "#f38f64",
+      "#f6a786",
+      "#ffdf78",
+      "#fff0b0",
+      "#d1c696",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": "🎮【游戏美术资产艺术指导简报】  \n—— 2D横版动作游戏角色设计规范（忍者主角）\n\n—\n\n📌 项目名称：  \n2D横版动作游戏 —— 主角“暗影忍者”角色动画资产\n\n—\n\n🎨 一、角色设定总纲：\n\n- **角色类型**：男性忍者（成年，体格矫健，动作敏捷）\n- **视觉风格**：手绘厚轮廓 + 赛璐璐（Cel Shading）风格，强调干净、硬朗、高对比度的视觉表现\n- **色彩基调**：统一配色系统，主色为黑、灰、红，辅以少量高光/阴影强调立体感\n- **视觉质感**：高细节、无锯齿、无畸变，线条干净利落，适合横版动作游戏的高速帧率表现\n- **输出格式**：透明背景PNG序列帧，角色拆分素材（含独立部件如：头、身体、手臂、腿、武器袋等），支持Unity导入\n\n—\n\n🧩 二、角色外观细节：\n\n✅ 头部：\n- 黑色束发（发丝有层次感，发带或发绳细节可选）\n- 红色眼纹（面部纹路，从眉心延伸至眼角，风格化、对称、赛璐璐色块填充）\n- 无面部表情（默认中性，待机时可微调眼神方向）\n\n✅ 服装：\n- 黑色紧身忍服（贴身剪裁，突出肌肉线条，但不夸张）\n- 灰色护腕（手腕处，可带绑带或金属扣细节）\n- 腰部配饰：可选黑色腰带或束带，与忍服一体感强\n\n✅ 武器/配件：\n- 手里剑袋（挂于腰侧或背部，材质为皮革或布料，带金属扣/绳结细节）\n- 可选：腰间小刀/短棍（若设定允许，需与整体风格统一）\n\n✅ 阴影与轮廓：\n- 硬阴影（Shadow）：角色下方及侧面需有明确、干净的硬阴影，增强立体感\n- 厚轮廓线（Thick Outline）：角色边缘使用统一粗细（建议2-4px）的黑色或深灰轮廓线，增强视觉分离度\n- 色块干净：无渐变、无杂色，使用纯色块（如：黑、灰、红、白）进行分层上色\n\n—\n\n🎬 三、动画动作序列（共4套，每套需完整帧序列）：\n\n1. **待机（Idle）**  \n   - 角色站立，轻微呼吸起伏，头微转，眼神可轻微扫视  \n   - 保持姿势稳定，无多余动作，突出角色存在感\n\n2. **走路（Walk）**  \n   - 两足交替迈步，身体轻微前倾，手臂自然摆动  \n   - 动作流畅，节奏适中（约12-16帧/循环）  \n   - 脚步带轻微尘土/落叶粒子（可选，非必须）\n\n3. **跳跃（Jump）**  \n   - 起跳时膝盖微屈，手臂后摆，落地时膝盖缓冲  \n   - 跳跃中可加入轻微身体前倾或后仰，增强动态感  \n   - 落地时带硬阴影变化，增强落地冲击感\n\n4. **攻击（Attack）**  \n   - 前刺/投掷手里剑动作（可选单手或双手）  \n   - 动作需有“蓄力—释放—收势”三段节奏  \n   - 攻击时可加入“手里剑飞出”粒子特效（非必须，可后期添加）  \n   - 攻击帧需有明显动作张力，如肌肉绷紧、眼神聚焦、衣摆飘动\n\n—\n\n🧱 四、美术资产交付规范：\n\n✅ 输出格式：\n- PNG序列帧（透明背景，无边框）\n- 每套动作独立文件夹命名：Idle, Walk, Jump, Attack\n- 拆分素材：角色各部件（头、躯干、手臂、腿、武器袋等）需单独导出，命名规范如：Ninja_Head.png, Ninja_Arm_Left.png 等\n- 文件命名统一格式：[角色名]_[动作名]_[帧号].png（如：Ninja_Idle_001.png）\n\n✅ 技术要求：\n- 分辨率：1024x1024（或按项目需求，如512x512，需注明）\n- 画质：高细节，无压缩伪影，无锯齿\n- 线条：干净、无断线、无畸变，符合Unity导入规范\n- 导入Unity：支持Sprite Atlas或单个Sprite导入，动画可直接拖入Animator Controller\n\n—\n\n🌈 五、风格一致性要求：\n\n- 所有动作必须保持统一人设、统一配色、统一轮廓线粗细、统一阴影方向（建议从左上45°）\n- 色彩使用：  \n  - 服装主色：#000000（黑）  \n  - 护腕/腰带：#888888（灰）  \n  - 眼纹/装饰：#FF0000（红）  \n  - 阴影：#222222（深灰）  \n  - 轮廓线：#000000（黑）  \n  - 高光：#FFFFFF（白）或 #EEEEEE（浅灰）\n\n—\n\n📦 六、交付物清单：\n\n1. 所有动作序列帧（PNG，透明背景，高分辨率）\n2. 拆分角色部件素材（PNG，透明背景）\n3. 动画帧数说明文档（每套动作帧数、循环方式、关键帧说明）\n4. 配色表（Color Palette）文件（.txt 或 .json）\n5. Unity导入说明文档（含Sprite设置、动画导入方式、图层命名建议）\n\n—\n\n🎯 七、目标效果：\n\n- 角色在横版动作游戏中具有极强的视觉辨识度与动作表现力\n- 动画流畅、节奏清晰、动作张力强，符合“忍者”敏捷、隐秘、爆发的特性\n- 美术风格统一、干净、硬朗，适配Unity引擎高效渲染与动画系统\n- 为后续UI、特效、敌人设计提供统一视觉基准\n\n—\n\n📎 附注：\n\n- 请提供角色设计草图或概念参考图（如有）\n- 若需添加“变身”、“技能特效”、“受击动画”等扩展动作，需另行说明\n- 交付前需通过Unity预览测试，确保动画无错帧、无拉伸、无色块错位\n\n—\n\n✅ 本简报为最终美术指导依据，所有设计需严格遵循，确保资产质量与项目一致性。\n\n—— 项目美术总监 / 游戏美术负责人  \n📅 日期：2025年4月5日  \n🎮 项目名称：《暗影之刃》2D横版动作游戏\n\n—\n\n（可附上角色参考图、配色示意图、动作节奏示意草图等辅助材料）",
+    "asset": {
+      "id": "ast00665",
+      "name": "2d横版动作游戏角色_角色序列帧_全身_手绘厚轮",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1553300665,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#843024",
+          "base": "#ee6328",
+          "highlight": "#ffd344",
+          "accent": "#ffea91",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast00665",
+        "name": "2d横版动作游戏角色_角色序列帧_全身_手绘厚轮",
+        "type": "character",
+        "role": "npc",
+        "seed": 1553300665,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#843024",
+          "base": "#ee6328",
+          "highlight": "#ffd344",
+          "accent": "#ffea91",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.899,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9081
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9081,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.335,
+          "phase_y": 0.008,
+          "confidence": 0.899
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#491a14",
+            "#843024",
+            "#8f3b18",
+            "#c35121",
+            "#ee6328",
+            "#f28557",
+            "#ffd344",
+            "#ffea91",
+            "#bfb06d",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#7c5a56",
+            "#a66a61",
+            "#ae7259",
+            "#d4825f",
+            "#f38f64",
+            "#f6a786",
+            "#ffdf78",
+            "#fff0b0",
+            "#d1c696",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#843024",
+            "base": "#ee6328",
+            "highlight": "#ffd344",
+            "accent": "#ffea91",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast00665",
+          "type": "character",
+          "resources": {
+            "texture": "ast00665.png",
+            "animation": "ast00665.anim",
+            "prefab": "ast00665.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast00665.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast00665.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast00665.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast00665.png",
+          "Animation": "Assets/Animation/ast00665.anim",
+          "Prefab": "Assets/Prefab/ast00665.prefab",
+          "Controller": "Assets/Controller/ast00665.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "2D横版动作游戏角色，角色序列帧，全身，手绘厚轮廓，赛璐璐，干净色块，硬阴影，\n男性忍者，黑色束发，红色眼纹，黑色紧身忍服，灰色护腕，手里剑袋，\n包含待机、走路、跳跃、攻击4套动作，统一人设统一配色，透明背景，角色拆分素材，游戏美术资产，高细节，线条干净，无畸变，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【游戏美术资产艺术指导简报】  \n—— 2D横版动作游戏角色设计规范（忍者主角）\n\n—\n\n📌 项目名称：  \n2D横版动作游戏 —— 主角“暗影忍者”角色动画资产\n\n—\n\n🎨 一、角色设定总纲：\n\n- **角色类型**：男性忍者（成年，体格矫健，动作敏捷）\n- **视觉风格**：手绘厚轮廓 + 赛璐璐（Cel Shading）风格，强调干净、硬朗、高对比度的视觉表现\n- **色彩基调**：统一配色系统，主色为黑、灰、红，辅以少量高光/阴影强调立体感\n- **视觉质感**：高细节、无锯齿、无畸变，线条干净利落，适合横版动作游戏的高速帧率表现\n- **输出格式**：透明背景PNG序列帧，角色拆分素材（含独立部件如：头、身体、手臂、腿、武器袋等），支持Unity导入\n\n—\n\n🧩 二、角色外观细节：\n\n✅ 头部：\n- 黑色束发（发丝有层次感，发带或发绳细节可选）\n- 红色眼纹（面部纹路，从眉心延伸至眼角，风格化、对称、赛璐璐色块填充）\n- 无面部表情（默认中性，待机时可微调眼神方向）\n\n✅ 服装：\n- 黑色紧身忍服（贴身剪裁，突出肌肉线条，但不夸张）\n- 灰色护腕（手腕处，可带绑带或金属扣细节）\n- 腰部配饰：可选黑色腰带或束带，与忍服一体感强\n\n✅ 武器/配件：\n- 手里剑袋（挂于腰侧或背部，材质为皮革或布料，带金属扣/绳结细节）\n- 可选：腰间小刀/短棍（若设定允许，需与整体风格统一）\n\n✅ 阴影与轮廓：\n- 硬阴影（Shadow）：角色下方及侧面需有明确、干净的硬阴影，增强立体感\n- 厚轮廓线（Thick Outline）：角色边缘使用统一粗细（建议2-4px）的黑色或深灰轮廓线，增强视觉分离度\n- 色块干净：无渐变、无杂色，使用纯色块（如：黑、灰、红、白）进行分层上色\n\n—\n\n🎬 三、动画动作序列（共4套，每套需完整帧序列）：\n\n1. **待机（Idle）**  \n   - 角色站立，轻微呼吸起伏，头微转，眼神可轻微扫视  \n   - 保持姿势稳定，无多余动作，突出角色存在感\n\n2. **走路（Walk）**  \n   - 两足交替迈步，身体轻微前倾，手臂自然摆动  \n   - 动作流畅，节奏适中（约12-16帧/循环）  \n   - 脚步带轻微尘土/落叶粒子（可选，非必须）\n\n3. **跳跃（Jump）**  \n   - 起跳时膝盖微屈，手臂后摆，落地时膝盖缓冲  \n   - 跳跃中可加入轻微身体前倾或后仰，增强动态感  \n   - 落地时带硬阴影变化，增强落地冲击感\n\n4. **攻击（Attack）**  \n   - 前刺/投掷手里剑动作（可选单手或双手）  \n   - 动作需有“蓄力—释放—收势”三段节奏  \n   - 攻击时可加入“手里剑飞出”粒子特效（非必须，可后期添加）  \n   - 攻击帧需有明显动作张力，如肌肉绷紧、眼神聚焦、衣摆飘动\n\n—\n\n🧱 四、美术资产交付规范：\n\n✅ 输出格式：\n- PNG序列帧（透明背景，无边框）\n- 每套动作独立文件夹命名：Idle, Walk, Jump, Attack\n- 拆分素材：角色各部件（头、躯干、手臂、腿、武器袋等）需单独导出，命名规范如：Ninja_Head.png, Ninja_Arm_Left.png 等\n- 文件命名统一格式：[角色名]_[动作名]_[帧号].png（如：Ninja_Idle_001.png）\n\n✅ 技术要求：\n- 分辨率：1024x1024（或按项目需求，如512x512，需注明）\n- 画质：高细节，无压缩伪影，无锯齿\n- 线条：干净、无断线、无畸变，符合Unity导入规范\n- 导入Unity：支持Sprite Atlas或单个Sprite导入，动画可直接拖入Animator Controller\n\n—\n\n🌈 五、风格一致性要求：\n\n- 所有动作必须保持统一人设、统一配色、统一轮廓线粗细、统一阴影方向（建议从左上45°）\n- 色彩使用：  \n  - 服装主色：#000000（黑）  \n  - 护腕/腰带：#888888（灰）  \n  - 眼纹/装饰：#FF0000（红）  \n  - 阴影：#222222（深灰）  \n  - 轮廓线：#000000（黑）  \n  - 高光：#FFFFFF（白）或 #EEEEEE（浅灰）\n\n—\n\n📦 六、交付物清单：\n\n1. 所有动作序列帧（PNG，透明背景，高分辨率）\n2. 拆分角色部件素材（PNG，透明背景）\n3. 动画帧数说明文档（每套动作帧数、循环方式、关键帧说明）\n4. 配色表（Color Palette）文件（.txt 或 .json）\n5. Unity导入说明文档（含Sprite设置、动画导入方式、图层命名建议）\n\n—\n\n🎯 七、目标效果：\n\n- 角色在横版动作游戏中具有极强的视觉辨识度与动作表现力\n- 动画流畅、节奏清晰、动作张力强，符合“忍者”敏捷、隐秘、爆发的特性\n- 美术风格统一、干净、硬朗，适配Unity引擎高效渲染与动画系统\n- 为后续UI、特效、敌人设计提供统一视觉基准\n\n—\n\n📎 附注：\n\n- 请提供角色设计草图或概念参考图（如有）\n- 若需添加“变身”、“技能特效”、“受击动画”等扩展动作，需另行说明\n- 交付前需通过Unity预览测试，确保动画无错帧、无拉伸、无色块错位\n\n—\n\n✅ 本简报为最终美术指导依据，所有设计需严格遵循，确保资产质量与项目一致性。\n\n—— 项目美术总监 / 游戏美术负责人  \n📅 日期：2025年4月5日  \n🎮 项目名称：《暗影之刃》2D横版动作游戏\n\n—\n\n（可附上角色参考图、配色示意图、动作节奏示意草图等辅助材料）"
+      }
+    },
+    "id": "T0002-3"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790486709.389106,
+    "finished_at": 1790486728.9227407,
+    "goal": "年轻男性冒险者，19岁，精瘦健硕身材，深棕色凌乱短发，琥珀色锐利眼睛，左脸颊一道浅疤，神情冷静警惕，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast71851",
+    "name": "年轻男性冒险者_19岁_精瘦健硕身材_深棕色凌乱",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9048,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 19.533,
+    "character": {
+      "id": "ast71851",
+      "name": "年轻男性冒险者_19岁_精瘦健硕身材_深棕色凌乱",
+      "type": "character",
+      "role": "npc",
+      "seed": 1286271851,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7f281b",
+        "base": "#f46529",
+        "highlight": "#ffd64e",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#46160f",
+      "#7f281b",
+      "#923d19",
+      "#c85322",
+      "#f46529",
+      "#f68758",
+      "#ffd64e",
+      "#ffeb97",
+      "#bfb071",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": {
+      "file": "img_1790486728297.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ef/20260927/77c9ad12/1a3ebc83-abdd-4ec5-99d0-0741fd3e00ac281485183.png?Expires=1790573128&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ZlZGgk8ZLvB%2FREYzN%2Fz%2Bqms5i5Y%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790486728297.png"
+    },
+    "enhanced_prompt": "🎮【游戏角色艺术指导简报】——“年轻男性冒险者”角色设计\n\n—\n\n📌 项目名称：  \n《荒野之痕》（暂定名）—— 主角角色“艾登·瑞恩”（Aiden Ryan）艺术设定\n\n—\n\n🎯 角色定位：  \n主角 / 可操作角色 / 年轻冒险者（19岁）  \n核心气质：冷静、警惕、坚韧、略带孤僻感  \n背景设定：出身边陲小镇，因家族被掠夺而踏上复仇与探索之路，身负秘密使命，擅长潜行与近战。\n\n—\n\n📏 身体特征：\n\n- 年龄：19岁（青年初期，尚未完全成熟但已具担当）\n- 身材：精瘦但肌肉线条分明（非健美型，而是“实战型”体格）—— 背部、肩颈、手臂有明显运动痕迹，腹部线条紧实，腿部修长有力，适合奔跑与攀爬。\n- 体态：略带前倾的警觉姿态，肩部微耸，重心下沉，随时准备应对突发状况。\n- 皮肤：偏小麦色，略带风霜感，非白皙，体现长期户外活动。\n- 伤疤：左脸颊（从颧骨斜向鼻翼）一道浅色、略带不规则的旧疤，长度约3cm，边缘略显陈旧，无红肿，暗示曾经历刀伤或战斗，非新伤，带有故事感。\n\n—\n\n💇‍♂️ 外貌细节：\n\n- 发型：深棕色（#5D4037 或 #4B3621 调色板），短发（长度约2.5–3cm），略显凌乱，发丝自然垂落，部分发丝被风吹起或沾在额前，体现动态感与环境互动。\n- 眼睛：琥珀色（#D4A500 或 #C19A6B），瞳孔锐利，眼神冷静、警惕、略带审视，不带情绪但充满观察力。眼白略带血丝，暗示疲惫或长期警戒。\n- 眉毛：自然浓密，略带粗犷，眉峰微挑，强化“警觉”表情。\n- 面部表情：中性偏冷，嘴唇紧闭，下颌线清晰，无多余表情，体现“沉默寡言”或“内心压抑”的性格。\n- 无胡须（或仅留极短胡茬），保持年轻感，但不显稚嫩。\n\n—\n\n🎨 艺术风格要求：\n\n- 风格：写实偏幻想（Realistic Fantasy），强调角色在奇幻世界中的“真实感”与“生存感”。\n- 细节：高精度建模（PBR材质），皮肤有细微毛孔、汗渍、灰尘、风化痕迹；衣物有磨损、补丁、缝线、污渍。\n- 色彩：整体色调偏大地色系（土棕、灰褐、沙黄），与环境融合，避免过于鲜艳或卡通化。\n- 动态表现：角色需支持多种动作（奔跑、攀爬、潜行、战斗、蹲伏），设计时需考虑骨骼结构与布料物理模拟的合理性。\n\n—\n\n🧩 Unity导入要求：\n\n- 格式：FBX（带骨骼动画）或 glTF 2.0（如支持）\n- 材质：PBR材质（Albedo, Normal, Roughness, Metallic, AO）\n- 动画：至少包含Idle、Walk、Run、Crouch、Jump、Attack、Block、Die（可选）\n- 骨骼命名规范：遵循Unity标准命名（如 “Hips”, “Spine”, “LeftArm”, “RightLeg” 等）\n- UV展开：无重叠，无拉伸，预留贴图空间（如面部、手部、衣物细节）\n- 优化：LOD层级合理，面数控制在10,000–15,000三角面内（视引擎需求调整）\n- 导入后需在Unity中可正常绑定动画控制器（Animator Controller），支持状态机切换\n\n—\n\n🖼️ 参考图建议（供美术参考）：\n\n- 人物参考：《巫师3》杰洛特（年轻版）、《黑暗之魂》主角、《塞尔达传说：旷野之息》林克（非卡通版）、《最后生还者》乔尔（青年版）\n- 眼神参考：《生化危机》里昂、《刺客信条》艾吉奥（青年期）\n- 伤疤参考：《战神》奎托斯（年轻时）、《荒野大镖客2》亚瑟·摩根（面部伤痕）\n\n—\n\n📝 附加说明：\n\n- 角色需具备“可塑性”：未来可扩展为不同职业（如盗贼、战士、弓手）时，服装/装备可替换，但基础面部与体型保持一致。\n- 需提供角色“正面、侧面、背面、四分之三视角”标准参考图（PNG透明背景，分辨率1024x1024或更高）\n- 如有表情包（如愤怒、惊讶、疲惫、微笑），可选提供，但非必需\n- 最终交付物需包含：模型文件、材质包、动画文件、参考图、技术说明文档（含骨骼结构、贴图规格、导入说明）\n\n—\n\n✅ 交付标准：\n\n- 无模型错误（无穿模、无面片错位、无UV拉伸）\n- 动画流畅自然，无卡顿或抖动\n- Unity导入后可正常播放动画，无材质丢失或贴图错位\n- 通过美术审核与技术测试（由程序与动画师联合验收）\n\n—\n\n📬 负责人：  \n美术总监：[填写姓名]  \n技术对接：[填写姓名]  \n交付截止：[填写日期]\n\n—\n\n🌟 设计理念关键词：  \n“沉默的猎手”、“风尘仆仆的少年”、“冷静如刃”、“伤痕是勋章”、“在危险中保持清醒”\n\n—\n\n请美术团队根据此简报进行角色建模、贴图、绑定与动画制作，确保角色在视觉与功能上完美契合游戏世界观与玩法需求。\n\n—— 《荒野之痕》项目组 敬上 ——\n\n（注：本简报可作为美术外包或内部团队执行的正式指导文件，建议配合角色设定文档与世界观背景一同使用）",
+    "asset": {
+      "id": "ast71851",
+      "name": "年轻男性冒险者_19岁_精瘦健硕身材_深棕色凌乱",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 1286271851,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7f281b",
+          "base": "#f46529",
+          "highlight": "#ffd64e",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790486728297.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ef/20260927/77c9ad12/1a3ebc83-abdd-4ec5-99d0-0741fd3e00ac281485183.png?Expires=1790573128&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ZlZGgk8ZLvB%2FREYzN%2Fz%2Bqms5i5Y%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790486728297.png"
+        }
+      },
+      "character": {
+        "id": "ast71851",
+        "name": "年轻男性冒险者_19岁_精瘦健硕身材_深棕色凌乱",
+        "type": "character",
+        "role": "npc",
+        "seed": 1286271851,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7f281b",
+          "base": "#f46529",
+          "highlight": "#ffd64e",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.904,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9048
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9048,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.034,
+          "phase_y": 0.202,
+          "confidence": 0.904
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#46160f",
+            "#7f281b",
+            "#923d19",
+            "#c85322",
+            "#f46529",
+            "#f68758",
+            "#ffd64e",
+            "#ffeb97",
+            "#bfb071",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7f281b",
+            "base": "#f46529",
+            "highlight": "#ffd64e",
+            "accent": "#ffeb97",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 7
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast71851",
+          "type": "character",
+          "resources": {
+            "texture": "ast71851.png",
+            "animation": "ast71851.anim",
+            "prefab": "ast71851.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast71851.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast71851.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast71851.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast71851.png",
+          "Animation": "Assets/Animation/ast71851.anim",
+          "Prefab": "Assets/Prefab/ast71851.prefab",
+          "Controller": "Assets/Controller/ast71851.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "年轻男性冒险者，19岁，精瘦健硕身材，深棕色凌乱短发，琥珀色锐利眼睛，左脸颊一道浅疤，神情冷静警惕，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【游戏角色艺术指导简报】——“年轻男性冒险者”角色设计\n\n—\n\n📌 项目名称：  \n《荒野之痕》（暂定名）—— 主角角色“艾登·瑞恩”（Aiden Ryan）艺术设定\n\n—\n\n🎯 角色定位：  \n主角 / 可操作角色 / 年轻冒险者（19岁）  \n核心气质：冷静、警惕、坚韧、略带孤僻感  \n背景设定：出身边陲小镇，因家族被掠夺而踏上复仇与探索之路，身负秘密使命，擅长潜行与近战。\n\n—\n\n📏 身体特征：\n\n- 年龄：19岁（青年初期，尚未完全成熟但已具担当）\n- 身材：精瘦但肌肉线条分明（非健美型，而是“实战型”体格）—— 背部、肩颈、手臂有明显运动痕迹，腹部线条紧实，腿部修长有力，适合奔跑与攀爬。\n- 体态：略带前倾的警觉姿态，肩部微耸，重心下沉，随时准备应对突发状况。\n- 皮肤：偏小麦色，略带风霜感，非白皙，体现长期户外活动。\n- 伤疤：左脸颊（从颧骨斜向鼻翼）一道浅色、略带不规则的旧疤，长度约3cm，边缘略显陈旧，无红肿，暗示曾经历刀伤或战斗，非新伤，带有故事感。\n\n—\n\n💇‍♂️ 外貌细节：\n\n- 发型：深棕色（#5D4037 或 #4B3621 调色板），短发（长度约2.5–3cm），略显凌乱，发丝自然垂落，部分发丝被风吹起或沾在额前，体现动态感与环境互动。\n- 眼睛：琥珀色（#D4A500 或 #C19A6B），瞳孔锐利，眼神冷静、警惕、略带审视，不带情绪但充满观察力。眼白略带血丝，暗示疲惫或长期警戒。\n- 眉毛：自然浓密，略带粗犷，眉峰微挑，强化“警觉”表情。\n- 面部表情：中性偏冷，嘴唇紧闭，下颌线清晰，无多余表情，体现“沉默寡言”或“内心压抑”的性格。\n- 无胡须（或仅留极短胡茬），保持年轻感，但不显稚嫩。\n\n—\n\n🎨 艺术风格要求：\n\n- 风格：写实偏幻想（Realistic Fantasy），强调角色在奇幻世界中的“真实感”与“生存感”。\n- 细节：高精度建模（PBR材质），皮肤有细微毛孔、汗渍、灰尘、风化痕迹；衣物有磨损、补丁、缝线、污渍。\n- 色彩：整体色调偏大地色系（土棕、灰褐、沙黄），与环境融合，避免过于鲜艳或卡通化。\n- 动态表现：角色需支持多种动作（奔跑、攀爬、潜行、战斗、蹲伏），设计时需考虑骨骼结构与布料物理模拟的合理性。\n\n—\n\n🧩 Unity导入要求：\n\n- 格式：FBX（带骨骼动画）或 glTF 2.0（如支持）\n- 材质：PBR材质（Albedo, Normal, Roughness, Metallic, AO）\n- 动画：至少包含Idle、Walk、Run、Crouch、Jump、Attack、Block、Die（可选）\n- 骨骼命名规范：遵循Unity标准命名（如 “Hips”, “Spine”, “LeftArm”, “RightLeg” 等）\n- UV展开：无重叠，无拉伸，预留贴图空间（如面部、手部、衣物细节）\n- 优化：LOD层级合理，面数控制在10,000–15,000三角面内（视引擎需求调整）\n- 导入后需在Unity中可正常绑定动画控制器（Animator Controller），支持状态机切换\n\n—\n\n🖼️ 参考图建议（供美术参考）：\n\n- 人物参考：《巫师3》杰洛特（年轻版）、《黑暗之魂》主角、《塞尔达传说：旷野之息》林克（非卡通版）、《最后生还者》乔尔（青年版）\n- 眼神参考：《生化危机》里昂、《刺客信条》艾吉奥（青年期）\n- 伤疤参考：《战神》奎托斯（年轻时）、《荒野大镖客2》亚瑟·摩根（面部伤痕）\n\n—\n\n📝 附加说明：\n\n- 角色需具备“可塑性”：未来可扩展为不同职业（如盗贼、战士、弓手）时，服装/装备可替换，但基础面部与体型保持一致。\n- 需提供角色“正面、侧面、背面、四分之三视角”标准参考图（PNG透明背景，分辨率1024x1024或更高）\n- 如有表情包（如愤怒、惊讶、疲惫、微笑），可选提供，但非必需\n- 最终交付物需包含：模型文件、材质包、动画文件、参考图、技术说明文档（含骨骼结构、贴图规格、导入说明）\n\n—\n\n✅ 交付标准：\n\n- 无模型错误（无穿模、无面片错位、无UV拉伸）\n- 动画流畅自然，无卡顿或抖动\n- Unity导入后可正常播放动画，无材质丢失或贴图错位\n- 通过美术审核与技术测试（由程序与动画师联合验收）\n\n—\n\n📬 负责人：  \n美术总监：[填写姓名]  \n技术对接：[填写姓名]  \n交付截止：[填写日期]\n\n—\n\n🌟 设计理念关键词：  \n“沉默的猎手”、“风尘仆仆的少年”、“冷静如刃”、“伤痕是勋章”、“在危险中保持清醒”\n\n—\n\n请美术团队根据此简报进行角色建模、贴图、绑定与动画制作，确保角色在视觉与功能上完美契合游戏世界观与玩法需求。\n\n—— 《荒野之痕》项目组 敬上 ——\n\n（注：本简报可作为美术外包或内部团队执行的正式指导文件，建议配合角色设定文档与世界观背景一同使用）"
+      },
+      "image": {
+        "file": "img_1790486728297.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ef/20260927/77c9ad12/1a3ebc83-abdd-4ec5-99d0-0741fd3e00ac281485183.png?Expires=1790573128&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ZlZGgk8ZLvB%2FREYzN%2Fz%2Bqms5i5Y%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790486728297.png"
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ef/20260927/77c9ad12/1a3ebc83-abdd-4ec5-99d0-0741fd3e00ac281485183.png?Expires=1790573128&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ZlZGgk8ZLvB%2FREYzN%2Fz%2Bqms5i5Y%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790489260532.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/2b/20260927/901e463f/633fdc98-8fb3-4c66-af0a-82fb64a2fc212094673170.png?Expires=1790575660&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=0ZxzC43aNhAKOXFaum1BMtDqZdA%3D",
+          "model": "wanx2.1-imageedit"
+        },
+        "back": {
+          "file": "edit_1790489273176.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/0f/20260927/901e463f/5b8e51d4-76e3-4517-b73d-469245ac84ef3358689321.png?Expires=1790575672&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=U5d4yjlIohzHeyLohiiKArdeGII%3D",
+          "model": "wanx2.1-imageedit"
+        }
+      }
+    },
+    "id": "T0003-3"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790487347.1894243,
+    "finished_at": 1790487390.547913,
+    "goal": "生成一个像素RPG火焰法师角色，带待机动画，导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9248,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 43.358,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#43110a",
+      "#7a1f12",
+      "#99401a",
+      "#d15723",
+      "#ff6a2b",
+      "#ff8b5a",
+      "#ffd23f",
+      "#ffe98a",
+      "#bfaf68",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": {
+      "file": "img_1790487372429.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260927/77c9ad12/2388fad5-11d0-4ee5-8e07-f691f697441d1590932300.png?Expires=1790573771&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=vLT0pC0UKPjJo4MbsG927ng0xBQ%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487372429.png"
+    },
+    "enhanced_prompt": "🎮【像素RPG火焰法师角色艺术指导简报】  \n—— 适用于Unity引擎导入与动画系统集成\n\n—\n\n📌 项目名称：  \n“烈焰术士” —— 像素风格RPG火焰法师角色资产\n\n—\n\n🎨 一、核心视觉风格\n\n- **美术风格**：复古像素艺术（Pixel Art），16-bit/32-bit风格参考（如《星之卡比》《暗黑地牢》《星露谷物语》或《Rogue Legacy》），强调高辨识度与动态表现力。\n- **分辨率要求**：角色基础尺寸建议为 32x48 或 64x96 像素（可扩展至128x192，视引擎需求），支持多帧动画。\n- **色彩方案**：\n  - 主色调：炽热红、橙、金黄、暗灰、深紫（表现火焰与魔法能量）\n  - 辅助色：黑、深褐、暗蓝（用于阴影、衣袍、魔法符文）\n  - 高光/火焰特效：使用发光色（如亮橙、白、淡黄）增强视觉冲击\n  - 色彩数量：每帧角色最多使用 8–12 色（含透明背景），确保在低分辨率下仍清晰可辨\n- **视觉质感**：角色需有“魔法能量流动感”，火焰特效可采用动态像素闪烁、粒子扩散、边缘辉光等手法，增强“施法中”的氛围。\n\n—\n\n🧍 二、角色设计要素\n\n- **角色类型**：火焰法师（Fire Mage），非战士/盗贼/牧师，强调魔法施放与元素掌控。\n- **外貌特征**：\n  - 头部：戴有火焰纹饰的尖顶法帽或头巾，或燃烧的发丝/光环\n  - 身体：长袍/斗篷，边缘有火焰纹路或飘动的火焰粒子\n  - 手部：持法杖或双手结印，法杖顶端有火焰球或符文\n  - 脚部：靴子或法靴，可带火焰拖尾或踏地溅火特效\n  - 面部：可选（非必须）：表情可为专注、狂热、冷峻，体现施法状态\n- **服装细节**：\n  - 长袍应有层次感，如披风、袖口、腰带、符文刺绣\n  - 可加入“魔法能量溢出”效果：如衣角飘动、火焰从袖口/法杖喷发\n- **魔法特效**：\n  - 施法时可有“火焰环绕”、“地面燃爆”、“火球轨迹”等动态粒子（可单独提供特效图层或动画帧）\n  - 火焰特效需与角色动画同步，避免“漂浮感”\n\n—\n\n🎬 三、动画系统要求（待机动画）\n\n- **动画帧数**：至少包含 4–8 帧的“待机/站立”动画（循环播放），建议支持“呼吸感”或“魔法能量脉动”效果\n- **动画类型**：\n  - 站立待机（循环）\n  - 轻微魔法吟唱（可选，如手部微动、火焰闪烁）\n  - 施法预备动作（如法杖抬起、火焰聚集）\n  - 可扩展：攻击动画、移动动画、受伤动画、死亡动画（如需）\n- **动画帧率**：建议 8–12 FPS（像素风格常用），确保流畅但保留“复古感”\n- **动画格式**：\n  - 输出为独立图层或帧序列（PNG序列或Sprite Sheet）\n  - 支持透明背景（Alpha通道）\n  - 建议提供“单帧图层”与“动画图层”两种格式，便于Unity导入与动画控制器绑定\n- **动画命名规范**（建议）：\n  - `Mage_Idle_00.png` ~ `Mage_Idle_07.png`\n  - `Mage_Cast_00.png` ~ `Mage_Cast_03.png`\n  - `Mage_Move_00.png` ~ `Mage_Move_05.png`\n\n—\n\n⚙️ 四、技术规格与Unity集成要求\n\n- **文件格式**：\n  - 主角色图：PNG（带透明背景）\n  - 动画序列：PNG帧序列或Sprite Sheet（推荐使用Sprite Sheet，便于Unity导入）\n  - 可选：提供动画图层（如火焰粒子层、魔法特效层）用于后期合成\n- **导出分辨率**：\n  - 建议输出为 64x96 或 128x192（可缩放），确保在Unity中支持不同分辨率缩放\n- **Unity导入设置建议**：\n  - 导入时设置为“Sprite (2D and UI)”\n  - 选择“Sprite Mode: Single”\n  - 设置“Pixels Per Unit”为 16 或 32（根据项目单位系统）\n  - 动画帧序列建议使用“Sprite Animation”或“Animator Controller”绑定\n- **动画控制器**：\n  - 需提供动画状态机结构建议（如 Idle → Cast → Move → Attack）\n  - 可提供动画参数（如 “isCasting”, “isMoving”）供脚本调用\n- **兼容性**：\n  - 确保角色在不同分辨率下（如 1080p、4K）仍保持视觉清晰度\n  - 避免使用过细线条或高饱和度纯色，防止像素锯齿或色彩溢出\n\n—\n\n📦 五、交付内容清单\n\n✅ 角色主图（站立待机帧序列）  \n✅ 角色动画帧序列（至少待机循环动画）  \n✅ 可选：施法、移动、受伤动画帧序列  \n✅ 可选：火焰粒子特效图层（PNG或Sprite Sheet）  \n✅ 可选：角色设计草图或概念图（用于美术对齐）  \n✅ 动画命名规范文档（含帧编号与状态说明）  \n✅ Unity导入建议文档（含单位设置、图层结构、动画绑定说明）\n\n—\n\n🎯 六、风格参考图（建议提供）\n\n- 参考角色：《Rogue Legacy》火焰法师、《Stardew Valley》魔法角色、《Celeste》火焰元素、《Terraria》法师NPC\n- 参考动画：《Hades》施法动画、《Ori》魔法粒子流动、《Dead Cells》角色待机动画\n\n—\n\n📝 七、备注与注意事项\n\n- 所有动画需“无缝循环”，避免卡顿或跳帧\n- 火焰特效需与角色“绑定”而非独立漂浮，确保视觉统一\n- 避免使用过多颜色或复杂纹理，保持像素风格“简洁有力”\n- 如需扩展角色（如升级形态、装备变化），请提前沟通设计方向\n- 交付前请提供“预览动画视频”或“Unity测试场景截图”以确认动画流畅度\n\n—\n\n📬 交付方式：  \n请将所有资源打包为 ZIP 文件，命名格式：  \n`[项目名]_Mage_Fire法师_角色资产_v1.0.zip`\n\n—\n\n✅ 本简报为美术与程序协作的基准文档，美术团队需确保视觉与技术规格完全对齐，程序团队将据此构建动画系统与角色控制器。\n\n——  \n🔥 烈焰术士，即将在你的像素世界中点燃魔法之火 ——  \n请按此方向创作，确保角色既具视觉冲击力，又完美适配Unity动画系统。\n\n（简报结束）",
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790487372429.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260927/77c9ad12/2388fad5-11d0-4ee5-8e07-f691f697441d1590932300.png?Expires=1790573771&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=vLT0pC0UKPjJo4MbsG927ng0xBQ%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487372429.png"
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.954,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9248
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9248,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.308,
+          "phase_y": 0.147,
+          "confidence": 0.954
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#43110a",
+            "#7a1f12",
+            "#99401a",
+            "#d15723",
+            "#ff6a2b",
+            "#ff8b5a",
+            "#ffd23f",
+            "#ffe98a",
+            "#bfaf68",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 8
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个像素RPG火焰法师角色，带待机动画，导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【像素RPG火焰法师角色艺术指导简报】  \n—— 适用于Unity引擎导入与动画系统集成\n\n—\n\n📌 项目名称：  \n“烈焰术士” —— 像素风格RPG火焰法师角色资产\n\n—\n\n🎨 一、核心视觉风格\n\n- **美术风格**：复古像素艺术（Pixel Art），16-bit/32-bit风格参考（如《星之卡比》《暗黑地牢》《星露谷物语》或《Rogue Legacy》），强调高辨识度与动态表现力。\n- **分辨率要求**：角色基础尺寸建议为 32x48 或 64x96 像素（可扩展至128x192，视引擎需求），支持多帧动画。\n- **色彩方案**：\n  - 主色调：炽热红、橙、金黄、暗灰、深紫（表现火焰与魔法能量）\n  - 辅助色：黑、深褐、暗蓝（用于阴影、衣袍、魔法符文）\n  - 高光/火焰特效：使用发光色（如亮橙、白、淡黄）增强视觉冲击\n  - 色彩数量：每帧角色最多使用 8–12 色（含透明背景），确保在低分辨率下仍清晰可辨\n- **视觉质感**：角色需有“魔法能量流动感”，火焰特效可采用动态像素闪烁、粒子扩散、边缘辉光等手法，增强“施法中”的氛围。\n\n—\n\n🧍 二、角色设计要素\n\n- **角色类型**：火焰法师（Fire Mage），非战士/盗贼/牧师，强调魔法施放与元素掌控。\n- **外貌特征**：\n  - 头部：戴有火焰纹饰的尖顶法帽或头巾，或燃烧的发丝/光环\n  - 身体：长袍/斗篷，边缘有火焰纹路或飘动的火焰粒子\n  - 手部：持法杖或双手结印，法杖顶端有火焰球或符文\n  - 脚部：靴子或法靴，可带火焰拖尾或踏地溅火特效\n  - 面部：可选（非必须）：表情可为专注、狂热、冷峻，体现施法状态\n- **服装细节**：\n  - 长袍应有层次感，如披风、袖口、腰带、符文刺绣\n  - 可加入“魔法能量溢出”效果：如衣角飘动、火焰从袖口/法杖喷发\n- **魔法特效**：\n  - 施法时可有“火焰环绕”、“地面燃爆”、“火球轨迹”等动态粒子（可单独提供特效图层或动画帧）\n  - 火焰特效需与角色动画同步，避免“漂浮感”\n\n—\n\n🎬 三、动画系统要求（待机动画）\n\n- **动画帧数**：至少包含 4–8 帧的“待机/站立”动画（循环播放），建议支持“呼吸感”或“魔法能量脉动”效果\n- **动画类型**：\n  - 站立待机（循环）\n  - 轻微魔法吟唱（可选，如手部微动、火焰闪烁）\n  - 施法预备动作（如法杖抬起、火焰聚集）\n  - 可扩展：攻击动画、移动动画、受伤动画、死亡动画（如需）\n- **动画帧率**：建议 8–12 FPS（像素风格常用），确保流畅但保留“复古感”\n- **动画格式**：\n  - 输出为独立图层或帧序列（PNG序列或Sprite Sheet）\n  - 支持透明背景（Alpha通道）\n  - 建议提供“单帧图层”与“动画图层”两种格式，便于Unity导入与动画控制器绑定\n- **动画命名规范**（建议）：\n  - `Mage_Idle_00.png` ~ `Mage_Idle_07.png`\n  - `Mage_Cast_00.png` ~ `Mage_Cast_03.png`\n  - `Mage_Move_00.png` ~ `Mage_Move_05.png`\n\n—\n\n⚙️ 四、技术规格与Unity集成要求\n\n- **文件格式**：\n  - 主角色图：PNG（带透明背景）\n  - 动画序列：PNG帧序列或Sprite Sheet（推荐使用Sprite Sheet，便于Unity导入）\n  - 可选：提供动画图层（如火焰粒子层、魔法特效层）用于后期合成\n- **导出分辨率**：\n  - 建议输出为 64x96 或 128x192（可缩放），确保在Unity中支持不同分辨率缩放\n- **Unity导入设置建议**：\n  - 导入时设置为“Sprite (2D and UI)”\n  - 选择“Sprite Mode: Single”\n  - 设置“Pixels Per Unit”为 16 或 32（根据项目单位系统）\n  - 动画帧序列建议使用“Sprite Animation”或“Animator Controller”绑定\n- **动画控制器**：\n  - 需提供动画状态机结构建议（如 Idle → Cast → Move → Attack）\n  - 可提供动画参数（如 “isCasting”, “isMoving”）供脚本调用\n- **兼容性**：\n  - 确保角色在不同分辨率下（如 1080p、4K）仍保持视觉清晰度\n  - 避免使用过细线条或高饱和度纯色，防止像素锯齿或色彩溢出\n\n—\n\n📦 五、交付内容清单\n\n✅ 角色主图（站立待机帧序列）  \n✅ 角色动画帧序列（至少待机循环动画）  \n✅ 可选：施法、移动、受伤动画帧序列  \n✅ 可选：火焰粒子特效图层（PNG或Sprite Sheet）  \n✅ 可选：角色设计草图或概念图（用于美术对齐）  \n✅ 动画命名规范文档（含帧编号与状态说明）  \n✅ Unity导入建议文档（含单位设置、图层结构、动画绑定说明）\n\n—\n\n🎯 六、风格参考图（建议提供）\n\n- 参考角色：《Rogue Legacy》火焰法师、《Stardew Valley》魔法角色、《Celeste》火焰元素、《Terraria》法师NPC\n- 参考动画：《Hades》施法动画、《Ori》魔法粒子流动、《Dead Cells》角色待机动画\n\n—\n\n📝 七、备注与注意事项\n\n- 所有动画需“无缝循环”，避免卡顿或跳帧\n- 火焰特效需与角色“绑定”而非独立漂浮，确保视觉统一\n- 避免使用过多颜色或复杂纹理，保持像素风格“简洁有力”\n- 如需扩展角色（如升级形态、装备变化），请提前沟通设计方向\n- 交付前请提供“预览动画视频”或“Unity测试场景截图”以确认动画流畅度\n\n—\n\n📬 交付方式：  \n请将所有资源打包为 ZIP 文件，命名格式：  \n`[项目名]_Mage_Fire法师_角色资产_v1.0.zip`\n\n—\n\n✅ 本简报为美术与程序协作的基准文档，美术团队需确保视觉与技术规格完全对齐，程序团队将据此构建动画系统与角色控制器。\n\n——  \n🔥 烈焰术士，即将在你的像素世界中点燃魔法之火 ——  \n请按此方向创作，确保角色既具视觉冲击力，又完美适配Unity动画系统。\n\n（简报结束）"
+      },
+      "image": {
+        "file": "img_1790487372429.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260927/77c9ad12/2388fad5-11d0-4ee5-8e07-f691f697441d1590932300.png?Expires=1790573771&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=vLT0pC0UKPjJo4MbsG927ng0xBQ%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487372429.png"
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260927/77c9ad12/2388fad5-11d0-4ee5-8e07-f691f697441d1590932300.png?Expires=1790573771&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=vLT0pC0UKPjJo4MbsG927ng0xBQ%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790487378691.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/15/20260927/901e463f/c98b14bf-eafb-40bd-ad92-c6e46b3613401212677295.png?Expires=1790573779&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=HpXhrzJVBWy7tZtGE3n02CVhul8%3D",
+          "model": "wanx2.1-imageedit"
+        },
+        "back": {
+          "file": "edit_1790487389650.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e2/20260927/901e463f/088ef14d-bf8b-4439-97e4-029d76ed24ff1819790873.png?Expires=1790573789&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=uWR0En9XeZg9GVZCOstgSCIBnPE%3D",
+          "model": "wanx2.1-imageedit"
+        }
+      }
+    },
+    "id": "T0001-7"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790487549.954691,
+    "finished_at": 1790487592.9789102,
+    "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9248,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 43.024,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#43110a",
+      "#7a1f12",
+      "#99401a",
+      "#d15723",
+      "#ff6a2b",
+      "#ff8b5a",
+      "#ffd23f",
+      "#ffe98a",
+      "#bfaf68",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": {
+      "file": "img_1790487571307.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/15/20260927/77c9ad12/26c42c55-5c24-4e59-a10c-13b22255f1ff2432898602.png?Expires=1790573971&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=UWWwA8iSkStZGw%2B%2FWwGqNhPFJZk%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487571307.png"
+    },
+    "enhanced_prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss（像素RPG风格）\n\n—\n\n📌 项目名称：  \n“烈焰之主” —— 像素RPG风格火焰法师Boss角色\n\n—\n\n🎨 一、整体艺术风格定位：\n\n- 风格类型：复古像素艺术（Pixel Art），致敬经典RPG游戏（如《暗黑地牢》《星露谷物语》《泰拉瑞亚》等），但需具备更高细节表现力与动态表现张力。\n- 分辨率要求：建议16x16或32x32像素基础单位，角色动画需支持4-8方向（前、后、左、右、斜角），并可扩展至16帧以上精细动作。\n- 色彩调性：高饱和度暖色调为主（橙、红、金、紫），辅以黑色/深灰阴影增强体积感；火焰特效需有“燃烧动态”视觉反馈，如闪烁、粒子飘散、光晕扩散。\n- 质感表现：角色需具备“魔法生物”质感——非纯人类，可加入非对称结构、火焰纹路、熔岩纹理、飘动斗篷/长袍等元素，强化“魔法掌控者”身份。\n\n—\n\n🧍 二、角色设计要求：\n\n1. 基础形象：\n   - 身高比例：约4-5格像素高（32x64或64x128像素），符合Boss体型。\n   - 头部：尖顶魔法帽或火焰冠冕，可带飘动火焰粒子；面部可有模糊轮廓或火焰眼（如燃烧瞳孔）。\n   - 身体：长袍/法袍设计，边缘带火焰纹路或熔岩流动效果；可有飘带、披风、法杖等标志性道具。\n   - 手部：持法杖或双手结印，法杖顶端可有火焰球或能量漩涡。\n   - 脚部：可设计为悬浮或踩踏火焰地面，增强“魔法施法者”气场。\n\n2. 颜色方案：\n   - 主色：深红、暗橙、金黄、紫黑（用于阴影与魔法边缘）\n   - 辅助色：亮橙、火红、琥珀色（用于火焰特效与高光）\n   - 阴影：深灰/炭黑，用于增强立体感，避免扁平化\n   - 高光：亮黄/白，用于火焰核心与魔法能量点\n\n3. 动态表现要求：\n   - 攻击动画必须包含：\n     - 1. 施法前摇（双手聚能、法杖发光、火焰环绕）\n     - 2. 攻击释放（火焰弹/火柱/火雨/爆炸范围特效）\n     - 3. 攻击后摇（能量回流、角色微震、火焰余波）\n     - 4. 受击反应（身体后仰、火焰闪烁、短暂僵直）\n   - 动画帧数：至少12帧/动作（可扩展至16帧），确保流畅度与节奏感。\n   - 攻击特效：需独立粒子系统（可导出为Sprite或AnimationClip），包含火焰粒子、爆炸光效、地面灼烧痕迹等。\n\n—\n\n⚙️ 三、技术实现要求：\n\n- 导出格式：支持Unity导入的Sprite Sheet（PNG序列帧）或AnimationClip（.anim + .png）。\n- 像素对齐：所有角色与特效必须严格对齐像素网格（建议使用16x16或32x32网格），避免锯齿或错位。\n- 透明通道：角色与特效需保留Alpha通道，支持透明背景或动态遮罩。\n- 文件命名规范：按Unity标准命名，如：\n  - `Boss_FireMage_Idle_00.png`\n  - `Boss_FireMage_Attack_01.png` → `Boss_FireMage_Attack_08.png`\n  - `Boss_FireMage_Explosion_Effect.png`\n- 导入Unity后需支持：\n  - 2D Sprite Renderer\n  - Animator Controller（可选）\n  - 可绑定到Unity的Animation Event（如攻击命中、施法完成等）\n\n—\n\n🎯 四、视觉重点与表现力：\n\n- 强调“魔法施法”的仪式感与压迫感：攻击前摇需有“能量蓄积”视觉反馈（如法杖发光、地面裂开、火焰升腾）。\n- 攻击特效需有“范围感”与“破坏感”：如火球爆炸后地面留下焦痕、火焰蔓延、烟雾扩散。\n- 角色动作需有“重量感”与“魔法能量流动感”：如施法时身体微颤、法袍飘动、火焰粒子随动作轨迹流动。\n- 可加入“Boss专属视觉标识”：如头顶火焰光环、脚下火焰漩涡、攻击时屏幕边缘泛红等。\n\n—\n\n📂 五、交付物清单：\n\n1. 角色主图（Idle状态，含所有方向）\n2. 攻击动画序列帧（至少3个攻击动作，每动作8-16帧）\n3. 受击动画（1-2帧）\n4. 独立特效图（火焰弹、爆炸、地面灼烧等）\n5. 所有图层按Unity命名规范整理，打包为ZIP文件\n6. 附带说明文档（含颜色代码、帧数说明、动画逻辑说明）\n\n—\n\n✅ 附加建议：\n\n- 可提供“Boss战前预告动画”（如火焰环绕、低语声效+视觉闪烁），增强沉浸感。\n- 可设计“Boss血条特效”（如火焰燃烧进度条）或“技能冷却视觉提示”。\n- 若支持，可提供“角色不同形态”（如“火焰形态”、“熔岩形态”、“狂暴形态”），用于多阶段Boss战。\n\n—\n\n📬 交付方式：\n\n- 文件格式：PNG（带透明通道），分辨率建议：32x64 或 64x128（可按项目需求调整）\n- 压缩包命名：`Boss_FireMage_PixelArt_UnityExport_v1.0.zip`\n- 交付平台：通过云盘/邮件/项目管理工具（如Jira、Trello）提交\n\n—\n\n🔥 最终目标：\n\n打造一个视觉冲击力强、动作表现力丰富、技术兼容性高、符合像素RPG世界观的火焰法师Boss角色，让玩家在战斗中感受到“魔法的压迫与毁灭之力”，并能无缝集成至Unity引擎，支持后续动画系统与战斗逻辑开发。\n\n—\n\n✅ 请确认：  \n- 是否接受“火焰粒子特效”作为独立图层？  \n- 是否需要“Boss战前/战后过场动画”？  \n- 是否需提供“角色不同形态”或“变身阶段”？  \n- 是否需适配“移动端/PC端”分辨率？\n\n—— 请艺术家/设计师根据此简报执行创作，确保最终交付物符合Unity引擎导入规范与游戏美术风格统一性。",
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790487571307.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/15/20260927/77c9ad12/26c42c55-5c24-4e59-a10c-13b22255f1ff2432898602.png?Expires=1790573971&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=UWWwA8iSkStZGw%2B%2FWwGqNhPFJZk%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487571307.png"
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.954,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9248
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9248,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.308,
+          "phase_y": 0.147,
+          "confidence": 0.954
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#43110a",
+            "#7a1f12",
+            "#99401a",
+            "#d15723",
+            "#ff6a2b",
+            "#ff8b5a",
+            "#ffd23f",
+            "#ffe98a",
+            "#bfaf68",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 8
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss（像素RPG风格）\n\n—\n\n📌 项目名称：  \n“烈焰之主” —— 像素RPG风格火焰法师Boss角色\n\n—\n\n🎨 一、整体艺术风格定位：\n\n- 风格类型：复古像素艺术（Pixel Art），致敬经典RPG游戏（如《暗黑地牢》《星露谷物语》《泰拉瑞亚》等），但需具备更高细节表现力与动态表现张力。\n- 分辨率要求：建议16x16或32x32像素基础单位，角色动画需支持4-8方向（前、后、左、右、斜角），并可扩展至16帧以上精细动作。\n- 色彩调性：高饱和度暖色调为主（橙、红、金、紫），辅以黑色/深灰阴影增强体积感；火焰特效需有“燃烧动态”视觉反馈，如闪烁、粒子飘散、光晕扩散。\n- 质感表现：角色需具备“魔法生物”质感——非纯人类，可加入非对称结构、火焰纹路、熔岩纹理、飘动斗篷/长袍等元素，强化“魔法掌控者”身份。\n\n—\n\n🧍 二、角色设计要求：\n\n1. 基础形象：\n   - 身高比例：约4-5格像素高（32x64或64x128像素），符合Boss体型。\n   - 头部：尖顶魔法帽或火焰冠冕，可带飘动火焰粒子；面部可有模糊轮廓或火焰眼（如燃烧瞳孔）。\n   - 身体：长袍/法袍设计，边缘带火焰纹路或熔岩流动效果；可有飘带、披风、法杖等标志性道具。\n   - 手部：持法杖或双手结印，法杖顶端可有火焰球或能量漩涡。\n   - 脚部：可设计为悬浮或踩踏火焰地面，增强“魔法施法者”气场。\n\n2. 颜色方案：\n   - 主色：深红、暗橙、金黄、紫黑（用于阴影与魔法边缘）\n   - 辅助色：亮橙、火红、琥珀色（用于火焰特效与高光）\n   - 阴影：深灰/炭黑，用于增强立体感，避免扁平化\n   - 高光：亮黄/白，用于火焰核心与魔法能量点\n\n3. 动态表现要求：\n   - 攻击动画必须包含：\n     - 1. 施法前摇（双手聚能、法杖发光、火焰环绕）\n     - 2. 攻击释放（火焰弹/火柱/火雨/爆炸范围特效）\n     - 3. 攻击后摇（能量回流、角色微震、火焰余波）\n     - 4. 受击反应（身体后仰、火焰闪烁、短暂僵直）\n   - 动画帧数：至少12帧/动作（可扩展至16帧），确保流畅度与节奏感。\n   - 攻击特效：需独立粒子系统（可导出为Sprite或AnimationClip），包含火焰粒子、爆炸光效、地面灼烧痕迹等。\n\n—\n\n⚙️ 三、技术实现要求：\n\n- 导出格式：支持Unity导入的Sprite Sheet（PNG序列帧）或AnimationClip（.anim + .png）。\n- 像素对齐：所有角色与特效必须严格对齐像素网格（建议使用16x16或32x32网格），避免锯齿或错位。\n- 透明通道：角色与特效需保留Alpha通道，支持透明背景或动态遮罩。\n- 文件命名规范：按Unity标准命名，如：\n  - `Boss_FireMage_Idle_00.png`\n  - `Boss_FireMage_Attack_01.png` → `Boss_FireMage_Attack_08.png`\n  - `Boss_FireMage_Explosion_Effect.png`\n- 导入Unity后需支持：\n  - 2D Sprite Renderer\n  - Animator Controller（可选）\n  - 可绑定到Unity的Animation Event（如攻击命中、施法完成等）\n\n—\n\n🎯 四、视觉重点与表现力：\n\n- 强调“魔法施法”的仪式感与压迫感：攻击前摇需有“能量蓄积”视觉反馈（如法杖发光、地面裂开、火焰升腾）。\n- 攻击特效需有“范围感”与“破坏感”：如火球爆炸后地面留下焦痕、火焰蔓延、烟雾扩散。\n- 角色动作需有“重量感”与“魔法能量流动感”：如施法时身体微颤、法袍飘动、火焰粒子随动作轨迹流动。\n- 可加入“Boss专属视觉标识”：如头顶火焰光环、脚下火焰漩涡、攻击时屏幕边缘泛红等。\n\n—\n\n📂 五、交付物清单：\n\n1. 角色主图（Idle状态，含所有方向）\n2. 攻击动画序列帧（至少3个攻击动作，每动作8-16帧）\n3. 受击动画（1-2帧）\n4. 独立特效图（火焰弹、爆炸、地面灼烧等）\n5. 所有图层按Unity命名规范整理，打包为ZIP文件\n6. 附带说明文档（含颜色代码、帧数说明、动画逻辑说明）\n\n—\n\n✅ 附加建议：\n\n- 可提供“Boss战前预告动画”（如火焰环绕、低语声效+视觉闪烁），增强沉浸感。\n- 可设计“Boss血条特效”（如火焰燃烧进度条）或“技能冷却视觉提示”。\n- 若支持，可提供“角色不同形态”（如“火焰形态”、“熔岩形态”、“狂暴形态”），用于多阶段Boss战。\n\n—\n\n📬 交付方式：\n\n- 文件格式：PNG（带透明通道），分辨率建议：32x64 或 64x128（可按项目需求调整）\n- 压缩包命名：`Boss_FireMage_PixelArt_UnityExport_v1.0.zip`\n- 交付平台：通过云盘/邮件/项目管理工具（如Jira、Trello）提交\n\n—\n\n🔥 最终目标：\n\n打造一个视觉冲击力强、动作表现力丰富、技术兼容性高、符合像素RPG世界观的火焰法师Boss角色，让玩家在战斗中感受到“魔法的压迫与毁灭之力”，并能无缝集成至Unity引擎，支持后续动画系统与战斗逻辑开发。\n\n—\n\n✅ 请确认：  \n- 是否接受“火焰粒子特效”作为独立图层？  \n- 是否需要“Boss战前/战后过场动画”？  \n- 是否需提供“角色不同形态”或“变身阶段”？  \n- 是否需适配“移动端/PC端”分辨率？\n\n—— 请艺术家/设计师根据此简报执行创作，确保最终交付物符合Unity引擎导入规范与游戏美术风格统一性。"
+      },
+      "image": {
+        "file": "img_1790487571307.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/15/20260927/77c9ad12/26c42c55-5c24-4e59-a10c-13b22255f1ff2432898602.png?Expires=1790573971&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=UWWwA8iSkStZGw%2B%2FWwGqNhPFJZk%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790487571307.png"
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/15/20260927/77c9ad12/26c42c55-5c24-4e59-a10c-13b22255f1ff2432898602.png?Expires=1790573971&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=UWWwA8iSkStZGw%2B%2FWwGqNhPFJZk%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790487582793.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/59/20260927/901e463f/2b9830f7-8ac7-44e9-9f56-b9b537a17b4e1894009181.png?Expires=1790573982&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=KApQPFN%2FYN23LaEjcMwgh8e5FVY%3D",
+          "model": "wanx2.1-imageedit"
+        },
+        "back": {
+          "file": "edit_1790487592433.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e9/20260927/901e463f/87095cdd-9ce5-466b-b71c-9b623a0512863920951338.png?Expires=1790573993&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=vSy9YJDYezHB4Dba7A644KB46Pg%3D",
+          "model": "wanx2.1-imageedit"
+        }
+      }
+    },
+    "id": "T0002-4"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790489296.9474988,
+    "finished_at": 1790489350.3881454,
+    "goal": "少女炼金师，青绿色大圆眼睛，浅粉色长双马尾，浅浅微笑，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast20175",
+    "name": "少女炼金师_青绿色大圆眼睛_浅粉色长双马尾_浅浅",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 53.44,
+    "character": {
+      "id": "ast20175",
+      "name": "少女炼金师_青绿色大圆眼睛_浅粉色长双马尾_浅浅",
+      "type": "character",
+      "role": "npc",
+      "seed": 1890020175,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6d1c10",
+        "base": "#ff7941",
+        "highlight": "#e1b938",
+        "accent": "#ffea8e",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#272e3a",
+      "#374858",
+      "#898394",
+      "#716e80",
+      "#323948",
+      "#1e2732",
+      "#cfb0b5",
+      "#405a6f",
+      "#33414f",
+      "#376675",
+      "#aa96a5",
+      "#c89da5",
+      "#819c9f",
+      "#52a8b9",
+      "#a6b3b3",
+      "#688280"
+    ],
+    "image": {
+      "file": "img_1790489318857.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260927/77c9ad12/776d9acc-aede-4d50-94df-d26b2f356fc5364799723.png?Expires=1790575719&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=G53bMiehScO8ZZIZeIIIVjOwstU%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790489318857.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "【游戏角色艺术指导简报 —— “少女炼金师”】\n\n项目名称：少女炼金师（Alchemist Girl）  \n目标平台：Unity 引擎（支持导入、动画、材质、碰撞体等完整资产流程）  \n角色定位：魔法系辅助/炼金术士角色，兼具治愈、元素合成、道具制作能力，性格温柔、聪慧、略带俏皮，是团队中的“知识担当”与“后勤核心”。\n\n—\n\n🎨 视觉风格定位：\n\n- 风格基调：日式幻想轻奇幻（类似《原神》《星穹铁道》或《符文之地传说》的美术调性），柔和色彩、精致细节、略带梦幻感。\n- 色彩主调：以“青绿色”与“浅粉”为主视觉焦点，辅以米白、淡金、浅灰等柔和中性色，营造“魔法+少女”的清新感。\n- 线条风格：流畅圆润，避免锐利棱角，突出角色“温柔”与“灵动”的气质。\n- 材质质感：布料轻盈飘逸（如薄纱、亚麻、丝绸），金属部件（炼金器具、发饰、腰带）需有细腻高光与磨损细节，体现“使用痕迹”与“魔法痕迹”。\n\n—\n\n👁️ 角色面部设计：\n\n- 眼睛：标志性的“青绿色大圆眼”，瞳孔为渐变青绿（外圈浅绿→内圈深绿），虹膜带细微光晕，眼白略带透明感，增强“魔法感”与“无辜感”。眼睫毛纤长卷翘，但不过分夸张。\n- 表情：嘴角微微上扬，呈现“浅浅微笑”，不露齿，传达温柔、自信、略带神秘感。眉形柔和，略带“挑眉”感，暗示“聪慧”与“小机灵”。\n- 面部比例：标准日式少女比例（大头小身），额头饱满，下巴小巧，脸颊略带红晕（浅粉腮红），增强“青春感”。\n\n—\n\n💇‍♀️ 发型与发色：\n\n- 发色：浅粉色（可选“樱花粉”或“蜜桃粉”），发丝柔顺有光泽，发尾略带自然卷曲。\n- 发型：双马尾，高度适中（约在耳后1/3处），马尾蓬松自然，发束用浅金色或透明发圈固定，发尾可有细小飘带或魔法符文装饰。\n- 发丝细节：每缕发丝需有独立光泽与阴影，建议使用“分层渲染”或“毛发系统”（如Unity Hair System或粒子模拟），增强动态感。\n- 可选装饰：发间可点缀小型炼金符文、水晶吊坠或魔法星尘粒子（可设为粒子特效，非模型硬质部件）。\n\n—\n\n🧬 服装与装备设计：\n\n- 主体服装：轻便炼金术士长袍，上身为短袖或无袖设计，领口为V领或圆领，袖口与下摆有流苏或魔法纹路装饰。\n- 色彩搭配：主色为米白或浅灰，辅以青绿、浅粉、淡金边饰，体现“炼金术”与“少女”的融合。\n- 腰带/配饰：腰间系有炼金术士腰带，挂有小瓶、试管、魔法书、炼金石等道具，道具需有可交互/可拾取的碰撞体与材质贴图。\n- 鞋履：及踝短靴或布鞋，鞋面有魔法符文或金属扣，鞋底略厚，增强“稳重感”。\n- 可选披风/斗篷：轻薄透明材质，边缘带魔法光晕，可随风飘动（需动画支持）。\n\n—\n\n🧩 Unity 导入要求：\n\n- 模型格式：FBX（推荐）或 glTF 2.0（如需轻量化），支持骨骼动画与材质贴图。\n- 材质系统：使用 Unity Standard Shader 或 PBR 材质，支持金属度、粗糙度、法线贴图、环境光遮蔽贴图。\n- 动画系统：需包含基础Idle、Walk、Run、Cast（施法）、Sit、Interact（交互）等动画，骨骼结构需符合 Unity 动画系统标准（如 3D 人物骨骼命名规范）。\n- 碰撞体：需为角色添加合适的碰撞体（Capsule Collider 或 Mesh Collider），用于物理交互与AI寻路。\n- 贴图规格：纹理分辨率建议 2048x2048 或 4096x4096（根据项目需求），支持 PNG 或 DDS 格式，包含 Albedo、Normal、Metallic、Roughness、AO 等通道。\n- 可选特效：发丝飘动、魔法粒子、施法光效、炼金瓶气泡等，建议使用 Unity Particle System 或 Shader Graph 实现，可独立导入为 Prefab 或 Material。\n\n—\n\n🎯 设计交付物清单：\n\n1. 高精度角色模型（含绑定骨骼）\n2. 所有材质贴图（含法线、金属、粗糙度等）\n3. 动画文件（FBX 格式，含动画控制器）\n4. 碰撞体与物理组件配置\n5. 可选特效资源（粒子系统、Shader）\n6. Unity 项目导入说明文档（含材质命名规范、动画路径、碰撞体设置等）\n7. 角色概念图（可选，用于美术对齐）\n\n—\n\n📌 特别备注：\n\n- 角色需具备“可替换外观”潜力（如不同季节/节日皮肤），建议在模型结构上预留“可替换部件”（如发饰、披风、服装外层）。\n- 面部表情需支持“微表情系统”（如眨眼、微笑幅度变化），便于后续UI或对话系统调用。\n- 避免过度复杂或写实风格，保持“幻想少女”的梦幻感与亲和力。\n\n—\n\n✅ 最终目标：交付一套可直接导入 Unity 引擎、支持动画、材质、交互、特效的完整角色资产包，确保美术风格统一、技术兼容、性能优化，为后续关卡、剧情、战斗系统提供高质量角色基础。\n\n——  \n美术指导：[你的名字/团队]  \n版本：v1.0  \n日期：2025年4月5日  \n备注：请在交付前提供预览图与模型结构说明，确保与项目美术规范对齐。",
+    "asset": {
+      "id": "ast20175",
+      "name": "少女炼金师_青绿色大圆眼睛_浅粉色长双马尾_浅浅",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 1890020175,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6d1c10",
+          "base": "#ff7941",
+          "highlight": "#e1b938",
+          "accent": "#ffea8e",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790489318857.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260927/77c9ad12/776d9acc-aede-4d50-94df-d26b2f356fc5364799723.png?Expires=1790575719&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=G53bMiehScO8ZZIZeIIIVjOwstU%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790489318857.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast20175",
+        "name": "少女炼金师_青绿色大圆眼睛_浅粉色长双马尾_浅浅",
+        "type": "character",
+        "role": "npc",
+        "seed": 1890020175,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6d1c10",
+          "base": "#ff7941",
+          "highlight": "#e1b938",
+          "accent": "#ffea8e",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#272e3a",
+            "#374858",
+            "#898394",
+            "#716e80",
+            "#323948",
+            "#1e2732",
+            "#cfb0b5",
+            "#405a6f",
+            "#33414f",
+            "#376675",
+            "#aa96a5",
+            "#c89da5",
+            "#819c9f",
+            "#52a8b9",
+            "#a6b3b3",
+            "#688280"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6d1c10",
+            "base": "#ff7941",
+            "highlight": "#e1b938",
+            "accent": "#ffea8e",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#272e3a",
+            "#272e3a",
+            "#374858",
+            "#898394",
+            "#716e80",
+            "#323948",
+            "#272e3a",
+            "#1e2732"
+          ],
+          [
+            "#272e3a",
+            "#374858",
+            "#898394",
+            "#cfb0b5",
+            "#cfb0b5",
+            "#405a6f",
+            "#323948",
+            "#272e3a"
+          ],
+          [
+            "#33414f",
+            "#376675",
+            "#aa96a5",
+            "#cfb0b5",
+            "#c89da5",
+            "#819c9f",
+            "#405a6f",
+            "#374858"
+          ],
+          [
+            "#376675",
+            "#819c9f",
+            "#c89da5",
+            "#aa96a5",
+            "#aa96a5",
+            "#aa96a5",
+            "#376675",
+            "#374858"
+          ],
+          [
+            "#52a8b9",
+            "#aa96a5",
+            "#a6b3b3",
+            "#688280",
+            "#819c9f",
+            "#aa96a5",
+            "#688280",
+            "#376675"
+          ],
+          [
+            "#376675",
+            "#898394",
+            "#a6b3b3",
+            "#819c9f",
+            "#688280",
+            "#a6b3b3",
+            "#716e80",
+            "#374858"
+          ],
+          [
+            "#52a8b9",
+            "#688280",
+            "#819c9f",
+            "#cfb0b5",
+            "#a6b3b3",
+            "#819c9f",
+            "#405a6f",
+            "#323948"
+          ],
+          [
+            "#323948",
+            "#374858",
+            "#898394",
+            "#c89da5",
+            "#c89da5",
+            "#716e80",
+            "#405a6f",
+            "#33414f"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast20175",
+          "type": "character",
+          "resources": {
+            "texture": "ast20175.png",
+            "animation": "ast20175.anim",
+            "prefab": "ast20175.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast20175.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast20175.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast20175.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast20175.png",
+          "Animation": "Assets/Animation/ast20175.anim",
+          "Prefab": "Assets/Prefab/ast20175.prefab",
+          "Controller": "Assets/Controller/ast20175.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "少女炼金师，青绿色大圆眼睛，浅粉色长双马尾，浅浅微笑，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "【游戏角色艺术指导简报 —— “少女炼金师”】\n\n项目名称：少女炼金师（Alchemist Girl）  \n目标平台：Unity 引擎（支持导入、动画、材质、碰撞体等完整资产流程）  \n角色定位：魔法系辅助/炼金术士角色，兼具治愈、元素合成、道具制作能力，性格温柔、聪慧、略带俏皮，是团队中的“知识担当”与“后勤核心”。\n\n—\n\n🎨 视觉风格定位：\n\n- 风格基调：日式幻想轻奇幻（类似《原神》《星穹铁道》或《符文之地传说》的美术调性），柔和色彩、精致细节、略带梦幻感。\n- 色彩主调：以“青绿色”与“浅粉”为主视觉焦点，辅以米白、淡金、浅灰等柔和中性色，营造“魔法+少女”的清新感。\n- 线条风格：流畅圆润，避免锐利棱角，突出角色“温柔”与“灵动”的气质。\n- 材质质感：布料轻盈飘逸（如薄纱、亚麻、丝绸），金属部件（炼金器具、发饰、腰带）需有细腻高光与磨损细节，体现“使用痕迹”与“魔法痕迹”。\n\n—\n\n👁️ 角色面部设计：\n\n- 眼睛：标志性的“青绿色大圆眼”，瞳孔为渐变青绿（外圈浅绿→内圈深绿），虹膜带细微光晕，眼白略带透明感，增强“魔法感”与“无辜感”。眼睫毛纤长卷翘，但不过分夸张。\n- 表情：嘴角微微上扬，呈现“浅浅微笑”，不露齿，传达温柔、自信、略带神秘感。眉形柔和，略带“挑眉”感，暗示“聪慧”与“小机灵”。\n- 面部比例：标准日式少女比例（大头小身），额头饱满，下巴小巧，脸颊略带红晕（浅粉腮红），增强“青春感”。\n\n—\n\n💇‍♀️ 发型与发色：\n\n- 发色：浅粉色（可选“樱花粉”或“蜜桃粉”），发丝柔顺有光泽，发尾略带自然卷曲。\n- 发型：双马尾，高度适中（约在耳后1/3处），马尾蓬松自然，发束用浅金色或透明发圈固定，发尾可有细小飘带或魔法符文装饰。\n- 发丝细节：每缕发丝需有独立光泽与阴影，建议使用“分层渲染”或“毛发系统”（如Unity Hair System或粒子模拟），增强动态感。\n- 可选装饰：发间可点缀小型炼金符文、水晶吊坠或魔法星尘粒子（可设为粒子特效，非模型硬质部件）。\n\n—\n\n🧬 服装与装备设计：\n\n- 主体服装：轻便炼金术士长袍，上身为短袖或无袖设计，领口为V领或圆领，袖口与下摆有流苏或魔法纹路装饰。\n- 色彩搭配：主色为米白或浅灰，辅以青绿、浅粉、淡金边饰，体现“炼金术”与“少女”的融合。\n- 腰带/配饰：腰间系有炼金术士腰带，挂有小瓶、试管、魔法书、炼金石等道具，道具需有可交互/可拾取的碰撞体与材质贴图。\n- 鞋履：及踝短靴或布鞋，鞋面有魔法符文或金属扣，鞋底略厚，增强“稳重感”。\n- 可选披风/斗篷：轻薄透明材质，边缘带魔法光晕，可随风飘动（需动画支持）。\n\n—\n\n🧩 Unity 导入要求：\n\n- 模型格式：FBX（推荐）或 glTF 2.0（如需轻量化），支持骨骼动画与材质贴图。\n- 材质系统：使用 Unity Standard Shader 或 PBR 材质，支持金属度、粗糙度、法线贴图、环境光遮蔽贴图。\n- 动画系统：需包含基础Idle、Walk、Run、Cast（施法）、Sit、Interact（交互）等动画，骨骼结构需符合 Unity 动画系统标准（如 3D 人物骨骼命名规范）。\n- 碰撞体：需为角色添加合适的碰撞体（Capsule Collider 或 Mesh Collider），用于物理交互与AI寻路。\n- 贴图规格：纹理分辨率建议 2048x2048 或 4096x4096（根据项目需求），支持 PNG 或 DDS 格式，包含 Albedo、Normal、Metallic、Roughness、AO 等通道。\n- 可选特效：发丝飘动、魔法粒子、施法光效、炼金瓶气泡等，建议使用 Unity Particle System 或 Shader Graph 实现，可独立导入为 Prefab 或 Material。\n\n—\n\n🎯 设计交付物清单：\n\n1. 高精度角色模型（含绑定骨骼）\n2. 所有材质贴图（含法线、金属、粗糙度等）\n3. 动画文件（FBX 格式，含动画控制器）\n4. 碰撞体与物理组件配置\n5. 可选特效资源（粒子系统、Shader）\n6. Unity 项目导入说明文档（含材质命名规范、动画路径、碰撞体设置等）\n7. 角色概念图（可选，用于美术对齐）\n\n—\n\n📌 特别备注：\n\n- 角色需具备“可替换外观”潜力（如不同季节/节日皮肤），建议在模型结构上预留“可替换部件”（如发饰、披风、服装外层）。\n- 面部表情需支持“微表情系统”（如眨眼、微笑幅度变化），便于后续UI或对话系统调用。\n- 避免过度复杂或写实风格，保持“幻想少女”的梦幻感与亲和力。\n\n—\n\n✅ 最终目标：交付一套可直接导入 Unity 引擎、支持动画、材质、交互、特效的完整角色资产包，确保美术风格统一、技术兼容、性能优化，为后续关卡、剧情、战斗系统提供高质量角色基础。\n\n——  \n美术指导：[你的名字/团队]  \n版本：v1.0  \n日期：2025年4月5日  \n备注：请在交付前提供预览图与模型结构说明，确保与项目美术规范对齐。"
+      },
+      "image": {
+        "file": "img_1790489318857.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260927/77c9ad12/776d9acc-aede-4d50-94df-d26b2f356fc5364799723.png?Expires=1790575719&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=G53bMiehScO8ZZIZeIIIVjOwstU%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790489318857.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260927/77c9ad12/776d9acc-aede-4d50-94df-d26b2f356fc5364799723.png?Expires=1790575719&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=G53bMiehScO8ZZIZeIIIVjOwstU%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790489338322.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/77/20260927/901e463f/93f03c4b-a49f-4c1f-9a0e-784ac96394fd4213847923.png?Expires=1790575739&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=hVNfcSSQNAqJWQDQ4AJQIEPPaFA%3D",
+          "model": "wanx2.1-imageedit"
+        },
+        "back": {
+          "file": "edit_1790489349794.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/50/20260927/901e463f/1599c2f2-8b76-483e-8f10-aa199dd16cd7421980477.png?Expires=1790575748&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=ykgxWEdnsnXb9p47dQyIZPy4tng%3D",
+          "model": "wanx2.1-imageedit"
+        }
+      }
+    },
+    "id": "T0003-4"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790490570.8000925,
+    "finished_at": 1790490624.0135307,
+    "goal": "create a blue cow mascot with a scarf and attack animation",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast65827",
+    "name": "Create_a_blue_cow_mascot",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 53.213,
+    "character": {
+      "id": "ast65827",
+      "name": "Create_a_blue_cow_mascot",
+      "type": "character",
+      "role": "npc",
+      "seed": 638265827,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#731d11",
+        "base": "#ff6d2f",
+        "highlight": "#e7be39",
+        "accent": "#edd980",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#fbfdfd",
+      "#dbdbdb",
+      "#f5f6f7",
+      "#e1e5ea",
+      "#60789f",
+      "#3b69a3",
+      "#88919f",
+      "#bec8d6",
+      "#97adc9",
+      "#80abd4",
+      "#2c568b",
+      "#272b30",
+      "#1052a9",
+      "#174482",
+      "#edeeef"
+    ],
+    "image": {
+      "file": "img_1790490587543.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/4c/20260927/77c9ad12/7e054ebc-ac14-41f2-bcd0-28b129c708101844247506.png?Expires=1790576987&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lcye5hyOIDdr2nZAkZXWT7HjG%2F4%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490587543.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "🎨 Game Character Art Direction Brief: “Blue Cow Mascot”\n\n—\n\n🎯 Objective:\nDesign a stylized, visually distinctive blue cow mascot character for use in a game environment — suitable for both static display and dynamic animation (specifically, an attack animation). The character must embody charm, personality, and combat readiness, while maintaining visual cohesion with the game’s overall art style.\n\n—\n\n🎨 Visual Identity & Design Specifications:\n\n1. **Core Species & Silhouette:**\n   - Primary form: Cow (bovine), but stylized for cartoonish or semi-realistic appeal.\n   - Silhouette should be easily recognizable as a cow — with horns, udder (optional, depending on stylization), hooves, and a rounded body.\n   - Avoid overly realistic anatomy; prioritize expressive, game-friendly proportions (e.g., slightly oversized head, large eyes, compact body).\n\n2. **Color Palette:**\n   - Primary color: A vibrant, saturated blue — think “electric blue” or “cerulean” — to make the character pop.\n   - Secondary accents: White or light gray for highlights (e.g., underbelly, hooves, horn tips), and optional subtle shading (darker blue or teal) for depth.\n   - Optional: Accent colors for scarf (see below) — consider complementary or contrasting tones (e.g., red, orange, yellow, or even metallic silver).\n\n3. **Accessories — The Scarf:**\n   - A prominent, stylized scarf wrapped around the cow’s neck and draping down its chest or back.\n   - Scarf should be visually dynamic — appear to flow or flutter with movement (especially during attack animation).\n   - Material suggestion: Wool, fleece, or fabric with visible texture (e.g., knit, woven, or fringed edges).\n   - Design: Can be striped, solid, or patterned — but must remain readable and not visually cluttered. Consider adding a tassel or fringe for flair.\n   - Color: Should contrast with blue body — e.g., warm tones (red, orange, gold) or cool tones (purple, teal) for visual interest.\n\n4. **Facial Expression & Personality:**\n   - Eyes: Large, expressive, and slightly cartoonish — convey confidence, playfulness, or aggression depending on context.\n   - Mouth: Can be neutral, smiling, or snarling — depending on attack animation intent.\n   - Overall vibe: Friendly but battle-ready — think “cute warrior” or “playful protector.” Avoid being too scary or too childish.\n\n5. **Attack Animation Requirements:**\n   - The character must have a unique, fluid, and visually engaging attack animation.\n   - Suggested attack moves:\n     - Charge forward with hooves stomping (scarf flapping dramatically).\n     - Swing head or horns in a sweeping motion (with impact effect).\n     - Jump and land with a stomp (scarf billowing).\n     - Optional: Use of environmental interaction (e.g., kicking up dust, leaving a blue aura trail).\n   - Animation must be loopable or have clear start/stop points for integration into game systems.\n   - Motion should feel weighty and grounded — even if stylized — with appropriate squash-and-stretch for impact.\n   - Scarf must react physically to movement — e.g., swing, flap, or ripple with momentum.\n\n6. **Technical & Artistic Notes:**\n   - Model should be rigged for animation (bone structure, flexible scarf attachment points).\n   - Texture resolution: 2K or 4K (depending on game engine and platform).\n   - File formats: .FBX or .DAE for 3D models; .PNG or .PSD for textures and concept art.\n   - Style reference: Blend of “Cartoon Network” charm with “Overwatch” or “Smash Bros.” character design — bold, clean lines, high contrast, and strong silhouette.\n\n7. **Inspiration & References (Optional):**\n   - Think “Bubbles” from *The Powerpuff Girls* (colorful, stylized animal mascot).\n   - Or “Brawlhalla’s” cow character — if you’re going for a more combat-focused vibe.\n   - Scarf movement inspired by “Sonic the Hedgehog” or “Kirby” animations — dynamic, flowing fabric.\n\n—\n\n✅ Deliverables:\n- High-resolution concept art (front, side, and 3/4 view).\n- 3D model (low-poly or high-poly, depending on game engine).\n- Attack animation (looped or keyframed, with optional impact FX).\n- Texture maps (diffuse, normal, specular, etc.).\n- Animation rigging notes (if applicable).\n\n—\n\n📌 Notes for Artist:\n- Prioritize visual clarity and readability in-game — avoid overly complex geometry or textures that may cause performance issues.\n- The scarf is a key visual element — make sure it’s not just a static prop, but an active, animated part of the character’s motion.\n- The character should feel “fun” but also “capable” — a mascot that can be both a companion and a combatant.\n\n—\n\nLet’s make this blue cow the most memorable mascot in the game — bold, blue, and ready to charge!\n\n— End of Brief —",
+    "asset": {
+      "id": "ast65827",
+      "name": "Create_a_blue_cow_mascot",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 638265827,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#731d11",
+          "base": "#ff6d2f",
+          "highlight": "#e7be39",
+          "accent": "#edd980",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790490587543.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/4c/20260927/77c9ad12/7e054ebc-ac14-41f2-bcd0-28b129c708101844247506.png?Expires=1790576987&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lcye5hyOIDdr2nZAkZXWT7HjG%2F4%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490587543.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast65827",
+        "name": "Create_a_blue_cow_mascot",
+        "type": "character",
+        "role": "npc",
+        "seed": 638265827,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#731d11",
+          "base": "#ff6d2f",
+          "highlight": "#e7be39",
+          "accent": "#edd980",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#fbfdfd",
+            "#dbdbdb",
+            "#f5f6f7",
+            "#e1e5ea",
+            "#60789f",
+            "#3b69a3",
+            "#88919f",
+            "#bec8d6",
+            "#97adc9",
+            "#80abd4",
+            "#2c568b",
+            "#272b30",
+            "#1052a9",
+            "#174482",
+            "#edeeef"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#731d11",
+            "base": "#ff6d2f",
+            "highlight": "#e7be39",
+            "accent": "#edd980",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#fbfdfd",
+            "#dbdbdb",
+            "#f5f6f7",
+            "#dbdbdb",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#e1e5ea",
+            "#60789f",
+            "#3b69a3",
+            "#88919f",
+            "#dbdbdb",
+            "#88919f"
+          ],
+          [
+            "#ffffff",
+            "#fbfdfd",
+            "#bec8d6",
+            "#97adc9",
+            "#bec8d6",
+            "#80abd4",
+            "#2c568b",
+            "#272b30"
+          ],
+          [
+            "#f5f6f7",
+            "#80abd4",
+            "#1052a9",
+            "#60789f",
+            "#88919f",
+            "#174482",
+            "#174482",
+            "#97adc9"
+          ],
+          [
+            "#272b30",
+            "#272b30",
+            "#3b69a3",
+            "#1052a9",
+            "#1052a9",
+            "#1052a9",
+            "#f5f6f7",
+            "#ffffff"
+          ],
+          [
+            "#e1e5ea",
+            "#f5f6f7",
+            "#60789f",
+            "#174482",
+            "#1052a9",
+            "#80abd4",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#e1e5ea",
+            "#174482",
+            "#2c568b",
+            "#60789f",
+            "#1052a9",
+            "#edeeef",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#dbdbdb",
+            "#88919f",
+            "#edeeef",
+            "#ffffff",
+            "#88919f",
+            "#bec8d6",
+            "#ffffff"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast65827",
+          "type": "character",
+          "resources": {
+            "texture": "ast65827.png",
+            "animation": "ast65827.anim",
+            "prefab": "ast65827.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast65827.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast65827.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast65827.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast65827.png",
+          "atlas": "assets/atlas/ast65827_sprite_atlas.plist",
+          "animations": "assets/animations/ast65827.anim",
+          "prefabs": "assets/prefabs/ast65827.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "create a blue cow mascot with a scarf and attack animation",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎨 Game Character Art Direction Brief: “Blue Cow Mascot”\n\n—\n\n🎯 Objective:\nDesign a stylized, visually distinctive blue cow mascot character for use in a game environment — suitable for both static display and dynamic animation (specifically, an attack animation). The character must embody charm, personality, and combat readiness, while maintaining visual cohesion with the game’s overall art style.\n\n—\n\n🎨 Visual Identity & Design Specifications:\n\n1. **Core Species & Silhouette:**\n   - Primary form: Cow (bovine), but stylized for cartoonish or semi-realistic appeal.\n   - Silhouette should be easily recognizable as a cow — with horns, udder (optional, depending on stylization), hooves, and a rounded body.\n   - Avoid overly realistic anatomy; prioritize expressive, game-friendly proportions (e.g., slightly oversized head, large eyes, compact body).\n\n2. **Color Palette:**\n   - Primary color: A vibrant, saturated blue — think “electric blue” or “cerulean” — to make the character pop.\n   - Secondary accents: White or light gray for highlights (e.g., underbelly, hooves, horn tips), and optional subtle shading (darker blue or teal) for depth.\n   - Optional: Accent colors for scarf (see below) — consider complementary or contrasting tones (e.g., red, orange, yellow, or even metallic silver).\n\n3. **Accessories — The Scarf:**\n   - A prominent, stylized scarf wrapped around the cow’s neck and draping down its chest or back.\n   - Scarf should be visually dynamic — appear to flow or flutter with movement (especially during attack animation).\n   - Material suggestion: Wool, fleece, or fabric with visible texture (e.g., knit, woven, or fringed edges).\n   - Design: Can be striped, solid, or patterned — but must remain readable and not visually cluttered. Consider adding a tassel or fringe for flair.\n   - Color: Should contrast with blue body — e.g., warm tones (red, orange, gold) or cool tones (purple, teal) for visual interest.\n\n4. **Facial Expression & Personality:**\n   - Eyes: Large, expressive, and slightly cartoonish — convey confidence, playfulness, or aggression depending on context.\n   - Mouth: Can be neutral, smiling, or snarling — depending on attack animation intent.\n   - Overall vibe: Friendly but battle-ready — think “cute warrior” or “playful protector.” Avoid being too scary or too childish.\n\n5. **Attack Animation Requirements:**\n   - The character must have a unique, fluid, and visually engaging attack animation.\n   - Suggested attack moves:\n     - Charge forward with hooves stomping (scarf flapping dramatically).\n     - Swing head or horns in a sweeping motion (with impact effect).\n     - Jump and land with a stomp (scarf billowing).\n     - Optional: Use of environmental interaction (e.g., kicking up dust, leaving a blue aura trail).\n   - Animation must be loopable or have clear start/stop points for integration into game systems.\n   - Motion should feel weighty and grounded — even if stylized — with appropriate squash-and-stretch for impact.\n   - Scarf must react physically to movement — e.g., swing, flap, or ripple with momentum.\n\n6. **Technical & Artistic Notes:**\n   - Model should be rigged for animation (bone structure, flexible scarf attachment points).\n   - Texture resolution: 2K or 4K (depending on game engine and platform).\n   - File formats: .FBX or .DAE for 3D models; .PNG or .PSD for textures and concept art.\n   - Style reference: Blend of “Cartoon Network” charm with “Overwatch” or “Smash Bros.” character design — bold, clean lines, high contrast, and strong silhouette.\n\n7. **Inspiration & References (Optional):**\n   - Think “Bubbles” from *The Powerpuff Girls* (colorful, stylized animal mascot).\n   - Or “Brawlhalla’s” cow character — if you’re going for a more combat-focused vibe.\n   - Scarf movement inspired by “Sonic the Hedgehog” or “Kirby” animations — dynamic, flowing fabric.\n\n—\n\n✅ Deliverables:\n- High-resolution concept art (front, side, and 3/4 view).\n- 3D model (low-poly or high-poly, depending on game engine).\n- Attack animation (looped or keyframed, with optional impact FX).\n- Texture maps (diffuse, normal, specular, etc.).\n- Animation rigging notes (if applicable).\n\n—\n\n📌 Notes for Artist:\n- Prioritize visual clarity and readability in-game — avoid overly complex geometry or textures that may cause performance issues.\n- The scarf is a key visual element — make sure it’s not just a static prop, but an active, animated part of the character’s motion.\n- The character should feel “fun” but also “capable” — a mascot that can be both a companion and a combatant.\n\n—\n\nLet’s make this blue cow the most memorable mascot in the game — bold, blue, and ready to charge!\n\n— End of Brief —"
+      },
+      "image": {
+        "file": "img_1790490587543.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/4c/20260927/77c9ad12/7e054ebc-ac14-41f2-bcd0-28b129c708101844247506.png?Expires=1790576987&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lcye5hyOIDdr2nZAkZXWT7HjG%2F4%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490587543.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/4c/20260927/77c9ad12/7e054ebc-ac14-41f2-bcd0-28b129c708101844247506.png?Expires=1790576987&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lcye5hyOIDdr2nZAkZXWT7HjG%2F4%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790490605180.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/61/20260927/17bff29b/90ab840c-3c89-42c3-80e7-338089a43af6-1.png?Expires=1791096406&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=nUTvCfAAONqmBYL21C1cj4muFZo%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790490623439.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/e9/20260927/aa4f9372/da29d7d0-c5e6-4184-89ed-7f5be297e000-1.png?Expires=1791096424&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=dCLvWopMrf%2BGilMBp7nanNPxZcE%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-8"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790490629.7019286,
+    "finished_at": 1790490694.0654852,
+    "goal": "create a red fox ninja",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast33377",
+    "name": "Create_a_red_fox_ninja",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 64.363,
+    "character": {
+      "id": "ast33377",
+      "name": "Create_a_red_fox_ninja",
+      "type": "character",
+      "role": "npc",
+      "seed": 163233377,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#89382d",
+        "base": "#e96127",
+        "highlight": "#ffd54e",
+        "accent": "#ffea90",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#334e63",
+      "#94a6af",
+      "#2a4358",
+      "#263a4e",
+      "#1a2737",
+      "#53606e",
+      "#494d5a",
+      "#1a1b24",
+      "#2f4153",
+      "#2b2932",
+      "#403e47",
+      "#2f303b",
+      "#1a1316",
+      "#111319",
+      "#19181f",
+      "#0e0a0f"
+    ],
+    "image": {
+      "file": "img_1790490657132.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/7a/20260927/77c9ad12/36c5f108-5e2e-4129-bcbf-74211b24afa31270311727.png?Expires=1790577058&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1VEiYcBkXb6kH9lYAjP1etT3MNQ%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490657132.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "**Art Direction Brief: “Red Fox Ninja” — Game Character Design**\n\n---\n\n**1. Character Concept Overview**\n\nDesign a stylized, cinematic, and visually compelling **Red Fox Ninja** — a stealthy, agile, and mysterious feline assassin who blends the grace and cunning of a red fox with the lethal discipline and aesthetic of a traditional ninja. The character should feel both mythical and grounded, suitable for a fantasy-action or stealth-adventure game with a stylized art direction (e.g., cel-shaded, anime-inspired, or painterly realism).\n\n---\n\n**2. Core Identity & Personality**\n\n- **Species:** Red Fox — retain key fox traits: pointed ears, bushy tail, sharp eyes, slender muzzle, and expressive facial features.\n- **Role:** Stealth operative / assassin / scout / infiltrator. Moves silently, uses environment, prefers ambushes and precision strikes.\n- **Personality:** Calm, calculating, enigmatic. Slight arrogance or sly confidence. Eyes should convey intelligence and focus. Minimalist expressions — rarely smiles, often observant or smirking.\n- **Cultural Influence:** Blend of Japanese ninja aesthetics with fox mythology (e.g., kitsune from Shinto folklore — wise, magical, mischievous, or trickster-like). Optional: subtle magical or spiritual elements (e.g., glowing eyes, spirit trails, or enchanted gear).\n\n---\n\n**3. Visual Design Specifications**\n\n**A. Silhouette & Proportions:**\n- Lean, athletic, and agile build — slightly taller than average human, with long limbs for leaping and climbing.\n- Fox ears should be prominent, upright, and slightly pointed — can twitch or move independently for emotional cues.\n- Tail should be long, bushy, and expressive — used for balance, stealth movement, or as a visual storytelling tool (e.g., fluffed when startled, curled when focused).\n- Proportions should be stylized — slightly exaggerated limbs or torso for dynamic posing, but not cartoonish.\n\n**B. Attire & Gear:**\n- **Primary Garment:** Traditional ninja-style robes or tactical gear — dark, muted tones (black, charcoal, deep indigo) with red accents to match fox theme.\n- **Optional:** Layered, asymmetrical, or segmented armor pieces (e.g., shoulder guards, shin wraps, fingerless gloves) — should look functional, not bulky.\n- **Mask or Face Covering:** Optional — could be a half-mask (like a ninja mask covering nose and mouth) or a stylized fox-face mask (e.g., with eye slits, red accents, or fox-ear motifs). Alternatively, no mask — reveal full facial expression.\n- **Weapons:** Dual short blades (katanas, wakizashi, or curved daggers), or a single long blade with a fox-tail hilt. Optional: throwing stars, smoke bombs, or rope darts. Weapons should be sleek, minimal, and match the ninja aesthetic.\n- **Footwear:** Silent-soled boots or barefoot with padded soles — emphasize stealth movement.\n- **Accessories:** Red sash or belt, pouches for tools, possibly a small fox-shaped charm or talisman.\n\n**C. Color Palette:**\n- **Primary:** Deep black or charcoal base for clothing, with **vibrant red accents** — on trim, sash, mask, or tail tips.\n- **Secondary:** Earthy tones (burnt orange, rust, deep brown) for fur texture and environmental blending.\n- **Accent:** Metallic silver or bronze for weapons and armor details.\n- **Eyes:** Glowing amber, crimson, or gold — to emphasize supernatural or focused traits. Can shift color slightly with emotion or magic use.\n\n**D. Fur & Texture:**\n- Fur should be soft, detailed, and slightly glossy — especially on the face, ears, and tail.\n- Fur should appear wind-swept or slightly ruffled to imply movement or stealth.\n- Tail should have a distinct “fluffiness” — not overly cartoonish, but visually expressive.\n- Fur color: Rich red-orange (like a red fox in autumn), with white or cream accents on muzzle, chest, and underside of tail.\n\n**E. Animation & Movement:**\n- Movement should be fluid, silent, and acrobatic — think parkour, wall-running, and silent takedowns.\n- Tail should sway subtly with movement — can puff up when startled or curl when focused.\n- Footsteps should be silent — no visible footprints or sound effects unless desired for gameplay feedback.\n- Combat animations should emphasize precision — quick slashes, dodges, and silent assassinations.\n\n---\n\n**4. Art Style & Reference Direction**\n\n- **Style:** Cel-shaded, anime-inspired, or painterly 3D (e.g., like *Ghost of Tsushima*, *Assassin’s Creed: Shadows*, or *Naruto* meets *Shadow of the Colossus*).\n- **Inspiration References:**\n  - *Ninja Gaiden* / *Metal Gear Solid* — stealth and agility.\n  - *Kitsune* folklore — magical, trickster, wise.\n  - *Red Foxes in nature photography* — for fur texture and movement.\n  - *Anime ninja characters* — e.g., *Naruto’s Kakashi*, *Naruto Shippuden’s Zabuza*, or *Sakura’s ninja gear* — for stylized clothing and gear.\n  - *Shadow of the Tomb Raider* — for environmental stealth and acrobatics.\n\n---\n\n**5. Key Visual Moments / Poses**\n\n- **Stealth Pose:** Crouched behind a bush or rooftop ledge, tail curled, eyes glowing, one hand on a blade.\n- **Combat Pose:** Mid-air slash, fur and clothing flowing, tail extended for balance.\n- **Emotional Expression:** Slight smirk or narrowed eyes — conveys confidence or mischief.\n- **Magic/Power Activation:** Eyes glow brighter, red aura or spirit trails appear around tail or weapons.\n\n---\n\n**6. Technical Notes**\n\n- Model should be optimized for animation — clean topology, dynamic tail rig, flexible limbs.\n- Textures should support both close-up detail (fur, fabric weave) and distance rendering (stylized, not overly detailed).\n- Include multiple outfit variants if needed (e.g., night gear, ceremonial gear, or battle-worn version).\n- Consider environmental interaction — e.g., tail can brush against leaves or snow for subtle visual feedback.\n\n---\n\n**7. Deliverables (for Artist/Team)**\n\n- High-resolution concept art (front, side, back, 3/4 view)\n- Color palette + texture reference sheet\n- Pose sheet (idle, walk, run, jump, attack, stealth, special move)\n- Weapon and gear detail sheets\n- Optional: Animation reference video or motion capture notes\n\n---\n\n**8. Tone & Atmosphere**\n\nThe character should feel **mysterious, elegant, and lethal** — a creature of the shadows with a touch of magic or folklore. Avoid cartoonishness or overt cuteness — instead, aim for **mythic realism**. The red fox should feel like a guardian, a trickster, or a silent predator — depending on narrative context.\n\n---\n\n**Final Note to Artist:**\n\n“Create a character that feels like a whisper in the wind — beautiful, dangerous, and unforgettable. Let the red fox’s spirit shine through every detail — from the flick of its tail to the glint of its blade.”\n\n—\n\n✅ **Approved for Production**  \n*Art Direction Brief — “Red Fox Ninja” — Version 1.0*  \n*For use in game development pipeline — character modeling, animation, and visual design.*",
+    "asset": {
+      "id": "ast33377",
+      "name": "Create_a_red_fox_ninja",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 163233377,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#89382d",
+          "base": "#e96127",
+          "highlight": "#ffd54e",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790490657132.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/7a/20260927/77c9ad12/36c5f108-5e2e-4129-bcbf-74211b24afa31270311727.png?Expires=1790577058&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1VEiYcBkXb6kH9lYAjP1etT3MNQ%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490657132.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast33377",
+        "name": "Create_a_red_fox_ninja",
+        "type": "character",
+        "role": "npc",
+        "seed": 163233377,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#89382d",
+          "base": "#e96127",
+          "highlight": "#ffd54e",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#334e63",
+            "#94a6af",
+            "#2a4358",
+            "#263a4e",
+            "#1a2737",
+            "#53606e",
+            "#494d5a",
+            "#1a1b24",
+            "#2f4153",
+            "#2b2932",
+            "#403e47",
+            "#2f303b",
+            "#1a1316",
+            "#111319",
+            "#19181f",
+            "#0e0a0f"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#89382d",
+            "base": "#e96127",
+            "highlight": "#ffd54e",
+            "accent": "#ffea90",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#334e63",
+            "#94a6af",
+            "#94a6af",
+            "#334e63",
+            "#2a4358",
+            "#263a4e",
+            "#1a2737",
+            "#1a2737"
+          ],
+          [
+            "#2a4358",
+            "#53606e",
+            "#94a6af",
+            "#53606e",
+            "#494d5a",
+            "#494d5a",
+            "#2a4358",
+            "#1a2737"
+          ],
+          [
+            "#53606e",
+            "#2a4358",
+            "#334e63",
+            "#494d5a",
+            "#53606e",
+            "#334e63",
+            "#263a4e",
+            "#1a1b24"
+          ],
+          [
+            "#1a1b24",
+            "#263a4e",
+            "#2f4153",
+            "#2b2932",
+            "#1a1b24",
+            "#494d5a",
+            "#2a4358",
+            "#403e47"
+          ],
+          [
+            "#403e47",
+            "#94a6af",
+            "#2f303b",
+            "#1a1316",
+            "#111319",
+            "#2b2932",
+            "#2f4153",
+            "#2f303b"
+          ],
+          [
+            "#2f303b",
+            "#403e47",
+            "#19181f",
+            "#19181f",
+            "#0e0a0f",
+            "#111319",
+            "#334e63",
+            "#1a2737"
+          ],
+          [
+            "#2b2932",
+            "#1a1316",
+            "#19181f",
+            "#111319",
+            "#111319",
+            "#263a4e",
+            "#334e63",
+            "#2f4153"
+          ],
+          [
+            "#1a1b24",
+            "#19181f",
+            "#0e0a0f",
+            "#0e0a0f",
+            "#111319",
+            "#2b2932",
+            "#2b2932",
+            "#2f303b"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast33377",
+          "type": "character",
+          "resources": {
+            "texture": "ast33377.png",
+            "animation": "ast33377.anim",
+            "prefab": "ast33377.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast33377.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast33377.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast33377.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast33377.png",
+          "atlas": "assets/atlas/ast33377_sprite_atlas.plist",
+          "animations": "assets/animations/ast33377.anim",
+          "prefabs": "assets/prefabs/ast33377.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "create a red fox ninja",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "**Art Direction Brief: “Red Fox Ninja” — Game Character Design**\n\n---\n\n**1. Character Concept Overview**\n\nDesign a stylized, cinematic, and visually compelling **Red Fox Ninja** — a stealthy, agile, and mysterious feline assassin who blends the grace and cunning of a red fox with the lethal discipline and aesthetic of a traditional ninja. The character should feel both mythical and grounded, suitable for a fantasy-action or stealth-adventure game with a stylized art direction (e.g., cel-shaded, anime-inspired, or painterly realism).\n\n---\n\n**2. Core Identity & Personality**\n\n- **Species:** Red Fox — retain key fox traits: pointed ears, bushy tail, sharp eyes, slender muzzle, and expressive facial features.\n- **Role:** Stealth operative / assassin / scout / infiltrator. Moves silently, uses environment, prefers ambushes and precision strikes.\n- **Personality:** Calm, calculating, enigmatic. Slight arrogance or sly confidence. Eyes should convey intelligence and focus. Minimalist expressions — rarely smiles, often observant or smirking.\n- **Cultural Influence:** Blend of Japanese ninja aesthetics with fox mythology (e.g., kitsune from Shinto folklore — wise, magical, mischievous, or trickster-like). Optional: subtle magical or spiritual elements (e.g., glowing eyes, spirit trails, or enchanted gear).\n\n---\n\n**3. Visual Design Specifications**\n\n**A. Silhouette & Proportions:**\n- Lean, athletic, and agile build — slightly taller than average human, with long limbs for leaping and climbing.\n- Fox ears should be prominent, upright, and slightly pointed — can twitch or move independently for emotional cues.\n- Tail should be long, bushy, and expressive — used for balance, stealth movement, or as a visual storytelling tool (e.g., fluffed when startled, curled when focused).\n- Proportions should be stylized — slightly exaggerated limbs or torso for dynamic posing, but not cartoonish.\n\n**B. Attire & Gear:**\n- **Primary Garment:** Traditional ninja-style robes or tactical gear — dark, muted tones (black, charcoal, deep indigo) with red accents to match fox theme.\n- **Optional:** Layered, asymmetrical, or segmented armor pieces (e.g., shoulder guards, shin wraps, fingerless gloves) — should look functional, not bulky.\n- **Mask or Face Covering:** Optional — could be a half-mask (like a ninja mask covering nose and mouth) or a stylized fox-face mask (e.g., with eye slits, red accents, or fox-ear motifs). Alternatively, no mask — reveal full facial expression.\n- **Weapons:** Dual short blades (katanas, wakizashi, or curved daggers), or a single long blade with a fox-tail hilt. Optional: throwing stars, smoke bombs, or rope darts. Weapons should be sleek, minimal, and match the ninja aesthetic.\n- **Footwear:** Silent-soled boots or barefoot with padded soles — emphasize stealth movement.\n- **Accessories:** Red sash or belt, pouches for tools, possibly a small fox-shaped charm or talisman.\n\n**C. Color Palette:**\n- **Primary:** Deep black or charcoal base for clothing, with **vibrant red accents** — on trim, sash, mask, or tail tips.\n- **Secondary:** Earthy tones (burnt orange, rust, deep brown) for fur texture and environmental blending.\n- **Accent:** Metallic silver or bronze for weapons and armor details.\n- **Eyes:** Glowing amber, crimson, or gold — to emphasize supernatural or focused traits. Can shift color slightly with emotion or magic use.\n\n**D. Fur & Texture:**\n- Fur should be soft, detailed, and slightly glossy — especially on the face, ears, and tail.\n- Fur should appear wind-swept or slightly ruffled to imply movement or stealth.\n- Tail should have a distinct “fluffiness” — not overly cartoonish, but visually expressive.\n- Fur color: Rich red-orange (like a red fox in autumn), with white or cream accents on muzzle, chest, and underside of tail.\n\n**E. Animation & Movement:**\n- Movement should be fluid, silent, and acrobatic — think parkour, wall-running, and silent takedowns.\n- Tail should sway subtly with movement — can puff up when startled or curl when focused.\n- Footsteps should be silent — no visible footprints or sound effects unless desired for gameplay feedback.\n- Combat animations should emphasize precision — quick slashes, dodges, and silent assassinations.\n\n---\n\n**4. Art Style & Reference Direction**\n\n- **Style:** Cel-shaded, anime-inspired, or painterly 3D (e.g., like *Ghost of Tsushima*, *Assassin’s Creed: Shadows*, or *Naruto* meets *Shadow of the Colossus*).\n- **Inspiration References:**\n  - *Ninja Gaiden* / *Metal Gear Solid* — stealth and agility.\n  - *Kitsune* folklore — magical, trickster, wise.\n  - *Red Foxes in nature photography* — for fur texture and movement.\n  - *Anime ninja characters* — e.g., *Naruto’s Kakashi*, *Naruto Shippuden’s Zabuza*, or *Sakura’s ninja gear* — for stylized clothing and gear.\n  - *Shadow of the Tomb Raider* — for environmental stealth and acrobatics.\n\n---\n\n**5. Key Visual Moments / Poses**\n\n- **Stealth Pose:** Crouched behind a bush or rooftop ledge, tail curled, eyes glowing, one hand on a blade.\n- **Combat Pose:** Mid-air slash, fur and clothing flowing, tail extended for balance.\n- **Emotional Expression:** Slight smirk or narrowed eyes — conveys confidence or mischief.\n- **Magic/Power Activation:** Eyes glow brighter, red aura or spirit trails appear around tail or weapons.\n\n---\n\n**6. Technical Notes**\n\n- Model should be optimized for animation — clean topology, dynamic tail rig, flexible limbs.\n- Textures should support both close-up detail (fur, fabric weave) and distance rendering (stylized, not overly detailed).\n- Include multiple outfit variants if needed (e.g., night gear, ceremonial gear, or battle-worn version).\n- Consider environmental interaction — e.g., tail can brush against leaves or snow for subtle visual feedback.\n\n---\n\n**7. Deliverables (for Artist/Team)**\n\n- High-resolution concept art (front, side, back, 3/4 view)\n- Color palette + texture reference sheet\n- Pose sheet (idle, walk, run, jump, attack, stealth, special move)\n- Weapon and gear detail sheets\n- Optional: Animation reference video or motion capture notes\n\n---\n\n**8. Tone & Atmosphere**\n\nThe character should feel **mysterious, elegant, and lethal** — a creature of the shadows with a touch of magic or folklore. Avoid cartoonishness or overt cuteness — instead, aim for **mythic realism**. The red fox should feel like a guardian, a trickster, or a silent predator — depending on narrative context.\n\n---\n\n**Final Note to Artist:**\n\n“Create a character that feels like a whisper in the wind — beautiful, dangerous, and unforgettable. Let the red fox’s spirit shine through every detail — from the flick of its tail to the glint of its blade.”\n\n—\n\n✅ **Approved for Production**  \n*Art Direction Brief — “Red Fox Ninja” — Version 1.0*  \n*For use in game development pipeline — character modeling, animation, and visual design.*"
+      },
+      "image": {
+        "file": "img_1790490657132.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/7a/20260927/77c9ad12/36c5f108-5e2e-4129-bcbf-74211b24afa31270311727.png?Expires=1790577058&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1VEiYcBkXb6kH9lYAjP1etT3MNQ%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790490657132.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/7a/20260927/77c9ad12/36c5f108-5e2e-4129-bcbf-74211b24afa31270311727.png?Expires=1790577058&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1VEiYcBkXb6kH9lYAjP1etT3MNQ%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790490675021.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/42/20260927/17bff29b/8e72815e-4f85-4104-9a77-2591619fc311-1.png?Expires=1791096476&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=ReclOgqsf0tlBz6QqDLv%2BmUSSuI%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790490693064.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/5a/20260927/aa4f9372/6721c217-ba66-4ed3-9038-671c688b2ca2-1.png?Expires=1791096494&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=jQQhzXc5IUd%2BbG7zLGOe5cnqMeM%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-5"
   }
 ]

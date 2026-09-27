@@ -16,6 +16,7 @@ from app.api.dna import router as dna_router
 from app.api.knowledge import router as knowledge_router
 from app.api.mcp import router as mcp_router
 from app.api.models import router as models_router
+from app.api.providers import router as providers_router
 from app.api.task import router as task_router
 from app.core.database import init_models
 
@@ -46,6 +47,7 @@ app.include_router(asset_router, prefix="/api/v1/assets", tags=["assets"])
 app.include_router(task_router, prefix="/api/v1/tasks", tags=["tasks"])
 app.include_router(dna_router, prefix="/api/v1/dna", tags=["dna"])
 app.include_router(models_router, prefix="/api/v1/models", tags=["models"])
+app.include_router(providers_router, prefix="/api/v1/providers", tags=["providers"])
 app.include_router(mcp_router, prefix="/api/v1/mcp", tags=["mcp"])
 app.include_router(collab_router, prefix="/api/v1/projects", tags=["projects"])
 app.include_router(knowledge_router, prefix="/api/v1/knowledge", tags=["knowledge"])
