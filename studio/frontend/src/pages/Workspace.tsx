@@ -37,6 +37,7 @@ const ENGINES = [
 ];
 
 const OVERRIDE_OPTIONS: Record<string, Array<[string, string]>> = {
+  style: [["auto", "风格：自动"], ["pixel", "像素"], ["2d", "2D 动漫"]],
   gender: [["auto", "性别：自动"], ["female", "女性"], ["male", "男性"], ["neutral", "中性"]],
   class: [
     ["auto", "职业：自动"], ["mage", "法师"], ["warrior", "战士"], ["archer", "弓箭手"],
@@ -220,11 +221,11 @@ export default function Workspace() {
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <div className="grid grid-cols-12 gap-5">
-        <section className="cf-sheen relative col-span-12 overflow-hidden rounded-2xl border border-line-subtle bg-[radial-gradient(620px_240px_at_88%_-30%,rgba(76,194,255,.2),transparent_70%),radial-gradient(420px_220px_at_6%_130%,rgba(139,123,255,.13),transparent_70%),linear-gradient(180deg,#111826,#0c1017)] p-6 xl:col-span-8">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+        <section className="cf-sheen relative col-span-12 overflow-hidden rounded-2xl border border-line-subtle bg-[radial-gradient(620px_240px_at_88%_-30%,rgba(169,129,47,.12),transparent_70%),radial-gradient(420px_220px_at_6%_130%,rgba(62,125,90,.09),transparent_70%),linear-gradient(180deg,#f2efe9,#ece9e2)] p-6 xl:col-span-8">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
             CreativeForge Studio · 目标输入
           </div>
-          <h1 className="mt-2 text-2xl font-semibold leading-8 tracking-[-0.01em]">
+          <h1 className="mt-2 font-display text-[28px] font-black leading-10">
             今天要锻造什么资产？
           </h1>
           <p className="mt-1 text-[13px] text-ink-3">
@@ -345,7 +346,7 @@ export default function Workspace() {
                 step.status === "done"
                   ? "border-success bg-success/10 text-success"
                   : step.status === "running"
-                    ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(76,194,255,.1)]"
+                    ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(26,24,20,.08)]"
                     : step.status === "failed"
                       ? "border-danger bg-danger/10 text-danger"
                       : "border-line bg-surface-1 text-ink-4";
@@ -398,7 +399,7 @@ export default function Workspace() {
               </span>
               <Sparkline
                 points="M0 22 15 20 30 21 45 15 60 16 75 10 90 11 105 5 120 6"
-                stroke="#ffb454"
+                stroke="#a9812f"
               />
               <span className="text-[11px] text-ink-3">
                 权重 pixel .30 / anim .30 / engine .25 / agent .15
@@ -418,7 +419,7 @@ export default function Workspace() {
               </span>
               <Sparkline
                 points="M0 23 15 21 30 18 45 19 60 14 75 12 90 9 105 8 120 6"
-                stroke="#22d3ee"
+                stroke="#0e8ea8"
               />
               <span className="text-[11px] text-ink-3">
                 baseline {Math.round(kpis.precon.baseline_pixel_score * 100)}% · +
@@ -439,7 +440,7 @@ export default function Workspace() {
               </span>
               <Sparkline
                 points="M0 4 15 6 30 12 45 16 60 20 75 24 90 25 105 26 120 26"
-                stroke="#a78bfa"
+                stroke="#7c5cc4"
               />
               <span className="text-[11px] text-ink-3">
                 baseline {kpis.falign.baseline_root_drift.toFixed(2)} → 纠偏 100%
@@ -459,7 +460,7 @@ export default function Workspace() {
               </span>
               <Sparkline
                 points="M0 26 20 26 40 26 60 26 80 26 100 26 120 26"
-                stroke="#34d399"
+                stroke="#3e7d5a"
               />
               <span className="text-[11px] text-ink-3">
                 {kpis.gimport.manual_reduction.traditional_steps} 步 →{" "}
@@ -515,7 +516,7 @@ export default function Workspace() {
                 <tr
                   key={task.task_id}
                   onClick={() => openTask(task)}
-                  className="cursor-pointer border-b border-white/[.045] text-ink-2 transition-colors last:border-0 hover:bg-surface-2/60"
+                  className="cursor-pointer border-b border-ink/[.08] text-ink-2 transition-colors last:border-0 hover:bg-surface-2/60"
                 >
                   <td className="px-4 py-3 font-mono text-xs text-ink-3">{task.task_id}</td>
                   <td className="max-w-[420px] truncate px-4 py-3 text-ink">{task.goal}</td>

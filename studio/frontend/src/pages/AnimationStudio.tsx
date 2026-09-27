@@ -109,7 +109,7 @@ export default function AnimationStudio() {
               </Button>
             }
           >
-            <div className="flex h-[230px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(167,139,250,.14),transparent_70%),#0a0e15]">
+            <div className="flex h-[230px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
               <motion.div
                 key={current}
                 initial={{ scale: 0.96, opacity: 0.7 }}
@@ -171,14 +171,14 @@ export default function AnimationStudio() {
             right={<Badge tone="success">0.00 px/frame</Badge>}
           >
             <svg viewBox="0 0 640 90" className="h-[90px] w-full">
-              <line x1="0" y1="45" x2="640" y2="45" stroke="#2a3444" strokeDasharray="5 5" />
-              <path d={trackPath} fill="none" stroke="#fb7185" strokeWidth="2" />
+              <line x1="0" y1="45" x2="640" y2="45" stroke="#b9b3a5" strokeDasharray="5 5" />
+              <path d={trackPath} fill="none" stroke="#a94f3d" strokeWidth="2" />
               {rootTrack.map((point, index) => {
                 const corrected = corrections[index];
                 const x = (index / Math.max(1, rootTrack.length - 1)) * 640;
                 const y = 45 - (point.dx + (corrected?.dx ?? 0)) * 6;
                 return (
-                  <circle key={index} cx={x} cy={y} r="3.5" fill="#34d399">
+                  <circle key={index} cx={x} cy={y} r="3.5" fill="#3e7d5a">
                     <title>{`frame ${index} · dx ${point.dx.toFixed(2)}`}</title>
                   </circle>
                 );

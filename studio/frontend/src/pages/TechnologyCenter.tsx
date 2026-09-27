@@ -68,13 +68,13 @@ export default function TechnologyCenter() {
         }
       />
 
-      <section className="cf-sheen relative overflow-hidden rounded-2xl border border-line-subtle bg-[radial-gradient(700px_260px_at_88%_-30%,rgba(76,194,255,.2),transparent_70%),radial-gradient(460px_240px_at_4%_130%,rgba(139,123,255,.13),transparent_70%),linear-gradient(180deg,#111826,#0c1017)] p-7">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-primary">
+      <section className="cf-sheen relative overflow-hidden rounded-2xl border border-line-subtle bg-[radial-gradient(700px_260px_at_88%_-30%,rgba(169,129,47,.12),transparent_70%),radial-gradient(460px_240px_at_4%_130%,rgba(124,92,196,.08),transparent_70%),linear-gradient(180deg,#f2efe9,#ece9e2)] p-7">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
           CreativeForge Engine
         </div>
-        <h2 className="mt-2.5 max-w-3xl text-[40px] font-semibold leading-[48px] tracking-[-0.02em]">
+        <h2 className="mt-2.5 max-w-3xl font-display text-[38px] font-black leading-[50px]">
           把创意
-          <span className="bg-gradient-to-br from-[#7ad1ff] to-[#b9a8ff] bg-clip-text text-transparent">
+          <span className="bg-gradient-to-br from-[#a9812f] to-[#c46a3a] bg-clip-text text-transparent">
             锻造
           </span>
           成可运行的资产

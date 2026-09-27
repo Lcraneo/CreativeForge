@@ -21,7 +21,8 @@ export const useAssetStore = create<AssetState>((set) => ({
   setError: (error) => set({ error }),
 }));
 
-/** Loads the given (or latest) asset once per mount/key. */
+/** Loads the given (or latest) asset once per mount/key. Falls back to the
+ *  newest history record when the runtime holds no assets (e.g. after restart). */
 export function useAssetLoader(assetId?: string | null): CreativeAsset | null {
   const asset = useAssetStore((state) => state.asset);
   const set = useAssetStore((state) => state.set);
@@ -36,14 +37,32 @@ export function useAssetLoader(assetId?: string | null): CreativeAsset | null {
     let cancelled = false;
     setLoading(true);
     const loader = assetId ? api.getAsset(assetId) : api.latestAsset();
-    loader
-      .then((result) => {
+    const latestFromHistory = () =>
+      api.listHistory({ limit: 1 }).then((history) => {
+        const fromHistory = history.records[0]?.asset ?? null;
+        if (!fromHistory) throw new Error("no asset yet");
+        return fromHistory;
+      });
+    loader.then((result) => {
         if (cancelled) return;
         set(result);
         setLoading(false);
       })
       .catch(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        if (assetId) {
+          setLoading(false);
+          return;
+        }
+        latestFromHistory()
+          .then((fromHistory) => {
+            if (cancelled) return;
+            set(fromHistory);
+            setLoading(false);
+          })
+          .catch(() => {
+            if (!cancelled) setLoading(false);
+          });
       });
     return () => {
       cancelled = true;

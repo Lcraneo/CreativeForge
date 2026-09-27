@@ -118,12 +118,30 @@ export interface AnimationFrame {
   };
 }
 
+export interface DesignViewImage {
+  url: string;
+  model?: string;
+  file?: string;
+}
+
 export interface CreativeAsset {
   id: string;
   name?: string;
   type?: string;
   role?: string;
-  source: { width: number; height: number; prompt?: string };
+  source: {
+    width: number;
+    height: number;
+    prompt?: string;
+    ai_image?: {
+      file?: string;
+      url?: string;
+      model?: string;
+      path?: string;
+      width?: number;
+      height?: number;
+    };
+  };
   animation?: {
     action: string;
     fps: number;
@@ -144,6 +162,8 @@ export interface CreativeAsset {
     grid: { size: number; phase_x: number; phase_y: number; confidence: number };
     palette: { max_colors: number; colors: string[]; semantic_roles: Record<string, string | null> };
     contour: { thickness: number; connectivity: number; style: string; repaired: boolean };
+    pixels?: Array<Array<string | null>>;
+    style?: string;
   };
   quality?: {
     pixel?: { overall: number; [key: string]: number };
@@ -168,6 +188,11 @@ export interface CreativeAsset {
   };
   character?: CharacterSpec;
   image?: GeneratedImage;
+  design_views?: {
+    front?: DesignViewImage;
+    side?: DesignViewImage;
+    back?: DesignViewImage;
+  };
   prompt_enhance?: PromptEnhance;
   memory?: Record<string, unknown>;
 }
@@ -193,11 +218,7 @@ export interface ModelSettings {
   use_image: boolean;
   size: string;
   timeout: number;
-  has_key: boolean;
-  key_hint: string;
-  updated_at: number | null;
-  env_override: boolean;
-  capabilities: { chat: boolean; image: boolean; any: boolean };
+  style?: string;
 }
 
 export interface ProviderPreset {
@@ -205,10 +226,9 @@ export interface ProviderPreset {
   label: string;
   base_url: string;
   chat_model: string;
-  image_model: string;
-  use_chat: boolean;
-  use_image: boolean;
-  note: string;
+  model: string;
+  style?: string;
+  note?: string;
 }
 
 export interface PromptEnhance {
@@ -220,13 +240,12 @@ export interface PromptEnhance {
 
 export interface ModelTestResult {
   ok: boolean;
-  message: string;
-  latency_ms?: number;
-  models?: string[];
-  hint?: string;
+  status?: number;
+  detail?: string;
 }
 
 export interface GenerationOverrides {
+  style?: string;
   gender?: string;
   class?: string;
   element?: string;
@@ -348,7 +367,7 @@ export interface HistoryCharacter {
 }
 
 export interface HistorySummary {
-  record_id: string;
+  id: string;
   task_id: string;
   created_at: number;
   finished_at: number;
@@ -371,6 +390,7 @@ export interface HistorySummary {
   palette: string[];
   image?: GeneratedImage | null;
   enhanced_prompt?: string | null;
+  asset?: CreativeAsset | null;
 }
 
 export interface HistoryRecord extends HistorySummary {

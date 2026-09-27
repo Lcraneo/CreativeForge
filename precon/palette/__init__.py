@@ -46,9 +46,18 @@ def reconstruct_palette(image, style=None):
     seed = seed_of(image)
 
     if isinstance(roles, dict) and roles:
+        colors = _from_roles(roles)
+        max_colors = 16
+        source = "prompt"
+        if style == "2d":
+            # 2D requests keep gradient richness: mirror the ramp with
+            # lightened steps instead of collapsing to 16 flat colours
+            colors = colors + [shade(c, 0.28) for c in colors]
+            max_colors = 32
+            source = "prompt-2d"
         return {
-            "max_colors": 16,
-            "colors": _from_roles(roles),
+            "max_colors": max_colors,
+            "colors": colors,
             "semantic_roles": {
                 "outline": roles.get("outline"),
                 "shadow": roles.get("shadow"),
@@ -60,7 +69,7 @@ def reconstruct_palette(image, style=None):
                 "eyes": roles.get("eyes"),
                 "metal": roles.get("metal"),
             },
-            "source": "prompt"
+            "source": source
         }
 
     if seed is not None:

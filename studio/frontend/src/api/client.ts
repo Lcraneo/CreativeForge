@@ -49,6 +49,12 @@ export const api = {
 
   getAsset: (assetId: string) => request<CreativeAsset>(`/api/assets/${assetId}`),
 
+  generateDesignViews: (assetId: string) =>
+    request<CreativeAsset["design_views"]>("/api/design/views", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId }),
+    }),
+
   latestAsset: () => request<CreativeAsset>("/api/assets/latest"),
 
   exportAsset: (assetId: string, engine: string) =>
@@ -72,13 +78,20 @@ export const api = {
 
   getHistory: (recordId: string) => request<HistoryRecord>(`/api/history/${recordId}`),
 
+  deleteHistory: (recordId: string) =>
+    request<{ status: string; removed: number }>(`/api/history/${recordId}`, {
+      method: "DELETE",
+    }),
+
   clearHistory: () =>
     request<{ status: string }>("/api/history", { method: "DELETE" }),
 
   getModelSettings: () => request<ModelSettings>("/api/settings/model"),
 
   getModelPresets: () =>
-    request<{ presets: import("../types").ProviderPreset[] }>("/api/settings/model/presets"),
+    request<{ presets: Record<string, import("../types").ProviderPreset> }>(
+      "/api/settings/model/presets",
+    ),
 
   saveModelSettings: (payload: Partial<ModelSettings> & { api_key?: string | null }) =>
     request<ModelSettings>("/api/settings/model", {

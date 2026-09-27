@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   Background,
   Controls,
@@ -26,7 +27,7 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
-import type { Plan, TaskEvent } from "../types";
+import type { Plan, TaskEvent, HistorySummary } from "../types";
 
 const KIND_LABEL: Record<string, string> = {
   supervisor: "规划",
@@ -37,13 +38,13 @@ const KIND_LABEL: Record<string, string> = {
 };
 
 const DOMAIN_COLOR: Record<string, string> = {
-  supervisor: "#60a5fa",
-  precon: "#22d3ee",
-  falign: "#a78bfa",
-  gimport: "#34d399",
-  qa: "#fbbf24",
-  memory: "#94a3b8",
-  default: "#4cc2ff",
+  supervisor: "#4a6f8a",
+  precon: "#0e8ea8",
+  falign: "#7c5cc4",
+  gimport: "#3e7d5a",
+  qa: "#a9812f",
+  memory: "#6f7d8c",
+  default: "#1a1814",
 };
 
 function domainOf(id: string) {
@@ -56,21 +57,126 @@ function domainOf(id: string) {
   return "default";
 }
 
+function timeLabel(seconds: number) {
+  return new Date(seconds * 1000).toLocaleString([], {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function statusTone(status: string) {
+  return status === "pass" || status === "success"
+    ? "success"
+    : status === "failed"
+      ? "danger"
+      : "primary";
+}
+
+/** 无进行中任务时展示最近生成档案（历史已落盘，重启后仍有内容可看）。 */
+function RecentRuns() {
+  const navigate = useNavigate();
+  const setAsset = useAssetStore((state) => state.set);
+  const history = useQuery({
+    queryKey: ["history-recent"],
+    queryFn: () => api.listHistory({ limit: 8 }),
+  });
+
+  async function openAsset(record: HistorySummary) {
+    if (!record.asset_id) return;
+    try {
+      setAsset(record.asset ?? (await api.getAsset(record.asset_id)));
+      navigate("/asset");
+    } catch {
+      navigate("/asset");
+    }
+  }
+
+  const rows = history.data?.records ?? [];
+
+  return (
+    <Card
+      title="最近生成"
+      icon="clock"
+      right={
+        <Button variant="ghost" size="sm" icon="chevron" onClick={() => navigate("/history")}>
+          全部历史
+        </Button>
+      }
+      bodyClassName="p-0"
+    >
+      {rows.length === 0 ? (
+        <EmptyState
+          icon="layers"
+          title="还没有生产记录"
+          description="回到工作台输入一个游戏创意，Supervisor 会规划任务图并调度 Art / Animation / Engine / QA 智能体。"
+          action={
+            <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+              去创建任务
+            </Button>
+          }
+        />
+      ) : (
+        <div>
+          {rows.map((record) => (
+            <button
+              key={record.id}
+              onClick={() => openAsset(record)}
+              className="flex w-full items-center gap-4 border-b border-ink/[.08] px-[18px] py-3 text-left transition-colors last:border-0 hover:bg-surface-2/60"
+            >
+              <span className="w-[86px] shrink-0 font-mono text-[11.5px] text-ink-3">
+                {timeLabel(record.finished_at || record.created_at)}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13.5px] text-ink">
+                  {record.name || record.goal}
+                </span>
+                <span className="block truncate text-[11.5px] text-ink-3">
+                  {record.task_id} · {record.goal}
+                </span>
+              </span>
+              <span className="hidden shrink-0 items-center gap-2 sm:flex">
+                {record.scores?.pixel != null && (
+                  <Badge tone="precon">pixel {Math.round(record.scores.pixel * 100)}%</Badge>
+                )}
+                {record.scores?.animation != null && (
+                  <Badge tone="falign">anim {Math.round(record.scores.animation * 100)}%</Badge>
+                )}
+                {record.engine && <Badge tone="neutral">{record.engine}</Badge>}
+              </span>
+              <Badge tone={statusTone(record.report_status || record.status)}>
+                <StatusDot
+                  tone={record.report_status === "PASS" ? "success" : record.status === "failed" ? "failed" : "idle"}
+                />
+                {record.report_status || record.status}
+              </Badge>
+              {record.asset_id && (
+                <Icon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-4" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 function nodeStyle(status: NodeStatus, active: boolean, domain: string): React.CSSProperties {
   const color = DOMAIN_COLOR[domain] ?? DOMAIN_COLOR.default;
   const base: React.CSSProperties = {
     borderRadius: 12,
-    border: "1px solid #2a3444",
-    background: "linear-gradient(180deg,#151a24,#10141c)",
-    color: "#e9eef6",
+    border: "1px solid #d3cfc5",
+    background: "linear-gradient(180deg,#faf9f5,#f0ede6)",
+    color: "#1a1814",
     padding: "10px 12px",
     fontSize: 12,
     width: 186,
-    boxShadow: "0 6px 18px -10px rgba(0,0,0,.9)",
+    boxShadow: "0 6px 18px -10px rgba(26,24,20,.25)",
   };
   if (status === "success" || status === "recovered")
-    return { ...base, borderColor: "rgba(52,211,153,.45)" };
-  if (status === "failed") return { ...base, borderColor: "rgba(251,113,133,.6)" };
+    return { ...base, borderColor: "rgba(62,125,90,.5)" };
+  if (status === "failed") return { ...base, borderColor: "rgba(169,79,61,.6)" };
   if (active || status === "running")
     return {
       ...base,
@@ -189,7 +295,7 @@ export default function AgentDashboard() {
     source: edge.from,
     target: edge.to,
     animated: true,
-    style: { stroke: "#3a4658", strokeDasharray: "5 5" },
+    style: { stroke: "#b9b3a5", strokeDasharray: "5 5" },
   }));
 
   const qualityEvent = events.filter((event) => event.type === "QUALITY_REPORT").at(-1);
@@ -198,19 +304,18 @@ export default function AgentDashboard() {
 
   if (!taskId) {
     return (
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
-        <Card>
-          <EmptyState
-            icon="layers"
-            title="还没有正在运行的任务"
-            description="回到工作台输入一个游戏创意，Supervisor 会规划任务图并调度 Art / Animation / Engine / QA 智能体。"
-            action={
-              <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
-                去创建任务
-              </Button>
-            }
-          />
-        </Card>
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
+        <PageHeader
+          overline="Agent Command Center"
+          title="智能体指挥中心"
+          description="当前没有进行中的任务；下方为最近生成档案，点击可直接打开资产"
+          actions={
+            <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+              去创建任务
+            </Button>
+          }
+        />
+        <RecentRuns />
       </div>
     );
   }
@@ -253,7 +358,7 @@ export default function AgentDashboard() {
           }
           bodyClassName="p-3"
         >
-          <div className="h-[430px] overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(420px_200px_at_50%_0%,rgba(96,165,250,.09),transparent_70%)]">
+          <div className="h-[430px] overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(420px_200px_at_50%_0%,rgba(74,111,138,.08),transparent_70%),#f1efe9]">
             <ReactFlow
               nodes={graphNodes}
               edges={graphEdges}
@@ -262,7 +367,7 @@ export default function AgentDashboard() {
               nodesDraggable={false}
               nodesConnectable={false}
             >
-              <Background color="#1e2633" gap={24} />
+              <Background color="#ddd9cf" gap={24} />
               <Controls showInteractive={false} />
             </ReactFlow>
           </div>
@@ -290,11 +395,11 @@ export default function AgentDashboard() {
                 <span className="text-xs text-ink-3">{runningNode.sublabel}</span>
               </div>
               <div className="mt-3 space-y-0">
-                <div className="flex justify-between border-b border-white/[.05] py-2 text-[12.5px]">
+                <div className="flex justify-between border-b border-ink/[.08] py-2 text-[12.5px]">
                   <span className="text-ink-3">进度</span>
                   <span className="tabular font-mono">{progress}%</span>
                 </div>
-                <div className="flex justify-between border-b border-white/[.05] py-2 text-[12.5px]">
+                <div className="flex justify-between border-b border-ink/[.08] py-2 text-[12.5px]">
                   <span className="text-ink-3">任务 ID</span>
                   <span className="font-mono">{taskId}</span>
                 </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAgentStore } from "../stores/agentStore";
 import { useAssetStore } from "../stores/assetStore";
 import { CommandPalette } from "./CommandPalette";
@@ -71,6 +71,7 @@ export default function Layout() {
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const taskId = useAgentStore((state) => state.taskId);
   const status = useAgentStore((state) => state.status);
@@ -79,6 +80,32 @@ export default function Layout() {
   const asset = useAssetStore((state) => state.asset);
 
   useEffect(() => localStorage.setItem("cf-rail", rail ? "1" : "0"), [rail]);
+
+  // 侧栏 kbd 数字 = 真实快捷键（1/2/3 跳转），输入时忽略
+  useEffect(() => {
+    const shortcuts = new Map(
+      NAV_GROUPS.flatMap((group) => group.items)
+        .filter((item) => item.kbd)
+        .map((item) => [item.kbd as string, item.to]),
+    );
+    function onKey(event: KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const to = shortcuts.get(event.key);
+      if (to) navigate(to);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [navigate]);
 
   const crumb = BREADCRUMBS[location.pathname] ?? { group: "CreativeForge", label: "工作台" };
 
@@ -89,7 +116,7 @@ export default function Layout() {
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
-          "hidden shrink-0 flex-col border-r border-line-subtle bg-gradient-to-b from-[#0c1017] to-[#090c11] transition-[width] duration-200 ease-standard md:flex",
+          "hidden shrink-0 flex-col border-r border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ebe8e0] transition-[width] duration-200 ease-standard md:flex",
           rail ? "w-16 px-2 py-3" : "w-60 p-3",
         )}
       >
@@ -99,12 +126,12 @@ export default function Layout() {
             rail ? "justify-center px-0" : "px-2",
           )}
         >
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[9px] bg-gradient-to-br from-primary to-[#8b7bff] text-[13px] font-extrabold tracking-[-0.04em] text-[#05121c] shadow-[0_0_18px_-4px_rgba(76,194,255,.6)]">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[9px] bg-ink font-display text-[13px] font-black tracking-[-0.04em] text-canvas shadow-[0_6px_14px_-6px_rgba(26,24,20,.5)]">
             CF
           </span>
           {!rail && (
             <div className="min-w-0">
-              <div className="truncate text-[13.5px] font-bold">CreativeForge</div>
+              <div className="truncate font-display text-[14.5px] font-black">CreativeForge</div>
               <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-ink-3">
                 AI Asset Factory
               </div>
@@ -180,9 +207,9 @@ export default function Layout() {
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line-subtle bg-[rgba(10,13,18,.86)] px-4 backdrop-blur-md md:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line-subtle bg-[rgba(245,243,239,.86)] px-4 backdrop-blur-md md:px-6">
           <span className="flex items-center gap-2 md:hidden">
-            <span className="grid h-6 w-6 place-items-center rounded-md bg-gradient-to-br from-primary to-[#8b7bff] text-[10px] font-extrabold text-[#05121c]">
+            <span className="grid h-6 w-6 place-items-center rounded-md bg-ink font-display text-[10px] font-black text-canvas">
               CF
             </span>
             <b className="text-[13px]">{crumb.label}</b>
@@ -247,7 +274,7 @@ export default function Layout() {
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line-subtle bg-[rgba(10,13,18,.95)] backdrop-blur-md md:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line-subtle bg-[rgba(245,243,239,.95)] backdrop-blur-md md:hidden">
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}

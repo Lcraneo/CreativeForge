@@ -63,3 +63,34 @@ INFO:     127.0.0.1:64535 - "GET /api/v1/assets/5db3999a-5b05-45e5-89fb-2b337b3b
 INFO:     127.0.0.1:55428 - "GET /api/v1/dna/%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B5%9B%E5%8D%9A%E6%9C%8B%E5%85%8B%E6%9C%BA%E6%A2%B0%E7%8C%AB%E6%88%98%E5%A3%AB_%E8%A3%85%E5%A4%87%E7%81%AB%E7%84%B0%E5%89%91_%E6%9C%89%E6%94%BB%E5%87%BB%E5%8A%A8%E7%94%BB_%E5%AF%BC%E5%85%A5cocos_460 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50539 - "GET /api/v1/assets?limit=6 HTTP/1.1" 200 OK
 INFO:     127.0.0.1:50540 - "GET /api/v1/models/registry HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57162 - "GET /api/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57166 - "GET /api/v1/models HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:57167 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57167 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:60190 - "GET /api/v1/assets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58991 - "GET /api/v1/assets?limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:65402 - "GET /api/v1/models/registry HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55739 - "GET /api/v1/assets?limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55740 - "GET /api/v1/models/registry HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52309 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /docs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58557 - "GET /openapi.json HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59550 - "GET /api/health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:59552 - "GET /api/v1/assets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59554 - "GET /api/v1/assets HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50824 - "GET /api/v1/assets?limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50825 - "GET /api/v1/models/registry HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50826 - "GET /api/v1/assets?limit=6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:50827 - "GET /api/v1/models/registry HTTP/1.1" 200 OK
+INFO:     127.0.0.1:61922 - "POST /api/v1/assets/create HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49879 - "GET /api/v1/tasks?limit=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:58827 - "GET /api/v1/tasks?limit=10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:53510 - "GET /api/v1/tasks/160dd577-d50d-4a68-a31b-bfa1f3fcae10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52925 - "GET /api/v1/tasks/160dd577-d50d-4a68-a31b-bfa1f3fcae10 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56763 - "GET /api/v1/assets?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63359 - "GET /api/v1/assets?limit=20 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:63242 - "GET /api/v1/assets/08082a37-3995-41e9-978a-23219dffce13 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:56450 - "GET /api/v1/assets/08082a37-3995-41e9-978a-23219dffce13 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55143 - "GET /api/v1/dna/%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B5%9B%E5%8D%9A%E6%9C%8B%E5%85%8B%E6%9C%BA%E6%A2%B0%E7%8C%AB%E6%88%98%E5%A3%AB_%E8%A3%85%E5%A4%87%E7%81%AB%E7%84%B0%E5%89%91_%E6%9C%89%E6%94%BB%E5%87%BB%E5%8A%A8%E7%94%BB_%E5%AF%BC%E5%85%A5cocos_460 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55144 - "GET /api/v1/dna/%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%B5%9B%E5%8D%9A%E6%9C%8B%E5%85%8B%E6%9C%BA%E6%A2%B0%E7%8C%AB%E6%88%98%E5%A3%AB_%E8%A3%85%E5%A4%87%E7%81%AB%E7%84%B0%E5%89%91_%E6%9C%89%E6%94%BB%E5%87%BB%E5%8A%A8%E7%94%BB_%E5%AF%BC%E5%85%A5cocos_460 HTTP/1.1" 200 OK

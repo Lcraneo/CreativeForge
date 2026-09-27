@@ -143,7 +143,7 @@ export default function ExportCenter() {
               }
               bodyClassName="p-4"
             >
-              <pre className="cf-scroll overflow-x-auto rounded-md border border-line-subtle bg-[#0a0e15] p-4 font-mono text-[11.5px] leading-[21px] text-ink-2">
+              <pre className="cf-scroll overflow-x-auto rounded-md border border-line-subtle bg-[#faf9f5] p-4 font-mono text-[11.5px] leading-[21px] text-ink-2">
                 {renderTree(latest.files)}
               </pre>
             </Card>
@@ -168,7 +168,7 @@ export default function ExportCenter() {
               {latest.validation.checks.map((check) => (
                 <div
                   key={check.name}
-                  className="flex items-center gap-2.5 border-b border-white/[.04] py-1.5 text-[12.5px] text-ink-2 last:border-0"
+                  className="flex items-center gap-2.5 border-b border-ink/[.08] py-1.5 text-[12.5px] text-ink-2 last:border-0"
                 >
                   <Icon
                     name={check.passed ? "check" : "x"}

@@ -47,7 +47,25 @@ class AgentRuntime:
 
     def _run(self, task_id, goal, overrides=None):
         started = time.time()
-        enhanced, image = self._call_external(task_id, goal, overrides)
+        spec = apply_overrides(parse_prompt(goal), overrides)
+        enhanced, image = self._call_external(task_id, goal, overrides, spec)
+
+        if image:
+            # hand the AI artwork to the pipeline: PReCon reconstructs from it
+            from studio.backend.model_service.service import safe_generated_path
+
+            local = safe_generated_path(image.get("file"))
+            if local:
+                image["path"] = local
+                try:
+                    from PIL import Image
+
+                    with Image.open(local) as handle:
+                        image["width"], image["height"] = handle.size
+                except Exception:
+                    pass
+            overrides = dict(overrides or {})
+            overrides["_model_image"] = image
 
         def on_event(event):
             self.tasks.append_event(task_id, event)
@@ -78,11 +96,19 @@ class AgentRuntime:
             self.assets.save(asset)
         self._record(task_id, goal, result, None, started)
 
-    def _call_external(self, task_id, goal, overrides):
+    def _call_external(self, task_id, goal, overrides, spec=None):
         """Runs the configured model API: chat prompt enhancement first, then
         optional image generation. Every failure degrades gracefully."""
+        spec = spec or {}
         settings = self.model_settings.effective()
         if not (settings.get("enabled") and settings.get("base_url") and settings.get("api_key")):
+            if settings.get("enabled"):
+                # switch is on but the configuration is incomplete — surface why
+                self.tasks.append_event(task_id, {
+                    "type": "MODEL_FALLBACK",
+                    "stage": "configure",
+                    "detail": "自定义模型未配置完整：需要 Base URL 与 API Key（设置 → 模型设置）",
+                })
             return None, None
 
         enhanced = None
@@ -94,7 +120,6 @@ class AgentRuntime:
                 "model": settings.get("chat_model"),
             })
             try:
-                spec = apply_overrides(parse_prompt(goal), overrides)
                 enhanced = ChatProvider(settings).enhance(goal, spec, overrides)
                 self.tasks.append_event(task_id, {
                     "type": "MODEL_ENHANCE",
@@ -119,7 +144,8 @@ class AgentRuntime:
             })
             try:
                 prompt = build_image_prompt(
-                    goal, overrides, enhanced.get("prompt") if enhanced else None
+                    goal, overrides, enhanced.get("prompt") if enhanced else None,
+                    style=spec.get("style"),
                 )
                 image = ImageProvider(settings).generate(prompt)
                 self.tasks.append_event(task_id, {

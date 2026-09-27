@@ -12,7 +12,6 @@ import {
 } from "../components/ui";
 import { FrameFigure } from "../components/FrameFigure";
 import { CharacterArt } from "../components/CharacterArt";
-import { AiImage } from "../components/AiImage";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import AssetViewer from "../three/AssetViewer";
@@ -53,6 +52,12 @@ export default function AssetInspector() {
   const palette = asset.pixel?.palette.colors?.length
     ? asset.pixel.palette.colors.slice(0, 16)
     : FALLBACK_PALETTE;
+  const spec = asset.character;
+  const aiImage = asset.image?.url ?? asset.source?.ai_image?.url;
+  const aiImageMeta = asset.image ?? asset.source?.ai_image;
+  const label = (value: string | null | undefined) => (value ? value : "—");
+  const pair = (...values: Array<string | null | undefined>) =>
+    values.map(label).filter((value) => value !== "—").join(" · ") || "—";
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -91,15 +96,37 @@ export default function AssetInspector() {
             <KV label="ID" value={asset.id} />
             <KV label="Name" value={asset.name ?? "—"} />
             <KV label="Type / Role" value={`${asset.type ?? "character"} / ${asset.role ?? "—"}`} />
-            <KV label="Source" value={`${asset.source.width} × ${asset.source.height}`} />
+            <KV
+              label="Source"
+              value={
+                asset.source?.ai_image?.width
+                  ? `${asset.source.ai_image.width} × ${asset.source.ai_image.height} · AI 原画`
+                  : `${asset.source.width} × ${asset.source.height}`
+              }
+            />
           </div>
-          <div className="h-[230px] overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(240px_160px_at_50%_20%,rgba(76,194,255,.12),transparent_70%),#0a0e15]">
-            <AssetViewer />
-          </div>
-          <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-ink-3">
-            <Icon name="refresh" className="h-3.5 w-3.5" />
-            拖拽旋转 · 滚轮缩放 · 自动旋转
-          </div>
+          {aiImage ? (
+            <div className="flex h-[230px] items-center justify-center overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
+              <img
+                src={aiImage}
+                alt={asset.name ?? "AI 原画"}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="h-[230px] overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(240px_160px_at_50%_20%,rgba(26,24,20,.06),transparent_70%),#f1efe9]">
+                <AssetViewer />
+              </div>
+              <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-ink-3">
+                <Icon name="refresh" className="h-3.5 w-3.5" />
+                占位 3D 预览 · 接入模型后此处显示 AI 原画
+              </div>
+            </>
+          )}
+          {aiImage && aiImageMeta?.model && (
+            <div className="mt-2 text-[11px] text-ink-3">AI 原画 · {aiImageMeta.model}</div>
+          )}
         </Card>
 
         <Card
@@ -123,6 +150,28 @@ export default function AssetInspector() {
               tone="precon"
             />
           </div>
+          {asset.pixel?.pixels && (
+            <div className="mt-4">
+              <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                AI 重建矩阵 · {asset.pixel.pixels.length}×{asset.pixel.pixels.length}
+              </div>
+              <div
+                className="mt-2 grid gap-px rounded-sm bg-line-subtle p-px"
+                style={{
+                  gridTemplateColumns: `repeat(${asset.pixel.pixels.length}, 1fr)`,
+                  maxWidth: 200,
+                }}
+              >
+                {asset.pixel.pixels.flat().map((color, index) => (
+                  <span
+                    key={index}
+                    className="aspect-square"
+                    style={{ background: color ?? "transparent" }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           <div className="mt-4 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
             Semantic Palette
           </div>
@@ -135,7 +184,7 @@ export default function AssetInspector() {
                   navigator.clipboard?.writeText(color).catch(() => undefined);
                   toast({ tone: "info", title: "已复制色值", description: color });
                 }}
-                className="h-6 rounded-sm border border-white/[.07] transition-transform hover:scale-110"
+                className="h-6 rounded-sm border border-ink/[.12] transition-transform hover:scale-110"
                 style={{ background: color }}
               />
             ))}
@@ -199,6 +248,11 @@ export default function AssetInspector() {
                   </div>
                 ))}
               </div>
+              {!frames[0]?.image && (
+                <p className="mt-2 text-[11px] text-ink-3">
+                  帧为时序示意（合成）；真实逐帧序列需接入图生帧模型。
+                </p>
+              )}
               <div className="mt-3">
                 <ScoreBar
                   label="animation overall · 阈值 0.85"
@@ -229,45 +283,43 @@ export default function AssetInspector() {
             </div>
           }
         >
-          {asset.character ? (
+          {spec ? (
             <div className="grid grid-cols-12 gap-5">
-              <div className="col-span-12 flex items-center justify-center overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(120px_120px_at_50%_24%,rgba(76,194,255,.12),transparent_70%),#0a0e15] py-3 md:col-span-2">
-                <AiImage
-                  src={
-                    asset.image?.url ||
-                    `/api/assets/${encodeURIComponent(asset.id)}/image.png?size=256`
-                  }
-                  alt={asset.name ?? "concept art"}
-                  className="h-[180px] w-[150px] rounded-lg object-cover"
-                  fallback={
-                    <CharacterArt
-                      spec={asset.character}
-                      palette={asset.pixel?.palette.colors}
-                      view="bust"
-                      className="h-[180px] w-[150px]"
-                    />
-                  }
-                />
+              <div className="col-span-12 flex items-center justify-center overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(120px_120px_at_50%_24%,rgba(26,24,20,.06),transparent_70%),#f1efe9] py-3 md:col-span-2">
+                {asset.image?.url ? (
+                  <img
+                    src={asset.image.url}
+                    alt={asset.name ?? "concept art"}
+                    className="h-[180px] w-[150px] rounded-lg object-cover"
+                  />
+                ) : (
+                  <CharacterArt
+                    spec={asset.character}
+                    palette={asset.pixel?.palette.colors}
+                    view="bust"
+                    className="h-[180px] w-[150px]"
+                  />
+                )}
               </div>
               <div className="col-span-12 md:col-span-5">
-                <KV label="Gender / Build" value={`${asset.character.gender_label} · ${asset.character.build_label}`} />
-                <KV label="Class / Element" value={`${asset.character.class_label} · ${asset.character.element_label}`} />
-                <KV label="Role" value={asset.character.role_label} />
-                <KV label="Height" value={`${asset.character.height_cm} cm`} />
+                <KV label="Gender / Build" value={pair(spec.gender_label, spec.build_label)} />
+                <KV label="Class / Element" value={pair(spec.class_label, spec.element_label)} />
+                <KV label="Role" value={label(spec.role_label)} />
+                <KV label="Height" value={spec.height_cm != null ? `${spec.height_cm} cm` : "—"} />
                 <KV
                   label="Hair"
-                  value={`${asset.character.hair_color_label}${asset.character.hair_style_label}`}
+                  value={pair(spec.hair_color_label, spec.hair_style_label)}
                 />
               </div>
               <div className="col-span-12 md:col-span-5">
-                <KV label="Eyes / Skin" value={`${asset.character.eyes_label} · ${asset.character.skin_label}`} />
-                <KV label="Expression" value={asset.character.expression_label} />
-                <KV label="Weapon" value={asset.character.weapon_label} />
+                <KV label="Eyes / Skin" value={pair(spec.eyes_label, spec.skin_label)} />
+                <KV label="Expression" value={label(spec.expression_label)} />
+                <KV label="Weapon" value={label(spec.weapon_label)} />
                 <KV
                   label="Accessory"
-                  value={asset.character.accessory?.length ? asset.character.accessory.join(" / ") : "无"}
+                  value={spec.accessory?.length ? spec.accessory.join(" / ") : "无"}
                 />
-                <KV label="Seed" value={asset.character.seed} />
+                <KV label="Seed" value={spec.seed ?? "—"} />
               </div>
               <div className="col-span-12 rounded-lg border border-line-subtle bg-surface-2/50 p-3">
                 <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
@@ -313,7 +365,7 @@ export default function AssetInspector() {
           {(asset.engine?.validation.checks ?? []).map((check) => (
             <div
               key={check.name}
-              className="flex items-center gap-2.5 border-b border-white/[.04] py-1.5 text-[12.5px] text-ink-2 last:border-0"
+              className="flex items-center gap-2.5 border-b border-ink/[.08] py-1.5 text-[12.5px] text-ink-2 last:border-0"
             >
               <Icon
                 name={check.passed ? "check" : "x"}

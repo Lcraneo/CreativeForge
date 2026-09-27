@@ -7,6 +7,11 @@ from ..quality import evaluate_pixel
 class PReConEngine:
 
     def process(self, image, style=None):
+        """Reconstruct a pixel/2D asset from the generation source.
+
+        ``style`` ("pixel" / "2d") steers palette width and contour treatment;
+        the seedless pixel path keeps the frozen benchmark baseline.
+        """
 
         grid = infer_grid(image)
 
@@ -16,7 +21,8 @@ class PReConEngine:
         )
 
         contour = repair_contour(
-            image
+            image,
+            style
         )
 
         quality = evaluate_pixel(
@@ -29,7 +35,8 @@ class PReConEngine:
             "pixel": {
                 "grid": grid,
                 "palette": palette,
-                "contour": contour
+                "contour": contour,
+                "style": style or "pixel"
             },
             "quality": quality
         }

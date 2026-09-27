@@ -22,9 +22,9 @@ type ButtonSize = "sm" | "md" | "lg";
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    "bg-primary text-[#05121c] hover:bg-primary-hover active:bg-primary-active shadow-[0_0_20px_-6px_rgba(76,194,255,.55)]",
+    "bg-primary text-canvas hover:bg-primary-hover active:bg-primary-active shadow-[0_6px_16px_-8px_rgba(26,24,20,.55)]",
   ember:
-    "bg-gradient-to-br from-ember to-[#ff7a6b] text-[#1c0f04] shadow-[0_0_22px_-6px_rgba(255,180,84,.55)] hover:brightness-110",
+    "bg-gradient-to-br from-ember to-[#c46a3a] text-[#fdfcf9] shadow-[0_6px_16px_-8px_rgba(169,129,47,.6)] hover:brightness-110",
   secondary:
     "bg-surface-2 border border-line text-ink hover:bg-surface-3 hover:border-line-strong",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
@@ -133,7 +133,7 @@ export function Card({
   return (
     <section
       className={cx(
-        "cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#10151d] to-[#0d1118]",
+        "cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1]",
         interactive &&
           "transition-all duration-150 ease-standard hover:-translate-y-px hover:border-line",
         className,
@@ -145,7 +145,7 @@ export function Card({
         />
       )}
       {(title || right) && (
-        <header className="flex items-center justify-between gap-3 border-b border-white/[.045] px-[18px] py-[13px]">
+        <header className="flex items-center justify-between gap-3 border-b border-ink/[.08] px-[18px] py-[13px]">
           <div className="flex min-w-0 items-center gap-2.5">
             {icon && (
               <Icon name={icon} className={cx("h-4 w-4 shrink-0 text-primary", iconClassName)} />
@@ -179,7 +179,7 @@ export function PageHeader({
             {overline}
           </div>
         )}
-        <h1 className="text-2xl font-semibold leading-8 tracking-[-0.01em]">{title}</h1>
+        <h1 className="font-display text-[26px] font-black leading-9">{title}</h1>
         {description && (
           <p className="mt-1 max-w-3xl text-[13px] leading-5 text-ink-3">{description}</p>
         )}
@@ -205,7 +205,7 @@ export type Tone =
   | "ember";
 
 const BADGE_TONES: Record<Tone, string> = {
-  neutral: "bg-white/[.06] text-ink-2",
+  neutral: "bg-ink/[.06] text-ink-2",
   primary: "bg-primary/15 text-primary",
   success: "bg-success/15 text-success",
   warning: "bg-warning/15 text-warning",
@@ -242,11 +242,11 @@ export function Badge({
 }
 
 const DOT_TONES: Record<string, string> = {
-  idle: "bg-ink-4 shadow-[0_0_0_4px_rgba(76,87,104,.15)]",
+  idle: "bg-ink-4 shadow-[0_0_0_4px_rgba(26,24,20,.12)]",
   running: "bg-primary animate-pulse-run",
-  success: "bg-success shadow-[0_0_0_4px_rgba(52,211,153,.14)]",
-  failed: "bg-danger shadow-[0_0_0_4px_rgba(251,113,133,.13)]",
-  warning: "bg-warning shadow-[0_0_0_4px_rgba(251,191,36,.13)]",
+  success: "bg-success shadow-[0_0_0_4px_rgba(62,125,90,.16)]",
+  failed: "bg-danger shadow-[0_0_0_4px_rgba(169,79,61,.16)]",
+  warning: "bg-warning shadow-[0_0_0_4px_rgba(169,129,47,.16)]",
 };
 
 export function StatusDot({
@@ -297,7 +297,7 @@ export function Input({
   return (
     <label
       className={cx(
-        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-all duration-150 ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(76,194,255,.12)]",
+        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-all duration-150 ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
     >
@@ -317,7 +317,7 @@ export function Textarea({
   return (
     <textarea
       className={cx(
-        "w-full resize-none rounded-[10px] border border-line bg-[#0a0e15] px-4 py-3.5 text-sm leading-6 text-ink outline-none transition-all duration-150 ease-standard placeholder:text-ink-4 focus:border-primary focus:shadow-[0_0_0_3px_rgba(76,194,255,.12)]",
+        "w-full resize-none rounded-[10px] border border-line bg-[#faf9f5] px-4 py-3.5 text-sm leading-6 text-ink outline-none transition-all duration-150 ease-standard placeholder:text-ink-4 focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
       {...rest}
@@ -335,7 +335,7 @@ export function Select({
   return (
     <select
       className={cx(
-        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%2376839a%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-all duration-150 ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(76,194,255,.12)]",
+        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23918c82%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-all duration-150 ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
       {...rest}
@@ -412,7 +412,7 @@ export function Segmented<T extends string>({
           className={cx(
             "flex h-7 select-none items-center gap-1.5 rounded-[7px] px-3.5 text-[12.5px] transition-colors duration-150 ease-standard",
             value === option.id
-              ? "bg-surface-3 font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,.07)]"
+              ? "bg-surface-3 font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,.65)]"
               : "text-ink-2 hover:text-ink",
           )}
         >
@@ -465,12 +465,12 @@ export function Tabs({
 
 const SCORE_FILLS: Record<string, string> = {
   primary: "bg-primary",
-  success: "bg-gradient-to-r from-[#2fbfe0] to-success",
+  success: "bg-gradient-to-r from-[#6fa287] to-success",
   danger: "bg-gradient-to-r from-warning to-danger",
-  precon: "bg-gradient-to-r from-[#1e9fbd] to-precon",
-  falign: "bg-gradient-to-r from-[#7c5cff] to-falign",
-  gimport: "bg-gradient-to-r from-[#1f9d75] to-gimport",
-  ember: "bg-gradient-to-r from-ember to-[#ff7a6b]",
+  precon: "bg-gradient-to-r from-[#4fb3c7] to-precon",
+  falign: "bg-gradient-to-r from-[#9d85d0] to-falign",
+  gimport: "bg-gradient-to-r from-[#5f9c7d] to-gimport",
+  ember: "bg-gradient-to-r from-ember to-[#c46a3a]",
 };
 
 export function ScoreBar({
@@ -540,8 +540,8 @@ export function ScoreRing({
     <svg viewBox="0 0 100 100" style={{ width: size, height: size }} role="img" aria-label={label}>
       <defs>
         <linearGradient id={`ring-${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#4cc2ff" />
-          <stop offset="1" stopColor="#8b7bff" />
+          <stop offset="0" stopColor="var(--color-ink)" />
+          <stop offset="1" stopColor="var(--color-ember)" />
         </linearGradient>
       </defs>
       <circle
@@ -603,7 +603,7 @@ export function KV({
   mono?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 border-b border-white/[.05] py-2 text-[12.5px] last:border-b-0">
+    <div className="flex items-baseline justify-between gap-4 border-b border-ink/[.08] py-2 text-[12.5px] last:border-b-0">
       <span className="shrink-0 text-ink-3">{label}</span>
       <span
         className={cx("min-w-0 truncate text-right text-ink", mono && "font-mono tabular")}
@@ -660,7 +660,7 @@ export function Stepper({
     state === "done"
       ? "border-success bg-success/10 text-success"
       : state === "running"
-        ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(76,194,255,.1)]"
+        ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(26,24,20,.08)]"
         : state === "failed"
           ? "border-danger bg-danger/10 text-danger"
           : "border-line bg-surface-1 text-ink-4";

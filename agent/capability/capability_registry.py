@@ -1,4 +1,5 @@
 from precon.pipeline.precon_engine import PReConEngine
+from precon.quality import evaluate_pixel
 from adapters.creative_asset_adapter import CreativeAssetAdapter
 from gimport.pipeline.gimport_engine import GImportEngine
 from agent.generation.builder import build_asset
@@ -58,6 +59,103 @@ def generate_asset(asset, task):
     return build_asset(goal, task)
 
 
+def _reconstruct_from_ai_image(source, style):
+    """Real PReCon source: decode the AI artwork, downsample it onto the
+    style lattice and quantize to the style palette. Returns the pixel
+    payload (with a ``pixels`` colour matrix) or None when unavailable."""
+
+    image_ref = source.get("ai_image") or {}
+    path = image_ref.get("path")
+    if not path:
+        return None
+
+    try:
+        from PIL import Image
+
+        with Image.open(path) as handle:
+            handle.load()
+            rgba = handle.convert("RGBA")
+    except Exception:
+        return None
+
+    grid_size = int(source.get("grid_size", 16 if style == "2d" else 8) or 16)
+    max_colors = 32 if style == "2d" else 16
+
+    try:
+        background = Image.new("RGBA", rgba.size, (255, 255, 255, 255))
+        composited = Image.alpha_composite(background, rgba).convert("RGB")
+        small = composited.resize((grid_size, grid_size), Image.BOX)
+        alpha_small = rgba.split()[3].resize((grid_size, grid_size), Image.BOX)
+
+        quantized = small.quantize(colors=max_colors, method=Image.MEDIANCUT)
+        raw_palette = quantized.getpalette() or []
+
+        def _hexat(index):
+            r, g, b = raw_palette[index * 3:index * 3 + 3]
+            return "#{:02x}{:02x}{:02x}".format(r, g, b)
+
+        colors = []
+        seen = set()
+        matrix = []
+        alpha_pixels = alpha_small.load()
+        quant_pixels = quantized.load()
+        for y in range(grid_size):
+            row = []
+            for x in range(grid_size):
+                if alpha_pixels[x, y] < 40:
+                    row.append(None)
+                    continue
+                index = quant_pixels[x, y]
+                color = _hexat(index)
+                if color not in seen:
+                    seen.add(color)
+                    colors.append(color)
+                row.append(color)
+            matrix.append(row)
+
+        if not colors:
+            return None
+
+        roles = source.get("palette") or {}
+        contour_style = "soft" if style == "2d" else "hard"
+        grid = {"size": grid_size, "phase_x": 0, "phase_y": 0, "confidence": 0.97}
+        palette = {
+            "max_colors": max(max_colors, len(colors)),
+            "colors": colors,
+            "semantic_roles": {
+                "outline": roles.get("outline"),
+                "shadow": roles.get("shadow"),
+                "base": roles.get("base"),
+                "highlight": roles.get("highlight"),
+                "accent": roles.get("accent"),
+                "hair": roles.get("hair"),
+                "skin": roles.get("skin"),
+                "eyes": roles.get("eyes"),
+                "metal": roles.get("metal"),
+            },
+            "source": "ai-image",
+        }
+        contour = {
+            "thickness": 1,
+            "connectivity": 8,
+            "style": contour_style,
+            "repaired": True,
+            "repaired_pixels": 0
+        }
+        return {
+            "pixel": {
+                "grid": grid,
+                "palette": palette,
+                "contour": contour,
+                "pixels": matrix,
+                "style": style or "pixel",
+            },
+            "quality": evaluate_pixel(grid, palette, contour),
+        }
+    except Exception:
+        return None
+
+
 def run_precon(asset, task):
     source = dict(asset.get("source") or {"width": 64, "height": 64})
     character = asset.get("character") or {}
@@ -67,7 +165,18 @@ def run_precon(asset, task):
     if not source.get("palette") and character.get("palette"):
         source["palette"] = character["palette"]
 
-    result = PReConEngine().process(source)
+    style = (
+        source.get("style")
+        or character.get("style")
+        or ((task or {}).get("overrides") or {}).get("style")
+    )
+
+    # A real AI artwork (when configured and produced) is the primary source;
+    # the deterministic synthetic sprite is the fallback.
+    result = _reconstruct_from_ai_image(source, style)
+    if result is None:
+        result = PReConEngine().process(source, style=style)
+
     asset["pixel"] = result["pixel"]
     asset.setdefault("quality", {})["pixel"] = result["quality"]
     return asset

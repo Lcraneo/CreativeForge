@@ -90,7 +90,11 @@ class AssetStore:
     def save(self, asset):
         with self._lock:
             asset_id = asset.get("id")
-            if asset_id not in self._assets:
+            if asset_id in self._assets:
+                # regenerated asset becomes the latest again
+                self._order.remove(asset_id)
+                self._order.append(asset_id)
+            else:
                 self._order.append(asset_id)
             self._assets[asset_id] = asset
             return asset_id

@@ -45,13 +45,13 @@ function CompareRow({
         : (method / baseline - 1) * 100;
 
   const FILLS = {
-    precon: "bg-gradient-to-r from-[#1e9fbd] to-precon",
-    falign: "bg-gradient-to-r from-[#7c5cff] to-falign",
-    gimport: "bg-gradient-to-r from-[#1f9d75] to-gimport",
+    precon: "bg-gradient-to-r from-[#4fb3c7] to-precon",
+    falign: "bg-gradient-to-r from-[#9d85d0] to-falign",
+    gimport: "bg-gradient-to-r from-[#5f9c7d] to-gimport",
   };
 
   return (
-    <div className="grid grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)_118px] items-center gap-3.5 border-b border-white/[.04] py-2.5 last:border-0">
+    <div className="grid grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)_118px] items-center gap-3.5 border-b border-ink/[.08] py-2.5 last:border-0">
       <span className="truncate text-[12.5px] text-ink-2">{name}</span>
       <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3">
         <motion.span

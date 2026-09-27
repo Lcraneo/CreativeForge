@@ -31,12 +31,20 @@ export default function PixelStudio() {
   const palette = asset?.pixel?.palette.colors?.length
     ? asset.pixel.palette.colors.slice(0, 16)
     : FALLBACK_PALETTE;
+  const realPixels = asset?.pixel?.pixels;
 
   const sprite = useMemo(
     () => buildSprite(spec, palette),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [asset?.id, asset?.character?.seed, palette],
   );
+
+  // AI 原图模式：有真实重建矩阵用矩阵，否则退回合成 sprite
+  const cells: Array<Array<string | null>> = showRaw
+    ? sprite.before
+    : (realPixels ?? sprite.after);
+  const cellsSize = cells.length || GRID;
+  const aiImage = asset?.image?.url ?? asset?.source?.ai_image?.url;
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -88,8 +96,13 @@ export default function PixelStudio() {
             </Badge>
           ))}
           <span className="text-[11.5px] text-ink-3">
-            {character?.height_cm}cm · {character?.weapon_label}
-            {character?.accessory?.length ? ` · ${character.accessory.join("/")}` : ""}
+            {[
+              character?.height_cm != null ? `${character.height_cm}cm` : null,
+              character?.weapon_label,
+              character?.accessory?.length ? character.accessory.join("/") : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
         </div>
       )}
@@ -97,57 +110,61 @@ export default function PixelStudio() {
       <div className="grid grid-cols-12 gap-5">
         <Card
           className="col-span-12 self-start lg:col-span-6"
-          title={showRaw ? "AI 生成原图 · 64 色 · 网格错位" : "像素资产 · 16 色 · 8×8 网格"}
+          title={showRaw ? (aiImage ? "AI 生成原图" : "AI 生成原图 · 64 色 · 网格错位") : "像素资产 · PReCon 重建"}
           icon="grid"
           iconClassName="text-precon"
-          right={<Badge tone="neutral">26 px / 格 · ←→ 切换</Badge>}
+          right={<Badge tone="neutral">{cellsSize} px / 格 · ←→ 切换</Badge>}
         >
-          <div className="flex justify-center rounded-[10px] border border-line-subtle bg-[#0a0e15] py-5">
-            <Stage width={GRID * CELL} height={GRID * CELL} className="rounded-lg">
-              <Layer>
-                {sprite[showRaw ? "before" : "after"].map((row, y) =>
-                  row.map((color, x) => {
-                    if (!color) return null;
-                    return (
-                      <Rect
-                        key={`${x}-${y}`}
-                        x={x * CELL}
-                        y={y * CELL}
-                        width={CELL - (showRaw ? 0 : 2)}
-                        height={CELL - (showRaw ? 0 : 2)}
-                        fill={color}
-                        cornerRadius={showRaw ? 0 : 3}
-                      />
-                    );
-                  }),
-                )}
-                {!showRaw && (
-                  <Group listening={false}>
-                    {Array.from({ length: GRID + 1 }, (_, i) => (
-                      <Line
-                        key={`h${i}`}
-                        points={[0, i * CELL - 1, GRID * CELL, i * CELL - 1]}
-                        stroke="rgba(255,255,255,0.05)"
-                        strokeWidth={1}
-                      />
-                    ))}
-                    {Array.from({ length: GRID + 1 }, (_, i) => (
-                      <Line
-                        key={`v${i}`}
-                        points={[i * CELL - 1, 0, i * CELL - 1, GRID * CELL]}
-                        stroke="rgba(255,255,255,0.05)"
-                        strokeWidth={1}
-                      />
-                    ))}
-                  </Group>
-                )}
-              </Layer>
-            </Stage>
+          <div className="flex justify-center rounded-[10px] border border-line-subtle bg-[#f1efe9] py-5">
+            {showRaw && aiImage ? (
+              <img src={aiImage} alt="AI 原图" className="max-h-[220px] rounded-lg" />
+            ) : (
+              <Stage width={cellsSize * CELL} height={(cells[0]?.length ?? GRID) * CELL} className="rounded-lg">
+                <Layer>
+                  {cells.map((row, y) =>
+                    row.map((color, x) => {
+                      if (!color) return null;
+                      return (
+                        <Rect
+                          key={`${x}-${y}`}
+                          x={x * CELL}
+                          y={y * CELL}
+                          width={CELL - (showRaw ? 0 : 2)}
+                          height={CELL - (showRaw ? 0 : 2)}
+                          fill={color}
+                          cornerRadius={showRaw ? 0 : 3}
+                        />
+                      );
+                    }),
+                  )}
+                  {!showRaw && (
+                    <Group listening={false}>
+                      {Array.from({ length: cellsSize + 1 }, (_, i) => (
+                        <Line
+                          key={`h${i}`}
+                          points={[0, i * CELL - 1, cellsSize * CELL, i * CELL - 1]}
+                          stroke="rgba(26,24,20,0.08)"
+                          strokeWidth={1}
+                        />
+                      ))}
+                      {Array.from({ length: cellsSize + 1 }, (_, i) => (
+                        <Line
+                          key={`v${i}`}
+                          points={[i * CELL - 1, 0, i * CELL - 1, cellsSize * CELL]}
+                          stroke="rgba(26,24,20,0.08)"
+                          strokeWidth={1}
+                        />
+                      ))}
+                    </Group>
+                  )}
+                </Layer>
+              </Stage>
+            )}
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <Badge tone={showRaw ? "danger" : "success"}>{showRaw ? "64 colors" : "16 colors"}</Badge>
+            <Badge tone={showRaw ? "danger" : "success"}>{showRaw ? "原图" : `${asset?.pixel?.palette?.max_colors ?? 16} colors`}</Badge>
             <Badge tone={showRaw ? "warning" : "precon"}>
-              grid {showRaw ? "off-grid" : "aligned"}
+              {showRaw ? "原图" : asset?.pixel?.pixels ? "AI 重建" : "grid aligned"}
             </Badge>
             <Badge tone="neutral">conf {asset?.pixel?.grid.confidence ?? 0.92}</Badge>
           </div>
@@ -169,7 +186,7 @@ export default function PixelStudio() {
                     navigator.clipboard?.writeText(color).catch(() => undefined);
                     toast({ tone: "info", title: "已复制色值", description: color });
                   }}
-                  className="h-7 rounded-sm border border-white/[.07] transition-transform duration-150 ease-standard hover:scale-110"
+                  className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-150 ease-standard hover:scale-110"
                   style={{ background: color }}
                 />
               ))}
@@ -194,7 +211,7 @@ export default function PixelStudio() {
                           x={16 + j * 28}
                           y={16 + i * 28}
                           radius={4}
-                          fill={i === 1 && j === 1 ? "#22d3ee" : "#3a4658"}
+                          fill={i === 1 && j === 1 ? "#0e8ea8" : "#b9b3a5"}
                         />
                       )),
                     )}

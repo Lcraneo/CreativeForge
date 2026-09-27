@@ -70,20 +70,20 @@ function Grid() {
   return (
     <mesh ref={ref} rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[6, 6]} />
-      <meshStandardMaterial color="#141922" />
+      <meshStandardMaterial color="#e3dfd6" />
     </mesh>
   );
 }
 
-export default function AssetViewer({ accent = "#4cc2ff" }: { accent?: string }) {
+export default function AssetViewer({ accent = "#a9812f" }: { accent?: string }) {
   return (
     <Canvas
       camera={{ position: [3.2, 2.2, 4.2], fov: 45 }}
-      style={{ background: "#0a0e15" }}
+      style={{ background: "#f1efe9" }}
     >
-      <ambientLight intensity={0.5} />
-      <directionalLight position={[4, 6, 3]} intensity={1.1} />
-      <pointLight position={[-3, 2, -2]} intensity={0.5} color="#4cc2ff" />
+      <ambientLight intensity={0.65} />
+      <directionalLight position={[4, 6, 3]} intensity={1.15} />
+      <pointLight position={[-3, 2, -2]} intensity={0.55} color="#a9812f" />
       <VoxelCharacter accent={accent} />
       <Grid />
       <OrbitControls enablePan={false} minDistance={3} maxDistance={9} />

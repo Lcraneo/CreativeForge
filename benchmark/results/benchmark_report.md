@@ -1,6 +1,6 @@
 # CreativeForge Benchmark Report
 
-Generated: 2026-09-24T09:11:50.797748+00:00
+Generated: 2026-09-26T12:33:08.737695+00:00
 Dataset: 12 assets across 6 categories (8 animated)
 
 ## PReCon — pixel reconstruction vs naive pixelate

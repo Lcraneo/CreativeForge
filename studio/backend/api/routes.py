@@ -172,6 +172,13 @@ def build_router(runtime):
             raise HTTPException(status_code=404, detail="unknown history record")
         return record
 
+    @router.delete("/history/{record_id}")
+    def delete_history(record_id: str):
+        removed = runtime.history.delete(record_id)
+        if not removed:
+            raise HTTPException(status_code=404, detail="unknown history record")
+        return {"status": "deleted", "removed": removed}
+
     @router.delete("/history")
     def clear_history():
         runtime.history.clear()
@@ -213,6 +220,43 @@ def build_router(runtime):
         if path is None:
             raise HTTPException(status_code=404, detail="unknown image")
         return FileResponse(path)
+
+    @router.post("/design/views")
+    def generate_design_views(request: dict):
+        """基于资产的 AI 原画生成侧视/背视图（DashScope imageedit）。"""
+        from studio.backend.model_service.service import ImageEditProvider
+
+        asset_id = request.get("asset_id") or ""
+        asset = runtime.assets.get(asset_id)
+        if asset is None:
+            # runtime 已重启等场景：从落盘历史里找回资产
+            for record in runtime.history.list(limit=100):
+                candidate = record.get("asset")
+                if isinstance(candidate, dict) and candidate.get("id") == asset_id:
+                    asset = candidate
+                    break
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get("ai_image", {}).get("url")
+        if not base:
+            raise HTTPException(status_code=409, detail="该资产没有 AI 原画，无法生成三视图（先在工作台用自定义模型生成）")
+
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
+
+        editor = ImageEditProvider(settings)
+        views = {"front": {"url": base, "model": (asset.get("image") or {}).get("model")}}
+        try:
+            views["side"] = editor.edit(base, "Same character exactly, rotated 90 degrees to show the LEFT SIDE profile view of the same character, keep identical colors, outfit and proportions, full body, transparent background")
+            views["back"] = editor.edit(base, "Same character exactly, viewed from BEHIND showing its back, keep identical colors, outfit and proportions, full body, transparent background")
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+
+        asset["design_views"] = views
+        runtime.assets.save(asset)
+        runtime.history.patch_asset(asset_id, {"design_views": views})
+        return views
 
     @router.get("/health")
     def health():
