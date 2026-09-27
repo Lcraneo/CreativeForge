@@ -1,55 +1,44 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useToastStore, type ToastTone } from "../stores/toastStore";
-import { Icon, type IconName } from "./icons";
+import { cx } from "./ui";
 
-const TONES: Record<ToastTone, { bar: string; icon: IconName; iconClass: string }> = {
-  info: { bar: "bg-primary", icon: "activity", iconClass: "text-primary" },
-  success: { bar: "bg-success", icon: "check", iconClass: "text-success" },
-  warning: { bar: "bg-warning", icon: "alert", iconClass: "text-warning" },
-  danger: { bar: "bg-danger", icon: "x", iconClass: "text-danger" },
+const TONE_BAR: Record<ToastTone, string> = {
+  info: "bg-ink-3",
+  success: "bg-success",
+  danger: "bg-danger",
+  warning: "bg-warning",
 };
 
 export function Toaster() {
-  const toasts = useToastStore((state) => state.toasts);
-  const remove = useToastStore((state) => state.remove);
+  const items = useToastStore((state) => state.items);
+  const dismiss = useToastStore((state) => state.dismiss);
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-5 z-[60] flex w-80 flex-col gap-2.5">
+    <div className="pointer-events-none fixed bottom-20 right-4 z-50 flex flex-col-reverse gap-2.5 md:bottom-5 md:right-5">
       <AnimatePresence initial={false}>
-        {toasts.map((toast) => {
-          const tone = TONES[toast.tone];
-          return (
-            <motion.output
-              key={toast.id}
-              role="status"
-              initial={{ opacity: 0, y: 10, scale: 0.98 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 6 }}
-              transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
-              className="pointer-events-auto relative overflow-hidden rounded-xl border border-line-subtle bg-surface-1 shadow-e3"
-            >
-              <span className={`absolute inset-x-0 top-0 h-0.5 ${tone.bar}`} />
-              <div className="flex items-start gap-2.5 px-4 py-3">
-                <Icon name={tone.icon} className={`mt-0.5 h-4 w-4 shrink-0 ${tone.iconClass}`} />
-                <div className="min-w-0 flex-1">
-                  <div className="text-[13px] font-semibold">{toast.title}</div>
-                  {toast.description && (
-                    <div className="mt-0.5 text-xs leading-[18px] text-ink-3">
-                      {toast.description}
-                    </div>
-                  )}
+        {items.map((item) => (
+          <motion.div
+            key={item.id}
+            layout
+            initial={{ opacity: 0, y: 14, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, x: 24, transition: { duration: 0.16 } }}
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            className="pointer-events-auto relative flex w-[330px] max-w-[calc(100vw-2rem)] cursor-pointer gap-3 overflow-hidden rounded-lg border border-line bg-[#faf9f5]/95 py-3 pl-4 pr-3.5 shadow-e3 backdrop-blur-md"
+            onClick={() => dismiss(item.id)}
+            role="status"
+          >
+            <span className={cx("absolute inset-y-0 left-0 w-[3px]", TONE_BAR[item.tone])} />
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold leading-[19px] text-ink">{item.title}</div>
+              {item.description && (
+                <div className="mt-0.5 line-clamp-2 text-[12px] leading-[18px] text-ink-3">
+                  {item.description}
                 </div>
-                <button
-                  aria-label="关闭通知"
-                  onClick={() => remove(toast.id)}
-                  className="text-ink-4 transition-colors hover:text-ink-2"
-                >
-                  <Icon name="x" className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </motion.output>
-          );
-        })}
+              )}
+            </div>
+          </motion.div>
+        ))}
       </AnimatePresence>
     </div>
   );

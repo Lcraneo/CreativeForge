@@ -1,161 +1,124 @@
-"""Persistent generation history (falls back gracefully when the disk is read-only).
+"""Persistent store of past generations (prompt + character + asset snapshot).
 
-Every finished (or failed) production task is appended as a record containing
-the prompt, timestamps, engine, quality scores, the character spec and a full
-CreativeAsset snapshot — so users can revisit any past generation even after a
-server restart, regardless of the in-memory asset store.
+Each finished Studio task is appended here so the History view survives
+restarts. Records are kept in a single JSON file keyed by ``task_id``.
 """
 
 import json
 import os
 import threading
-import time
 
 DEFAULT_HISTORY_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data",
-    "history.json"
+    os.path.dirname(os.path.abspath(__file__)), "history.json"
 )
-
-MAX_RECORDS = 300
 
 
 class HistoryStore:
-    def __init__(self, path=DEFAULT_HISTORY_PATH):
-        self._path = path
-        self._lock = threading.RLock()
+    def __init__(self, path=None):
+        self.path = path or DEFAULT_HISTORY_PATH
+        self._lock = threading.Lock()
         self._records = []
-        self._counter = 0
         self._load()
 
-    # ------------------------------------------------------------------
-    # persistence
-    # ------------------------------------------------------------------
-
     def _load(self):
-        try:
-            with open(self._path, encoding="utf-8") as handle:
-                payload = json.load(handle)
-        except (OSError, ValueError):
-            payload = {}
+        if os.path.isfile(self.path):
+            try:
+                with open(self.path, "r", encoding="utf-8") as handle:
+                    data = json.load(handle)
+                self._records = data if isinstance(data, list) else []
+            except (ValueError, OSError):
+                self._records = []
 
-        records = payload.get("records") if isinstance(payload, dict) else None
-        self._records = records if isinstance(records, list) else []
-        self._counter = int(payload.get("counter", len(self._records))) if isinstance(payload, dict) else len(self._records)
-
-    def _persist_locked(self):
+    def _save(self):
         try:
-            directory = os.path.dirname(self._path)
-            if directory:
-                os.makedirs(directory, exist_ok=True)
-            temporary = "{}.tmp".format(self._path)
-            with open(temporary, "w", encoding="utf-8") as handle:
-                json.dump(
-                    {"counter": self._counter, "records": self._records},
-                    handle,
-                    ensure_ascii=False,
-                    indent=2
-                )
-            os.replace(temporary, self._path)
+            with open(self.path, "w", encoding="utf-8") as handle:
+                json.dump(self._records, handle, ensure_ascii=False, indent=2)
         except OSError:
-            # read-only deployment: keep serving from memory
             pass
 
-    # ------------------------------------------------------------------
-    # public API
-    # ------------------------------------------------------------------
-
     def add(self, record):
-        with self._lock:
-            self._counter += 1
-            item = dict(record)
-            item["record_id"] = "H{:04d}".format(self._counter)
-            item.setdefault("finished_at", time.time())
-            self._records.append(item)
-            if len(self._records) > MAX_RECORDS:
-                self._records = self._records[-MAX_RECORDS:]
-            self._persist_locked()
-            return item["record_id"]
+        """Append a history record and return its id.
 
-    def list(self, limit=100, engine=None, keyword=None):
+        Ids are de-duplicated on insert: task counters restart between
+        backend runs, so a bare ``task_id`` is not unique across sessions.
+        """
+
+        if not isinstance(record, dict):
+            return None
+        record = dict(record)
         with self._lock:
-            items = self._records
-            if engine:
-                items = [item for item in items if item.get("engine") == engine]
-            if keyword:
-                needle = str(keyword).lower()
-                items = [
-                    item for item in items
-                    if needle in str(item.get("goal", "")).lower()
-                    or needle in str(item.get("name", "")).lower()
-                    or needle in str((item.get("character") or {}).get("summary", "")).lower()
-                ]
-            ordered = sorted(
-                items,
-                key=lambda item: item.get("finished_at", item.get("created_at", 0)),
-                reverse=True
+            existing = {r.get("id") for r in self._records}
+            rid = record.get("id") or record.get("task_id") or "H{:04d}".format(
+                len(self._records) + 1
             )
-            return [self._summary(item) for item in ordered[: max(1, int(limit))]]
+            if rid in existing:
+                suffix = 2
+                while "{}-{}".format(rid, suffix) in existing:
+                    suffix += 1
+                rid = "{}-{}".format(rid, suffix)
+            record["id"] = rid
+            self._records.append(record)
+            self._save()
+        return rid
 
     def get(self, record_id):
         with self._lock:
-            for item in self._records:
-                if item.get("record_id") == record_id:
-                    return dict(item)
-            return None
+            for record in self._records:
+                if record.get("id") == record_id:
+                    return record
+            for record in self._records:
+                if record.get("task_id") == record_id:
+                    return record
+        return None
 
-    def clear(self):
+    def list(self, limit=100, engine=None, keyword=None):
         with self._lock:
-            self._records = []
-            self._counter = 0
-            self._persist_locked()
+            items = list(self._records)
+        items.sort(
+            key=lambda r: r.get("finished_at", r.get("created_at", 0)),
+            reverse=True,
+        )
+        if engine:
+            items = [r for r in items if r.get("engine") == engine]
+        if keyword:
+            needle = str(keyword).lower()
+            items = [r for r in items if needle in str(r.get("goal", "")).lower()]
+        return items[:limit]
 
     def count(self):
         with self._lock:
             return len(self._records)
 
-    @staticmethod
-    def _summary(item):
-        character = item.get("character") or {}
-        return {
-            "record_id": item.get("record_id"),
-            "task_id": item.get("task_id"),
-            "created_at": item.get("created_at"),
-            "finished_at": item.get("finished_at"),
-            "goal": item.get("goal"),
-            "engine": item.get("engine"),
-            "status": item.get("status"),
-            "report_status": item.get("report_status"),
-            "asset_id": item.get("asset_id"),
-            "name": item.get("name"),
-            "type": item.get("type"),
-            "role": item.get("role"),
-            "action": item.get("action"),
-            "frames": item.get("frames"),
-            "fps": item.get("fps"),
-            "scores": item.get("scores") or {},
-            "qa_rounds": item.get("qa_rounds", 0),
-            "elapsed_seconds": item.get("elapsed_seconds"),
-            "error": item.get("error"),
-            "image": item.get("image"),
-            "enhanced_prompt": item.get("enhanced_prompt"),
-            "character": {
-                "summary": character.get("summary"),
-                "gender_label": character.get("gender_label"),
-                "class_label": character.get("class_label"),
-                "element_label": character.get("element_label"),
-                "role_label": character.get("role_label"),
-                "hair_color_hex": character.get("hair_color_hex"),
-                "hair_color_label": character.get("hair_color_label"),
-                "hair_style_label": character.get("hair_style_label"),
-                "skin_hex": character.get("skin_hex"),
-                "eyes_hex": character.get("eyes_hex"),
-                "expression_label": character.get("expression_label"),
-                "build_label": character.get("build_label"),
-                "height_cm": character.get("height_cm"),
-                "weapon_label": character.get("weapon_label"),
-                "accessory": character.get("accessory") or [],
-                "seed": character.get("seed"),
-            },
-            "palette": item.get("palette") or [],
-        }
+    def clear(self):
+        with self._lock:
+            self._records = []
+            self._save()
+
+    def patch_asset(self, asset_id, patch):
+        """Merge ``patch`` into the asset payload of the matching record.
+
+        Returns True when a record was found and updated."""
+
+        with self._lock:
+            for record in self._records:
+                if record.get("id") == asset_id or record.get("task_id") == asset_id:
+                    asset = record.get("asset")
+                    if isinstance(asset, dict):
+                        asset.update(patch)
+                        record["asset"] = asset
+                        self._save()
+                        return True
+        return False
+
+    def delete(self, record_id):
+        """Remove the single record whose id matches exactly; returns count removed."""
+
+        with self._lock:
+            before = len(self._records)
+            self._records = [
+                record for record in self._records if record.get("id") != record_id
+            ]
+            removed = before - len(self._records)
+            if removed:
+                self._save()
+            return removed

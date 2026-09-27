@@ -1,0 +1,7444 @@
+[
+  {
+    "task_id": "T0006",
+    "created_at": 1790425961.5615506,
+    "finished_at": 1790425961.5626411,
+    "goal": "做一个像素洞穴Boss，带攻击动画，导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast65278",
+    "name": "做一个像素洞穴boss_带攻击动画_导入unit",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9345,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast65278",
+      "name": "做一个像素洞穴boss_带攻击动画_导入unit",
+      "type": "character",
+      "role": "npc",
+      "seed": 15665278,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#731d11",
+        "base": "#fc692a",
+        "highlight": "#f9cd3d",
+        "accent": "#ffeb96",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#3f1009",
+      "#731d11",
+      "#973f19",
+      "#cf5622",
+      "#fc692a",
+      "#fd8a59",
+      "#f9cd3d",
+      "#ffeb96",
+      "#bfb070",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast65278",
+      "name": "做一个像素洞穴boss_带攻击动画_导入unit",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 15665278,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#731d11",
+          "base": "#fc692a",
+          "highlight": "#f9cd3d",
+          "accent": "#ffeb96",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast65278",
+        "name": "做一个像素洞穴boss_带攻击动画_导入unit",
+        "type": "character",
+        "role": "npc",
+        "seed": 15665278,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#731d11",
+          "base": "#fc692a",
+          "highlight": "#f9cd3d",
+          "accent": "#ffeb96",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.978,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9345
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9345,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.133,
+          "phase_y": 0.039,
+          "confidence": 0.978
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#3f1009",
+            "#731d11",
+            "#973f19",
+            "#cf5622",
+            "#fc692a",
+            "#fd8a59",
+            "#f9cd3d",
+            "#ffeb96",
+            "#bfb070",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#731d11",
+            "base": "#fc692a",
+            "highlight": "#f9cd3d",
+            "accent": "#ffeb96",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 16
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast65278",
+          "type": "character",
+          "resources": {
+            "texture": "ast65278.png",
+            "animation": "ast65278.anim",
+            "prefab": "ast65278.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast65278.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast65278.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast65278.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast65278.png",
+          "Animation": "Assets/Animation/ast65278.anim",
+          "Prefab": "Assets/Prefab/ast65278.prefab",
+          "Controller": "Assets/Controller/ast65278.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "做一个像素洞穴Boss，带攻击动画，导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0006"
+  },
+  {
+    "task_id": "T0007",
+    "created_at": 1790425961.5970273,
+    "finished_at": 1790425961.5977142,
+    "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9248,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#43110a",
+      "#7a1f12",
+      "#99401a",
+      "#d15723",
+      "#ff6a2b",
+      "#ff8b5a",
+      "#ffd23f",
+      "#ffe98a",
+      "#bfaf68",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.954,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9248
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9248,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0.308,
+          "phase_y": 0.147,
+          "confidence": 0.954
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#07090d",
+            "#43110a",
+            "#7a1f12",
+            "#99401a",
+            "#d15723",
+            "#ff6a2b",
+            "#ff8b5a",
+            "#ffd23f",
+            "#ffe98a",
+            "#bfaf68",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 8
+        },
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0007"
+  },
+  {
+    "task_id": "T0008",
+    "created_at": 1790426021.2124128,
+    "finished_at": 1790426021.2132874,
+    "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast78426",
+    "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9045,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 2028278426,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#59bce4",
+        "highlight": "#c5dfe9",
+        "accent": "#a3e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#1d2c3d",
+      "#34506e",
+      "#357189",
+      "#499abb",
+      "#59bce4",
+      "#7ecbea",
+      "#c5dfe9",
+      "#a3e9ff",
+      "#7aafbf",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#5c6773",
+      "#6d8197",
+      "#6e99aa",
+      "#7cb6ce",
+      "#87cfec",
+      "#a2daf0",
+      "#d5e8ef",
+      "#bdefff",
+      "#9fc5d1",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 2028278426,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast78426",
+        "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 2028278426,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.89,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9045
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9045,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.437,
+          "phase_y": 0.458,
+          "confidence": 0.89
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#1d2c3d",
+            "#34506e",
+            "#357189",
+            "#499abb",
+            "#59bce4",
+            "#7ecbea",
+            "#c5dfe9",
+            "#a3e9ff",
+            "#7aafbf",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#5c6773",
+            "#6d8197",
+            "#6e99aa",
+            "#7cb6ce",
+            "#87cfec",
+            "#a2daf0",
+            "#d5e8ef",
+            "#bdefff",
+            "#9fc5d1",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#59bce4",
+            "highlight": "#c5dfe9",
+            "accent": "#a3e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast78426",
+          "type": "character",
+          "resources": {
+            "texture": "ast78426.png",
+            "animation": "ast78426.anim",
+            "prefab": "ast78426.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast78426.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast78426.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast78426.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast78426.png",
+          "Animation": "Assets/Animation/ast78426.anim",
+          "Prefab": "Assets/Prefab/ast78426.prefab",
+          "Controller": "Assets/Controller/ast78426.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0008"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790426296.6648295,
+    "finished_at": 1790426296.6659653,
+    "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast78426",
+    "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9045,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 2028278426,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#59bce4",
+        "highlight": "#c5dfe9",
+        "accent": "#a3e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#1d2c3d",
+      "#34506e",
+      "#357189",
+      "#499abb",
+      "#59bce4",
+      "#7ecbea",
+      "#c5dfe9",
+      "#a3e9ff",
+      "#7aafbf",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#5c6773",
+      "#6d8197",
+      "#6e99aa",
+      "#7cb6ce",
+      "#87cfec",
+      "#a2daf0",
+      "#d5e8ef",
+      "#bdefff",
+      "#9fc5d1",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 2028278426,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast78426",
+        "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 2028278426,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.89,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9045
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9045,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.437,
+          "phase_y": 0.458,
+          "confidence": 0.89
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#1d2c3d",
+            "#34506e",
+            "#357189",
+            "#499abb",
+            "#59bce4",
+            "#7ecbea",
+            "#c5dfe9",
+            "#a3e9ff",
+            "#7aafbf",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#5c6773",
+            "#6d8197",
+            "#6e99aa",
+            "#7cb6ce",
+            "#87cfec",
+            "#a2daf0",
+            "#d5e8ef",
+            "#bdefff",
+            "#9fc5d1",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#59bce4",
+            "highlight": "#c5dfe9",
+            "accent": "#a3e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast78426",
+          "type": "character",
+          "resources": {
+            "texture": "ast78426.png",
+            "animation": "ast78426.anim",
+            "prefab": "ast78426.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast78426.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast78426.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast78426.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast78426.png",
+          "Animation": "Assets/Animation/ast78426.anim",
+          "Prefab": "Assets/Prefab/ast78426.prefab",
+          "Controller": "Assets/Controller/ast78426.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790427363.4219034,
+    "finished_at": 1790427363.4232688,
+    "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast98226",
+    "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9177,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 1982298226,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6c1b10",
+        "base": "#e45f27",
+        "highlight": "#efc53b",
+        "accent": "#f5e085",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#3b0f09",
+      "#6c1b10",
+      "#893917",
+      "#bb4e20",
+      "#e45f27",
+      "#ea8257",
+      "#efc53b",
+      "#f5e085",
+      "#b8a864",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#72524e",
+      "#955b53",
+      "#aa7058",
+      "#ce805e",
+      "#ec8c63",
+      "#f0a586",
+      "#f3d572",
+      "#f8e9a7",
+      "#ccc08f",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1982298226,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast98226",
+        "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 1982298226,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.923,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9177
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9177,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.347,
+          "phase_y": 0.408,
+          "confidence": 0.923
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#3b0f09",
+            "#6c1b10",
+            "#893917",
+            "#bb4e20",
+            "#e45f27",
+            "#ea8257",
+            "#efc53b",
+            "#f5e085",
+            "#b8a864",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#72524e",
+            "#955b53",
+            "#aa7058",
+            "#ce805e",
+            "#ec8c63",
+            "#f0a586",
+            "#f3d572",
+            "#f8e9a7",
+            "#ccc08f",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6c1b10",
+            "base": "#e45f27",
+            "highlight": "#efc53b",
+            "accent": "#f5e085",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast98226",
+          "type": "character",
+          "resources": {
+            "texture": "ast98226.png",
+            "animation": "ast98226.anim",
+            "prefab": "ast98226.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast98226.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast98226.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast98226.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast98226.png",
+          "Animation": "Assets/Animation/ast98226.anim",
+          "Prefab": "Assets/Prefab/ast98226.prefab",
+          "Controller": "Assets/Controller/ast98226.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001-2"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790427458.175425,
+    "finished_at": 1790427458.1762345,
+    "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast98226",
+    "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9177,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 1982298226,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6c1b10",
+        "base": "#e45f27",
+        "highlight": "#efc53b",
+        "accent": "#f5e085",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#3b0f09",
+      "#6c1b10",
+      "#893917",
+      "#bb4e20",
+      "#e45f27",
+      "#ea8257",
+      "#efc53b",
+      "#f5e085",
+      "#b8a864",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#72524e",
+      "#955b53",
+      "#aa7058",
+      "#ce805e",
+      "#ec8c63",
+      "#f0a586",
+      "#f3d572",
+      "#f8e9a7",
+      "#ccc08f",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1982298226,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast98226",
+        "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 1982298226,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.923,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9177
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9177,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.347,
+          "phase_y": 0.408,
+          "confidence": 0.923
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#3b0f09",
+            "#6c1b10",
+            "#893917",
+            "#bb4e20",
+            "#e45f27",
+            "#ea8257",
+            "#efc53b",
+            "#f5e085",
+            "#b8a864",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#72524e",
+            "#955b53",
+            "#aa7058",
+            "#ce805e",
+            "#ec8c63",
+            "#f0a586",
+            "#f3d572",
+            "#f8e9a7",
+            "#ccc08f",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6c1b10",
+            "base": "#e45f27",
+            "highlight": "#efc53b",
+            "accent": "#f5e085",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast98226",
+          "type": "character",
+          "resources": {
+            "texture": "ast98226.png",
+            "animation": "ast98226.anim",
+            "prefab": "ast98226.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast98226.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast98226.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast98226.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast98226.png",
+          "Animation": "Assets/Animation/ast98226.anim",
+          "Prefab": "Assets/Prefab/ast98226.prefab",
+          "Controller": "Assets/Controller/ast98226.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0002"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790427458.2068489,
+    "finished_at": 1790427458.247527,
+    "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+    "engine": null,
+    "status": "failed",
+    "report_status": null,
+    "error": null,
+    "asset_id": null,
+    "name": null,
+    "type": null,
+    "role": null,
+    "action": null,
+    "frames": null,
+    "fps": null,
+    "scores": {},
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.04,
+    "character": {},
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": null,
+    "id": "T0003"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790427708.2324343,
+    "finished_at": 1790427708.2342868,
+    "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast98226",
+    "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9177,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.001,
+    "character": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 1982298226,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6c1b10",
+        "base": "#e45f27",
+        "highlight": "#efc53b",
+        "accent": "#f5e085",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#3b0f09",
+      "#6c1b10",
+      "#893917",
+      "#bb4e20",
+      "#e45f27",
+      "#ea8257",
+      "#efc53b",
+      "#f5e085",
+      "#b8a864",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#72524e",
+      "#955b53",
+      "#aa7058",
+      "#ce805e",
+      "#ec8c63",
+      "#f0a586",
+      "#f3d572",
+      "#f8e9a7",
+      "#ccc08f",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast98226",
+      "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1982298226,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast98226",
+        "name": "生成一个2d动漫风格的月光刺客_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 1982298226,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6c1b10",
+          "base": "#e45f27",
+          "highlight": "#efc53b",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.923,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9177
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9177,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.347,
+          "phase_y": 0.408,
+          "confidence": 0.923
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#3b0f09",
+            "#6c1b10",
+            "#893917",
+            "#bb4e20",
+            "#e45f27",
+            "#ea8257",
+            "#efc53b",
+            "#f5e085",
+            "#b8a864",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#72524e",
+            "#955b53",
+            "#aa7058",
+            "#ce805e",
+            "#ec8c63",
+            "#f0a586",
+            "#f3d572",
+            "#f8e9a7",
+            "#ccc08f",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6c1b10",
+            "base": "#e45f27",
+            "highlight": "#efc53b",
+            "accent": "#f5e085",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast98226",
+          "type": "character",
+          "resources": {
+            "texture": "ast98226.png",
+            "animation": "ast98226.anim",
+            "prefab": "ast98226.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast98226.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast98226.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast98226.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast98226.png",
+          "Animation": "Assets/Animation/ast98226.anim",
+          "Prefab": "Assets/Prefab/ast98226.prefab",
+          "Controller": "Assets/Controller/ast98226.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的月光刺客，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001-3"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790427708.2419508,
+    "finished_at": 1790427708.269419,
+    "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast78426",
+    "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.027,
+    "character": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "seed": 2028278426,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#59bce4",
+        "highlight": "#c5dfe9",
+        "accent": "#a3e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#c6dcf4",
+      "#73a8e5",
+      "#4c90dd",
+      "#71a7e4",
+      "#c3d9f4",
+      "#9dc2ec",
+      "#468cdc",
+      "#6297c9",
+      "#97beeb",
+      "#8ba7ab",
+      "#f9d25b",
+      "#fad25a",
+      "#90a9a8",
+      "#c0d8f3",
+      "#c6be92",
+      "#498edc",
+      "#fdfeff",
+      "#6698c5",
+      "#335886",
+      "#2d476c",
+      "#bdd6f3",
+      "#2e3c54",
+      "#1e1e28",
+      "#27364f",
+      "#92bbea",
+      "#384458",
+      "#56565e",
+      "#4f4f57",
+      "#a6b1b0",
+      "#a4a4a8"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast78426",
+      "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 2028278426,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "selftest_ai.png",
+          "path": "D:\\project01\\CreativeForge\\studio\\generated\\selftest_ai.png",
+          "url": "/api/generated/selftest_ai.png",
+          "model": "selftest"
+        }
+      },
+      "character": {
+        "id": "ast78426",
+        "name": "生成一个2d动漫风格的冰霜女王_带攻击动画_并导",
+        "type": "character",
+        "role": "npc",
+        "seed": 2028278426,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#59bce4",
+          "highlight": "#c5dfe9",
+          "accent": "#a3e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#ffffff",
+            "#c6dcf4",
+            "#73a8e5",
+            "#4c90dd",
+            "#71a7e4",
+            "#c3d9f4",
+            "#9dc2ec",
+            "#468cdc",
+            "#6297c9",
+            "#97beeb",
+            "#8ba7ab",
+            "#f9d25b",
+            "#fad25a",
+            "#90a9a8",
+            "#c0d8f3",
+            "#c6be92",
+            "#498edc",
+            "#fdfeff",
+            "#6698c5",
+            "#335886",
+            "#2d476c",
+            "#bdd6f3",
+            "#2e3c54",
+            "#1e1e28",
+            "#27364f",
+            "#92bbea",
+            "#384458",
+            "#56565e",
+            "#4f4f57",
+            "#a6b1b0",
+            "#a4a4a8"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#59bce4",
+            "highlight": "#c5dfe9",
+            "accent": "#a3e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#c6dcf4",
+            "#73a8e5",
+            "#4c90dd",
+            "#4c90dd",
+            "#71a7e4",
+            "#c3d9f4",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#9dc2ec",
+            "#468cdc",
+            "#468cdc",
+            "#6297c9",
+            "#6297c9",
+            "#468cdc",
+            "#468cdc",
+            "#97beeb",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#c6dcf4",
+            "#468cdc",
+            "#468cdc",
+            "#8ba7ab",
+            "#f9d25b",
+            "#fad25a",
+            "#90a9a8",
+            "#468cdc",
+            "#468cdc",
+            "#c0d8f3",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#73a8e5",
+            "#468cdc",
+            "#468cdc",
+            "#c6be92",
+            "#fad25a",
+            "#fad25a",
+            "#c6be92",
+            "#468cdc",
+            "#468cdc",
+            "#71a7e4",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#4c90dd",
+            "#468cdc",
+            "#468cdc",
+            "#90a9a8",
+            "#fad25a",
+            "#fad25a",
+            "#90a9a8",
+            "#468cdc",
+            "#468cdc",
+            "#498edc",
+            "#fdfeff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#4c90dd",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#6698c5",
+            "#6698c5",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#498edc",
+            "#fdfeff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#71a7e4",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#468cdc",
+            "#71a7e4",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#c3d9f4",
+            "#468cdc",
+            "#468cdc",
+            "#335886",
+            "#2d476c",
+            "#2d476c",
+            "#335886",
+            "#468cdc",
+            "#468cdc",
+            "#bdd6f3",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#97beeb",
+            "#468cdc",
+            "#2e3c54",
+            "#1e1e28",
+            "#1e1e28",
+            "#27364f",
+            "#468cdc",
+            "#92bbea",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#c0d8f3",
+            "#384458",
+            "#1e1e28",
+            "#1e1e28",
+            "#2e3c54",
+            "#bdd6f3",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#56565e",
+            "#1e1e28",
+            "#1e1e28",
+            "#4f4f57",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#56565e",
+            "#1e1e28",
+            "#1e1e28",
+            "#4f4f57",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#a6b1b0",
+            "#a4a4a8",
+            "#a4a4a8",
+            "#a6b1b0",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast78426",
+          "type": "character",
+          "resources": {
+            "texture": "ast78426.png",
+            "animation": "ast78426.anim",
+            "prefab": "ast78426.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast78426.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast78426.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast78426.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast78426.png",
+          "Animation": "Assets/Animation/ast78426.anim",
+          "Prefab": "Assets/Prefab/ast78426.prefab",
+          "Controller": "Assets/Controller/ast78426.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D动漫风格的冰霜女王，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0002-2"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790428099.9119146,
+    "finished_at": 1790428100.355002,
+    "goal": "生成一个2D蓝色史莱姆，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast79408",
+    "name": "生成一个2d蓝色史莱姆_并导入unity",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9329,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.443,
+    "character": {
+      "id": "ast79408",
+      "name": "生成一个2d蓝色史莱姆_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "seed": 91479408,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#822c20",
+        "base": "#ff7034",
+        "highlight": "#face3e",
+        "accent": "#ffe98c",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#481812",
+      "#822c20",
+      "#99431f",
+      "#d15c2b",
+      "#ff7034",
+      "#ff8f61",
+      "#face3e",
+      "#ffe98c",
+      "#bfaf69",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#7b5954",
+      "#a5675e",
+      "#b6785e",
+      "#de8a66",
+      "#ff986d",
+      "#ffae8d",
+      "#fbdc74",
+      "#ffefac",
+      "#d1c593",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast79408",
+      "name": "生成一个2d蓝色史莱姆_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 91479408,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#822c20",
+          "base": "#ff7034",
+          "highlight": "#face3e",
+          "accent": "#ffe98c",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast79408",
+        "name": "生成一个2d蓝色史莱姆_并导入unity",
+        "type": "character",
+        "role": "npc",
+        "seed": 91479408,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#822c20",
+          "base": "#ff7034",
+          "highlight": "#face3e",
+          "accent": "#ffe98c",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.961,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9329
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9329,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.062,
+          "phase_y": 0.096,
+          "confidence": 0.961
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#481812",
+            "#822c20",
+            "#99431f",
+            "#d15c2b",
+            "#ff7034",
+            "#ff8f61",
+            "#face3e",
+            "#ffe98c",
+            "#bfaf69",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#7b5954",
+            "#a5675e",
+            "#b6785e",
+            "#de8a66",
+            "#ff986d",
+            "#ffae8d",
+            "#fbdc74",
+            "#ffefac",
+            "#d1c593",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#822c20",
+            "base": "#ff7034",
+            "highlight": "#face3e",
+            "accent": "#ffe98c",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast79408",
+          "type": "character",
+          "resources": {
+            "texture": "ast79408.png",
+            "animation": "ast79408.anim",
+            "prefab": "ast79408.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast79408.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast79408.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast79408.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast79408.png",
+          "Animation": "Assets/Animation/ast79408.anim",
+          "Prefab": "Assets/Prefab/ast79408.prefab",
+          "Controller": "Assets/Controller/ast79408.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2D蓝色史莱姆，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0003-2"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790428645.9659543,
+    "finished_at": 1790428651.8132062,
+    "goal": "生成一个2d动漫风格的蓝色史莱姆，带攻击动画，并导入unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast35042",
+    "name": "生成一个2d动漫风格的蓝色史莱姆_带攻击动画_并",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 5.847,
+    "character": {
+      "id": "ast35042",
+      "name": "生成一个2d动漫风格的蓝色史莱姆_带攻击动画_并",
+      "type": "character",
+      "role": "npc",
+      "seed": 515435042,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7b2013",
+        "base": "#fa682a",
+        "highlight": "#ffd756",
+        "accent": "#ffe98c",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#f7f9fb",
+      "#e1f8fc",
+      "#adc4de",
+      "#b8dce9",
+      "#187fd7",
+      "#0288ed",
+      "#0098f7",
+      "#e2e7ef",
+      "#cfd9e5",
+      "#9db8d9",
+      "#3b77ba",
+      "#086fc4",
+      "#039df0",
+      "#12a2e4",
+      "#38aed9",
+      "#01b4f8",
+      "#94c3dd",
+      "#71acd9",
+      "#67bad8",
+      "#2999ce",
+      "#07aff0",
+      "#10d0f6",
+      "#01bdfd",
+      "#09b6f5",
+      "#18e5fc",
+      "#02c3fc",
+      "#08a7f0",
+      "#5f9cd3",
+      "#0e96df",
+      "#008ff1",
+      "#3bf0fe"
+    ],
+    "image": {
+      "file": "img_1790428651358.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/d0/20260926/77c9ad12/a77b2d75-a8de-4e67-bb03-fc1ffcf6c0a73854267995.png?Expires=1790515050&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=dkc%2FojNu6H%2BAWIXKVHCHkAyhw7w%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790428651358.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast35042",
+      "name": "生成一个2d动漫风格的蓝色史莱姆_带攻击动画_并",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 515435042,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7b2013",
+          "base": "#fa682a",
+          "highlight": "#ffd756",
+          "accent": "#ffe98c",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790428651358.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/d0/20260926/77c9ad12/a77b2d75-a8de-4e67-bb03-fc1ffcf6c0a73854267995.png?Expires=1790515050&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=dkc%2FojNu6H%2BAWIXKVHCHkAyhw7w%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790428651358.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast35042",
+        "name": "生成一个2d动漫风格的蓝色史莱姆_带攻击动画_并",
+        "type": "character",
+        "role": "npc",
+        "seed": 515435042,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7b2013",
+          "base": "#fa682a",
+          "highlight": "#ffd756",
+          "accent": "#ffe98c",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#ffffff",
+            "#f7f9fb",
+            "#e1f8fc",
+            "#adc4de",
+            "#b8dce9",
+            "#187fd7",
+            "#0288ed",
+            "#0098f7",
+            "#e2e7ef",
+            "#cfd9e5",
+            "#9db8d9",
+            "#3b77ba",
+            "#086fc4",
+            "#039df0",
+            "#12a2e4",
+            "#38aed9",
+            "#01b4f8",
+            "#94c3dd",
+            "#71acd9",
+            "#67bad8",
+            "#2999ce",
+            "#07aff0",
+            "#10d0f6",
+            "#01bdfd",
+            "#09b6f5",
+            "#18e5fc",
+            "#02c3fc",
+            "#08a7f0",
+            "#5f9cd3",
+            "#0e96df",
+            "#008ff1",
+            "#3bf0fe"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7b2013",
+            "base": "#fa682a",
+            "highlight": "#ffd756",
+            "accent": "#ffe98c",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#f7f9fb",
+            "#e1f8fc",
+            "#ffffff",
+            "#ffffff",
+            "#f7f9fb",
+            "#adc4de",
+            "#adc4de",
+            "#f7f9fb",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#e1f8fc",
+            "#b8dce9",
+            "#f7f9fb",
+            "#adc4de",
+            "#187fd7",
+            "#0288ed",
+            "#0288ed",
+            "#187fd7",
+            "#adc4de",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#e1f8fc",
+            "#b8dce9",
+            "#0288ed",
+            "#0098f7",
+            "#0098f7",
+            "#0098f7",
+            "#187fd7",
+            "#187fd7",
+            "#e2e7ef",
+            "#ffffff",
+            "#e2e7ef",
+            "#cfd9e5",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#f7f9fb",
+            "#b8dce9",
+            "#9db8d9",
+            "#3b77ba",
+            "#086fc4",
+            "#039df0",
+            "#086fc4",
+            "#3b77ba",
+            "#12a2e4",
+            "#9db8d9",
+            "#b8dce9",
+            "#38aed9",
+            "#01b4f8",
+            "#94c3dd"
+          ],
+          [
+            "#f7f9fb",
+            "#cfd9e5",
+            "#ffffff",
+            "#e1f8fc",
+            "#71acd9",
+            "#67bad8",
+            "#2999ce",
+            "#07aff0",
+            "#2999ce",
+            "#10d0f6",
+            "#01bdfd",
+            "#71acd9",
+            "#38aed9",
+            "#09b6f5",
+            "#09b6f5",
+            "#12a2e4"
+          ],
+          [
+            "#67bad8",
+            "#18e5fc",
+            "#38aed9",
+            "#b8dce9",
+            "#adc4de",
+            "#07aff0",
+            "#01bdfd",
+            "#02c3fc",
+            "#02c3fc",
+            "#01bdfd",
+            "#039df0",
+            "#b8dce9",
+            "#71acd9",
+            "#039df0",
+            "#039df0",
+            "#01b4f8"
+          ],
+          [
+            "#09b6f5",
+            "#10d0f6",
+            "#02c3fc",
+            "#2999ce",
+            "#ffffff",
+            "#9db8d9",
+            "#039df0",
+            "#01bdfd",
+            "#02c3fc",
+            "#08a7f0",
+            "#5f9cd3",
+            "#adc4de",
+            "#12a2e4",
+            "#0288ed",
+            "#039df0",
+            "#2999ce"
+          ],
+          [
+            "#38aed9",
+            "#02c3fc",
+            "#07aff0",
+            "#5f9cd3",
+            "#94c3dd",
+            "#0e96df",
+            "#09b6f5",
+            "#18e5fc",
+            "#10d0f6",
+            "#0098f7",
+            "#008ff1",
+            "#008ff1",
+            "#008ff1",
+            "#0098f7",
+            "#0e96df",
+            "#e2e7ef"
+          ],
+          [
+            "#cfd9e5",
+            "#12a2e4",
+            "#01b4f8",
+            "#08a7f0",
+            "#0098f7",
+            "#187fd7",
+            "#10d0f6",
+            "#18e5fc",
+            "#18e5fc",
+            "#0098f7",
+            "#187fd7",
+            "#187fd7",
+            "#187fd7",
+            "#71acd9",
+            "#e2e7ef",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#e2e7ef",
+            "#71acd9",
+            "#71acd9",
+            "#9db8d9",
+            "#cfd9e5",
+            "#3bf0fe",
+            "#3bf0fe",
+            "#18e5fc",
+            "#09b6f5",
+            "#5f9cd3",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#cfd9e5",
+            "#3bf0fe",
+            "#3bf0fe",
+            "#3bf0fe",
+            "#10d0f6",
+            "#187fd7",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#cfd9e5",
+            "#67bad8",
+            "#18e5fc",
+            "#3bf0fe",
+            "#18e5fc",
+            "#10d0f6",
+            "#0288ed",
+            "#e2e7ef",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#cfd9e5",
+            "#12a2e4",
+            "#039df0",
+            "#039df0",
+            "#09b6f5",
+            "#09b6f5",
+            "#039df0",
+            "#008ff1",
+            "#2999ce",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#94c3dd",
+            "#008ff1",
+            "#0288ed",
+            "#187fd7",
+            "#5f9cd3",
+            "#5f9cd3",
+            "#187fd7",
+            "#008ff1",
+            "#0288ed",
+            "#9db8d9",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#f7f9fb",
+            "#5f9cd3",
+            "#0288ed",
+            "#0288ed",
+            "#9db8d9",
+            "#ffffff",
+            "#ffffff",
+            "#e2e7ef",
+            "#187fd7",
+            "#008ff1",
+            "#2999ce",
+            "#e2e7ef",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#adc4de",
+            "#12a2e4",
+            "#187fd7",
+            "#187fd7",
+            "#9db8d9",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#94c3dd",
+            "#38aed9",
+            "#12a2e4",
+            "#67bad8",
+            "#ffffff",
+            "#ffffff"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast35042",
+          "type": "character",
+          "resources": {
+            "texture": "ast35042.png",
+            "animation": "ast35042.anim",
+            "prefab": "ast35042.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast35042.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast35042.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast35042.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast35042.png",
+          "Animation": "Assets/Animation/ast35042.anim",
+          "Prefab": "Assets/Prefab/ast35042.prefab",
+          "Controller": "Assets/Controller/ast35042.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2d动漫风格的蓝色史莱姆，带攻击动画，并导入unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790428651358.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/d0/20260926/77c9ad12/a77b2d75-a8de-4e67-bb03-fc1ffcf6c0a73854267995.png?Expires=1790515050&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=dkc%2FojNu6H%2BAWIXKVHCHkAyhw7w%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790428651358.png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    "id": "T0001-4"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790430655.8873694,
+    "finished_at": 1790430679.6161158,
+    "goal": "生成一个2d动漫风格的紫发星语法师，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast66010",
+    "name": "生成一个2d动漫风格的紫发星语法师_带攻击动画_",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 23.728,
+    "character": {
+      "id": "ast66010",
+      "name": "生成一个2d动漫风格的紫发星语法师_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "seed": 1477566010,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#89382d",
+        "base": "#ff7940",
+        "highlight": "#e2ba38",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#0a1337",
+      "#081338",
+      "#0b1946",
+      "#07133b",
+      "#1a205f",
+      "#0e1545",
+      "#2e2677",
+      "#181c54",
+      "#483d91",
+      "#3b2e7f",
+      "#5b42a7",
+      "#745db0",
+      "#403385",
+      "#544b99",
+      "#6f4fac",
+      "#5637a4",
+      "#1c2766",
+      "#29377e",
+      "#8f75c2",
+      "#c6acd1",
+      "#442f8c",
+      "#2b2d80",
+      "#352c80",
+      "#3c2685",
+      "#604ea3",
+      "#2d167a",
+      "#46358e",
+      "#605aac",
+      "#2f1e7c",
+      "#403b90",
+      "#393684",
+      "#554db4"
+    ],
+    "image": {
+      "file": "img_1790430679077.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/76/20260926/77c9ad12/75792045-0a8e-4c1a-992e-cf36222c206f2940094862.png?Expires=1790517078&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=Xt5BA07wVFIf7v0tDVqKavj%2BJk4%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790430679077.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "🎨【游戏角色艺术指导简报】——“紫发星语法师”角色设计与动画集成\n\n—\n\n📌 项目名称：  \n“紫发星语法师”2D动漫风格角色资产（含攻击动画，适配Unity引擎）\n\n—\n\n🎯 一、角色定位与风格基调\n\n- 类型：2D动漫风格（Anime-style 2D Character）  \n- 风格参考：  \n  - 类似《原神》《崩坏：星穹铁道》《Fate/Grand Order》等高精度2D动漫角色  \n  - 线条清晰、色彩饱和、细节精致，强调“魔法感”与“星语”主题  \n  - 人物比例：偏日式美少女/少年风格（可略带夸张比例，如大眼睛、修长身形）  \n  - 整体氛围：神秘、优雅、略带冷艳，同时具备魔法施法时的动态张力\n\n—\n\n💜 二、角色视觉设计要求\n\n1. 发色与发型：  \n   - 主色调：深紫色（#4B2E83 至 #8A2BE2 之间渐变）  \n   - 发型建议：长发飘逸，可带星芒粒子特效，发尾或发饰处有微光闪烁  \n   - 可选：发间嵌入小型星形/符文发饰，或发丝末端有星尘飘散\n\n2. 服装设计：  \n   - 主体：魔法长袍/斗篷，材质感为轻盈布料+魔法能量流动纹理  \n   - 配色：主色为深紫、靛蓝、银白，辅以星辉金/银线刺绣  \n   - 细节：衣摆、袖口、领口有星图符文或魔法阵纹样，可随动作轻微发光  \n   - 可选：腰带、披风、法杖/手环等魔法道具，增强“星语法师”身份辨识度\n\n3. 面部与表情：  \n   - 眼睛：大而明亮，瞳孔可设计为星芒状或带星轨流动效果（如：瞳孔内有微小星云旋转）  \n   - 表情：常态为冷静、略带神秘微笑；攻击时可切换为专注、冷冽或略带怒意  \n   - 皮肤：白皙或浅冷色调，突出魔法感\n\n4. 魔法特效设计（攻击时）：  \n   - 攻击动画中需包含：  \n     - 手部/法杖挥动时的星芒轨迹（粒子+光效）  \n     - 地面/空中浮现星图符文阵  \n     - 攻击命中时有“星语”文字浮现（如：✨“星陨·天罚”✨）  \n     - 攻击后角色周围有星尘粒子环绕或短暂浮空特效  \n   - 特效需与角色服装/发饰风格统一，避免突兀\n\n—\n\n🎬 三、动画要求（攻击动画）\n\n- 动画时长：约1.5~2秒（可循环或单次播放）  \n- 动作设计：  \n  - 起手：法师抬手/法杖蓄力，周围星芒聚集  \n  - 中段：法术释放，身体微转，法杖指向目标，星轨轨迹从杖尖射出  \n  - 收尾：法术命中后角色轻盈后退或原地旋转，星尘环绕，特效消散  \n- 动画帧数：建议24~30帧/秒，动作流畅，有弹性与魔法能量的“拉伸/压缩”感  \n- 需提供：  \n  - 帧动画序列（PNG序列或Sprite Sheet）  \n  - 攻击动画可独立导出为“Attack_01”等命名资源  \n  - 支持Unity的Animator Controller导入（需提供动画状态机结构建议）\n\n—\n\n📦 四、技术规格与导出要求\n\n- 格式：  \n  - 角色主图：PNG（透明背景，带Alpha通道）  \n  - 动画帧：PNG序列（命名规范：Char_PurpleMage_Attack_001.png ~ 030.png）  \n  - 可选：带骨骼的Sprite Sheet（如使用Unity的Sprite Packer或Sprite Atlas）  \n- 分辨率：建议1024x1024（或按项目需求调整，如512x512）  \n- 导入Unity要求：  \n  - 所有资源需按Unity标准命名规范（如：PurpleMage_Attack_01.png）  \n  - 支持Unity的Sprite Import Settings（Pivot点居中、Pixels Per Unit=100）  \n  - 攻击动画需可被Unity Animator Controller调用，建议提供动画剪辑（Animation Clip）文件  \n  - 可选：提供角色骨骼结构（如使用Unity的2D Animation系统）或提供Sprite Atlas打包方案\n\n—\n\n🎨 五、附加艺术指导\n\n- 色彩风格：高饱和度+低对比度，突出“星语”梦幻感，避免过于写实  \n- 魔法元素：星尘、符文、光轨、粒子、文字特效需统一风格，建议使用“微光+流动感”设计  \n- 动态表现：攻击动画需有“能量积蓄→爆发→余韵”的节奏感，配合音效（可选）  \n- 可扩展性：角色设计需预留“表情/动作扩展空间”，如可添加“受伤”“施法中”“胜利”等状态\n\n—\n\n✅ 交付物清单：\n\n1. 角色主视觉图（PNG，透明背景）  \n2. 攻击动画帧序列（PNG序列，命名规范）  \n3. 动画资源说明文档（含帧数、时长、动作描述）  \n4. Unity导入建议文档（命名、Pivot、Sprite Settings）  \n5. （可选）角色骨骼结构图或Sprite Atlas配置说明\n\n—\n\n📬 项目备注：\n\n- 请确保所有资源符合Unity 2022+版本兼容性  \n- 魔法特效需可独立调整强度/颜色/粒子密度，便于后期调优  \n- 如有风格参考图或角色设定文档，请一并提供，以确保风格统一\n\n—\n\n📩 提交方式：  \n请将所有资源打包为ZIP文件，命名为：  \n“PurpleMage_ArtAsset_UnityImport_v1.0.zip”  \n并附上简要说明文档（PDF或TXT）\n\n—\n\n🌟 最终目标：  \n打造一个视觉惊艳、动画流畅、魔法感十足的“紫发星语法师”，在Unity中可无缝集成，成为游戏中极具辨识度与表现力的魔法角色。\n\n——  \n艺术指导简报撰写完毕，期待高质量交付！  \n（可由美术团队、动画师、技术美术协同执行）",
+    "asset": {
+      "id": "ast66010",
+      "name": "生成一个2d动漫风格的紫发星语法师_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1477566010,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#89382d",
+          "base": "#ff7940",
+          "highlight": "#e2ba38",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790430679077.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/76/20260926/77c9ad12/75792045-0a8e-4c1a-992e-cf36222c206f2940094862.png?Expires=1790517078&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=Xt5BA07wVFIf7v0tDVqKavj%2BJk4%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790430679077.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast66010",
+        "name": "生成一个2d动漫风格的紫发星语法师_带攻击动画_",
+        "type": "character",
+        "role": "npc",
+        "seed": 1477566010,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#89382d",
+          "base": "#ff7940",
+          "highlight": "#e2ba38",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#0a1337",
+            "#081338",
+            "#0b1946",
+            "#07133b",
+            "#1a205f",
+            "#0e1545",
+            "#2e2677",
+            "#181c54",
+            "#483d91",
+            "#3b2e7f",
+            "#5b42a7",
+            "#745db0",
+            "#403385",
+            "#544b99",
+            "#6f4fac",
+            "#5637a4",
+            "#1c2766",
+            "#29377e",
+            "#8f75c2",
+            "#c6acd1",
+            "#442f8c",
+            "#2b2d80",
+            "#352c80",
+            "#3c2685",
+            "#604ea3",
+            "#2d167a",
+            "#46358e",
+            "#605aac",
+            "#2f1e7c",
+            "#403b90",
+            "#393684",
+            "#554db4"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#89382d",
+            "base": "#ff7940",
+            "highlight": "#e2ba38",
+            "accent": "#ffeb97",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#0a1337",
+            "#0a1337",
+            "#0a1337",
+            "#0a1337",
+            "#081338",
+            "#0b1946",
+            "#07133b",
+            "#0a1337",
+            "#0a1337",
+            "#0a1337",
+            "#07133b",
+            "#07133b",
+            "#081338",
+            "#081338",
+            "#0b1946",
+            "#1a205f"
+          ],
+          [
+            "#0a1337",
+            "#0a1337",
+            "#0a1337",
+            "#0b1946",
+            "#0b1946",
+            "#0a1337",
+            "#0e1545",
+            "#081338",
+            "#0e1545",
+            "#2e2677",
+            "#1a205f",
+            "#07133b",
+            "#07133b",
+            "#1a205f",
+            "#181c54",
+            "#081338"
+          ],
+          [
+            "#0e1545",
+            "#483d91",
+            "#1a205f",
+            "#181c54",
+            "#0e1545",
+            "#0e1545",
+            "#3b2e7f",
+            "#5b42a7",
+            "#745db0",
+            "#403385",
+            "#544b99",
+            "#181c54",
+            "#0b1946",
+            "#0b1946",
+            "#07133b",
+            "#07133b"
+          ],
+          [
+            "#3b2e7f",
+            "#6f4fac",
+            "#5637a4",
+            "#1c2766",
+            "#181c54",
+            "#29377e",
+            "#745db0",
+            "#8f75c2",
+            "#8f75c2",
+            "#5637a4",
+            "#3b2e7f",
+            "#1a205f",
+            "#1a205f",
+            "#1a205f",
+            "#0b1946",
+            "#181c54"
+          ],
+          [
+            "#5b42a7",
+            "#c6acd1",
+            "#c6acd1",
+            "#442f8c",
+            "#2b2d80",
+            "#1c2766",
+            "#6f4fac",
+            "#c6acd1",
+            "#c6acd1",
+            "#6f4fac",
+            "#5637a4",
+            "#2b2d80",
+            "#2e2677",
+            "#1c2766",
+            "#1a205f",
+            "#29377e"
+          ],
+          [
+            "#403385",
+            "#c6acd1",
+            "#8f75c2",
+            "#442f8c",
+            "#2b2d80",
+            "#352c80",
+            "#442f8c",
+            "#8f75c2",
+            "#c6acd1",
+            "#3c2685",
+            "#442f8c",
+            "#604ea3",
+            "#5b42a7",
+            "#2b2d80",
+            "#29377e",
+            "#1c2766"
+          ],
+          [
+            "#181c54",
+            "#745db0",
+            "#8f75c2",
+            "#2b2d80",
+            "#5637a4",
+            "#6f4fac",
+            "#2d167a",
+            "#2d167a",
+            "#604ea3",
+            "#442f8c",
+            "#544b99",
+            "#3b2e7f",
+            "#46358e",
+            "#6f4fac",
+            "#352c80",
+            "#2e2677"
+          ],
+          [
+            "#181c54",
+            "#3b2e7f",
+            "#745db0",
+            "#442f8c",
+            "#6f4fac",
+            "#5637a4",
+            "#605aac",
+            "#c6acd1",
+            "#c6acd1",
+            "#745db0",
+            "#604ea3",
+            "#403385",
+            "#3c2685",
+            "#442f8c",
+            "#46358e",
+            "#2e2677"
+          ],
+          [
+            "#1a205f",
+            "#1a205f",
+            "#605aac",
+            "#5637a4",
+            "#5637a4",
+            "#2f1e7c",
+            "#605aac",
+            "#745db0",
+            "#3c2685",
+            "#2e2677",
+            "#46358e",
+            "#8f75c2",
+            "#483d91",
+            "#5637a4",
+            "#442f8c",
+            "#352c80"
+          ],
+          [
+            "#1c2766",
+            "#1c2766",
+            "#544b99",
+            "#403385",
+            "#3c2685",
+            "#604ea3",
+            "#604ea3",
+            "#403385",
+            "#3b2e7f",
+            "#2e2677",
+            "#2e2677",
+            "#3b2e7f",
+            "#3b2e7f",
+            "#3c2685",
+            "#442f8c",
+            "#2f1e7c"
+          ],
+          [
+            "#1c2766",
+            "#2e2677",
+            "#483d91",
+            "#5637a4",
+            "#544b99",
+            "#604ea3",
+            "#403385",
+            "#403385",
+            "#544b99",
+            "#2e2677",
+            "#1a205f",
+            "#2e2677",
+            "#3b2e7f",
+            "#3c2685",
+            "#3c2685",
+            "#2f1e7c"
+          ],
+          [
+            "#604ea3",
+            "#6f4fac",
+            "#745db0",
+            "#604ea3",
+            "#2e2677",
+            "#2d167a",
+            "#403385",
+            "#403385",
+            "#745db0",
+            "#605aac",
+            "#2e2677",
+            "#1c2766",
+            "#403385",
+            "#2d167a",
+            "#403b90",
+            "#46358e"
+          ],
+          [
+            "#393684",
+            "#544b99",
+            "#554db4",
+            "#352c80",
+            "#2e2677",
+            "#352c80",
+            "#181c54",
+            "#352c80",
+            "#745db0",
+            "#605aac",
+            "#2f1e7c",
+            "#2b2d80",
+            "#483d91",
+            "#2d167a",
+            "#483d91",
+            "#544b99"
+          ],
+          [
+            "#403b90",
+            "#403b90",
+            "#403b90",
+            "#442f8c",
+            "#3c2685",
+            "#3b2e7f",
+            "#2e2677",
+            "#352c80",
+            "#5b42a7",
+            "#554db4",
+            "#5b42a7",
+            "#29377e",
+            "#393684",
+            "#403b90",
+            "#554db4",
+            "#554db4"
+          ],
+          [
+            "#2b2d80",
+            "#2b2d80",
+            "#403b90",
+            "#403b90",
+            "#403b90",
+            "#3b2e7f",
+            "#3c2685",
+            "#5b42a7",
+            "#745db0",
+            "#c6acd1",
+            "#5637a4",
+            "#29377e",
+            "#604ea3",
+            "#554db4",
+            "#554db4",
+            "#554db4"
+          ],
+          [
+            "#403b90",
+            "#483d91",
+            "#403b90",
+            "#403b90",
+            "#483d91",
+            "#442f8c",
+            "#483d91",
+            "#604ea3",
+            "#8f75c2",
+            "#c6acd1",
+            "#46358e",
+            "#352c80",
+            "#554db4",
+            "#554db4",
+            "#605aac",
+            "#605aac"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast66010",
+          "type": "character",
+          "resources": {
+            "texture": "ast66010.png",
+            "animation": "ast66010.anim",
+            "prefab": "ast66010.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast66010.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast66010.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast66010.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast66010.png",
+          "Animation": "Assets/Animation/ast66010.anim",
+          "Prefab": "Assets/Prefab/ast66010.prefab",
+          "Controller": "Assets/Controller/ast66010.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2d动漫风格的紫发星语法师，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎨【游戏角色艺术指导简报】——“紫发星语法师”角色设计与动画集成\n\n—\n\n📌 项目名称：  \n“紫发星语法师”2D动漫风格角色资产（含攻击动画，适配Unity引擎）\n\n—\n\n🎯 一、角色定位与风格基调\n\n- 类型：2D动漫风格（Anime-style 2D Character）  \n- 风格参考：  \n  - 类似《原神》《崩坏：星穹铁道》《Fate/Grand Order》等高精度2D动漫角色  \n  - 线条清晰、色彩饱和、细节精致，强调“魔法感”与“星语”主题  \n  - 人物比例：偏日式美少女/少年风格（可略带夸张比例，如大眼睛、修长身形）  \n  - 整体氛围：神秘、优雅、略带冷艳，同时具备魔法施法时的动态张力\n\n—\n\n💜 二、角色视觉设计要求\n\n1. 发色与发型：  \n   - 主色调：深紫色（#4B2E83 至 #8A2BE2 之间渐变）  \n   - 发型建议：长发飘逸，可带星芒粒子特效，发尾或发饰处有微光闪烁  \n   - 可选：发间嵌入小型星形/符文发饰，或发丝末端有星尘飘散\n\n2. 服装设计：  \n   - 主体：魔法长袍/斗篷，材质感为轻盈布料+魔法能量流动纹理  \n   - 配色：主色为深紫、靛蓝、银白，辅以星辉金/银线刺绣  \n   - 细节：衣摆、袖口、领口有星图符文或魔法阵纹样，可随动作轻微发光  \n   - 可选：腰带、披风、法杖/手环等魔法道具，增强“星语法师”身份辨识度\n\n3. 面部与表情：  \n   - 眼睛：大而明亮，瞳孔可设计为星芒状或带星轨流动效果（如：瞳孔内有微小星云旋转）  \n   - 表情：常态为冷静、略带神秘微笑；攻击时可切换为专注、冷冽或略带怒意  \n   - 皮肤：白皙或浅冷色调，突出魔法感\n\n4. 魔法特效设计（攻击时）：  \n   - 攻击动画中需包含：  \n     - 手部/法杖挥动时的星芒轨迹（粒子+光效）  \n     - 地面/空中浮现星图符文阵  \n     - 攻击命中时有“星语”文字浮现（如：✨“星陨·天罚”✨）  \n     - 攻击后角色周围有星尘粒子环绕或短暂浮空特效  \n   - 特效需与角色服装/发饰风格统一，避免突兀\n\n—\n\n🎬 三、动画要求（攻击动画）\n\n- 动画时长：约1.5~2秒（可循环或单次播放）  \n- 动作设计：  \n  - 起手：法师抬手/法杖蓄力，周围星芒聚集  \n  - 中段：法术释放，身体微转，法杖指向目标，星轨轨迹从杖尖射出  \n  - 收尾：法术命中后角色轻盈后退或原地旋转，星尘环绕，特效消散  \n- 动画帧数：建议24~30帧/秒，动作流畅，有弹性与魔法能量的“拉伸/压缩”感  \n- 需提供：  \n  - 帧动画序列（PNG序列或Sprite Sheet）  \n  - 攻击动画可独立导出为“Attack_01”等命名资源  \n  - 支持Unity的Animator Controller导入（需提供动画状态机结构建议）\n\n—\n\n📦 四、技术规格与导出要求\n\n- 格式：  \n  - 角色主图：PNG（透明背景，带Alpha通道）  \n  - 动画帧：PNG序列（命名规范：Char_PurpleMage_Attack_001.png ~ 030.png）  \n  - 可选：带骨骼的Sprite Sheet（如使用Unity的Sprite Packer或Sprite Atlas）  \n- 分辨率：建议1024x1024（或按项目需求调整，如512x512）  \n- 导入Unity要求：  \n  - 所有资源需按Unity标准命名规范（如：PurpleMage_Attack_01.png）  \n  - 支持Unity的Sprite Import Settings（Pivot点居中、Pixels Per Unit=100）  \n  - 攻击动画需可被Unity Animator Controller调用，建议提供动画剪辑（Animation Clip）文件  \n  - 可选：提供角色骨骼结构（如使用Unity的2D Animation系统）或提供Sprite Atlas打包方案\n\n—\n\n🎨 五、附加艺术指导\n\n- 色彩风格：高饱和度+低对比度，突出“星语”梦幻感，避免过于写实  \n- 魔法元素：星尘、符文、光轨、粒子、文字特效需统一风格，建议使用“微光+流动感”设计  \n- 动态表现：攻击动画需有“能量积蓄→爆发→余韵”的节奏感，配合音效（可选）  \n- 可扩展性：角色设计需预留“表情/动作扩展空间”，如可添加“受伤”“施法中”“胜利”等状态\n\n—\n\n✅ 交付物清单：\n\n1. 角色主视觉图（PNG，透明背景）  \n2. 攻击动画帧序列（PNG序列，命名规范）  \n3. 动画资源说明文档（含帧数、时长、动作描述）  \n4. Unity导入建议文档（命名、Pivot、Sprite Settings）  \n5. （可选）角色骨骼结构图或Sprite Atlas配置说明\n\n—\n\n📬 项目备注：\n\n- 请确保所有资源符合Unity 2022+版本兼容性  \n- 魔法特效需可独立调整强度/颜色/粒子密度，便于后期调优  \n- 如有风格参考图或角色设定文档，请一并提供，以确保风格统一\n\n—\n\n📩 提交方式：  \n请将所有资源打包为ZIP文件，命名为：  \n“PurpleMage_ArtAsset_UnityImport_v1.0.zip”  \n并附上简要说明文档（PDF或TXT）\n\n—\n\n🌟 最终目标：  \n打造一个视觉惊艳、动画流畅、魔法感十足的“紫发星语法师”，在Unity中可无缝集成，成为游戏中极具辨识度与表现力的魔法角色。\n\n——  \n艺术指导简报撰写完毕，期待高质量交付！  \n（可由美术团队、动画师、技术美术协同执行）"
+      },
+      "image": {
+        "file": "img_1790430679077.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/76/20260926/77c9ad12/75792045-0a8e-4c1a-992e-cf36222c206f2940094862.png?Expires=1790517078&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=Xt5BA07wVFIf7v0tDVqKavj%2BJk4%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790430679077.png",
+        "width": 512,
+        "height": 512
+      }
+    },
+    "id": "T0001-5"
+  }
+]

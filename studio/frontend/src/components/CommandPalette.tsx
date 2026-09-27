@@ -1,31 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { api } from "../api/client";
+import { motion } from "framer-motion";
 import { Icon, type IconName } from "./icons";
 import { cx } from "./ui";
 
-interface CommandItem {
+interface Command {
   id: string;
-  group: string;
   label: string;
-  hint?: string;
+  group: string;
   icon: IconName;
+  keywords?: string;
   run: () => void;
 }
 
-const NAV_ITEMS: Array<{ to: string; label: string; group: string; icon: IconName }> = [
-  { to: "/", label: "工作台", group: "生产", icon: "spark" },
-  { to: "/agents", label: "智能体指挥中心", group: "生产", icon: "layers" },
-  { to: "/asset", label: "资产检查器", group: "资产", icon: "cube" },
-  { to: "/pixel", label: "像素工作台", group: "资产", icon: "grid" },
-  { to: "/animation", label: "动画工作台", group: "资产", icon: "film" },
-  { to: "/export", label: "导出中心", group: "交付", icon: "package" },
-  { to: "/benchmark", label: "基准中心", group: "洞察", icon: "gauge" },
-  { to: "/technology", label: "技术中心", group: "洞察", icon: "book" },
-  { to: "/settings", label: "模型设置（第三方 API）", group: "洞察", icon: "terminal" },
-];
-
+/** ⌘K command palette: fuzzy route jumping (listener stays global). */
 export function CommandPalette({
   open,
   onOpenChange,
@@ -33,179 +21,137 @@ export function CommandPalette({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [cursor, setCursor] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const tasks = useQuery({ queryKey: ["tasks"], queryFn: api.listTasks, staleTime: 5000 });
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
+    function onKey(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
         onOpenChange(!open);
       }
-      if (event.key === "Escape") onOpenChange(false);
     }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onOpenChange]);
 
   useEffect(() => {
     if (open) {
       setQuery("");
-      setCursor(0);
+      setActive(0);
       requestAnimationFrame(() => inputRef.current?.focus());
     }
   }, [open]);
 
-  const items = useMemo<CommandItem[]>(() => {
-    const list: CommandItem[] = NAV_ITEMS.map((item) => ({
-      id: `nav:${item.to}`,
-      group: "导航",
-      label: item.label,
-      hint: item.group,
-      icon: item.icon,
-      run: () => navigate(item.to),
-    }));
-    list.push({
-      id: "action:new-task",
-      group: "操作",
-      label: "创建新的资产任务",
-      hint: "回到工作台输入目标",
-      icon: "plus",
-      run: () => navigate("/"),
-    });
-    for (const task of tasks.data?.tasks.slice(0, 6) ?? []) {
-      list.push({
-        id: `task:${task.task_id}`,
-        group: "最近任务",
-        label: task.goal,
-        hint: `${task.task_id} · ${task.status}`,
-        icon: "terminal",
-        run: () => navigate(task.status === "running" ? "/agents" : "/asset"),
-      });
-    }
-    return list;
-  }, [navigate, tasks.data]);
+  const commands = useMemo<Command[]>(() => {
+    const go = (path: string) => {
+      navigate(path);
+      onOpenChange(false);
+    };
+    return [
+      { id: "workspace", label: "工作台", group: "生产", icon: "spark", keywords: "goal generate 生成", run: () => go("/") },
+      { id: "agents", label: "智能体指挥中心", group: "生产", icon: "layers", keywords: "task graph 任务图", run: () => go("/agents") },
+      { id: "history", label: "历史记录", group: "生产", icon: "clock", keywords: "records 历史", run: () => go("/history") },
+      { id: "asset", label: "资产检查器", group: "资产", icon: "cube", keywords: "inspector asset 资产", run: () => go("/asset") },
+      { id: "design", label: "角色设计三视图", group: "资产", icon: "image", keywords: "turnaround 三视图 design", run: () => go("/design") },
+      { id: "pixel", label: "像素工作台", group: "资产", icon: "grid", keywords: "precon pixel 像素", run: () => go("/pixel") },
+      { id: "animation", label: "动画工作台", group: "资产", icon: "film", keywords: "falign animation 动画", run: () => go("/animation") },
+      { id: "export", label: "导出中心", group: "交付 · 洞察", icon: "package", keywords: "gimport export 导出 unity cocos godot", run: () => go("/export") },
+      { id: "benchmark", label: "基准中心", group: "交付 · 洞察", icon: "gauge", keywords: "benchmark 基准评测", run: () => go("/benchmark") },
+      { id: "technology", label: "技术中心", group: "交付 · 洞察", icon: "book", keywords: "technology 技术", run: () => go("/technology") },
+      { id: "settings", label: "模型设置", group: "交付 · 洞察", icon: "terminal", keywords: "model settings api key 模型", run: () => go("/settings") },
+    ];
+  }, [navigate, onOpenChange]);
 
   const filtered = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    if (!keyword) return items;
-    return items.filter(
-      (item) =>
-        item.label.toLowerCase().includes(keyword) ||
-        item.hint?.toLowerCase().includes(keyword),
+    const q = query.trim().toLowerCase();
+    if (!q) return commands;
+    return commands.filter((command) =>
+      `${command.label} ${command.group} ${command.keywords ?? ""}`.toLowerCase().includes(q),
     );
-  }, [items, query]);
-
-  useEffect(() => setCursor(0), [query]);
+  }, [commands, query]);
 
   if (!open) return null;
 
-  const groups: Array<{ name: string; items: CommandItem[] }> = [];
-  for (const item of filtered) {
-    const group = groups.find((entry) => entry.name === item.group);
-    if (group) group.items.push(item);
-    else groups.push({ name: item.group, items: [item] });
-  }
-
-  function onKeyDown(event: ReactKeyboardEvent) {
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "Escape") {
+      onOpenChange(false);
+      return;
+    }
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setCursor((value) => Math.min(filtered.length - 1, value + 1));
-    } else if (event.key === "ArrowUp") {
+      setActive((index) => Math.min(filtered.length - 1, index + 1));
+    }
+    if (event.key === "ArrowUp") {
       event.preventDefault();
-      setCursor((value) => Math.max(0, value - 1));
-    } else if (event.key === "Enter") {
-      event.preventDefault();
-      filtered[cursor]?.run();
-      onOpenChange(false);
+      setActive((index) => Math.max(0, index - 1));
+    }
+    if (event.key === "Enter" && filtered[active]) {
+      filtered[active].run();
     }
   }
 
-  let flatIndex = -1;
-
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center bg-canvas/70 px-4 pt-24 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-ink/25 backdrop-blur-[2px]"
       onClick={() => onOpenChange(false)}
+      onKeyDown={onKeyDown}
       role="dialog"
       aria-modal="true"
       aria-label="命令面板"
     >
-      <div
-        className="w-full max-w-[560px] overflow-hidden rounded-2xl border border-line-subtle bg-surface-1 shadow-e3"
+      <motion.div
+        initial={{ opacity: 0, y: -10, scale: 0.985 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}
+        className="mx-auto mt-[16vh] w-[560px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-[#faf9f5] shadow-e3"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center gap-3 border-b border-line-subtle px-4 py-3">
-          <Icon name="search" className="h-4 w-4 text-ink-3" />
+        <div className="flex items-center gap-2.5 border-b border-line-subtle px-4">
+          <Icon name="search" className="h-4 w-4 shrink-0 text-ink-3" />
           <input
             ref={inputRef}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            onKeyDown={onKeyDown}
-            placeholder="搜索页面、任务或操作…"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ink-4"
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActive(0);
+            }}
+            placeholder="搜索页面与操作…"
+            className="h-12 w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
           />
           <kbd className="rounded-xs border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3">
             ESC
           </kbd>
         </div>
-        <div className="cf-scroll max-h-[380px] overflow-y-auto p-2">
-          {groups.length === 0 && (
-            <div className="px-3 py-8 text-center text-[12.5px] text-ink-3">
-              没有匹配的结果
-            </div>
+        <div className="cf-scroll max-h-[340px] overflow-y-auto p-1.5">
+          {filtered.length === 0 && (
+            <p className="px-3 py-6 text-center text-[13px] text-ink-3">没有匹配的结果</p>
           )}
-          {groups.map((group) => (
-            <div key={group.name} className="mb-1">
-              <div className="px-3 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
-                {group.name}
-              </div>
-              {group.items.map((item) => {
-                flatIndex += 1;
-                const active = flatIndex === cursor;
-                const index = flatIndex;
-                return (
-                  <button
-                    key={item.id}
-                    onMouseEnter={() => setCursor(index)}
-                    onClick={() => {
-                      item.run();
-                      onOpenChange(false);
-                    }}
-                    className={cx(
-                      "flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-[13px] transition-colors",
-                      active ? "bg-primary-tint text-ink" : "text-ink-2 hover:bg-surface-2",
-                    )}
-                  >
-                    <Icon
-                      name={item.icon}
-                      className={cx("h-4 w-4 shrink-0", active ? "text-primary" : "text-ink-3")}
-                    />
-                    <span className="min-w-0 flex-1 truncate">{item.label}</span>
-                    {item.hint && (
-                      <span className="shrink-0 font-mono text-[10.5px] text-ink-4">{item.hint}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+          {filtered.map((command, index) => (
+            <button
+              key={command.id}
+              onClick={command.run}
+              onMouseEnter={() => setActive(index)}
+              className={cx(
+                "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-[13.5px] transition-colors",
+                index === active ? "bg-ink/[.06] text-ink" : "text-ink-2",
+              )}
+            >
+              <Icon
+                name={command.icon}
+                className={cx("h-4 w-4 shrink-0", index === active ? "text-primary" : "text-ink-3")}
+              />
+              <span className="min-w-0 flex-1 truncate">
+                {command.label}
+                <span className="ml-2 text-[11px] text-ink-4">{command.group}</span>
+              </span>
+              {index === active && <Icon name="chevron" className="h-3.5 w-3.5 text-ink-4" />}
+            </button>
           ))}
         </div>
-        <div className="flex items-center gap-4 border-t border-line-subtle px-4 py-2 text-[10.5px] text-ink-4">
-          <span>
-            <kbd className="mr-1 font-mono">↑↓</kbd>选择
-          </span>
-          <span>
-            <kbd className="mr-1 font-mono">↵</kbd>打开
-          </span>
-          <span className="ml-auto">
-            <kbd className="mr-1 font-mono">⌘K</kbd>唤出
-          </span>
-        </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

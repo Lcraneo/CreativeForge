@@ -1,137 +1,145 @@
 import type { SVGProps } from "react";
 
-/**
- * Forge UI icon set — 20px grid, 1.7 stroke, round terminals.
- * No emoji, no external assets.
- */
-const PATHS = {
-  spark: <path d="M10 2.5 11.8 8l5.7.4-4.4 3.7 1.4 5.6L10 14.6l-4.5 3.1 1.4-5.6L2.5 8.4 8.2 8z" />,
-  layers: (
+/** Inline stroke icon set (feather-style, 24 viewBox, currentColor). */
+const ICON_PATHS = {
+  activity: <path d="M3 12h4l2.5-7 4.5 14 2.5-7H21" />,
+  alert: (
     <>
-      <path d="M10 3 17 7l-7 4-7-4z" />
-      <path d="M3 11l7 4 7-4" />
-      <path d="M3 14.5l7 4 7-4" />
-    </>
-  ),
-  cube: (
-    <>
-      <path d="M10 2.6 17 6.4v7.2L10 17.4 3 13.6V6.4z" />
-      <path d="M3 6.4 10 10.2l7-3.8M10 10.2v7.2" />
-    </>
-  ),
-  grid: (
-    <>
-      <path d="M3.5 3.5h5v5h-5z" />
-      <path d="M11.5 3.5h5v5h-5z" />
-      <path d="M3.5 11.5h5v5h-5z" />
-      <path d="M11.5 11.5h5v5h-5z" />
-    </>
-  ),
-  film: (
-    <>
-      <path d="M3.5 5.5h13v9h-13z" />
-      <path d="M6.5 5.5v9M13.5 5.5v9M3.5 10h13" />
-    </>
-  ),
-  package: (
-    <>
-      <path d="M10 2.8 17 6.5v7L10 17.2 3 13.5v-7z" />
-      <path d="M3 6.5 10 10.3l7-3.8M10 10.3v6.9" />
-    </>
-  ),
-  gauge: (
-    <>
-      <path d="M4 14.5a7.5 7.5 0 1 1 12 0" />
-      <path d="M10 11l3.2-3.2" />
-      <circle cx="10" cy="14.5" r="1" />
+      <path d="M12 4 21 19H3L12 4z" />
+      <path d="M12 10v4" />
+      <path d="M12 16.6v.01" />
     </>
   ),
   book: (
     <>
-      <path d="M4 4.5h4.5a2 2 0 0 1 2 2v9a2 2 0 0 0-2-2H4z" />
-      <path d="M16 4.5h-4.5a2 2 0 0 0-2 2v9a2 2 0 0 1 2-2H16z" />
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
     </>
   ),
-  activity: <path d="M2.5 10h3l2-5 3 10 2.5-5h4.5" />,
-  terminal: (
+  check: <path d="M5 12.5l4.5 4.5L19 7.5" />,
+  chevron: <path d="M9 5l7 7-7 7" />,
+  clock: (
     <>
-      <path d="M3.5 4.5h13v11h-13z" />
-      <path d="M6.5 8l2 2-2 2M10.5 12.5h3" />
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
     </>
   ),
-  check: <path d="M4.5 10.5l3.5 3.5 7.5-8" />,
-  alert: (
+  cube: (
     <>
-      <path d="M10 3.5 17.5 16.5h-15z" />
-      <path d="M10 8v3.5M10 14h.01" />
+      <path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2V8.2z" />
+      <path d="M3 8.2l9 5.2 9-5.2" />
+      <path d="M12 13.4V21" />
     </>
   ),
-  x: <path d="M5.5 5.5l9 9M14.5 5.5l-9 9" />,
-  chevron: <path d="M8 5l5 5-5 5" />,
-  chevronDown: <path d="M5 8l5 5 5-5" />,
-  search: (
+  download: (
     <>
-      <circle cx="8.5" cy="8.5" r="4.5" />
-      <path d="M12 12l4 4" />
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M4 20h16" />
+    </>
+  ),
+  film: (
+    <>
+      <rect x="3.5" y="4" width="17" height="16" rx="2" />
+      <path d="M7 4v16M17 4v16M3.5 9H7M3.5 15H7M17 9h3.5M17 15h3.5" />
+    </>
+  ),
+  gauge: (
+    <>
+      <path d="M4.5 14a7.5 7.5 0 1 1 15 0" />
+      <path d="M12 14l3.8-4.2" />
+      <path d="M12 14v.01" />
+    </>
+  ),
+  grid: (
+    <>
+      <rect x="4" y="4" width="7" height="7" rx="1" />
+      <rect x="13" y="4" width="7" height="7" rx="1" />
+      <rect x="4" y="13" width="7" height="7" rx="1" />
+      <rect x="13" y="13" width="7" height="7" rx="1" />
+    </>
+  ),
+  layers: (
+    <>
+      <path d="M12 3.5 21 8.5l-9 5-9-5 9-5z" />
+      <path d="m4.5 12.5 7.5 4.2 7.5-4.2" />
+      <path d="m4.5 16.5 7.5 4.2 7.5-4.2" />
+    </>
+  ),
+  package: (
+    <>
+      <path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2V8.2z" />
+      <path d="M3.3 8.1 12 13l8.7-4.9" />
+      <path d="M12 13v8" />
     </>
   ),
   panel: (
     <>
-      <path d="M3.5 4.5h13v11h-13z" />
-      <path d="M8.5 4.5v11" />
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <path d="M9.5 4.5v15" />
     </>
   ),
-  download: <path d="M10 3.5v9M6 9l4 4 4-4M4 16.5h12" />,
-  play: <path d="M7 4.5l8 5.5-8 5.5z" />,
-  pause: <path d="M7.5 4.5v11M12.5 4.5v11" />,
+  play: <path d="M8 5.5v13l10-6.5-10-6.5z" />,
+  pause: <path d="M9 5v14M15 5v14" />,
   refresh: (
     <>
-      <path d="M16 10a6 6 0 1 1-1.8-4.3" />
-      <path d="M16.5 3.5v3h-3" />
+      <path d="M21 4v6h-6" />
+      <path d="M20.5 13a8.5 8.5 0 1 1-2-7.5L21 8" />
     </>
   ),
-  plus: <path d="M10 5v10M5 10h10" />,
-  copy: (
+  search: (
     <>
-      <rect x="7.5" y="7.5" width="9" height="9" rx="1.5" />
-      <path d="M12.5 7.5v-2a1.5 1.5 0 0 0-1.5-1.5H5A1.5 1.5 0 0 0 3.5 5.5v6A1.5 1.5 0 0 0 5 13h2" />
+      <circle cx="11" cy="11" r="7" />
+      <path d="M20.5 20.5 16 16" />
     </>
   ),
-  external: (
+  spark: (
+    <path d="M12 3c.6 3.9 2.1 5.4 6 6-3.9.6-5.4 2.1-6 6-.6-3.9-2.1-5.4-6-6 3.9-.6 5.4-2.1 6-6z" />
+  ),
+  terminal: <path d="M4 17.5l5.5-5.5L4 6.5M12.5 19H20" />,
+  trash: (
     <>
-      <path d="M9 4.5H4.5v11h11V11" />
-      <path d="M12 4.5h3.5V8M15.5 4.5 9.5 10.5" />
+      <path d="M4.5 7h15" />
+      <path d="M9.5 7V4.5h5V7" />
+      <path d="M6.5 7l1 13.5h9L17.5 7" />
+      <path d="M10 11v6M14 11v6" />
     </>
   ),
-  clock: (
+  image: (
     <>
-      <circle cx="10" cy="10" r="6.5" />
-      <path d="M10 6.5V10l2.5 1.5" />
+      <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="M3.5 17.5 9 12.5l4 3.5 3-2.5 4.5 4" />
     </>
   ),
+  key: (
+    <>
+      <circle cx="7.5" cy="16.5" r="3.8" />
+      <path d="M10.2 13.8 20 4" />
+      <path d="M15.5 8.5 18 11" />
+      <path d="M18.5 5.5 21 8" />
+    </>
+  ),
+  zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />,
+  x: <path d="M6 6l12 12M18 6 6 18" />,
 } as const;
 
-export type IconName = keyof typeof PATHS;
+export type IconName = keyof typeof ICON_PATHS;
 
-export function Icon({
-  name,
-  className = "h-5 w-5",
-  strokeWidth = 1.7,
-  ...rest
-}: { name: IconName; strokeWidth?: number } & SVGProps<SVGSVGElement>) {
+export function Icon({ name, className, ...rest }: { name: IconName } & SVGProps<SVGSVGElement>) {
   return (
     <svg
-      viewBox="0 0 20 20"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={strokeWidth}
+      strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
       className={className}
       {...rest}
     >
-      {PATHS[name]}
+      {ICON_PATHS[name]}
     </svg>
   );
 }

@@ -1,0 +1,13 @@
+{
+  "enabled": true,
+  "provider": "dashscope",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "api_key": "sk-ws-H.EPDYYEP.bzUO.MEQCH1rIpIOceXaJMwXc2kicrVY7XVGzFa_YTGNgZ3CXR-sCIQCLcHmgLAl5cANHAeAJ1cBesTOycd62XO2JpoNP5fES1g",
+  "model": "wanx2.1-t2i-turbo",
+  "chat_model": "qwen3-omni-flash",
+  "use_chat": true,
+  "use_image": true,
+  "size": "512x512",
+  "timeout": 60,
+  "style": "pixel"
+}

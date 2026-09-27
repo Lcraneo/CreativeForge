@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
 import {
@@ -8,449 +7,376 @@ import {
   Button,
   Card,
   Input,
+  KV,
   PageHeader,
-  Segmented,
+  Select,
   Skeleton,
-  StatusDot,
   Switch,
-  cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
-import type { ModelTestResult, ProviderPreset } from "../types";
+import type { ModelSettings, ProviderPreset } from "../types";
 
-const SIZES = [
-  { id: "512x512", label: "512²" },
-  { id: "768x768", label: "768²" },
-  { id: "1024x1024", label: "1024²" },
-  { id: "1024x1792", label: "1024×1792" },
-];
+interface FormState {
+  enabled: boolean;
+  provider: string;
+  base_url: string;
+  model: string;
+  chat_model: string;
+  use_chat: boolean;
+  use_image: boolean;
+  size: string;
+  timeout: number;
+}
 
-const CHAT_SUGGESTIONS = ["deepseek-chat", "deepseek-reasoner", "gpt-4o-mini", "glm-4-flash"];
-const IMAGE_SUGGESTIONS = ["gpt-image-1", "FLUX.1-schnell", "cogview-3-flash", "dall-e-3"];
+function toForm(settings: ModelSettings): FormState {
+  return {
+    enabled: settings.enabled,
+    provider: settings.provider,
+    base_url: settings.base_url,
+    model: settings.model,
+    chat_model: settings.chat_model,
+    use_chat: settings.use_chat,
+    use_image: settings.use_image,
+    size: settings.size,
+    timeout: settings.timeout,
+  };
+}
+
+function applyPreset(form: FormState, preset: ProviderPreset): FormState {
+  return {
+    ...form,
+    provider: preset.id,
+    base_url: preset.base_url,
+    model: preset.model,
+    chat_model: preset.chat_model,
+  };
+}
 
 export default function SettingsCenter() {
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const settings = useQuery({ queryKey: ["model-settings"], queryFn: api.getModelSettings });
-  const presets = useQuery({ queryKey: ["model-presets"], queryFn: api.getModelPresets, staleTime: Infinity });
+  const settings = useQuery({
+    queryKey: ["model-settings"],
+    queryFn: api.getModelSettings,
+  });
+  const presets = useQuery({
+    queryKey: ["model-presets"],
+    queryFn: api.getModelPresets,
+    staleTime: Infinity,
+  });
 
-  const [enabled, setEnabled] = useState(false);
-  const [provider, setProvider] = useState("custom");
-  const [baseUrl, setBaseUrl] = useState("");
+  const [form, setForm] = useState<FormState | null>(null);
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("");
-  const [chatModel, setChatModel] = useState("");
-  const [useChat, setUseChat] = useState(true);
-  const [useImage, setUseImage] = useState(true);
-  const [size, setSize] = useState("1024x1024");
-  const [timeout, setTimeoutValue] = useState(60);
-  const [testResult, setTestResult] = useState<ModelTestResult | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
   useEffect(() => {
-    const data = settings.data;
-    if (!data) return;
-    setEnabled(data.enabled);
-    setProvider(data.provider);
-    setBaseUrl(data.base_url);
-    setModel(data.model);
-    setChatModel(data.chat_model);
-    setUseChat(data.use_chat);
-    setUseImage(data.use_image);
-    setSize(data.size);
-    setTimeoutValue(data.timeout);
-    setApiKey("");
-  }, [settings.data]);
+    if (settings.data && !form) setForm(toForm(settings.data));
+  }, [settings.data, form]);
 
-  function applyPreset(preset: ProviderPreset) {
-    setProvider(preset.id);
-    setBaseUrl(preset.base_url || baseUrl);
-    setChatModel(preset.chat_model || "");
-    setModel(preset.image_model || "");
-    setUseChat(preset.use_chat);
-    setUseImage(preset.use_image);
-    if (preset.id === "system") {
-      setEnabled(false);
-    } else {
-      setEnabled(true);
-    }
-    setTestResult(null);
+  async function persist(): Promise<ModelSettings> {
+    if (!form) throw new Error("表单未就绪");
+    const payload: Record<string, unknown> = { ...form };
+    if (apiKey.trim()) payload.api_key = apiKey.trim();
+    const next = await api.saveModelSettings(payload as Parameters<typeof api.saveModelSettings>[0]);
+    queryClient.setQueryData(["model-settings"], next);
+    setForm(toForm(next));
+    setApiKey("");
+    return next;
   }
 
-  const save = useMutation({
-    mutationFn: () =>
-      api.saveModelSettings({
-        enabled,
-        provider,
-        base_url: baseUrl,
-        model,
-        chat_model: chatModel,
-        use_chat: useChat,
-        use_image: useImage,
-        size,
-        timeout,
-        api_key: apiKey.trim() ? apiKey.trim() : undefined,
-      }),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["model-settings"], data);
-      setApiKey("");
+  async function save() {
+    if (!form || saving) return;
+    setSaving(true);
+    try {
+      const next = await persist();
       toast({
         tone: "success",
-        title: "配置已保存",
-        description: data.enabled
-          ? `当前使用 ${data.provider} · ${[data.use_chat && data.chat_model, data.use_image && data.model].filter(Boolean).join(" + ") || "未启用能力"}`
-          : "当前使用系统默认模型",
+        title: "模型设置已保存",
+        description: next.enabled ? `自定义模型 ${next.model || "(未填 model)"} 将用于原画与提示词增强` : "已回到系统默认离线管线",
       });
-    },
-    onError: (error) => toast({ tone: "danger", title: "保存失败", description: String(error) }),
-  });
+    } catch (cause) {
+      toast({ tone: "danger", title: "保存失败", description: String(cause) });
+    } finally {
+      setSaving(false);
+    }
+  }
 
-  const test = useMutation({
-    mutationFn: api.testModelSettings,
-    onSuccess: (result) => {
-      setTestResult(result);
+  async function test() {
+    if (testing || !form) return;
+    setTesting(true);
+    setTestResult(null);
+    try {
+      // 后端只测已保存的配置：先静默落盘当前表单（含密钥），避免填了却报 not configured
+      await persist();
+      const result = await api.testModelSettings();
+      const text = result.ok
+        ? `连接成功${result.status ? ` · HTTP ${result.status}` : ""}${result.detail ? ` · ${result.detail}` : ""}`
+        : result.detail && result.detail !== "not configured"
+          ? result.detail
+          : result.status
+            ? `连接失败 · HTTP ${result.status}`
+            : "未配置：请填写 Base URL 与 API Key（保存后自动重试）";
+      setTestResult({ ok: result.ok, text });
       toast({
-        tone: result.ok ? "success" : "warning",
+        tone: result.ok ? "success" : "danger",
         title: result.ok ? "连接成功" : "连接失败",
-        description: result.message,
+        description: text,
       });
-    },
-    onError: (error) => toast({ tone: "danger", title: "验证失败", description: String(error) }),
-  });
+    } catch (cause) {
+      setTestResult({ ok: false, text: String(cause) });
+      toast({ tone: "danger", title: "连接失败", description: String(cause) });
+    } finally {
+      setTesting(false);
+    }
+  }
 
-  const clearKey = useMutation({
-    mutationFn: api.clearModelKey,
-    onSuccess: (data) => {
-      queryClient.setQueryData(["model-settings"], data);
+  async function clearKey() {
+    try {
+      const next = await api.clearModelKey();
+      queryClient.setQueryData(["model-settings"], next);
       setApiKey("");
-      toast({ tone: "info", title: "已清除本地保存的密钥" });
-    },
-  });
+      toast({ tone: "success", title: "已清除后端保存的 API Key" });
+    } catch (cause) {
+      toast({ tone: "danger", title: "删除失败", description: String(cause) });
+    }
+  }
 
-  const capabilities = settings.data?.capabilities;
-  const dirty =
-    settings.data !== undefined &&
-    (enabled !== settings.data.enabled ||
-      provider !== settings.data.provider ||
-      baseUrl !== settings.data.base_url ||
-      model !== settings.data.model ||
-      chatModel !== settings.data.chat_model ||
-      useChat !== settings.data.use_chat ||
-      useImage !== settings.data.use_image ||
-      size !== settings.data.size ||
-      timeout !== settings.data.timeout ||
-      apiKey.trim().length > 0);
+  if (settings.isLoading || !form) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
+        <PageHeader overline="Model Settings" title="模型设置" description="正在读取当前配置…" />
+        <div className="grid grid-cols-12 gap-5">
+          <Skeleton className="col-span-12 h-40 lg:col-span-7" />
+          <Skeleton className="col-span-12 h-40 lg:col-span-5" />
+        </div>
+      </div>
+    );
+  }
 
-  const activePreset = presets.data?.presets.find((item) => item.id === provider);
+  const presetEntries = Object.entries(presets.data?.presets ?? {});
+  const presetOptions = [
+    { value: "custom", label: "自定义 / 手动填写" },
+    ...presetEntries.map(([id, preset]) => ({ value: id, label: preset.label || id })),
+  ];
+  const activePreset = presetOptions.some((option) => option.value === form.provider)
+    ? form.provider
+    : "custom";
+  const data = settings.data!;
 
   return (
-    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5 px-4 py-5 md:px-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
         overline="Model Settings"
         title="模型设置"
-        description="接入第三方模型 API（OpenAI 兼容）：对话模型增强角色设定与提示词，图像模型生成概念原画；可随时切回系统默认管线"
+        description="接入自定义大模型用于提示词增强与原画生成；未启用时使用确定性离线管线"
         actions={
-          <>
-            <Button variant="secondary" icon="activity" loading={test.isPending} onClick={() => test.mutate()}>
-              测试连接
-            </Button>
-            <Button variant="primary" icon="download" loading={save.isPending} disabled={!dirty} onClick={() => save.mutate()}>
-              保存配置
-            </Button>
-          </>
+          <Badge tone={data.enabled ? "primary" : "neutral"} icon={data.enabled ? "spark" : "cube"}>
+            {data.enabled ? "自定义模型已启用" : "系统默认管线"}
+          </Badge>
         }
       />
 
-      {settings.isLoading ? (
-        <Skeleton className="h-64" />
-      ) : (
-        <>
-          <Card
-            title="生成引擎"
-            icon="spark"
-            right={
-              <Badge tone={enabled ? "primary" : "neutral"}>
-                <StatusDot tone={enabled ? "running" : "idle"} />
-                {enabled ? `${activePreset?.label ?? provider}` : "系统默认模型"}
-              </Badge>
-            }
-          >
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-0">
-                <div className="text-[13px] font-semibold">启用第三方模型</div>
-                <p className="mt-1 max-w-2xl text-[12px] leading-[19px] text-ink-3">
-                  开启后：先用对话模型增强提示词（MODEL_ENHANCE），再按需生成原画（MODEL_IMAGE）；
-                  任一环节失败都会自动回退系统默认管线并记录 MODEL_FALLBACK，任务不会中断。
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 flex flex-col gap-5 lg:col-span-7">
+          <Card title="启用与预设" icon="spark">
+            <div className="flex items-center justify-between gap-4 py-1">
+              <div>
+                <div className="text-[13.5px] font-semibold text-ink">启用自定义模型</div>
+                <p className="mt-0.5 text-[12px] text-ink-3">
+                  关闭后始终使用离线确定性管线（无需网络与 Key）
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-ink-3">{enabled ? "已启用" : "已关闭"}</span>
-                <Switch checked={enabled} onChange={setEnabled} label="启用第三方模型" />
-              </div>
+              <Switch
+                checked={form.enabled}
+                onChange={(enabled) => setForm({ ...form, enabled })}
+                label="启用自定义模型"
+              />
             </div>
-
             <div className="mt-4">
-              <div className="mb-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
-                厂商预设
+              <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                服务商预设
               </div>
-              <div className="flex flex-wrap gap-2">
-                {(presets.data?.presets ?? []).map((preset) => (
-                  <button
-                    key={preset.id}
-                    onClick={() => applyPreset(preset)}
-                    className={cx(
-                      "rounded-lg border px-3 py-1.5 text-[12.5px] transition-colors",
-                      provider === preset.id
-                        ? "border-primary/50 bg-primary-tint font-semibold text-primary"
-                        : "border-line-subtle bg-surface-1 text-ink-2 hover:border-line hover:text-ink",
-                    )}
-                  >
-                    {preset.label}
-                  </button>
-                ))}
-              </div>
-              {activePreset?.note && (
-                <p className="mt-2 text-[11.5px] leading-[18px] text-ink-3">{activePreset.note}</p>
-              )}
+              <Select
+                value={activePreset}
+                options={presetOptions}
+                onChange={(event) => {
+                  const preset = presetEntries.find(([id]) => id === event.target.value)?.[1];
+                  setForm((current) =>
+                    preset && current
+                      ? applyPreset({ ...current, provider: event.target.value }, { ...preset, id: event.target.value })
+                      : current,
+                  );
+                }}
+              />
+              {activePreset !== "custom" &&
+                (() => {
+                  const preset = presetEntries.find(([id]) => id === activePreset)?.[1];
+                  if (!preset) return null;
+                  return (
+                    <div className="mt-2 rounded-md border border-line-subtle bg-surface-1 p-2.5 text-[11.5px] leading-[18px] text-ink-3">
+                      <span className="font-semibold text-ink-2">{preset.label}</span>
+                      ：图像 <code className="font-mono">{preset.model || "—"}</code> · 对话{" "}
+                      <code className="font-mono">{preset.chat_model || "—"}</code>
+                      {preset.note && <span> · {preset.note}</span>}
+                    </div>
+                  );
+                })()}
             </div>
-
-            {enabled && capabilities && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge tone={capabilities.chat ? "success" : "neutral"} icon="activity">
-                  提示词增强 {capabilities.chat ? "已就绪" : "未配置"}
-                </Badge>
-                <Badge tone={capabilities.image ? "success" : "neutral"} icon="spark">
-                  原画生成 {capabilities.image ? "已就绪" : "未配置"}
-                </Badge>
-                {!capabilities.image && (
-                  <span className="text-[11.5px] text-ink-3">
-                    未配置图像模型时，原画由系统默认矢量管线产出。
-                  </span>
-                )}
-              </div>
-            )}
-            {settings.data?.env_override && (
-              <div className="mt-3 flex items-center gap-2 rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-[11.5px] text-warning">
-                <Icon name="alert" className="h-3.5 w-3.5" />
-                检测到环境变量 CF_MODEL_API_KEY / CF_MODEL_BASE_URL，环境变量优先生效。
-              </div>
-            )}
           </Card>
 
-          <Card title="API 配置" icon="terminal" bodyClassName="p-5">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs text-ink-3">API 地址 Base URL</span>
-                <Input
-                  icon="external"
-                  value={baseUrl}
-                  onChange={(event) => setBaseUrl(event.target.value)}
-                  placeholder="https://api.deepseek.com/v1"
-                  spellCheck={false}
-                />
-                <span className="text-[11px] text-ink-4">
-                  DeepSeek 官方填 https://api.deepseek.com/v1；可填根地址或完整的 /v1/... 路径。
-                </span>
-              </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs text-ink-3">API 密钥 API Key</span>
-                <Input
-                  icon="check"
-                  type="password"
-                  value={apiKey}
-                  onChange={(event) => setApiKey(event.target.value)}
-                  placeholder={
-                    settings.data?.has_key
-                      ? `已保存 ${settings.data.key_hint}（留空表示不修改）`
-                      : "sk-..."
-                  }
-                  autoComplete="off"
-                  spellCheck={false}
-                />
-                <span className="text-[11px] text-ink-4">
-                  密钥不会再返回给前端；仅保存在本机 data 目录。
-                </span>
-              </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="flex items-center justify-between text-xs text-ink-3">
-                  对话模型 Chat Model
-                  <span className="flex items-center gap-2 text-[11px] text-ink-4">
-                    提示词增强
-                    <Switch checked={useChat} onChange={setUseChat} label="提示词增强" />
-                  </span>
+          <Card title="连接配置" icon="terminal">
+            <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  Base URL
                 </span>
                 <Input
-                  icon="activity"
-                  value={chatModel}
-                  onChange={(event) => setChatModel(event.target.value)}
-                  list="cf-chat-suggestions"
-                  placeholder="deepseek-chat"
-                  spellCheck={false}
+                  value={form.base_url}
+                  onChange={(event) => setForm({ ...form, base_url: event.target.value })}
+                  placeholder="https://api.example.com/v1"
                 />
-                <datalist id="cf-chat-suggestions">
-                  {CHAT_SUGGESTIONS.map((item) => (
-                    <option key={item} value={item} />
-                  ))}
-                </datalist>
               </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="flex items-center justify-between text-xs text-ink-3">
-                  图像模型 Image Model
-                  <span className="flex items-center gap-2 text-[11px] text-ink-4">
-                    生成原画
-                    <Switch checked={useImage} onChange={setUseImage} label="生成原画" />
-                  </span>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  图像模型 model
                 </span>
                 <Input
-                  icon="spark"
-                  value={model}
-                  onChange={(event) => setModel(event.target.value)}
-                  list="cf-image-suggestions"
-                  placeholder="gpt-image-1 / FLUX.1-schnell（DeepSeek 官方无图像接口，可留空）"
-                  spellCheck={false}
+                  value={form.model}
+                  onChange={(event) => setForm({ ...form, model: event.target.value })}
+                  placeholder="image-model-name"
                 />
-                <datalist id="cf-image-suggestions">
-                  {IMAGE_SUGGESTIONS.map((item) => (
-                    <option key={item} value={item} />
-                  ))}
-                </datalist>
               </label>
-
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs text-ink-3">超时（秒）</span>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  对话模型 chat_model
+                </span>
                 <Input
-                  icon="clock"
+                  value={form.chat_model}
+                  onChange={(event) => setForm({ ...form, chat_model: event.target.value })}
+                  placeholder="chat-model-name"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  生成尺寸 size
+                </span>
+                <Input
+                  value={form.size}
+                  onChange={(event) => setForm({ ...form, size: event.target.value })}
+                  placeholder="1024x1024"
+                />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  超时 timeout（秒）
+                </span>
+                <Input
                   type="number"
                   min={5}
-                  max={300}
-                  value={timeout}
-                  onChange={(event) => setTimeoutValue(Number(event.target.value) || 60)}
+                  max={600}
+                  value={form.timeout}
+                  onChange={(event) =>
+                    setForm({ ...form, timeout: Number(event.target.value) || 60 })
+                  }
                 />
               </label>
-
-              <div className="flex flex-col gap-1.5 md:col-span-2">
-                <span className="text-xs text-ink-3">输出尺寸 Size（仅图像模型）</span>
-                <Segmented options={SIZES} value={size} onChange={setSize as (value: string) => void} />
+              <div className="grid grid-cols-2 gap-3 self-end">
+                <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle bg-surface-1 px-3 py-2">
+                  <span className="text-[12px] text-ink-2">提示词增强</span>
+                  <Switch
+                    checked={form.use_chat}
+                    onChange={(use_chat) => setForm({ ...form, use_chat })}
+                  />
+                </label>
+                <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle bg-surface-1 px-3 py-2">
+                  <span className="text-[12px] text-ink-2">图像生成</span>
+                  <Switch
+                    checked={form.use_image}
+                    onChange={(use_image) => setForm({ ...form, use_image })}
+                  />
+                </label>
               </div>
             </div>
+          </Card>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-line-subtle pt-4">
-              <Button
-                variant="secondary"
-                size="sm"
-                icon="refresh"
-                loading={test.isPending}
-                onClick={() => test.mutate()}
-              >
-                验证密钥
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="x"
-                loading={clearKey.isPending}
-                disabled={!settings.data?.has_key}
-                onClick={() => clearKey.mutate()}
-              >
-                清除已保存密钥
-              </Button>
-              {testResult && (
-                <span
-                  className={cx(
-                    "ml-auto inline-flex items-center gap-2 text-[12px]",
-                    testResult.ok ? "text-success" : "text-danger",
-                  )}
-                >
-                  <Icon name={testResult.ok ? "check" : "alert"} className="h-3.5 w-3.5" />
-                  {testResult.message}
-                  {testResult.latency_ms !== undefined && (
-                    <span className="font-mono text-ink-3">{testResult.latency_ms}ms</span>
-                  )}
+          <Card title="鉴权 API Key" icon="key">
+            <div className="flex flex-wrap items-end gap-3">
+              <label className="min-w-[240px] flex-1">
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  密钥（仅提交时发送，保存在后端本机）
                 </span>
-              )}
+                <Input
+                  type="password"
+                  autoComplete="new-password"
+                  value={apiKey}
+                  onChange={(event) => setApiKey(event.target.value)}
+                  placeholder="sk-…"
+                  icon="key"
+                />
+              </label>
+              <div className="flex gap-2">
+                <Button variant="secondary" icon="x" onClick={clearKey}>
+                  清除 Key
+                </Button>
+                <Button variant="secondary" icon="refresh" loading={testing} onClick={test}>
+                  测试连接
+                </Button>
+                <Button variant="primary" icon="check" loading={saving} onClick={save}>
+                  保存设置
+                </Button>
+              </div>
             </div>
-            {testResult?.models && testResult.models.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {testResult.models.slice(0, 16).map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => {
-                      if (/image|flux|cogview|dall|sd|stable/i.test(item)) setModel(item);
-                      else setChatModel(item);
-                    }}
-                    title="点击填入：含 image/flux 等关键词的填入图像模型，其余填入对话模型"
-                    className="rounded-sm border border-line-subtle bg-surface-2 px-2 py-0.5 font-mono text-[11px] text-ink-2 transition-colors hover:border-primary/50 hover:text-primary"
-                  >
-                    {item}
-                  </button>
-                ))}
+            {testResult && (
+              <div
+                className={`mt-3 flex items-start gap-2 rounded-md border p-2.5 text-[12px] leading-[18px] ${
+                  testResult.ok
+                    ? "border-success/40 bg-success/10 text-ink-2"
+                    : "border-danger/40 bg-danger/10 text-ink-2"
+                }`}
+              >
+                <Icon
+                  name={testResult.ok ? "check" : "alert"}
+                  className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${testResult.ok ? "text-success" : "text-danger"}`}
+                />
+                <span>{testResult.text}</span>
               </div>
             )}
           </Card>
+        </div>
 
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <Card title="DeepSeek 接入说明" icon="book">
-              <ul className="space-y-2.5 text-[12.5px] leading-5 text-ink-2">
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    官方 API 兼容 OpenAI 协议：地址{" "}
-                    <span className="font-mono">https://api.deepseek.com/v1</span>，模型{" "}
-                    <span className="font-mono">deepseek-chat</span> /{" "}
-                    <span className="font-mono">deepseek-reasoner</span>。
-                  </span>
-                </li>
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    DeepSeek 目前是文本模型：用于把口语化需求扩写成专业美术提示词，
-                    角色结构、调色板、三视图与工程包仍由系统管线产出。
-                  </span>
-                </li>
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>
-                    若你使用支持图像的聚合网关（如硅基流动 / 智谱 / 自建 NewAPI），
-                    在预设里选对应厂商，同时开启「生成原画」即可用 FLUX / CogView 等出图。
-                  </span>
-                </li>
-              </ul>
-            </Card>
+        <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">
+          <Card title="当前配置" icon="activity">
+            <KV label="provider" value={data.provider || "—"} />
+            <KV label="base_url" value={data.base_url || "—"} />
+            <KV label="image model" value={data.model || "—"} />
+            <KV label="chat model" value={data.chat_model || "—"} />
+            <KV label="enabled" value={data.enabled ? "true" : "false"} />
+            <KV label="size / timeout" value={`${data.size} · ${data.timeout}s`} />
+          </Card>
 
-            <Card title="数据安全" icon="check">
-              <ul className="space-y-2.5 text-[12.5px] leading-5 text-ink-2">
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                  密钥不会通过任何接口返回，页面只显示 sk-****最后四位。
-                </li>
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                  配置保存在本机 studio/backend/data（已加入 .gitignore），仅进程可读。
-                </li>
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                  支持环境变量 CF_MODEL_API_KEY / CF_MODEL_BASE_URL，无需落盘。
-                </li>
-                <li className="flex gap-2.5">
-                  <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                  增强后的提示词与原画都会写入资产和历史，可追溯来源模型。
-                </li>
-              </ul>
-              <Button
-                variant="secondary"
-                size="sm"
-                icon="spark"
-                className="mt-4"
-                onClick={() => navigate("/")}
-              >
-                去工作台生成
-              </Button>
-            </Card>
-          </div>
-        </>
-      )}
+          <Card title="工作方式" icon="book">
+            <ul className="space-y-2.5 text-[12.5px] leading-[19px] text-ink-2">
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                提示词增强：对话模型把自然语言目标改写为高质量图像提示词。
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                原画生成：图像模型产出原图，交给 PReCon 重建为 16 色像素资产。
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                调用失败会自动回退离线管线，任务不会中断（MODEL_FALLBACK 事件）。
+              </li>
+              <li className="flex items-start gap-2.5">
+                <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                Key 仅保存在后端本机 model_settings.json 中，页面不回显。
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

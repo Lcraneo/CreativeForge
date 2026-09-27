@@ -1,92 +1,90 @@
-"""Deterministic helpers shared by the PReCon stages.
+"""Deterministic seeding helpers for the PReCon pixel engine.
 
-A generation request carries a ``seed`` (derived from the user prompt) plus a
-semantic palette; both let every stage produce prompt-specific yet fully
-reproducible results. When no seed is present the stages fall back to the
-frozen baseline values used by the benchmark.
+All four PReCon submodules (``contour`` / ``grid`` / ``palette`` / ``quality``)
+derive their prompt-specific variation from a single seed so that the benchmark
+stays reproducible. When no seed is available (the frozen benchmark baseline)
+every helper degrades to ``None`` so callers keep their seedless behaviour.
 """
 
-import hashlib
-
-
-def to_seed(value):
-    """Normalizes a seed (int or string) to a 32-bit int, or None."""
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return int(value)
-    if isinstance(value, int):
-        return value & 0xFFFFFFFF
-    text = str(value).encode("utf-8")
-    return int(hashlib.sha1(text).hexdigest()[:8], 16)
+import colorsys
+import random as _random
 
 
 def seed_of(image):
+    """Return a stable integer seed for ``image`` or ``None`` for the
+    seedless benchmark path.
+
+    ``image`` is the asset/character dict; a seed may arrive under the
+    ``seed`` key (int or numeric string).
+    """
+
     if not isinstance(image, dict):
         return None
-    return to_seed(image.get("seed"))
+    seed = image.get("seed")
+    if seed is None:
+        return None
+    try:
+        return int(seed)
+    except (TypeError, ValueError):
+        return None
 
 
 def rng(seed, salt=0):
-    """Tiny LCG -> deterministic float stream in [0, 1)."""
-    value = (int(seed) ^ (0x9E3779B9 * (salt + 1))) & 0xFFFFFFFF
+    """Return a 0..1 float generator deterministic for ``(seed, salt)``."""
 
-    def next_float():
-        nonlocal value
-        value = (value * 1664525 + 1013904223) & 0xFFFFFFFF
-        return value / 0xFFFFFFFF
-
-    return next_float
+    base = int(seed) if isinstance(seed, (int, float)) else 0
+    state = (base ^ (salt * 0x9E3779B1)) & 0xFFFFFFFF
+    gen = _random.Random(state)
+    return gen.random
 
 
-def clamp(value, low=0.0, high=1.0):
-    return max(low, min(high, float(value)))
+def clamp(value, lo=0.0, hi=1.0):
+    """Clamp ``value`` into ``[lo, hi]`` (defaults to the unit interval)."""
+
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return lo
+    return max(lo, min(hi, value))
 
 
-def _channel(value):
-    return max(0, min(255, int(round(value))))
-
-
-def hex_to_rgb(color):
-    text = str(color).lstrip("#")
+def _hex_to_rgb(hex_color):
+    text = str(hex_color).lstrip("#")
     if len(text) == 3:
-        text = "".join(char * 2 for char in text)
-    return tuple(int(text[index:index + 2], 16) for index in (0, 2, 4))
+        text = "".join(c * 2 for c in text)
+    return tuple(int(text[i:i + 2], 16) for i in (0, 2, 4))
 
 
-def rgb_to_hex(rgb):
-    return "#{:02x}{:02x}{:02x}".format(*(_channel(value) for value in rgb))
+def _rgb_to_hex(rgb):
+    return "#" + "".join(
+        "{:02x}".format(max(0, min(255, int(round(c)))) ) for c in rgb
+    )
 
 
-def shade(color, amount):
-    """Lightens (amount > 0) or darkens (amount < 0) a hex colour."""
-    red, green, blue = hex_to_rgb(color)
+def shade(hex_color, amount):
+    """Lighten (``amount`` > 0) or darken (``amount`` < 0) a hex colour.
+
+    ``amount`` is a fraction in roughly (-1, 1): ``0.18`` nudges toward white,
+    ``-0.45`` toward black.
+    """
+
+    rgb = _hex_to_rgb(hex_color)
     if amount >= 0:
-        factor = amount
-        red, green, blue = (
-            red + (255 - red) * factor,
-            green + (255 - green) * factor,
-            blue + (255 - blue) * factor,
-        )
-    else:
-        factor = 1.0 + amount
-        red, green, blue = red * factor, green * factor, blue * factor
-    return rgb_to_hex((red, green, blue))
+        return _rgb_to_hex([c + (255 - c) * amount for c in rgb])
+    factor = 1.0 + amount
+    return _rgb_to_hex([c * factor for c in rgb])
 
 
-def hue_palette(seed, count=16):
-    """Builds a deterministic 16-colour ramp from a seed (hue rotation)."""
-    import colorsys
+def hue_palette(seed):
+    """Deterministic 16-colour hue ramp derived from ``seed``."""
 
-    hue = (int(seed) % 360) / 360.0
-    ramps = [
-        (0.16, 0.10), (0.16, 0.20), (0.16, 0.32), (0.30, 0.48),
-        (0.42, 0.62), (0.52, 0.72), (0.60, 0.82), (0.22, 0.42),
-    ]
+    base = int(seed) if isinstance(seed, (int, float)) else 0
+    gen = _random.Random((base ^ 0x5BD1E995) & 0xFFFFFFFF)
     colors = []
-    for index in range(count):
-        saturation, lightness = ramps[index % len(ramps)]
-        hue_shift = (hue + index * 0.013) % 1.0
-        red, green, blue = colorsys.hls_to_rgb(hue_shift, lightness, saturation)
-        colors.append(rgb_to_hex((red * 255, green * 255, blue * 255)))
+    for index in range(16):
+        hue = (index / 16.0 + gen.uniform(-0.02, 0.02)) % 1.0
+        saturation = 0.45 + 0.35 * gen.random()
+        value = 0.45 + 0.45 * gen.random()
+        red, green, blue = colorsys.hsv_to_rgb(hue, saturation, value)
+        colors.append(_rgb_to_hex([red * 255, green * 255, blue * 255]))
     return colors

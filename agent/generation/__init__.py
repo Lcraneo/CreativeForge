@@ -1,6 +1,6 @@
-"""Prompt-driven character generation (spec parsing + asset building)."""
+"""External generation helpers: prompt parsing/override and image prompting."""
 
-from agent.generation.builder import build_asset, asset_identity, spec_palette
-from agent.generation.spec import parse_prompt
+from agent.generation.external import build_image_prompt
+from agent.generation.spec import apply_overrides, parse_prompt
 
-__all__ = ["build_asset", "asset_identity", "spec_palette", "parse_prompt"]
+__all__ = ["build_image_prompt", "parse_prompt", "apply_overrides"]
