@@ -15,6 +15,10 @@ interface Props {
  * style-consistent cycle and shows the resulting GIF. Falls back to the
  * character's still image while generating / on failure (never pixel art).
  */
+/** Session cache so re-entering the inspector replays the same GIF instead of
+ *  regenerating (and flashing still → GIF) on every mount. */
+const cache = new Map<string, string>();
+
 export function AnimPreview({
   assetId,
   action = "walk",
@@ -27,11 +31,20 @@ export function AnimPreview({
 
   useEffect(() => {
     let alive = true;
+    const key = `${assetId}|${action}|${fps}|${duration}|${size}`;
+    const cached = cache.get(key);
+    if (cached) {
+      setUrl(cached);
+      return;
+    }
     setUrl(null);
     api
       .createAnimation({ asset_id: assetId, action, fps, duration, size })
       .then((result) => {
-        if (alive) setUrl(result.urls.gif);
+        if (alive) {
+          cache.set(key, result.urls.gif);
+          setUrl(result.urls.gif);
+        }
       })
       .catch(() => {});
     return () => {

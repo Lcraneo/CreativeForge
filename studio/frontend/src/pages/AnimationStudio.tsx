@@ -10,17 +10,27 @@ const ACTION_LABELS: Record<string, string> = {
   run: "奔跑",
   attack: "攻击",
   jump: "跳跃",
+  sequence: "序列帧",
 };
 const SIZES = [256, 384, 512, 768];
 
+interface SeqFrame {
+  name: string;
+  dataUrl: string;
+}
+
 export default function AnimationStudio() {
   const asset = useAssetLoader();
+  const [mode, setMode] = useState<"smart" | "sequence">("smart");
+  const [skeletal, setSkeletal] = useState(true);
   const [action, setAction] = useState("walk");
   const [fps, setFps] = useState(12);
   const [duration, setDuration] = useState(1.0);
   const [size, setSize] = useState(384);
   const [result, setResult] = useState<AnimationResult | null>(null);
   const [upload, setUpload] = useState<{ name: string; dataUrl: string } | null>(null);
+  const [seqFrames, setSeqFrames] = useState<SeqFrame[]>([]);
+  const seqFileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState(false);
@@ -44,6 +54,7 @@ export default function AnimationStudio() {
         fps,
         duration,
         size,
+        skeletal,
       };
       if (upload) {
         payload.image = upload.dataUrl.split(",")[1];
@@ -57,7 +68,7 @@ export default function AnimationStudio() {
     } finally {
       setBusy(false);
     }
-  }, [action, fps, duration, size, upload, asset?.id]);
+  }, [action, fps, duration, size, upload, asset?.id, skeletal]);
 
   const openPreview = () => {
     if (!result) return;
@@ -65,6 +76,45 @@ export default function AnimationStudio() {
     setPreviewLoading(true);
     setPreview(true);
   };
+
+  const onSeqFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+    const incoming = Array.from(files)
+      .sort((a, b) => collator.compare(a.name, b.name))
+      .map(
+        (file) =>
+          new Promise<SeqFrame>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve({ name: file.name, dataUrl: String(reader.result) });
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+          }),
+      );
+    Promise.all(incoming)
+      .then((frames) => setSeqFrames((prev) => [...prev, ...frames].slice(0, 60)))
+      .catch(() => setError("读取序列帧图片失败，请重试"));
+  };
+
+  const composeSequence = useCallback(async () => {
+    if (seqFrames.length < 2 || busy) return;
+    setBusy(true);
+    setError(null);
+    setMainError(false);
+    try {
+      setResult(
+        await api.createAnimationSequence({
+          frames: seqFrames.map((frame) => frame.dataUrl),
+          fps,
+          size,
+        }),
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setBusy(false);
+    }
+  }, [seqFrames, fps, size, busy]);
 
   const onFile = (file?: File) => {
     if (!file) return;
@@ -89,7 +139,7 @@ export default function AnimationStudio() {
       <PageHeader
         overline="Animation Studio"
         title="动画工作台"
-        description="读取源图风格 → 提取人物特征 → 生成风格一致帧序列 → 视觉相似度一致性校验 → 输出动画"
+        description="智能生成：读取源图风格 → 提取人物特征 → 生成风格一致帧序列 → 一致性校验 → 输出动画；序列帧导入：按顺序导入帧图直接合成循环动画"
         actions={
           <>
             {result && <Badge tone="falign">{ACTION_LABELS[result.action] ?? result.action}</Badge>}
@@ -149,76 +199,220 @@ export default function AnimationStudio() {
               )}
             </div>
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-ink-3">
-              <span>源：{upload ? `上传 · ${upload.name}` : asset ? `资产 · ${asset.name ?? asset.id}` : "—"}</span>
+              <span>
+                源：
+                {mode === "sequence"
+                  ? `序列帧 · ${seqFrames.length} 张`
+                  : upload
+                    ? `上传 · ${upload.name}`
+                    : asset
+                      ? `资产 · ${asset.name ?? asset.id}`
+                      : "—"}
+              </span>
               {result && <span>输出 {result.size}px · {result.duration}s · 循环</span>}
             </div>
           </Card>
 
           <Card title="生成参数 Animation Settings" icon="panel" iconClassName="text-falign">
-            <div className="flex flex-wrap items-end gap-6">
-              <div>
-                <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
-                <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                  {ACTIONS.map((item) => (
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                <button
+                  onClick={() => setMode("smart")}
+                  className={cx(
+                    "px-3 py-1.5 text-[12px] transition-colors",
+                    mode === "smart" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                  )}
+                >
+                  智能生成
+                </button>
+                <button
+                  onClick={() => setMode("sequence")}
+                  className={cx(
+                    "px-3 py-1.5 text-[12px] transition-colors",
+                    mode === "sequence" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                  )}
+                >
+                  序列帧导入
+                </button>
+              </div>
+              <span className="text-[11px] text-ink-4">
+                {mode === "smart"
+                  ? "由 AI 原画 / 资产立绘驱动生成风格一致的动作帧"
+                  : "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"}
+              </span>
+            </div>
+            {mode === "smart" ? (
+              <div className="flex flex-wrap items-end gap-6">
+              <div className="flex flex-wrap items-center gap-6">
+                <div>
+                  <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">生成方式</div>
+                  <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                     <button
-                      key={item}
-                      onClick={() => setAction(item)}
+                      onClick={() => setSkeletal(true)}
+                      title="姿态引擎驱动的全身关节动画，含预备/跟随/重叠动作"
                       className={cx(
                         "px-3 py-1.5 text-[12px] transition-colors",
-                        action === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                        skeletal ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
                       )}
                     >
-                      {ACTION_LABELS[item]}
+                      全身骨骼
                     </button>
-                  ))}
+                    <button
+                      onClick={() => setSkeletal(false)}
+                      title="对源图做变形动画，最大程度保留原画外观"
+                      className={cx(
+                        "px-3 py-1.5 text-[12px] transition-colors",
+                        !skeletal ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                      )}
+                    >
+                      源图驱动
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
+                  <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                    {ACTIONS.map((item) => (
+                      <button
+                        key={item}
+                        onClick={() => setAction(item)}
+                        className={cx(
+                          "px-3 py-1.5 text-[12px] transition-colors",
+                          action === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                        )}
+                      >
+                        {ACTION_LABELS[item]}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
-              <label className="text-[11px] text-ink-4">
-                <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
-                <input type="range" min={4} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
-              </label>
-              <label className="text-[11px] text-ink-4">
-                <span className="mb-2 block uppercase tracking-widest">时长 {duration.toFixed(1)}s</span>
-                <input
-                  type="range"
-                  min={0.3}
-                  max={4}
-                  step={0.1}
-                  value={duration}
-                  onChange={(e) => setDuration(Number(e.target.value))}
-                />
-              </label>
-              <label className="text-[11px] text-ink-4">
-                <span className="mb-2 block uppercase tracking-widest">分辨率</span>
-                <select
-                  value={size}
-                  onChange={(e) => setSize(Number(e.target.value))}
-                  className="rounded-lg border border-line-subtle bg-surface-1 px-2 py-1.5 text-[12px]"
-                >
-                  {SIZES.map((option) => (
-                    <option key={option} value={option}>
-                      {option} x {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="ml-auto flex items-center gap-3">
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => onFile(e.target.files?.[0])}
-                />
-                <Button variant="secondary" size="sm" icon="image" onClick={() => fileRef.current?.click()}>
-                  上传源图
-                </Button>
-                <Button variant="primary" size="sm" icon="spark" onClick={generate} disabled={busy}>
-                  {busy ? "生成中…" : "生成动画"}
-                </Button>
+                <label className="text-[11px] text-ink-4">
+                  <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
+                  <input type="range" min={4} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
+                </label>
+                <label className="text-[11px] text-ink-4">
+                  <span className="mb-2 block uppercase tracking-widest">时长 {duration.toFixed(1)}s</span>
+                  <input
+                    type="range"
+                    min={0.3}
+                    max={4}
+                    step={0.1}
+                    value={duration}
+                    onChange={(e) => setDuration(Number(e.target.value))}
+                  />
+                </label>
+                <label className="text-[11px] text-ink-4">
+                  <span className="mb-2 block uppercase tracking-widest">分辨率</span>
+                  <select
+                    value={size}
+                    onChange={(e) => setSize(Number(e.target.value))}
+                    className="rounded-lg border border-line-subtle bg-surface-1 px-2 py-1.5 text-[12px]"
+                  >
+                    {SIZES.map((option) => (
+                      <option key={option} value={option}>
+                        {option} x {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div className="ml-auto flex items-center gap-3">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => onFile(e.target.files?.[0])}
+                  />
+                  <Button variant="secondary" size="sm" icon="image" onClick={() => fileRef.current?.click()}>
+                    上传源图
+                  </Button>
+                  <Button variant="primary" size="sm" icon="spark" onClick={generate} disabled={busy}>
+                    {busy ? "生成中…" : "生成动画"}
+                  </Button>
+                </div>
               </div>
-            </div>
-            {upload && (
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-end gap-6">
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
+                    <input type="range" min={2} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
+                  </label>
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-2 block uppercase tracking-widest">分辨率</span>
+                    <select
+                      value={size}
+                      onChange={(e) => setSize(Number(e.target.value))}
+                      className="rounded-lg border border-line-subtle bg-surface-1 px-2 py-1.5 text-[12px]"
+                    >
+                      {SIZES.map((option) => (
+                        <option key={option} value={option}>
+                          {option} x {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="ml-auto flex items-center gap-3">
+                    <input
+                      ref={seqFileRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        onSeqFiles(e.target.files);
+                        e.target.value = "";
+                      }}
+                    />
+                    <Button variant="secondary" size="sm" icon="image" onClick={() => seqFileRef.current?.click()}>
+                      导入序列帧
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="film"
+                      onClick={composeSequence}
+                      disabled={busy || seqFrames.length < 2}
+                    >
+                      {busy ? "合成中…" : `合成动画（${seqFrames.length} 帧）`}
+                    </Button>
+                  </div>
+                </div>
+                {seqFrames.length > 0 && (
+                  <div>
+                    <div className="mb-2 flex items-center justify-between text-[11px] text-ink-4">
+                      <span>已导入 {seqFrames.length} 帧 · 按文件名顺序播放（时长约 {(seqFrames.length / fps).toFixed(2)}s）</span>
+                      <button className="underline hover:text-ink-2" onClick={() => setSeqFrames([])}>
+                        清空全部
+                      </button>
+                    </div>
+                    <div className="cf-scroll flex max-h-[120px] flex-wrap gap-2 overflow-y-auto rounded-[10px] border border-line-subtle bg-surface-1 p-2">
+                      {seqFrames.map((frame, index) => (
+                        <div
+                          key={`${frame.name}-${index}`}
+                          className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-line-subtle bg-[#f1efe9]"
+                          title={`${frame.name} · 第 ${index + 1} 帧`}
+                        >
+                          <img src={frame.dataUrl} alt={frame.name} className="h-full w-full object-contain" />
+                          <button
+                            onClick={() => setSeqFrames((prev) => prev.filter((_, i) => i !== index))}
+                            className="absolute right-0 top-0 hidden h-4 w-4 items-center justify-center rounded-bl-md bg-ink/80 text-[9px] text-canvas group-hover:flex"
+                            aria-label={`移除 ${frame.name}`}
+                          >
+                            ✕
+                          </button>
+                          <span className="absolute bottom-0 left-0 bg-ink/70 px-1 text-[9px] text-canvas">
+                            {index + 1}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            {(mode === "smart" && upload) && (
               <button className="mt-2 text-[11px] text-ink-3 underline" onClick={() => setUpload(null)}>
                 清除上传，改用当前资产
               </button>
@@ -239,6 +433,37 @@ export default function AnimationStudio() {
             >
               <div className="cf-scroll overflow-x-auto rounded-[10px] border border-line-subtle bg-surface-1 p-2">
                 <img src={result.urls.sheet} alt="sprite sheet" className="max-h-[220px]" />
+              </div>
+            </Card>
+          )}
+
+          {result && result.frame_urls && result.frame_urls.length > 0 && (
+            <Card
+              title={`关键帧 Keyframes · ${result.frame_count} 帧`}
+              icon="grid"
+              iconClassName="text-falign"
+              right={
+                <span className="text-[12px] text-ink-3">
+                  {result.action === "sequence" ? "导入序列 · 原样合成" : skeletal ? "全身骨骼 · 关节动画" : "源图驱动 · 变形动画"}
+                </span>
+              }
+            >
+              <div className="cf-scroll flex gap-3 overflow-x-auto pb-1">
+                {result.frame_urls.map((url, index) => (
+                  <figure key={url} className="shrink-0">
+                    <div className="h-[130px] w-[130px] overflow-hidden rounded-lg border border-line-subtle bg-[#f1efe9]">
+                      <img
+                        src={url}
+                        alt={`frame ${index + 1}`}
+                        className="h-full w-full object-contain"
+                        loading="lazy"
+                      />
+                    </div>
+                    <figcaption className="mt-1 text-center font-mono text-[10.5px] text-ink-4">
+                      #{index + 1}
+                    </figcaption>
+                  </figure>
+                ))}
               </div>
             </Card>
           )}

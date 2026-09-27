@@ -12,26 +12,27 @@ Uses Pillow for the transforms (already an optional dependency of the runtime).
 import io
 import math
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 CANVAS_BG = (0, 0, 0, 0)
 ALPHA_THRESHOLD = 16
 BG_DIFF_THRESHOLD = 48
+FEATHER_RADIUS = 1.0
 
 
 def _motion(action, phase):
     t = phase * 2.0 * math.pi
     if action == "walk":
-        return {"dy": -abs(math.sin(t)) * 6, "dx": math.cos(t) * 3, "rot": math.cos(t) * 3.0, "sx": 1.0, "sy": 1.03}
+        return {"dy": -abs(math.sin(t)) * 8, "dx": math.cos(t) * 3, "rot": math.cos(t) * 3.0, "sx": 1.0, "sy": 1.0}
     if action == "run":
-        return {"dy": -abs(math.sin(t)) * 10, "dx": math.cos(t) * 5, "rot": math.cos(t) * 5.0, "sx": 1.02, "sy": 1.05}
+        return {"dy": -abs(math.sin(t)) * 12, "dx": math.cos(t) * 5, "rot": math.cos(t) * 4.5, "sx": 1.02, "sy": 1.04}
     if action == "attack":
         k = 0.5 + 0.5 * math.cos(t)
-        return {"dy": -abs(math.sin(t)) * 3, "dx": k * 20, "rot": k * 7.0, "sx": 1.0 + k * 0.03, "sy": 1.0 - k * 0.02}
+        return {"dy": -abs(math.sin(t)) * 3, "dx": k * 18, "rot": k * 6.0, "sx": 1.0 + k * 0.02, "sy": 1.0 - k * 0.015}
     if action == "jump":
         k = abs(math.sin(math.pi * phase))
-        return {"dy": -k * 42, "dx": 0.0, "rot": 0.0, "sx": 1.0 + 0.05 * k, "sy": 1.0 - 0.05 * k}
-    return {"dy": math.cos(t) * 4, "dx": 0.0, "rot": math.cos(t) * 1.5,
+        return {"dy": -k * 46, "dx": 0.0, "rot": 0.0, "sx": 1.0 + 0.05 * k, "sy": 1.0 - 0.05 * k}
+    return {"dy": math.cos(t) * 5, "dx": 0.0, "rot": math.cos(t) * 2.0,
             "sx": 1.0 + 0.008 * math.cos(t), "sy": 1.0 + 0.012 * math.cos(t)}
 
 
@@ -46,15 +47,9 @@ def _fit(image, size):
     return canvas
 
 
-def _subject_mask(canvas):
-    """-> (subject_mask L, is_transparent, background_rgb|None)."""
-    alpha = canvas.getchannel("A")
-    lo, hi = alpha.getextrema()
-    if lo < 250 and hi > 0:
-        return alpha.point(lambda a: 255 if a > ALPHA_THRESHOLD else 0), True, None
-
-    w, h = canvas.size
-    rgb = canvas.convert("RGB")
+def _border_bg(rgb):
+    """Median colour of the canvas border -> (r,g,b)."""
+    w, h = rgb.size
     step = max(1, w // 64)
     samples = []
     for x in range(0, w, step):
@@ -63,16 +58,47 @@ def _subject_mask(canvas):
     for y in range(0, h, step):
         samples.append(rgb.getpixel((0, y)))
         samples.append(rgb.getpixel((w - 1, y)))
-    bg = tuple(sorted(c[i] for c in samples)[len(samples) // 2] for i in range(3))
+    return tuple(sorted(c[i] for c in samples)[len(samples) // 2] for i in range(3))
 
-    diff = Image.new("L", (w, h))
-    out = diff.load()
-    src = rgb.load()
-    for y in range(h):
-        for x in range(w):
-            r, g, b = src[x, y]
-            out[x, y] = 255 if abs(r - bg[0]) + abs(g - bg[1]) + abs(b - bg[2]) > BG_DIFF_THRESHOLD else 0
-    return diff, False, bg
+
+def _flood_subject(rgb):
+    """Subject mask of an opaque canvas: the background is whatever a flood
+    fill seeded from the borders can reach (tolerance relative to each seed's
+    own colour, so gradients still fill); everything else is subject.
+
+    Unlike a global colour diff this leaves similarly-coloured interior
+    regions of the subject intact."""
+    w, h = rgb.size
+    work = rgb.copy()
+    sentinel = (255, 0, 254)
+    step = max(4, w // 16)
+    seeds = [(x, 0) for x in range(0, w, step)] + [(x, h - 1) for x in range(0, w, step)]
+    seeds += [(0, y) for y in range(step, h - 1, step)] + [(w - 1, y) for y in range(step, h - 1, step)]
+    for seed in seeds:
+        if work.getpixel(seed) == sentinel:
+            continue
+        ImageDraw.floodfill(work, seed, sentinel, thresh=BG_DIFF_THRESHOLD)
+    r, g, b = work.split()
+    flagged = ImageChops.multiply(
+        ImageChops.multiply(r.point(lambda v: 255 if v == 255 else 0),
+                            g.point(lambda v: 255 if v == 0 else 0)),
+        b.point(lambda v: 255 if v == 254 else 0),
+    )
+    subject = ImageChops.invert(flagged)
+    # soften the cut edge so frames don't get hard jaggies
+    return subject.filter(ImageFilter.GaussianBlur(FEATHER_RADIUS))
+
+
+def _subject_mask(canvas):
+    """-> (subject_mask L, is_transparent, background_rgb|None)."""
+    alpha = canvas.getchannel("A")
+    lo, hi = alpha.getextrema()
+    if lo < 250 and hi > 0:
+        return alpha.point(lambda a: 255 if a > ALPHA_THRESHOLD else 0), True, None
+
+    rgb = canvas.convert("RGB")
+    bg = _border_bg(rgb)
+    return _flood_subject(rgb), False, bg
 
 
 def _transform(sub, anchor, move):
@@ -94,23 +120,40 @@ def animate_source(image_bytes, action="walk", frame_count=12, size=384):
     """-> (frames, reference); frames = [(w,h,RGBA)], reference = (w,h,RGBA)."""
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(48, int(frame_count)))
-    canvas = _fit(Image.open(io.BytesIO(image_bytes)), size)
+    original = _fit(Image.open(io.BytesIO(image_bytes)), size)
 
-    mask, transparent, bg = _subject_mask(canvas)
+    mask, transparent, bg = _subject_mask(original)
     bbox = mask.getbbox() or (0, 0, size, size)
-    pad = 12
+    # generous pad so lunges/rotations don't clip at the crop edge (the extra
+    # area is harmless: the subject layer's alpha is transparent there)
+    pad = 16 + int(size * 0.03)
     bx0, by0 = max(0, bbox[0] - pad), max(0, bbox[1] - pad)
     bx1, by1 = min(size, bbox[2] + pad), min(size, bbox[3] + pad)
-    sub = canvas.crop((bx0, by0, bx1, by1))
+
+    # reference/style anchor: the untouched fitted artwork
+    reference = (size, size, bytearray(original.tobytes()))
+
+    # backdrop: original scene with the subject removed (hole filled with the
+    # background colour), so the moving subject never leaves a ghost of itself.
+    # The hole is punched slightly wider than the subject so leftover
+    # anti-aliased edge pixels can't show as a pale outline after the move.
+    hole = mask.filter(ImageFilter.MaxFilter(5)) if not transparent else mask
+    base = original.copy()
+    if transparent:
+        base.paste(CANVAS_BG, (0, 0), hole)
+    else:
+        base.paste(Image.new("RGBA", original.size, (bg[0], bg[1], bg[2], 255)), (0, 0), hole)
+
+    # subject layer: the artwork whose alpha IS the subject mask. Transforms
+    # then move the character alone — an opaque source must not paste a ghost
+    # rectangle of its background around (the old bug).
+    sub_source = original
+    if not transparent:
+        sub_source = original.copy()
+        sub_source.putalpha(mask)
     anchor = ((bx0 + bx1) / 2.0, float(by1))
     local_anchor = (anchor[0] - bx0, anchor[1] - by0)
-
-    # background with the subject removed (keeps composition fixed)
-    base = canvas.copy()
-    if transparent:
-        base.paste(CANVAS_BG, (0, 0), mask)
-    else:
-        base.paste(Image.new("RGBA", canvas.size, (bg[0], bg[1], bg[2], 255)), (0, 0), mask)
+    sub = sub_source.crop((bx0, by0, bx1, by1))
 
     frames = []
     for index in range(frame_count):
@@ -120,4 +163,4 @@ def animate_source(image_bytes, action="walk", frame_count=12, size=384):
         frame.paste(transformed, (bx0, by0), transformed)
         frames.append((size, size, bytearray(frame.tobytes())))
 
-    return frames, (size, size, bytearray(canvas.tobytes()))
+    return frames, reference

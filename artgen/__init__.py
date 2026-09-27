@@ -20,7 +20,7 @@ from artgen.character2d import (
 from artgen.character2d import render_asset_view as render_asset_png
 from artgen.character2d import render_character_view as render_character_png
 from artgen.gif import decode_image, decode_png, encode_gif
-from artgen.pipeline import analyze_source, create_animation
+from artgen.pipeline import analyze_source, compose_animation, create_animation
 from artgen.anim import ACTIONS
 from artgen.png import PNG_MAGIC, encode_rgba
 from artgen.style import STYLE_LABELS
@@ -43,5 +43,6 @@ __all__ = [
     "decode_image",
     "encode_gif",
     "analyze_source",
+    "compose_animation",
     "create_animation",
 ]

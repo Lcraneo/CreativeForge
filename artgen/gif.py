@@ -1,10 +1,12 @@
 """Pure-stdlib animated GIF encoder + PNG decoder.
 
-No Pillow required: CreativeForge ships a hand-rolled GIF89a writer (median-cut
-palette + LZW) and an 8-bit PNG reader (all five filter types, RGB/RGBA/gray).
-This keeps animation output dependency-free and deterministic.
+Pillow is used for GIF writing when available (spec-perfect LZW); without it a
+conservative hand-rolled GIF89a writer (median-cut palette + fixed-width LZW)
+and an 8-bit PNG reader (all five filter types, RGB/RGBA/gray) keep animation
+output dependency-free and deterministic.
 """
 
+import io
 import struct
 import zlib
 
@@ -179,7 +181,65 @@ def _nearest(palette, color):
 
 
 def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
-    """frames: list of RGBA bytearrays/bytes. Returns animated GIF bytes."""
+    """frames: list of RGBA bytearrays/bytes. Returns animated GIF bytes.
+
+    Prefers Pillow's encoder (spec-perfect LZW + per-frame disposal); the
+    hand-rolled LZW historically produced streams that strict decoders
+    truncate mid-frame, which rendered as flickering previews. Without
+    Pillow, a conservative stdlib encoder is used that clears the table
+    before any code-width change could ever be needed.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return _encode_gif_stdlib(frames, width, height, fps, loop, max_colors)
+
+    duration_ms = max(20, round(1000.0 / max(1, fps)))
+    quantized = [_quantize_frame(Image.frombytes("RGBA", (width, height), bytes(frame)), max_colors) for frame in frames]
+
+    buf = io.BytesIO()
+    kwargs = {
+        "save_all": True,
+        "append_images": quantized[1:],
+        "duration": duration_ms,
+        # `loop` is the raw NETSCAPE loop count: 0 = loop forever. Never map
+        # it through a truthiness check — 0 is the *wanted* value and would
+        # invert to "play once then freeze on the last frame".
+        "loop": max(0, min(65535, int(loop))),
+        "disposal": 2,  # restore-to-background: no ghosting between frames
+        "optimize": False,
+    }
+    transparency = quantized[0].info.get("transparency")
+    if transparency is not None:
+        kwargs["transparency"] = transparency
+    quantized[0].save(buf, "GIF", **kwargs)
+    return buf.getvalue()
+
+
+def _quantize_frame(im, max_colors):
+    """RGBA -> P-mode frame. When any pixel is transparent, palette index 0 is
+    reserved for it and declared via info["transparency"] (Pillow's FASTOCTREE
+    quantizer does not mark transparency itself)."""
+    from PIL import Image
+
+    alpha = im.getchannel("A")
+    transparent = alpha.point(lambda a: 255 if a < 128 else 0)
+    has_holes = transparent.getextrema()[1] > 0
+    colors = max(2, min(256, max_colors)) - (1 if has_holes else 0)
+    p = im.convert("RGB").quantize(colors=colors, method=Image.MEDIANCUT, dither=Image.NONE)
+    if not has_holes:
+        return p
+    shifted = p.point(lambda i: min(255, i + 1))
+    opaque = alpha.point(lambda a: 0 if a < 128 else 255)
+    out = Image.composite(shifted, Image.new("P", im.size, 0), opaque)
+    palette = (p.getpalette() or [])[: 255 * 3]
+    out.putpalette([0, 0, 0] + palette + [0] * (768 - 3 - len(palette)))
+    out.info["transparency"] = 0
+    return out
+
+
+def _encode_gif_stdlib(frames, width, height, fps=12, loop=0, max_colors=255):
+    """Pillow-free animated GIF writer (conservative LZW, fixed code width)."""
     # sample palette from all opaque pixels
     sample = []
     step = max(1, (width * height) // 4000)
@@ -226,7 +286,11 @@ def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
     delay = max(2, round(100.0 / max(1, fps)))
     min_code_size = 8
     for indexed in indexed_frames:
-        out += b"\x21\xF9\x04\x01" + struct.pack("<H", delay) + b"\x00\x00"  # GCE
+        # GCE flags 0x05 = disposal method 2 (restore to background) + has
+        # transparency index; with plain 0x01 browsers keep showing the
+        # previous frame through transparent pixels, so moving subjects ghost
+        # and the loop appears to flicker
+        out += b"\x21\xF9\x04\x05" + struct.pack("<H", delay) + b"\x00\x00"  # GCE
         out += b"\x2C" + struct.pack("<HHHH", 0, 0, width, height) + b"\x00"
         out += bytes((min_code_size,)) + _lzw_encode(indexed, min_code_size)
     out += b"\x3B"
@@ -262,16 +326,17 @@ def _lzw_encode(indexed, min_code_size):
             prefix = combined
             continue
         emit(dictionary[prefix] if prefix else value)
-        dictionary[combined] = next_code
-        next_code += 1
-        if next_code == (1 << code_size):
-            if code_size < 12:
-                code_size += 1
-            else:
-                emit(clear)
-                dictionary = {bytes((i,)): i for i in range(clear)}
-                next_code = end + 1
-                code_size = min_code_size + 1
+        if next_code >= (1 << code_size) - 1:
+            # table nearly full: clear before any code-width change could be
+            # required. Widening the code size mid-stream is where decoder
+            # conventions disagree ("early change"), so this fixed-width
+            # scheme decodes identically everywhere.
+            emit(clear)
+            dictionary = {bytes((i,)): i for i in range(clear)}
+            next_code = end + 1
+        else:
+            dictionary[combined] = next_code
+            next_code += 1
         prefix = current
     if prefix:
         emit(dictionary[prefix])

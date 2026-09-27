@@ -3,7 +3,7 @@
 import base64
 import os
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -52,6 +52,13 @@ class AnimationRequest(BaseModel):
     fps: int = 12
     duration: float = 1.0
     size: int = 512
+    skeletal: bool = False  # 全身骨骼模式：关节动画而非源图变形
+
+
+class SequenceRequest(BaseModel):
+    frames: list[str]  # base64 PNG / JPEG frame images, in play order
+    fps: int = 12
+    size: int = 384
 
 
 class AnalyzeRequest(BaseModel):
@@ -136,7 +143,8 @@ def build_router(runtime):
         """Deterministic 2D character artwork (front/side/top view)."""
         from artgen import render_asset_view
 
-        asset = runtime.assets.get(asset_id)
+        # 也从历史解析：重启后工作台仍会展示历史资产图，动画/预览共用此图
+        asset = _resolve_asset(runtime, asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
         bounded = max(64, min(1024, int(size)))
@@ -155,7 +163,7 @@ def build_router(runtime):
         """Three-view character sheet (front | side | top)."""
         from artgen import render_asset_sheet
 
-        asset = runtime.assets.get(asset_id)
+        asset = _resolve_asset(runtime, asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
         bounded = max(64, min(768, int(size)))
@@ -328,7 +336,29 @@ def build_router(runtime):
             fps=request.fps,
             duration=request.duration,
             size=request.size,
+            skeletal=request.skeletal,
         )
+
+    @router.post("/animation/sequence")
+    def create_sequence_animation(request: SequenceRequest):
+        """标准序列帧工作流：导入的帧图按给定顺序合成为循环动画。"""
+        from studio.backend.animation_service.service import AnimationService
+
+        if len(request.frames) < 2:
+            raise HTTPException(status_code=422, detail="至少导入 2 张序列帧")
+        if len(request.frames) > 60:
+            raise HTTPException(status_code=422, detail="序列帧最多 60 张")
+        frames = []
+        for index, data in enumerate(request.frames):
+            try:
+                frames.append(base64.b64decode(data.split(",")[-1]))
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=422, detail=f"第 {index + 1} 帧不是合法的 base64")
+        service = AnimationService(ANIMATION_DIR)
+        try:
+            return service.create_sequence(frames=frames, fps=request.fps, size=request.size)
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error))
 
     @router.post("/animation/analyze")
     def analyze_animation_source(request: AnalyzeRequest):

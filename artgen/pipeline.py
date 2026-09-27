@@ -5,6 +5,8 @@ Ties together the deterministic renderer (``artgen.anim``), the style/feature
 analyser (``artgen.style``) and the pure-stdlib media codec (``artgen.gif``).
 """
 
+import io
+
 from artgen.anim import ACTIONS, pack_sheet, render_action_frames
 from artgen.character2d import asset_params, render_character_view
 from artgen.gif import decode_image, decode_png, encode_gif
@@ -31,6 +33,81 @@ def analyze_source(source):
     width, height, rgba = reference
     profile = analyze_rgba(width, height, rgba)
     return {"style": profile, "character": extract_character(width, height, rgba)}
+
+
+def compose_animation(
+    frame_bytes=None,
+    frames_rgba=None,
+    fps=12,
+    size=384,
+    loop=True,
+    consistency_floor=0.6,
+):
+    """Compose an animation from user-supplied sequence frames (the standard
+    sprite workflow): each frame is decoded and contain-fitted onto a shared
+    size×size canvas, then packed into GIF + sheet with a consistency check
+    against the first frame.
+
+    ``frame_bytes`` is a list of PNG/JPEG/WebP bytes; ``frames_rgba`` may be
+    passed instead as ready (w,h,RGBA) tuples.
+    """
+    from PIL import Image
+
+    from artgen.sourceanim import _fit
+
+    fps = max(1, min(60, int(fps)))
+    size = max(64, min(1024, int(size)))
+
+    if frames_rgba is None:
+        if not frame_bytes:
+            raise ValueError("no frames supplied")
+        frames_rgba = []
+        for data in frame_bytes[:60]:
+            frame = Image.open(io.BytesIO(data)).convert("RGBA")
+            canvas = _fit(frame, size)
+            frames_rgba.append((size, size, bytearray(canvas.tobytes())))
+    if len(frames_rgba) < 2:
+        raise ValueError("a sequence needs at least 2 frames")
+
+    frames_rgba = [(w, h, bytearray(rgba)) for w, h, rgba in frames_rgba]
+    reference_rgba = tuple(frames_rgba[0])
+
+    style = analyze_rgba(*reference_rgba)
+    character = extract_character(*reference_rgba)
+
+    step = max(1, len(frames_rgba) // 6)
+    sampled = frames_rgba[::step]
+    per_frame = [similarity_rgba(reference_rgba, frame) for frame in sampled]
+    aggregate = {
+        key: round(sum(item[key] for item in per_frame) / len(per_frame), 4)
+        for key in ("palette", "color", "line", "hash", "overall")
+    }
+    aggregate["passed"] = aggregate["overall"] >= consistency_floor
+    aggregate["floor"] = consistency_floor
+    aggregate["frames_checked"] = len(per_frame)
+
+    gif = encode_gif(
+        [rgba for _, _, rgba in frames_rgba], size, size, fps=fps, loop=0 if loop else 1
+    )
+    sheet_w, sheet_h, sheet_rgba = pack_sheet(frames_rgba)
+    sheet = encode_rgba(sheet_w, sheet_h, sheet_rgba)
+
+    return {
+        "action": "sequence",
+        "fps": fps,
+        "duration": round(len(frames_rgba) / fps, 3),
+        "frame_count": len(frames_rgba),
+        "size": size,
+        "loop": loop,
+        "style": style,
+        "character": character,
+        "consistency": aggregate,
+        "per_frame": per_frame,
+        "gif": gif,
+        "sheet": sheet,
+        "sheet_size": [sheet_w, sheet_h],
+        "frames": [encode_rgba(size, size, rgba) for _, _, rgba in frames_rgba],
+    }
 
 
 def create_animation(

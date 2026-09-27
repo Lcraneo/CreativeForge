@@ -28,23 +28,68 @@ def _arm_joint(shoulder, angle_deg, length):
     return shoulder[0] + math.sin(a) * length, shoulder[1] + math.cos(a) * length
 
 
+def _two_bone(root, target, l1, l2, bend):
+    """Middle-joint position of a two-segment limb reaching from ``root`` to
+    ``target`` (standard IK circle intersection). ``bend`` (+1/-1) picks which
+    way the joint points, giving elbows/knees a fixed, anatomically stable
+    bend direction across the whole cycle."""
+    dx, dy = target[0] - root[0], target[1] - root[1]
+    d = math.hypot(dx, dy)
+    if d < 1e-3:
+        return root[0], root[1] - l1
+    d = min(d, l1 + l2 - 1e-3)
+    a = (l1 * l1 - l2 * l2 + d * d) / (2 * d)
+    h = math.sqrt(max(0.0, l1 * l1 - a * a))
+    ux, uy = dx / d, dy / d
+    mx, my = root[0] + ux * a, root[1] + uy * a
+    return mx - uy * h * bend, my + ux * h * bend
+
+
 def _pose(action, phase):
     t = phase * 2.0 * math.pi
     state = {"bob": 0.0, "jump": 0.0, "arm": 0.0, "leg": 0.0, "lean": 0.0,
-             "weapon": None, "tuck": 0.0}
+             "weapon": None, "tuck": 0.0, "lift": (0.0, 0.0), "squat": 0.0}
     if action == "walk":
-        state.update(leg=math.cos(t), arm=-math.cos(t), bob=-abs(math.sin(t)) * 6.0)
+        # arms trail the legs slightly (overlapping action)
+        state.update(leg=math.cos(t), arm=-math.cos(t - 0.45),
+                     bob=-abs(math.sin(t)) * 6.0,
+                     lift=(max(0.0, math.sin(t)) * 12.0, max(0.0, -math.sin(t)) * 12.0))
     elif action == "run":
-        state.update(leg=math.cos(t) * 1.3, arm=-math.cos(t) * 1.3,
-                     bob=-abs(math.sin(t)) * 10.0, lean=7.0)
+        state.update(leg=math.cos(t) * 1.25, arm=-math.cos(t - 0.5) * 1.25,
+                     bob=-abs(math.sin(t)) * 10.0, lean=7.0,
+                     lift=(max(0.0, math.sin(t)) * 22.0, max(0.0, -math.sin(t)) * 22.0))
     elif action == "attack":
-        state.update(leg=math.sin(t) * 0.4, arm=0.4 + 0.4 * math.sin(t),
-                     lean=4.0, weapon=-70.0 + 110.0 * (0.5 + 0.5 * math.sin(t)))
+        # anticipation (wind-up) -> fast strike -> follow-through -> recover
+        if phase < 0.3:
+            u = phase / 0.3
+            k = -0.55 * math.sin(math.pi * u)
+        elif phase < 0.55:
+            u = (phase - 0.3) / 0.25
+            k = -0.55 + 1.62 * (u * u * (3 - 2 * u))
+        elif phase < 0.8:
+            u = (phase - 0.55) / 0.25
+            k = 1.07 - 0.3 * math.sin(math.pi * u)
+        else:
+            u = (phase - 0.8) / 0.2
+            k = 0.77 - 0.77 * (u * u * (3 - 2 * u))
+        state.update(leg=math.sin(t) * 0.4, arm=0.3 - k * 0.25, lean=4.0 + k * 10.0,
+                     weapon=-60.0 + 120.0 * k)
     elif action == "jump":
-        state.update(jump=abs(math.sin(math.pi * phase)) * 118.0,
-                     leg=0.5, arm=-0.5, tuck=1.0)
-    else:  # idle
-        state.update(bob=math.sin(t) * 4.0, arm=math.sin(t) * 0.22)
+        if phase < 0.22:
+            # anticipation: crouch, arms swing back
+            u = phase / 0.22
+            state.update(jump=-18.0 * math.sin(math.pi * u), arm=0.5 * u, squat=1.0)
+        elif phase < 0.72:
+            u = (phase - 0.22) / 0.5
+            state.update(jump=-18.0 + 140.0 * math.sin(math.pi * u),
+                         arm=-0.6, leg=0.5, tuck=math.sin(math.pi * u))
+        else:
+            # landing: absorb the impact with a decaying squat
+            u = (phase - 0.72) / 0.28
+            state.update(jump=-14.0 * (1.0 - u) * math.sin(math.pi * min(1.0, u * 1.6)),
+                         arm=-0.3 * (1.0 - u), squat=1.0 - u)
+    else:  # idle: breathing with lazy arm sway trailing the breath
+        state.update(bob=math.sin(t) * 4.0, arm=math.sin(t - 0.5) * 0.22)
     return state
 
 
@@ -63,30 +108,37 @@ def _draw_frame(painter, colors, traits, action, phase):
         scale = 1.0 - jump / 160.0
         painter.soft_ellipse(ellipse(256, 500, 150 * scale, 34 * scale), c["dark"], alpha=48)
 
-    # legs
-    hip_y = 428.0 + dy
-    for side, sign in ((-1, -1), (1, 1)):
+    # legs: hip -> knee -> ankle (two-bone), feet lift alternately when stepping
+    hip_y = 428.0 + dy + pose["squat"] * 8.0
+    for side, (sign, lift) in enumerate(((-1, pose["lift"][0]), (1, pose["lift"][1]))):
         hip = (256.0 + sign * 30, hip_y)
-        angle = sign * 10 + pose["leg"] * 30 * -sign
+        angle = sign * 8 + pose["leg"] * 16 * -sign
+        reach = 76.0
         if pose["tuck"]:
-            angle = sign * 18
-        foot = _arm_joint(hip, angle, 72.0 - (14.0 if pose["tuck"] else 0.0))
-        painter.shape(capsule(hip[0], hip[1], foot[0], foot[1], 32), c["base_dark"], c["outline"], 5)
-        painter.shape(ellipse(foot[0], foot[1] + 12, 42, 26), c["base"], c["outline"], 5)
+            angle = sign * 20
+            reach = 58.0
+        foot = _arm_joint(hip, angle, reach)
+        foot = (foot[0], foot[1] - lift)
+        knee = _two_bone(hip, foot, 40.0, 40.0, bend=sign * (1.0 + pose["tuck"] * 0.6))
+        painter.shape(capsule(hip[0], hip[1], knee[0], knee[1], 30), c["base_dark"], c["outline"], 5)
+        painter.shape(capsule(knee[0], knee[1], foot[0], foot[1], 22), c["base_dark"], c["outline"], 5)
+        painter.shape(ellipse(foot[0], foot[1] + 10, 42, 24), c["base"], c["outline"], 5)
 
     # torso
-    body = 372.0 + dy
+    body = 372.0 + dy + pose["squat"] * 8.0
     painter.shape(ellipse(cx, body, 112, body_ry), c["base"], c["outline"], 6)
     painter.shape(ellipse(cx, body + 20, 74, body_ry * 0.62), c["belly"], None)
-    _scarf(painter, cx, 300.0 + dy, 94, 26, traits)
+    _scarf(painter, cx, 300.0 + dy + pose["squat"] * 8.0, 94, 26, traits)
 
-    # arms
-    shoulders = ((cx - 74, 336.0 + dy), (cx + 74, 336.0 + dy))
+    # arms: shoulder -> elbow -> wrist (two-bone), elbows bend outward
+    shoulders = ((cx - 74, 336.0 + dy + pose["squat"] * 8.0), (cx + 74, 336.0 + dy + pose["squat"] * 8.0))
     for index, (sign, shoulder) in enumerate(((-1, shoulders[0]), (1, shoulders[1]))):
         angle = sign * 16 - pose["arm"] * 34 * sign
-        hand = _arm_joint(shoulder, angle, 92.0)
-        painter.shape(capsule(shoulder[0], shoulder[1], hand[0], hand[1], 27), c["base"], c["outline"], 5)
-        painter.shape(ellipse(hand[0], hand[1], 30, 30), c["belly"], c["outline"], 4)
+        hand = _arm_joint(shoulder, angle, 94.0)
+        elbow = _two_bone(shoulder, hand, 48.0, 50.0, bend=-sign)
+        painter.shape(capsule(shoulder[0], shoulder[1], elbow[0], elbow[1], 24), c["base"], c["outline"], 5)
+        painter.shape(capsule(elbow[0], elbow[1], hand[0], hand[1], 19), c["base"], c["outline"], 5)
+        painter.shape(ellipse(hand[0], hand[1], 28, 28), c["belly"], c["outline"], 4)
         if index == 1 and traits["has_weapon"]:
             weapon_angle = pose["weapon"]
             if weapon_angle is None:

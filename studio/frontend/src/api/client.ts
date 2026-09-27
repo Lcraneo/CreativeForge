@@ -65,6 +65,7 @@ export interface AnimationResult {
   consistency: ConsistencyReport;
   sheet_size: number[];
   frames: number;
+  frame_urls?: string[];
   urls: { gif: string; sheet: string; thumb: string };
   created_at: number;
 }
@@ -76,6 +77,7 @@ export interface AnimationRequestPayload {
   fps?: number;
   duration?: number;
   size?: number;
+  skeletal?: boolean;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -116,6 +118,12 @@ export const api = {
 
   createAnimation: (payload: AnimationRequestPayload) =>
     request<AnimationResult>("/api/animation", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  createAnimationSequence: (payload: { frames: string[]; fps?: number; size?: number }) =>
+    request<AnimationResult>("/api/animation/sequence", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
