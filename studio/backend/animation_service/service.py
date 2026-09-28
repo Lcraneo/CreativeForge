@@ -66,6 +66,19 @@ MOTION_PROMPTS = {
 }
 
 
+# AI 主体分割指令：背景替换为纯白（白底可被经典洪泛可靠分离）。
+# 实测"移除背景放置角色"的表述会让编辑模型丢细节（肩甲/脚部），
+# "背景替换纯白 + 明确列出不得缺失的部位"能保住全部装备细节。
+SEGMENT_PROMPT = (
+    "把这张图中角色周围的全部背景替换为纯白色(#FFFFFF)。角色本体保持完全原样："
+    "包括所有装备、护甲、武器、脚部、尾巴、饰物等每一个细节，不缺失、不变色、"
+    "不位移、不缩放。只允许背景像素变成纯白。"
+)
+
+MIN_SEGMENT_COVERAGE = 0.02   # mask 面积下限（低于此说明分割失败/人物丢失）
+MAX_SEGMENT_COVERAGE = 0.85   # mask 面积上限（高于此说明背景没抠掉）
+
+
 class AnimationService:
     def __init__(self, directory: str):
         self.directory = directory
@@ -85,6 +98,7 @@ class AnimationService:
         skeletal: bool = False,
         view: str = "front",
         pose_config: dict[str, Any] | None = None,
+        model_settings: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         action = action if action in ACTIONS else "walk"
 
@@ -123,6 +137,17 @@ class AnimationService:
                 except Exception:
                     source_bytes = None
 
+        # 原图驱动的主体分离：AI 原画是复杂场景背景，经典洪泛抠图会把背景
+        # 连同人一起判定为主体（整图一起动）。启用自定义模型时先用
+        # qwen-image-edit 把角色抠到纯白底再分离；失败回退经典洪泛。
+        segment_mask = None
+        if source_bytes is not None:
+            settings = model_settings or {}
+            if settings.get("enabled") and settings.get("api_key"):
+                segment_mask = ai_segment_subject(
+                    source_bytes, size, settings, deadline=time.time() + 150.0
+                )
+
         result = create_animation(
             params=params,
             action=action,
@@ -134,10 +159,14 @@ class AnimationService:
             consistency_floor=consistency_floor,
             view=view,
             pose_config=pose_config,
+            segment_mask=segment_mask,
         )
 
         animation_id = uuid.uuid4().hex[:12]
-        return self._persist(result, animation_id, source_kind)
+        meta = self._persist(result, animation_id, source_kind)
+        if segment_mask is not None:
+            meta["subject_segmentation"] = "ai"
+        return meta
 
     def create_sequence(
         self,
@@ -351,3 +380,60 @@ def analyze_only(image_bytes: bytes) -> dict[str, Any]:
         "character": extract_character(width, height, rgba),
         "palette": dominant_palette(width, height, rgba, count=8),
     }
+
+
+def ai_segment_subject(
+    source_bytes: bytes,
+    size: int,
+    settings: dict[str, Any],
+    deadline: float | None = None,
+):
+    """AI 主体分割：qwen-image-edit 把角色原样抠到纯白底，再用白底洪泛
+    提取主体 mask。对 AI 原画的复杂场景背景远比经典洪泛可靠。
+
+    返回 PIL "L" mask（size×size，255=主体，已膨胀羽化对齐误差），任何
+    失败返回 None（调用方回退经典洪泛），因此永远不会让任务中断。
+    """
+    if deadline is not None and time.time() >= deadline:
+        return None
+    try:
+        from PIL import Image, ImageFilter
+
+        from artgen.sourceanim import _border_bg, _fit, _flood_subject
+        from studio.backend.model_service.service import (
+            ImageEditProvider,
+            safe_generated_path,
+        )
+
+        editor = ImageEditProvider(settings)
+        encoded = base64.b64encode(source_bytes).decode()
+        result = editor.edit("data:image/png;base64," + encoded, SEGMENT_PROMPT)
+
+        path = safe_generated_path(result.get("file"))
+        if not path:
+            return None
+        with open(path, "rb") as handle:
+            edited = Image.open(io.BytesIO(handle.read())).convert("RGB")
+
+        fitted = _fit(edited, max(64, min(1024, int(size)))).convert("RGB")
+        # 白底化失败快速识别：四边中值色必须接近纯白
+        border = _border_bg(fitted)
+        if not all(channel > 230 for channel in border):
+            return None
+
+        mask = _flood_subject(fitted)
+        hist = mask.histogram()
+        total = mask.width * mask.height
+        coverage = sum(hist[128:]) / total
+        if not (MIN_SEGMENT_COVERAGE <= coverage <= MAX_SEGMENT_COVERAGE):
+            return None
+        bbox = mask.getbbox()
+        if bbox is None or (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) < 0.01 * total:
+            return None
+
+        # 编辑模型输出与源图构图存在毫米级偏差：膨胀 + 羽化吸收边缘误差
+        return mask.filter(ImageFilter.MaxFilter(7)).filter(
+            ImageFilter.GaussianBlur(1.2)
+        )
+    except Exception:  # noqa: BLE001 - segmentation is best-effort
+        return None

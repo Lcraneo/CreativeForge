@@ -116,13 +116,22 @@ def _transform(sub, anchor, move):
     return sub.transform(sub.size, Image.AFFINE, (m00, m01, c, m10, m11, f), resample=Image.BICUBIC)
 
 
-def animate_source(image_bytes, action="walk", frame_count=12, size=384):
-    """-> (frames, reference); frames = [(w,h,RGBA)], reference = (w,h,RGBA)."""
+def animate_source(image_bytes, action="walk", frame_count=12, size=384, segment_mask=None):
+    """-> (frames, reference); frames = [(w,h,RGBA)], reference = (w,h,RGBA).
+
+    ``segment_mask``: optional precomputed subject mask (PIL "L", size x size,
+    255 = subject) from an external segmenter. Only honoured for opaque
+    sources — transparent PNGs already carry a perfect alpha mask. This is how
+    AI-segmented subjects (complex scene backgrounds that defeat the flood
+    fill) plug into the deterministic transform pipeline."""
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(48, int(frame_count)))
     original = _fit(Image.open(io.BytesIO(image_bytes)), size)
 
     mask, transparent, bg = _subject_mask(original)
+    if segment_mask is not None and not transparent:
+        mask = segment_mask.resize((size, size))
+        bg = _border_bg(original.convert("RGB"))
     bbox = mask.getbbox() or (0, 0, size, size)
     # generous pad so lunges/rotations don't clip at the crop edge (the extra
     # area is harmless: the subject layer's alpha is transparent there)

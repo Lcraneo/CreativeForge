@@ -377,6 +377,7 @@ def build_router(runtime):
             skeletal=request.skeletal,
             view=request.view,
             pose_config=request.pose_config,
+            model_settings=runtime.model_settings.effective(),
         )
 
     @router.post("/animation/preview-frame")

@@ -200,7 +200,9 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     api_key = settings.get("api_key")
     if not api_key:
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
-    models = [m for m in (settings.get("video_model"), "wan2.1-i2v-turbo", "wanx2.1-i2v-turbo", "wanx-i2v") if m]
+    # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
+    # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
+    models = [m for m in (settings.get("video_model"), "wan2.2-i2v-flash", "wanx2.1-i2v-turbo") if m]
     encoded = base64.b64encode(image_bytes).decode()
     last_error = None
     for model in models:

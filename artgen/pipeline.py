@@ -124,6 +124,7 @@ def create_animation(
     consistency_floor=0.6,
     view="front",
     pose_config=None,
+    segment_mask=None,
 ):
     """Build a style-consistent animation.
 
@@ -133,6 +134,8 @@ def create_animation(
     ``reference`` is a style anchor for the vector path when no source is given.
     ``view="side"`` switches walk/run to the dedicated side-view gait system
     (2D 平台游戏式横版行走); ``pose_config`` carries the custom-action sliders.
+    ``segment_mask`` is an optional external subject mask for the source-driven
+    path (see artgen.sourceanim.animate_source).
     """
     action = action if action in ACTIONS else "walk"
     render_params = params or (asset_params(asset) if asset is not None else None)
@@ -150,7 +153,9 @@ def create_animation(
     if source_bytes:
         from artgen.sourceanim import animate_source
 
-        frames_rgba, source_reference = animate_source(source_bytes, action, frame_count, size)
+        frames_rgba, source_reference = animate_source(
+            source_bytes, action, frame_count, size, segment_mask=segment_mask
+        )
     elif view == "side" and action in ("walk", "run"):
         from artgen.sidewalk import render_side_frames
 
