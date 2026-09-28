@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAssetLoader } from "../stores/assetStore";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, cx } from "../components/ui";
+import StorageApiConfig from "../components/StorageApiConfig";
 
 const ACTIONS = ["idle", "walk", "run", "attack", "jump"];
 const ACTION_LABELS: Record<string, string> = {
@@ -41,7 +42,7 @@ interface SeqFrame {
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
-  const [mode, setMode] = useState<"smart" | "editor" | "sequence">("smart");
+  const [mode, setMode] = useState<"smart" | "editor" | "sequence" | "cloud">("smart");
   const [skeletal, setSkeletal] = useState(true);
   const [useVideo, setUseVideo] = useState(false);
   const [view, setView] = useState("side");
@@ -321,13 +322,18 @@ export default function AnimationStudio() {
             </div>
           </Card>
 
-          <Card title="生成参数 Animation Settings" icon="panel" iconClassName="text-falign">
+          <Card
+            title={mode === "cloud" ? "云存储 API 配置" : "生成参数 Animation Settings"}
+            icon={mode === "cloud" ? "package" : "panel"}
+            iconClassName={mode === "cloud" ? "text-accent" : "text-falign"}
+          >
             <div className="mb-4 flex items-center gap-3">
               <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                 {([
                   ["smart", "智能生成"],
                   ["editor", "动作编辑"],
                   ["sequence", "序列帧导入"],
+                  ["cloud", "云存储"],
                 ] as const).map(([value, label]) => (
                   <button
                     key={value}
@@ -346,9 +352,13 @@ export default function AnimationStudio() {
                   ? "由 AI 原画 / 资产立绘驱动生成风格一致的动作帧"
                   : mode === "editor"
                     ? "调节动作参数，时间轴上逐帧预览，可保存为自定义动作复用"
-                    : "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"}
+                    : mode === "sequence"
+                      ? "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"
+                      : "六厂商对象存储 API 配置：凭证加密存储、脱敏展示、连通性测试"}
               </span>
             </div>
+
+            {mode === "cloud" && <StorageApiConfig />}
 
             {mode === "smart" && (
               <div className="flex flex-col gap-4">

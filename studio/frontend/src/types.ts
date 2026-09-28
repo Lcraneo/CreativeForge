@@ -398,3 +398,59 @@ export interface HistoryRecord extends HistorySummary {
   asset?: CreativeAsset | null;
 }
 
+// ── 对象存储（三渲二改造 · 第二/三项） ─────────────────────────────────────
+
+export interface StorageProviderPreset {
+  id: string;
+  label: string;
+  addressing: string;
+  regions: string[];
+  endpoint_template: string;
+  credential_hint: string;
+}
+
+/** 对象存储配置的脱敏视图（后端永不回显明文凭证） */
+export interface StorageConfigPublic {
+  id: string;
+  name: string;
+  provider: string;
+  access_key: string;        // 脱敏，如 R8oG****D_Qu
+  secret_key: string;        // 脱敏
+  has_secret: boolean;
+  region: string;
+  bucket: string;
+  endpoint: string;
+  is_default: boolean;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface StorageConfigList {
+  configs: StorageConfigPublic[];
+  presets: Record<string, StorageProviderPreset>;
+  default_id: string | null;
+}
+
+export interface StorageTestResult {
+  ok: boolean;
+  latency_ms?: number;
+  detail?: string;
+}
+
+export interface MultipartSession {
+  session_id: string;
+  config_id: string;
+  key: string;
+  total_size: number;
+  part_size: number;
+  total_parts: number;
+  uploaded_parts: number[];
+  missing_parts: number[];
+  bytes_done: number;
+  progress: number;
+  status: string;
+  created_at: number;
+  updated_at: number;
+}
+
+

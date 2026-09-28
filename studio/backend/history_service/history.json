@@ -12248,5 +12248,1870 @@
       }
     },
     "id": "T0002-5"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790565834.4101458,
+    "finished_at": 1790565893.4139066,
+    "goal": "生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast46414",
+    "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 59.004,
+    "character": {
+      "id": "ast46414",
+      "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "seed": 6346414,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6f1c10",
+        "base": "#f8672a",
+        "highlight": "#ffd54a",
+        "accent": "#f3de84",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#17060a",
+      "#210508",
+      "#270708",
+      "#3f0b0b",
+      "#6b230e",
+      "#67160e",
+      "#620e0d",
+      "#771612",
+      "#330809",
+      "#8e1a13",
+      "#b2280e",
+      "#9f2a0f",
+      "#c7570b",
+      "#3f170f",
+      "#df851c",
+      "#c64809",
+      "#50110f",
+      "#c73709",
+      "#542616",
+      "#4d0b0c",
+      "#402519",
+      "#a5380e",
+      "#744934",
+      "#2b1812",
+      "#743c21",
+      "#8c2612",
+      "#160d0f",
+      "#25120f",
+      "#2f201d",
+      "#4f3a32",
+      "#181212",
+      "#2f2628"
+    ],
+    "image": {
+      "file": "img_1790565858029.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e5/20260928/77c9ad12/ee373682-0357-4022-bbac-079f957e2af01709005436.png?Expires=1790652257&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eCIVgYW8KtCV5JBk8yM0BxCs4HA%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565858029.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "当然可以。以下是将原始请求“生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity”转化为一份详细、专业、可执行的艺术指导简报（Art Direction Brief），适用于游戏美术团队或外包美术人员，确保创作方向明确、风格统一、技术兼容。\n\n—\n\n🔥【游戏角色艺术指导简报】🔥  \n角色名称：火焰法师Boss（Flame Sorcerer Boss）  \n游戏类型：2D RPG（横版/等距视图，根据项目设定）  \n交付目标：完整角色美术资源 + 攻击动画序列 + Unity兼容导出格式  \n交付平台：Unity 2021+（推荐使用URP或HDRP，视项目引擎配置）  \n交付格式：PNG（带透明通道） + 动画序列（Sprite Sheet 或 Unity Animator Controller）  \n交付时间：【请填写具体截止日期】  \n负责人：【请填写美术负责人或项目组】\n\n—\n\n🎨 一、角色概念与风格定位\n\n1. 角色类型：  \n   - 高阶魔法Boss，掌控火焰元素，具有压迫感与神秘感。  \n   - 非传统人类形态，可考虑半人半火焰/元素生物/堕落法师等设定。  \n   - 体型：中大型（建议角色高度约 2.5–3.5 倍于普通角色，以体现Boss压迫感）。\n\n2. 艺术风格：  \n   - 2D 手绘风格（可选：像素风、低多边形、赛璐璐、写实风等，需根据项目整体美术风格统一）  \n   - 建议风格参考：《暗黑地牢》《挺进地牢》《死亡细胞》《星露谷物语》Boss设计，或《魔界村》《恶魔城》火焰系Boss。  \n   - 色彩主调：红、橙、黄、黑、灰，强调火焰灼热感与魔法能量流动。  \n   - 细节要求：火焰特效需有“流动感”“粒子感”“热浪扭曲”等视觉表现，避免静态贴图。\n\n3. 角色特征（可选）：  \n   - 头部：燃烧的头冠、火焰眼、飘动的长发/披风（可燃化）  \n   - 身体：魔法长袍/铠甲（部分被火焰侵蚀），手持法杖/卷轴/火焰球  \n   - 脚部：悬浮或踩踏火焰地面，脚下有热浪涟漪  \n   - 附加元素：可设计“火焰残影”“魔法符文”“能量环”等视觉特效\n\n—\n\n⚡ 二、动画需求（攻击动画）\n\n1. 动画类型：  \n   - 主攻击动画（1–2种）：如“火焰喷射”“召唤火球”“地面烈焰波”“魔法吟唱+释放”  \n   - 可选：受击动画、死亡动画、移动动画（若需行走/漂浮）  \n   - 建议动画时长：攻击动画 0.8–1.5 秒，节奏紧凑，强调爆发力与魔法释放感\n\n2. 动画帧要求：  \n   - 帧率：24fps（或根据项目设定）  \n   - 帧数：建议每种攻击动画至少 12–20 帧，确保流畅度  \n   - 动画结构：  \n     - 起始姿态（准备）  \n     - 魔法吟唱/蓄力（可选）  \n     - 攻击释放（火焰爆发、法杖挥动、能量聚集）  \n     - 收尾/回位（角色恢复姿态）  \n   - 动画需支持“循环播放”或“单次播放后重置”，便于Unity中控制\n\n3. 动画与角色绑定：  \n   - 所有动画需与角色骨骼/图层对齐，确保动作自然  \n   - 攻击特效（如火焰粒子、光效）需与角色动画同步，可单独图层或嵌入动画帧中  \n   - 攻击判定区域（Hitbox）需在动画关键帧中明确标注（可提供参考图或标注说明）\n\n—\n\n📦 三、技术规格与导出要求\n\n1. 导出格式：  \n   - 角色主图：PNG（透明背景，带Alpha通道）  \n   - 动画序列：  \n     - Sprite Sheet（推荐）：单张大图，按帧切割，命名规范如：`Boss_FlameSorcerer_Attack1_00.png`  \n     - 或：独立PNG序列（如：`Attack1_00.png`, `Attack1_01.png`...）  \n   - 动画数据：  \n     - 若使用Unity Animator，需提供Animator Controller文件（.controller）或动画剪辑（.anim）  \n     - 若使用Sprite Sheet，需提供帧时间表（Frame Duration）或Unity Sprite Packer配置说明\n\n2. 导出分辨率：  \n   - 建议：1024x1024 或 512x512（根据项目分辨率缩放比例）  \n   - 需提供“源图”与“缩放图”（如需适配不同分辨率设备）\n\n3. Unity导入说明：  \n   - 所有资源需按Unity标准命名规范命名（如：`Boss_FlameSorcerer_Attack1`）  \n   - 动画需在Unity中可直接拖入Animator Controller，支持“触发器”或“状态机”控制  \n   - 建议提供一个“角色预制件（Prefab）”或“动画控制器示例”，便于程序集成  \n   - 若含粒子特效，需提供粒子系统配置文件（.prefab 或 .asset）或说明如何在Unity中配置\n\n—\n\n📌 四、交付物清单（Deliverables）\n\n✅ 角色主视觉图（PNG，透明背景）  \n✅ 攻击动画序列（Sprite Sheet 或 PNG 序列）  \n✅ 动画帧时间表（可选，如帧间隔为 0.04s）  \n✅ Unity 导入说明文档（含命名、路径、动画配置）  \n✅ 可选：角色模型/动画预览视频（MP4，展示攻击动画流畅度）  \n✅ 可选：角色设计草图或概念图（用于美术参考）\n\n—\n\n🎯 五、验收标准\n\n- 角色设计符合“火焰法师Boss”设定，视觉冲击力强，风格统一  \n- 攻击动画流畅、节奏合理、特效与角色动作同步  \n- 所有资源可直接导入Unity，无格式错误或缺失帧  \n- 动画可被程序正确调用，支持触发、循环、暂停等基础控制  \n- 无美术瑕疵（如锯齿、错位、颜色溢出、透明通道错误等）\n\n—\n\n📎 附加说明：\n\n- 请提供参考图或风格板（Style Guide）以确保美术风格统一  \n- 如有角色动作需求（如跳跃、闪避、施法前摇），请在需求中补充  \n- 请在交付前提供预览图或动画预览，便于项目组审核  \n- 如需多语言/多皮肤/多形态Boss，请在需求中说明\n\n—\n\n📩 提交方式：  \n请将所有资源打包为 ZIP 文件，命名为：  \n`Boss_FlameSorcerer_2DRPG_v1.0_美术交付.zip`  \n并附上说明文档（README.txt 或 PDF）\n\n—\n\n✅ 项目负责人签字：_________________  \n📅 交付截止日期：_________________  \n📆 项目名称：_________________  \n🎮 游戏引擎：Unity 2021+  \n🎨 美术风格参考：【可附链接或截图】\n\n—\n\n这份简报可直接用于外包团队、内部美术组或美术指导，确保从概念到技术实现的无缝衔接。如需进一步细化（如角色参数、动画帧数、特效粒子要求等），可在此基础上扩展。\n\n是否需要我为你生成配套的“角色设计草图描述”或“动画分镜脚本”？欢迎继续提出！",
+    "asset": {
+      "id": "ast46414",
+      "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 6346414,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#f8672a",
+          "highlight": "#ffd54a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790565858029.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e5/20260928/77c9ad12/ee373682-0357-4022-bbac-079f957e2af01709005436.png?Expires=1790652257&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eCIVgYW8KtCV5JBk8yM0BxCs4HA%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565858029.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast46414",
+        "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+        "type": "character",
+        "role": "npc",
+        "seed": 6346414,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#f8672a",
+          "highlight": "#ffd54a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#17060a",
+            "#210508",
+            "#270708",
+            "#3f0b0b",
+            "#6b230e",
+            "#67160e",
+            "#620e0d",
+            "#771612",
+            "#330809",
+            "#8e1a13",
+            "#b2280e",
+            "#9f2a0f",
+            "#c7570b",
+            "#3f170f",
+            "#df851c",
+            "#c64809",
+            "#50110f",
+            "#c73709",
+            "#542616",
+            "#4d0b0c",
+            "#402519",
+            "#a5380e",
+            "#744934",
+            "#2b1812",
+            "#743c21",
+            "#8c2612",
+            "#160d0f",
+            "#25120f",
+            "#2f201d",
+            "#4f3a32",
+            "#181212",
+            "#2f2628"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6f1c10",
+            "base": "#f8672a",
+            "highlight": "#ffd54a",
+            "accent": "#f3de84",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#17060a",
+            "#17060a",
+            "#210508",
+            "#210508",
+            "#210508",
+            "#270708",
+            "#3f0b0b",
+            "#6b230e",
+            "#67160e",
+            "#3f0b0b",
+            "#620e0d",
+            "#771612",
+            "#620e0d",
+            "#270708",
+            "#270708",
+            "#210508"
+          ],
+          [
+            "#210508",
+            "#210508",
+            "#210508",
+            "#330809",
+            "#771612",
+            "#771612",
+            "#8e1a13",
+            "#b2280e",
+            "#9f2a0f",
+            "#620e0d",
+            "#330809",
+            "#330809",
+            "#330809",
+            "#330809",
+            "#270708",
+            "#270708"
+          ],
+          [
+            "#210508",
+            "#270708",
+            "#6b230e",
+            "#c7570b",
+            "#b2280e",
+            "#620e0d",
+            "#67160e",
+            "#b2280e",
+            "#c7570b",
+            "#620e0d",
+            "#3f0b0b",
+            "#3f0b0b",
+            "#3f170f",
+            "#3f170f",
+            "#330809",
+            "#270708"
+          ],
+          [
+            "#270708",
+            "#6b230e",
+            "#df851c",
+            "#c64809",
+            "#771612",
+            "#50110f",
+            "#b2280e",
+            "#df851c",
+            "#df851c",
+            "#c73709",
+            "#67160e",
+            "#542616",
+            "#3f0b0b",
+            "#3f170f",
+            "#3f0b0b",
+            "#330809"
+          ],
+          [
+            "#330809",
+            "#c7570b",
+            "#df851c",
+            "#67160e",
+            "#4d0b0c",
+            "#542616",
+            "#c7570b",
+            "#df851c",
+            "#df851c",
+            "#df851c",
+            "#542616",
+            "#50110f",
+            "#402519",
+            "#50110f",
+            "#4d0b0c",
+            "#3f0b0b"
+          ],
+          [
+            "#4d0b0c",
+            "#a5380e",
+            "#df851c",
+            "#67160e",
+            "#a5380e",
+            "#50110f",
+            "#3f170f",
+            "#a5380e",
+            "#c7570b",
+            "#542616",
+            "#3f170f",
+            "#67160e",
+            "#744934",
+            "#50110f",
+            "#4d0b0c",
+            "#4d0b0c"
+          ],
+          [
+            "#4d0b0c",
+            "#a5380e",
+            "#c7570b",
+            "#620e0d",
+            "#a5380e",
+            "#771612",
+            "#3f170f",
+            "#402519",
+            "#402519",
+            "#2b1812",
+            "#402519",
+            "#743c21",
+            "#a5380e",
+            "#620e0d",
+            "#50110f",
+            "#50110f"
+          ],
+          [
+            "#620e0d",
+            "#a5380e",
+            "#c64809",
+            "#8c2612",
+            "#771612",
+            "#2b1812",
+            "#160d0f",
+            "#2b1812",
+            "#25120f",
+            "#160d0f",
+            "#160d0f",
+            "#67160e",
+            "#771612",
+            "#771612",
+            "#67160e",
+            "#620e0d"
+          ],
+          [
+            "#67160e",
+            "#9f2a0f",
+            "#9f2a0f",
+            "#8c2612",
+            "#2b1812",
+            "#160d0f",
+            "#3f170f",
+            "#25120f",
+            "#2f201d",
+            "#402519",
+            "#6b230e",
+            "#771612",
+            "#8e1a13",
+            "#771612",
+            "#771612",
+            "#771612"
+          ],
+          [
+            "#8e1a13",
+            "#8e1a13",
+            "#8c2612",
+            "#8c2612",
+            "#542616",
+            "#402519",
+            "#2b1812",
+            "#25120f",
+            "#2b1812",
+            "#4f3a32",
+            "#542616",
+            "#8c2612",
+            "#9f2a0f",
+            "#9f2a0f",
+            "#8e1a13",
+            "#771612"
+          ],
+          [
+            "#8e1a13",
+            "#b2280e",
+            "#9f2a0f",
+            "#9f2a0f",
+            "#542616",
+            "#3f170f",
+            "#2b1812",
+            "#2f201d",
+            "#181212",
+            "#181212",
+            "#6b230e",
+            "#9f2a0f",
+            "#9f2a0f",
+            "#b2280e",
+            "#9f2a0f",
+            "#8e1a13"
+          ],
+          [
+            "#b2280e",
+            "#9f2a0f",
+            "#b2280e",
+            "#a5380e",
+            "#c64809",
+            "#c64809",
+            "#3f170f",
+            "#2b1812",
+            "#160d0f",
+            "#542616",
+            "#c64809",
+            "#c64809",
+            "#c64809",
+            "#9f2a0f",
+            "#c73709",
+            "#b2280e"
+          ],
+          [
+            "#c73709",
+            "#b2280e",
+            "#8c2612",
+            "#743c21",
+            "#c7570b",
+            "#a5380e",
+            "#181212",
+            "#6b230e",
+            "#2b1812",
+            "#c7570b",
+            "#c7570b",
+            "#c7570b",
+            "#743c21",
+            "#542616",
+            "#c73709",
+            "#c73709"
+          ],
+          [
+            "#c73709",
+            "#542616",
+            "#2f201d",
+            "#2f2628",
+            "#4f3a32",
+            "#542616",
+            "#181212",
+            "#744934",
+            "#4f3a32",
+            "#4f3a32",
+            "#4f3a32",
+            "#744934",
+            "#2f2628",
+            "#402519",
+            "#743c21",
+            "#c73709"
+          ],
+          [
+            "#2f201d",
+            "#2f201d",
+            "#2f2628",
+            "#2f2628",
+            "#4f3a32",
+            "#4f3a32",
+            "#4f3a32",
+            "#744934",
+            "#4f3a32",
+            "#744934",
+            "#2f2628",
+            "#2f2628",
+            "#25120f",
+            "#2f201d",
+            "#2f2628",
+            "#2f2628"
+          ],
+          [
+            "#160d0f",
+            "#181212",
+            "#160d0f",
+            "#25120f",
+            "#2f2628",
+            "#2f2628",
+            "#160d0f",
+            "#2f201d",
+            "#160d0f",
+            "#2b1812",
+            "#160d0f",
+            "#330809",
+            "#181212",
+            "#160d0f",
+            "#160d0f",
+            "#181212"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast46414",
+          "type": "character",
+          "resources": {
+            "texture": "ast46414.png",
+            "animation": "ast46414.anim",
+            "prefab": "ast46414.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast46414.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast46414.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast46414.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast46414.png",
+          "Animation": "Assets/Animation/ast46414.anim",
+          "Prefab": "Assets/Prefab/ast46414.prefab",
+          "Controller": "Assets/Controller/ast46414.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "当然可以。以下是将原始请求“生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity”转化为一份详细、专业、可执行的艺术指导简报（Art Direction Brief），适用于游戏美术团队或外包美术人员，确保创作方向明确、风格统一、技术兼容。\n\n—\n\n🔥【游戏角色艺术指导简报】🔥  \n角色名称：火焰法师Boss（Flame Sorcerer Boss）  \n游戏类型：2D RPG（横版/等距视图，根据项目设定）  \n交付目标：完整角色美术资源 + 攻击动画序列 + Unity兼容导出格式  \n交付平台：Unity 2021+（推荐使用URP或HDRP，视项目引擎配置）  \n交付格式：PNG（带透明通道） + 动画序列（Sprite Sheet 或 Unity Animator Controller）  \n交付时间：【请填写具体截止日期】  \n负责人：【请填写美术负责人或项目组】\n\n—\n\n🎨 一、角色概念与风格定位\n\n1. 角色类型：  \n   - 高阶魔法Boss，掌控火焰元素，具有压迫感与神秘感。  \n   - 非传统人类形态，可考虑半人半火焰/元素生物/堕落法师等设定。  \n   - 体型：中大型（建议角色高度约 2.5–3.5 倍于普通角色，以体现Boss压迫感）。\n\n2. 艺术风格：  \n   - 2D 手绘风格（可选：像素风、低多边形、赛璐璐、写实风等，需根据项目整体美术风格统一）  \n   - 建议风格参考：《暗黑地牢》《挺进地牢》《死亡细胞》《星露谷物语》Boss设计，或《魔界村》《恶魔城》火焰系Boss。  \n   - 色彩主调：红、橙、黄、黑、灰，强调火焰灼热感与魔法能量流动。  \n   - 细节要求：火焰特效需有“流动感”“粒子感”“热浪扭曲”等视觉表现，避免静态贴图。\n\n3. 角色特征（可选）：  \n   - 头部：燃烧的头冠、火焰眼、飘动的长发/披风（可燃化）  \n   - 身体：魔法长袍/铠甲（部分被火焰侵蚀），手持法杖/卷轴/火焰球  \n   - 脚部：悬浮或踩踏火焰地面，脚下有热浪涟漪  \n   - 附加元素：可设计“火焰残影”“魔法符文”“能量环”等视觉特效\n\n—\n\n⚡ 二、动画需求（攻击动画）\n\n1. 动画类型：  \n   - 主攻击动画（1–2种）：如“火焰喷射”“召唤火球”“地面烈焰波”“魔法吟唱+释放”  \n   - 可选：受击动画、死亡动画、移动动画（若需行走/漂浮）  \n   - 建议动画时长：攻击动画 0.8–1.5 秒，节奏紧凑，强调爆发力与魔法释放感\n\n2. 动画帧要求：  \n   - 帧率：24fps（或根据项目设定）  \n   - 帧数：建议每种攻击动画至少 12–20 帧，确保流畅度  \n   - 动画结构：  \n     - 起始姿态（准备）  \n     - 魔法吟唱/蓄力（可选）  \n     - 攻击释放（火焰爆发、法杖挥动、能量聚集）  \n     - 收尾/回位（角色恢复姿态）  \n   - 动画需支持“循环播放”或“单次播放后重置”，便于Unity中控制\n\n3. 动画与角色绑定：  \n   - 所有动画需与角色骨骼/图层对齐，确保动作自然  \n   - 攻击特效（如火焰粒子、光效）需与角色动画同步，可单独图层或嵌入动画帧中  \n   - 攻击判定区域（Hitbox）需在动画关键帧中明确标注（可提供参考图或标注说明）\n\n—\n\n📦 三、技术规格与导出要求\n\n1. 导出格式：  \n   - 角色主图：PNG（透明背景，带Alpha通道）  \n   - 动画序列：  \n     - Sprite Sheet（推荐）：单张大图，按帧切割，命名规范如：`Boss_FlameSorcerer_Attack1_00.png`  \n     - 或：独立PNG序列（如：`Attack1_00.png`, `Attack1_01.png`...）  \n   - 动画数据：  \n     - 若使用Unity Animator，需提供Animator Controller文件（.controller）或动画剪辑（.anim）  \n     - 若使用Sprite Sheet，需提供帧时间表（Frame Duration）或Unity Sprite Packer配置说明\n\n2. 导出分辨率：  \n   - 建议：1024x1024 或 512x512（根据项目分辨率缩放比例）  \n   - 需提供“源图”与“缩放图”（如需适配不同分辨率设备）\n\n3. Unity导入说明：  \n   - 所有资源需按Unity标准命名规范命名（如：`Boss_FlameSorcerer_Attack1`）  \n   - 动画需在Unity中可直接拖入Animator Controller，支持“触发器”或“状态机”控制  \n   - 建议提供一个“角色预制件（Prefab）”或“动画控制器示例”，便于程序集成  \n   - 若含粒子特效，需提供粒子系统配置文件（.prefab 或 .asset）或说明如何在Unity中配置\n\n—\n\n📌 四、交付物清单（Deliverables）\n\n✅ 角色主视觉图（PNG，透明背景）  \n✅ 攻击动画序列（Sprite Sheet 或 PNG 序列）  \n✅ 动画帧时间表（可选，如帧间隔为 0.04s）  \n✅ Unity 导入说明文档（含命名、路径、动画配置）  \n✅ 可选：角色模型/动画预览视频（MP4，展示攻击动画流畅度）  \n✅ 可选：角色设计草图或概念图（用于美术参考）\n\n—\n\n🎯 五、验收标准\n\n- 角色设计符合“火焰法师Boss”设定，视觉冲击力强，风格统一  \n- 攻击动画流畅、节奏合理、特效与角色动作同步  \n- 所有资源可直接导入Unity，无格式错误或缺失帧  \n- 动画可被程序正确调用，支持触发、循环、暂停等基础控制  \n- 无美术瑕疵（如锯齿、错位、颜色溢出、透明通道错误等）\n\n—\n\n📎 附加说明：\n\n- 请提供参考图或风格板（Style Guide）以确保美术风格统一  \n- 如有角色动作需求（如跳跃、闪避、施法前摇），请在需求中补充  \n- 请在交付前提供预览图或动画预览，便于项目组审核  \n- 如需多语言/多皮肤/多形态Boss，请在需求中说明\n\n—\n\n📩 提交方式：  \n请将所有资源打包为 ZIP 文件，命名为：  \n`Boss_FlameSorcerer_2DRPG_v1.0_美术交付.zip`  \n并附上说明文档（README.txt 或 PDF）\n\n—\n\n✅ 项目负责人签字：_________________  \n📅 交付截止日期：_________________  \n📆 项目名称：_________________  \n🎮 游戏引擎：Unity 2021+  \n🎨 美术风格参考：【可附链接或截图】\n\n—\n\n这份简报可直接用于外包团队、内部美术组或美术指导，确保从概念到技术实现的无缝衔接。如需进一步细化（如角色参数、动画帧数、特效粒子要求等），可在此基础上扩展。\n\n是否需要我为你生成配套的“角色设计草图描述”或“动画分镜脚本”？欢迎继续提出！"
+      },
+      "image": {
+        "file": "img_1790565858029.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e5/20260928/77c9ad12/ee373682-0357-4022-bbac-079f957e2af01709005436.png?Expires=1790652257&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eCIVgYW8KtCV5JBk8yM0BxCs4HA%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565858029.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e5/20260928/77c9ad12/ee373682-0357-4022-bbac-079f957e2af01709005436.png?Expires=1790652257&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eCIVgYW8KtCV5JBk8yM0BxCs4HA%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790565875704.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/97/20260928/aa4f9372/dba3029a-9f80-4d27-8fd4-e7da8314086a-1.png?Expires=1791171675&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=xUI4uir7ly3mMWjwFN6G044Nvcs%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790565892880.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/5f/20260928/aa4f9372/13b35d95-f9e8-41fc-a636-ca2fb713fa85-1.png?Expires=1791171692&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=CJ%2BLwWHf7KX9MU2aSZ%2FIfSqO6ZE%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-9"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790565866.743932,
+    "finished_at": 1790565929.442973,
+    "goal": "生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast46414",
+    "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 62.699,
+    "character": {
+      "id": "ast46414",
+      "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "seed": 6346414,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6f1c10",
+        "base": "#f8672a",
+        "highlight": "#ffd54a",
+        "accent": "#f3de84",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#0d0c13",
+      "#12121b",
+      "#181722",
+      "#232838",
+      "#1b1c28",
+      "#2b1218",
+      "#511e1c",
+      "#25232f",
+      "#552f33",
+      "#4f181b",
+      "#b94416",
+      "#c95616",
+      "#1e1218",
+      "#41252c",
+      "#e97e17",
+      "#81261b",
+      "#411c1d",
+      "#362f3b",
+      "#4d2529",
+      "#2f2530",
+      "#8b311b",
+      "#713d32",
+      "#2a181f",
+      "#3e0e12",
+      "#672623",
+      "#67302d",
+      "#271d28",
+      "#5a2522",
+      "#361a20",
+      "#3a1417",
+      "#751b15",
+      "#5f1412"
+    ],
+    "image": {
+      "file": "img_1790565891391.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/91/20260928/77c9ad12/08bf0d9d-0dd1-490b-ac53-4811166b7c0a172250696.png?Expires=1790652289&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=st5OdHRVCJmSysW5felB8csvO94%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565891391.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "当然可以。以下是将原始请求“生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity”转化为一份详细、专业、可执行的艺术指导简报（Art Direction Brief），适用于游戏美术团队或外包美术人员，确保创作方向明确、风格统一、技术兼容。\n\n—\n\n🔥【游戏角色艺术指导简报】🔥  \n角色名称：火焰法师Boss（Flame Sorcerer Boss）  \n游戏类型：2D RPG（横版/等距视图，根据项目设定）  \n交付目标：完整角色美术资源 + 攻击动画序列 + Unity兼容导出格式  \n交付平台：Unity 2021+（推荐使用URP或HDRP，视项目引擎配置）  \n交付格式：PNG（带透明通道） + 动画序列（Sprite Sheet 或 Unity Animator Controller）  \n交付时间：【请填写具体截止日期】  \n负责人：【请填写美术负责人或项目组】\n\n—\n\n🎨 一、角色概念与风格定位\n\n1. 角色类型：Boss级火焰法师，非普通NPC，需具备压迫感、视觉冲击力与魔法威严。\n2. 风格方向：\n   - 2D手绘风格 / 卡通写实 / 暗黑奇幻 / 高对比度色彩（根据项目整体美术风格调整）\n   - 建议参考：《暗黑地牢》《火炬之光》《泰拉瑞亚Boss》《艾尔登法环2D化风格》等\n   - 色彩主调：橙红、深紫、黑灰、金黄（火焰与魔法能量的视觉表现）\n   - 风格关键词：炽热、神秘、威严、动态、魔法符文、燃烧残影\n\n3. 角色外形设计要点：\n   - 身体结构：高挑、修长、略带飘逸感（如长袍、斗篷、长发）\n   - 面部特征：可选带火焰纹路、眼瞳为熔岩色、面部表情狰狞或冷酷\n   - 服饰细节：长袍/法袍带火焰纹饰、袖口/衣摆飘动、魔法符文镶嵌于胸前或腰带\n   - 魔法元素：周身环绕火焰粒子、能量漩涡、浮空符文、燃烧脚印或地面裂痕\n   - 可选附加：手持法杖/水晶球/火焰卷轴，或无武器但双手释放魔法\n\n—\n\n⚡ 二、动画需求（攻击动画序列）\n\n1. 动画类型：角色攻击动作（至少1套完整攻击动画，建议包含“蓄力→施法→释放→收势”）\n2. 动画帧数：建议 12~24 帧（根据项目性能需求调整）\n3. 动画节奏：\n   - 蓄力阶段（1~4帧）：法师双手结印、火焰聚集、地面裂开\n   - 施法阶段（5~10帧）：法杖/双手释放魔法、火焰喷涌、符文旋转\n   - 释放阶段（11~18帧）：火焰冲击波/火球/火雨/火柱等特效爆发\n   - 收势阶段（19~24帧）：法师收手、火焰消散、能量回流、衣袍飘动\n4. 动画循环性：建议提供“攻击循环”与“攻击后恢复”两个状态，便于Unity动画控制器衔接\n5. 动画帧格式：建议使用Sprite Sheet（带透明背景），每帧尺寸统一（如 64x64、128x128、256x256，根据项目分辨率设定）\n6. 动画命名规范：如 “Boss_FlameSorcerer_Attack_01”, “Boss_FlameSorcerer_Idle”, “Boss_FlameSorcerer_Die”\n\n—\n\n🧩 三、美术资源交付清单\n\n✅ 角色主图（站立/待机姿态）  \n✅ 攻击动画Sprite Sheet（含所有帧）  \n✅ 攻击动画帧图层拆分（如：角色层、火焰特效层、粒子层、背景层等，便于Unity合成）  \n✅ 角色碰撞盒/触发区域（可选，如需物理交互）  \n✅ 角色朝向支持（如：左右翻转、多角度站立/攻击）  \n✅ 导出格式：PNG（带透明通道）、Sprite Sheet（.png）、动画序列（.png序列或Unity Animator Controller文件）  \n✅ 导出分辨率：建议 128x128 或 256x256（根据项目UI/缩放需求调整）  \n✅ 文件命名规范：统一前缀“Boss_FlameSorcerer_”，后接状态名+帧号，如 “Boss_FlameSorcerer_Attack_01.png”\n\n—\n\n⚙️ 四、技术对接要求（Unity导入）\n\n1. 导入方式：推荐使用 Unity Sprite Atlas 或 Sprite Sheet 导入，支持动画控制器（Animator Controller）\n2. 动画控制器：需提供Animator Controller文件（.controller）或至少提供动画状态机结构说明（如：Idle → Attack → Die）\n3. 骨骼/骨骼动画（如需）：如使用骨骼动画（Spine、DragonBones等），需提供导出文件及动画绑定说明\n4. 粒子特效（可选）：如火焰特效、魔法粒子、爆炸粒子，建议提供单独粒子系统文件（.prefab 或 .asset）或说明特效参数\n5. 资源命名与层级：建议在Unity中保持文件夹结构清晰，如：\n   - Assets/Characters/Bosses/Boss_FlameSorcerer/\n     ├── SpriteSheet/\n     ├── Animations/\n     ├── ParticleEffects/\n     └── AnimatorController.controller\n\n—\n\n📌 五、参考与灵感来源（可选）\n\n- 视觉参考图：提供3~5张参考图（如《暗黑地牢》火焰法师、《泰拉瑞亚》熔岩Boss、《恶魔城》魔法Boss等）\n- 动画参考：提供1~2段参考动画（如YouTube链接或GIF），说明希望的节奏、动作幅度、特效表现\n- 音效配合：建议动画与音效同步（如施法音效、火焰爆裂声、魔法吟唱声），可提供音效文件或描述\n\n—\n\n✅ 六、验收标准\n\n- 角色视觉风格与项目整体美术风格一致\n- 攻击动画流畅、有节奏感、符合魔法释放逻辑\n- 所有资源可直接导入Unity，无错位、无断帧、无透明通道错误\n- 动画状态可被Unity Animator控制器正确调用\n- 提供完整资源包（含所有文件、说明文档、命名规范）\n\n—\n\n📬 七、沟通与反馈\n\n- 美术负责人：【姓名/邮箱】\n- 项目负责人：【姓名/邮箱】\n- 提交方式：通过项目管理平台（如Jira、Trello、Notion）或指定文件夹上传\n- 修改周期：允许2轮免费修改，超出需另行协商\n\n—\n\n🎯 最终目标：\n\n打造一个视觉震撼、动作流畅、魔法感十足的2D RPG火焰法师Boss，不仅在战斗中具有压迫力，更在美术表现上成为玩家记忆点，同时技术上无缝对接Unity引擎，支持动画系统、粒子特效、碰撞交互等扩展功能。\n\n—\n\n如需进一步细化（如角色性格设定、技能描述、战斗机制联动等），请提供项目世界观或战斗设计文档，以便美术团队精准匹配角色表现。\n\n—\n\n✅ 本简报可作为美术外包合同附件或内部项目启动文档，确保创作方向统一、交付标准明确、技术对接顺畅。\n\n—  \n【美术指导签名】：_________________  \n【项目负责人签名】：_________________  \n【日期】：_________________  \n\n—\n\n如需我协助生成角色设定文档、动画分镜、Unity导入配置说明或粒子特效参数表，也可继续提出，我可为你进一步扩展。",
+    "asset": {
+      "id": "ast46414",
+      "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 6346414,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#f8672a",
+          "highlight": "#ffd54a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790565891391.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/91/20260928/77c9ad12/08bf0d9d-0dd1-490b-ac53-4811166b7c0a172250696.png?Expires=1790652289&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=st5OdHRVCJmSysW5felB8csvO94%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565891391.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast46414",
+        "name": "生成一个2drpg火焰法师boss_带攻击动画_",
+        "type": "character",
+        "role": "npc",
+        "seed": 6346414,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#f8672a",
+          "highlight": "#ffd54a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#0d0c13",
+            "#12121b",
+            "#181722",
+            "#232838",
+            "#1b1c28",
+            "#2b1218",
+            "#511e1c",
+            "#25232f",
+            "#552f33",
+            "#4f181b",
+            "#b94416",
+            "#c95616",
+            "#1e1218",
+            "#41252c",
+            "#e97e17",
+            "#81261b",
+            "#411c1d",
+            "#362f3b",
+            "#4d2529",
+            "#2f2530",
+            "#8b311b",
+            "#713d32",
+            "#2a181f",
+            "#3e0e12",
+            "#672623",
+            "#67302d",
+            "#271d28",
+            "#5a2522",
+            "#361a20",
+            "#3a1417",
+            "#751b15",
+            "#5f1412"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#6f1c10",
+            "base": "#f8672a",
+            "highlight": "#ffd54a",
+            "accent": "#f3de84",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#0d0c13",
+            "#12121b",
+            "#12121b",
+            "#12121b",
+            "#181722",
+            "#232838",
+            "#232838",
+            "#232838",
+            "#232838",
+            "#1b1c28",
+            "#181722",
+            "#181722",
+            "#2b1218",
+            "#511e1c",
+            "#0d0c13",
+            "#0d0c13"
+          ],
+          [
+            "#0d0c13",
+            "#12121b",
+            "#181722",
+            "#181722",
+            "#25232f",
+            "#232838",
+            "#232838",
+            "#552f33",
+            "#232838",
+            "#25232f",
+            "#25232f",
+            "#4f181b",
+            "#b94416",
+            "#c95616",
+            "#1e1218",
+            "#0d0c13"
+          ],
+          [
+            "#12121b",
+            "#1b1c28",
+            "#1b1c28",
+            "#25232f",
+            "#25232f",
+            "#232838",
+            "#552f33",
+            "#b94416",
+            "#552f33",
+            "#232838",
+            "#41252c",
+            "#e97e17",
+            "#e97e17",
+            "#e97e17",
+            "#4f181b",
+            "#1e1218"
+          ],
+          [
+            "#12121b",
+            "#1b1c28",
+            "#25232f",
+            "#25232f",
+            "#25232f",
+            "#552f33",
+            "#552f33",
+            "#81261b",
+            "#411c1d",
+            "#362f3b",
+            "#4d2529",
+            "#e97e17",
+            "#e97e17",
+            "#c95616",
+            "#411c1d",
+            "#1e1218"
+          ],
+          [
+            "#181722",
+            "#1b1c28",
+            "#25232f",
+            "#2f2530",
+            "#2f2530",
+            "#4d2529",
+            "#411c1d",
+            "#81261b",
+            "#8b311b",
+            "#713d32",
+            "#41252c",
+            "#8b311b",
+            "#8b311b",
+            "#4d2529",
+            "#2a181f",
+            "#1e1218"
+          ],
+          [
+            "#181722",
+            "#25232f",
+            "#2f2530",
+            "#552f33",
+            "#41252c",
+            "#2b1218",
+            "#3e0e12",
+            "#672623",
+            "#672623",
+            "#411c1d",
+            "#552f33",
+            "#67302d",
+            "#271d28",
+            "#1e1218",
+            "#271d28",
+            "#1e1218"
+          ],
+          [
+            "#181722",
+            "#2f2530",
+            "#713d32",
+            "#4d2529",
+            "#2b1218",
+            "#2b1218",
+            "#1e1218",
+            "#5a2522",
+            "#5a2522",
+            "#1e1218",
+            "#41252c",
+            "#41252c",
+            "#2f2530",
+            "#271d28",
+            "#271d28",
+            "#2a181f"
+          ],
+          [
+            "#271d28",
+            "#41252c",
+            "#713d32",
+            "#411c1d",
+            "#67302d",
+            "#1e1218",
+            "#361a20",
+            "#411c1d",
+            "#411c1d",
+            "#12121b",
+            "#672623",
+            "#552f33",
+            "#2f2530",
+            "#2f2530",
+            "#1b1c28",
+            "#271d28"
+          ],
+          [
+            "#2f2530",
+            "#552f33",
+            "#4d2529",
+            "#552f33",
+            "#81261b",
+            "#3a1417",
+            "#2b1218",
+            "#511e1c",
+            "#4f181b",
+            "#361a20",
+            "#361a20",
+            "#67302d",
+            "#4d2529",
+            "#41252c",
+            "#271d28",
+            "#361a20"
+          ],
+          [
+            "#41252c",
+            "#552f33",
+            "#552f33",
+            "#b94416",
+            "#672623",
+            "#2b1218",
+            "#411c1d",
+            "#5a2522",
+            "#511e1c",
+            "#3a1417",
+            "#2b1218",
+            "#411c1d",
+            "#81261b",
+            "#5a2522",
+            "#361a20",
+            "#41252c"
+          ],
+          [
+            "#4d2529",
+            "#67302d",
+            "#c95616",
+            "#b94416",
+            "#361a20",
+            "#1e1218",
+            "#411c1d",
+            "#511e1c",
+            "#751b15",
+            "#2b1218",
+            "#511e1c",
+            "#511e1c",
+            "#511e1c",
+            "#b94416",
+            "#672623",
+            "#361a20"
+          ],
+          [
+            "#81261b",
+            "#c95616",
+            "#c95616",
+            "#4f181b",
+            "#3e0e12",
+            "#3e0e12",
+            "#3a1417",
+            "#3a1417",
+            "#81261b",
+            "#3e0e12",
+            "#4f181b",
+            "#5a2522",
+            "#5a2522",
+            "#8b311b",
+            "#c95616",
+            "#2a181f"
+          ],
+          [
+            "#81261b",
+            "#81261b",
+            "#672623",
+            "#751b15",
+            "#5f1412",
+            "#5f1412",
+            "#5f1412",
+            "#3e0e12",
+            "#5f1412",
+            "#751b15",
+            "#8b311b",
+            "#5a2522",
+            "#672623",
+            "#511e1c",
+            "#e97e17",
+            "#3a1417"
+          ],
+          [
+            "#8b311b",
+            "#672623",
+            "#2a181f",
+            "#4f181b",
+            "#751b15",
+            "#5f1412",
+            "#5f1412",
+            "#5f1412",
+            "#8b311b",
+            "#8b311b",
+            "#511e1c",
+            "#361a20",
+            "#361a20",
+            "#8b311b",
+            "#e97e17",
+            "#3a1417"
+          ],
+          [
+            "#5a2522",
+            "#b94416",
+            "#511e1c",
+            "#361a20",
+            "#5f1412",
+            "#751b15",
+            "#8b311b",
+            "#b94416",
+            "#b94416",
+            "#672623",
+            "#5a2522",
+            "#672623",
+            "#8b311b",
+            "#c95616",
+            "#c95616",
+            "#2b1218"
+          ],
+          [
+            "#2b1218",
+            "#c95616",
+            "#e97e17",
+            "#b94416",
+            "#751b15",
+            "#751b15",
+            "#41252c",
+            "#552f33",
+            "#552f33",
+            "#552f33",
+            "#511e1c",
+            "#8b311b",
+            "#e97e17",
+            "#e97e17",
+            "#c95616",
+            "#3e0e12"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast46414",
+          "type": "character",
+          "resources": {
+            "texture": "ast46414.png",
+            "animation": "ast46414.anim",
+            "prefab": "ast46414.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast46414.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast46414.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast46414.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast46414.png",
+          "Animation": "Assets/Animation/ast46414.anim",
+          "Prefab": "Assets/Prefab/ast46414.prefab",
+          "Controller": "Assets/Controller/ast46414.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "当然可以。以下是将原始请求“生成一个2DRPG火焰法师Boss，带攻击动画，并导入Unity”转化为一份详细、专业、可执行的艺术指导简报（Art Direction Brief），适用于游戏美术团队或外包美术人员，确保创作方向明确、风格统一、技术兼容。\n\n—\n\n🔥【游戏角色艺术指导简报】🔥  \n角色名称：火焰法师Boss（Flame Sorcerer Boss）  \n游戏类型：2D RPG（横版/等距视图，根据项目设定）  \n交付目标：完整角色美术资源 + 攻击动画序列 + Unity兼容导出格式  \n交付平台：Unity 2021+（推荐使用URP或HDRP，视项目引擎配置）  \n交付格式：PNG（带透明通道） + 动画序列（Sprite Sheet 或 Unity Animator Controller）  \n交付时间：【请填写具体截止日期】  \n负责人：【请填写美术负责人或项目组】\n\n—\n\n🎨 一、角色概念与风格定位\n\n1. 角色类型：Boss级火焰法师，非普通NPC，需具备压迫感、视觉冲击力与魔法威严。\n2. 风格方向：\n   - 2D手绘风格 / 卡通写实 / 暗黑奇幻 / 高对比度色彩（根据项目整体美术风格调整）\n   - 建议参考：《暗黑地牢》《火炬之光》《泰拉瑞亚Boss》《艾尔登法环2D化风格》等\n   - 色彩主调：橙红、深紫、黑灰、金黄（火焰与魔法能量的视觉表现）\n   - 风格关键词：炽热、神秘、威严、动态、魔法符文、燃烧残影\n\n3. 角色外形设计要点：\n   - 身体结构：高挑、修长、略带飘逸感（如长袍、斗篷、长发）\n   - 面部特征：可选带火焰纹路、眼瞳为熔岩色、面部表情狰狞或冷酷\n   - 服饰细节：长袍/法袍带火焰纹饰、袖口/衣摆飘动、魔法符文镶嵌于胸前或腰带\n   - 魔法元素：周身环绕火焰粒子、能量漩涡、浮空符文、燃烧脚印或地面裂痕\n   - 可选附加：手持法杖/水晶球/火焰卷轴，或无武器但双手释放魔法\n\n—\n\n⚡ 二、动画需求（攻击动画序列）\n\n1. 动画类型：角色攻击动作（至少1套完整攻击动画，建议包含“蓄力→施法→释放→收势”）\n2. 动画帧数：建议 12~24 帧（根据项目性能需求调整）\n3. 动画节奏：\n   - 蓄力阶段（1~4帧）：法师双手结印、火焰聚集、地面裂开\n   - 施法阶段（5~10帧）：法杖/双手释放魔法、火焰喷涌、符文旋转\n   - 释放阶段（11~18帧）：火焰冲击波/火球/火雨/火柱等特效爆发\n   - 收势阶段（19~24帧）：法师收手、火焰消散、能量回流、衣袍飘动\n4. 动画循环性：建议提供“攻击循环”与“攻击后恢复”两个状态，便于Unity动画控制器衔接\n5. 动画帧格式：建议使用Sprite Sheet（带透明背景），每帧尺寸统一（如 64x64、128x128、256x256，根据项目分辨率设定）\n6. 动画命名规范：如 “Boss_FlameSorcerer_Attack_01”, “Boss_FlameSorcerer_Idle”, “Boss_FlameSorcerer_Die”\n\n—\n\n🧩 三、美术资源交付清单\n\n✅ 角色主图（站立/待机姿态）  \n✅ 攻击动画Sprite Sheet（含所有帧）  \n✅ 攻击动画帧图层拆分（如：角色层、火焰特效层、粒子层、背景层等，便于Unity合成）  \n✅ 角色碰撞盒/触发区域（可选，如需物理交互）  \n✅ 角色朝向支持（如：左右翻转、多角度站立/攻击）  \n✅ 导出格式：PNG（带透明通道）、Sprite Sheet（.png）、动画序列（.png序列或Unity Animator Controller文件）  \n✅ 导出分辨率：建议 128x128 或 256x256（根据项目UI/缩放需求调整）  \n✅ 文件命名规范：统一前缀“Boss_FlameSorcerer_”，后接状态名+帧号，如 “Boss_FlameSorcerer_Attack_01.png”\n\n—\n\n⚙️ 四、技术对接要求（Unity导入）\n\n1. 导入方式：推荐使用 Unity Sprite Atlas 或 Sprite Sheet 导入，支持动画控制器（Animator Controller）\n2. 动画控制器：需提供Animator Controller文件（.controller）或至少提供动画状态机结构说明（如：Idle → Attack → Die）\n3. 骨骼/骨骼动画（如需）：如使用骨骼动画（Spine、DragonBones等），需提供导出文件及动画绑定说明\n4. 粒子特效（可选）：如火焰特效、魔法粒子、爆炸粒子，建议提供单独粒子系统文件（.prefab 或 .asset）或说明特效参数\n5. 资源命名与层级：建议在Unity中保持文件夹结构清晰，如：\n   - Assets/Characters/Bosses/Boss_FlameSorcerer/\n     ├── SpriteSheet/\n     ├── Animations/\n     ├── ParticleEffects/\n     └── AnimatorController.controller\n\n—\n\n📌 五、参考与灵感来源（可选）\n\n- 视觉参考图：提供3~5张参考图（如《暗黑地牢》火焰法师、《泰拉瑞亚》熔岩Boss、《恶魔城》魔法Boss等）\n- 动画参考：提供1~2段参考动画（如YouTube链接或GIF），说明希望的节奏、动作幅度、特效表现\n- 音效配合：建议动画与音效同步（如施法音效、火焰爆裂声、魔法吟唱声），可提供音效文件或描述\n\n—\n\n✅ 六、验收标准\n\n- 角色视觉风格与项目整体美术风格一致\n- 攻击动画流畅、有节奏感、符合魔法释放逻辑\n- 所有资源可直接导入Unity，无错位、无断帧、无透明通道错误\n- 动画状态可被Unity Animator控制器正确调用\n- 提供完整资源包（含所有文件、说明文档、命名规范）\n\n—\n\n📬 七、沟通与反馈\n\n- 美术负责人：【姓名/邮箱】\n- 项目负责人：【姓名/邮箱】\n- 提交方式：通过项目管理平台（如Jira、Trello、Notion）或指定文件夹上传\n- 修改周期：允许2轮免费修改，超出需另行协商\n\n—\n\n🎯 最终目标：\n\n打造一个视觉震撼、动作流畅、魔法感十足的2D RPG火焰法师Boss，不仅在战斗中具有压迫力，更在美术表现上成为玩家记忆点，同时技术上无缝对接Unity引擎，支持动画系统、粒子特效、碰撞交互等扩展功能。\n\n—\n\n如需进一步细化（如角色性格设定、技能描述、战斗机制联动等），请提供项目世界观或战斗设计文档，以便美术团队精准匹配角色表现。\n\n—\n\n✅ 本简报可作为美术外包合同附件或内部项目启动文档，确保创作方向统一、交付标准明确、技术对接顺畅。\n\n—  \n【美术指导签名】：_________________  \n【项目负责人签名】：_________________  \n【日期】：_________________  \n\n—\n\n如需我协助生成角色设定文档、动画分镜、Unity导入配置说明或粒子特效参数表，也可继续提出，我可为你进一步扩展。"
+      },
+      "image": {
+        "file": "img_1790565891391.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/91/20260928/77c9ad12/08bf0d9d-0dd1-490b-ac53-4811166b7c0a172250696.png?Expires=1790652289&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=st5OdHRVCJmSysW5felB8csvO94%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1790565891391.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/91/20260928/77c9ad12/08bf0d9d-0dd1-490b-ac53-4811166b7c0a172250696.png?Expires=1790652289&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=st5OdHRVCJmSysW5felB8csvO94%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790565909656.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/2f/20260928/aa4f9372/a19e5a07-36c7-4c18-9156-62845a1a1112-1.png?Expires=1791171709&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=QYdZI%2BMtqGYReNy52LwKONd0PvI%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790565927033.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/76/20260928/aa4f9372/79ff364a-e8a5-4b22-8083-4bfe134001f7-1.png?Expires=1791171726&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=l%2BhUCUk9eYnMTZvwmYWwBl%2B3duw%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-6"
   }
 ]

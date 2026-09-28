@@ -25,6 +25,60 @@ GENERATED_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "generated"
 )
 
+# ── 凭证 .env 兜底（与 storage_service 同源纪律：密钥仅读取环境变量） ──────────
+_BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ENV_FILE_CANDIDATES = (
+    os.path.join(_BACKEND_DIR, ".env"),          # studio/backend/.env（推荐）
+    os.path.join(os.path.dirname(_BACKEND_DIR), ".env"),  # studio/.env
+    os.path.join(os.path.dirname(os.path.dirname(_BACKEND_DIR)), ".env"),  # 仓库根 .env
+)
+
+
+def _load_env_file(path):
+    """极简 .env 解析（KEY=VALUE，支持引号与 # 注释）。"""
+    values = {}
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            for line in handle:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                key, value = line.split("=", 1)
+                values[key.strip()] = value.strip().strip("\"'")
+    except OSError:
+        pass
+    return values
+
+
+def _env_credentials():
+    """合并进程环境与 .env 文件（进程环境优先）。"""
+    env = dict(os.environ)
+    for candidate in _ENV_FILE_CANDIDATES:
+        for key, value in _load_env_file(candidate).items():
+            env.setdefault(key, value)
+    return env
+
+
+def _dashscope_env_override():
+    """.env 里有百炼 key 时构造一份启用配置（兜底默认，用户显式配置优先）。"""
+    env = _env_credentials()
+    key = env.get("DASHSCOPE_API_KEY") or env.get("AI_API_KEY")
+    if not key:
+        return None
+    preset = PROVIDER_PRESETS["dashscope"]
+    return {
+        "enabled": True,
+        "provider": "dashscope",
+        "base_url": preset["base_url"],
+        "model": env.get("DASHSCOPE_MODEL", preset["model"]),
+        "chat_model": env.get("DASHSCOPE_CHAT_MODEL", preset["chat_model"]),
+        "api_key": key,
+        "use_chat": True,
+        "use_image": True,
+        "size": env.get("DASHSCOPE_SIZE", "1024*1024"),
+        "timeout": int(env.get("DASHSCOPE_TIMEOUT", "60")),
+    }
+
 PROVIDER_PRESETS = {
     "openai": {
         "label": "OpenAI",
@@ -131,13 +185,24 @@ class ModelSettingsStore:
             pass
 
     def effective(self):
-        with self._lock:
-            return dict(self._data)
-
-    def public(self):
+        """生效配置：用户显式保存的优先；未配 api_key 时回落 .env（百炼兜底）。"""
         with self._lock:
             data = dict(self._data)
-            data.pop("api_key", None)
+        if not data.get("api_key"):
+            override = _dashscope_env_override()
+            if override:
+                data.update(override)
+        return data
+
+    def public(self):
+        """脱敏视图（不回显 api_key）；.env 兜底启用时也反映启用状态。"""
+        with self._lock:
+            data = dict(self._data)
+        if not data.get("api_key"):
+            override = _dashscope_env_override()
+            if override:
+                data.update(override)
+        data.pop("api_key", None)
         return data
 
     def update(self, changes):

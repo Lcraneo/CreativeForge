@@ -7,6 +7,10 @@ import type {
   HistorySummary,
   ModelSettings,
   ModelTestResult,
+  MultipartSession,
+  StorageConfigList,
+  StorageConfigPublic,
+  StorageTestResult,
   TaskEvent,
   TaskSummary,
 } from "../types";
@@ -228,4 +232,89 @@ export const api = {
 
   clearModelKey: () =>
     request<ModelSettings>("/api/settings/model/key", { method: "DELETE" }),
+
+  // ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ─────────────────────
+  // 凭证本地加密存储、界面脱敏；新增/编辑时提交明文，后端落盘加密。
+  listStorageConfigs: () =>
+    request<StorageConfigList>("/api/storage/configs"),
+
+  createStorageConfig: (payload: Record<string, unknown>) =>
+    request<StorageConfigPublic>("/api/storage/configs", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  updateStorageConfig: (id: string, payload: Record<string, unknown>) =>
+    request<StorageConfigPublic>(`/api/storage/configs/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
+  deleteStorageConfig: (id: string) =>
+    request<{ status: string; removed: string }>(
+      `/api/storage/configs/${id}`,
+      { method: "DELETE" },
+    ),
+
+  setDefaultStorageConfig: (id: string) =>
+    request<StorageConfigPublic>(`/api/storage/configs/${id}/default`, {
+      method: "POST",
+    }),
+
+  testStorageConfig: (payload: {
+    config_id?: string;
+    provider?: string;
+    access_key?: string;
+    secret_key?: string;
+    region?: string;
+    bucket?: string;
+    endpoint?: string;
+    name?: string;
+  }) =>
+    request<StorageTestResult>("/api/storage/configs/test", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  // ── 对象存储：大文件分片上传（断点续传 / 失败重试） ─────────────────────
+  startMultipart: (payload: {
+    key: string;
+    total_size: number;
+    part_size?: number;
+    content_type?: string;
+    config_id?: string;
+  }) =>
+    request<MultipartSession>("/api/storage/multipart/start", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getMultipartStatus: (sessionId: string) =>
+    request<MultipartSession>(`/api/storage/multipart/${sessionId}`),
+
+  resumeMultipart: (sessionId: string) =>
+    request<MultipartSession>(`/api/storage/multipart/${sessionId}/resume`, {
+      method: "POST",
+    }),
+
+  uploadMultipartPart: async (sessionId: string, partNumber: number, data: Blob) => {
+    const form = new FormData();
+    form.append("file", data, `part-${partNumber}`);
+    const response = await fetch(
+      `/api/storage/multipart/${sessionId}/${partNumber}`,
+      { method: "PUT", body: form },
+    );
+    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
+    return (await response.json()) as MultipartSession;
+  },
+
+  completeMultipart: (sessionId: string) =>
+    request<MultipartSession>(`/api/storage/multipart/${sessionId}/complete`, {
+      method: "POST",
+    }),
+
+  abortMultipart: (sessionId: string) =>
+    request<MultipartSession>(`/api/storage/multipart/${sessionId}/abort`, {
+      method: "POST",
+    }),
 };

@@ -3,7 +3,7 @@
 import base64
 import os
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -479,4 +479,207 @@ def build_router(runtime):
     def health():
         return {"status": "ok", "service": "creativeforge-studio"}
 
+    # ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ────────────────────
+    # 凭证本地加密存储、界面脱敏展示、禁止明文回显与明文写入日志。
+
+    class StorageConfigRequest(BaseModel):
+        name: str
+        provider: str
+        access_key: str | None = None    # 空串/None 表示编辑时保持原值
+        secret_key: str | None = None
+        region: str | None = None
+        bucket: str | None = None
+        endpoint: str | None = None
+        is_default: bool | None = None
+
+    class StorageTestRequest(BaseModel):
+        config_id: str | None = None
+        name: str | None = None
+        provider: str | None = None
+        access_key: str | None = None
+        secret_key: str | None = None
+        region: str | None = None
+        bucket: str | None = None
+        endpoint: str | None = None
+
+    class PresignRequest(BaseModel):
+        key: str
+        expires: int = 3600
+        config_id: str | None = None
+
+    class MultipartStartRequest(BaseModel):
+        key: str
+        total_size: int
+        part_size: int | None = None
+        content_type: str = "application/octet-stream"
+        config_id: str | None = None
+
+    def _storage():
+        from studio.backend.storage_service import get_storage_manager
+
+        return get_storage_manager()
+
+    @router.get("/storage/configs")
+    def list_storage_configs():
+        manager = _storage()
+        return {
+            "configs": manager.store.list_public(),
+            "presets": _storage_presets_view(),
+            "default_id": manager.default_config_id(),
+        }
+
+    @router.post("/storage/configs", status_code=201)
+    def create_storage_config(request: StorageConfigRequest):
+        try:
+            return _storage().store.create(request.model_dump())
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.put("/storage/configs/{config_id}")
+    def update_storage_config(config_id: str, request: StorageConfigRequest):
+        try:
+            return _storage().store.update(config_id, request.model_dump())
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.delete("/storage/configs/{config_id}")
+    def delete_storage_config(config_id: str):
+        try:
+            return _storage().store.delete(config_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/configs/{config_id}/default")
+    def set_default_storage_config(config_id: str):
+        try:
+            return _storage().store.set_default(config_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/configs/test")
+    def test_storage_config(request: StorageTestRequest):
+        payload = None
+        if any(request.model_dump().get(k) for k in
+                ("name", "provider", "region", "bucket", "endpoint", "access_key", "secret_key")):
+            payload = request.model_dump()
+        return _storage().test_config(config_id=request.config_id, payload=payload)
+
+    # ── 对象存储：文件操作（统一接口：列举 / 上传 / 下载 / 删除 / 临时链接） ──
+
+    @router.get("/storage/files")
+    def list_storage_files(config_id: str | None = None,
+                          prefix: str = "", limit: int = 100):
+        try:
+            return {"objects": _storage().list(prefix, config_id=config_id, limit=limit),
+                    "config_id": config_id}
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/files", status_code=201)
+    async def upload_storage_file(file: "UploadFile" = File(...),
+                                  key: str = Form(None),
+                                  config_id: str | None = Form(None)):
+        data = await file.read()
+        object_key = key or file.filename or f"upload/{file.filename}"
+        try:
+            return _storage().upload(data, object_key, config_id=config_id,
+                                     content_type=file.content_type or "application/octet-stream")
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.get("/storage/files/{key:path}")
+    def get_storage_file(key: str, config_id: str | None = None,
+                         download: bool = True):
+        manager = _storage()
+        try:
+            data = manager.download(key, config_id=config_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=404, detail=str(error)) from error
+        return Response(content=data, media_type="application/octet-stream",
+                        headers={"Content-Disposition": f'attachment; filename="{key.rsplit("/", 1)[-1]}"'})
+
+    @router.delete("/storage/files/{key:path}")
+    def delete_storage_file(key: str, config_id: str | None = None):
+        try:
+            return _storage().delete(key, config_id=config_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/presign")
+    def presign_storage_file(request: PresignRequest):
+        try:
+            return _storage().presign(request.key, config_id=request.config_id,
+                                      expires=request.expires)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    # ── 对象存储：大文件分片上传（断点续传 / 失败重试 / 超时控制） ──────────
+
+    @router.post("/storage/multipart/start", status_code=201)
+    def start_multipart(request: MultipartStartRequest):
+        try:
+            return _storage().multipart.start(
+                request.config_id or _storage().default_config_id(),
+                request.key, request.total_size,
+                part_size=request.part_size or None,
+                content_type=request.content_type,
+            )
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.get("/storage/multipart/{session_id}")
+    def get_multipart_status(session_id: str):
+        try:
+            return _storage().multipart.status(session_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=404, detail=str(error)) from error
+
+    @router.post("/storage/multipart/{session_id}/resume")
+    def resume_multipart(session_id: str):
+        try:
+            return _storage().multipart.resume(session_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.put("/storage/multipart/{session_id}/{part_number}")
+    async def upload_multipart_part(session_id: str, part_number: int,
+                                    file: "UploadFile" = File(...)):
+        data = await file.read()
+        try:
+            return _storage().multipart.upload_part(session_id, part_number, data)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/multipart/{session_id}/complete")
+    def complete_multipart(session_id: str):
+        try:
+            return _storage().multipart.complete(session_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
+    @router.post("/storage/multipart/{session_id}/abort")
+    def abort_multipart(session_id: str):
+        try:
+            return _storage().multipart.abort(session_id)
+        except Exception as error:  # noqa: BLE001
+            raise HTTPException(status_code=422, detail=str(error)) from error
+
     return router
+
+
+def _storage_presets_view() -> dict:
+    """厂商预设给前端填表用（不含任何凭证）。"""
+    from studio.backend.storage_service.providers import PROVIDER_PRESETS
+
+    return {
+        key: {
+            "id": value["id"],
+            "label": value["label"],
+            "addressing": value["addressing"],
+            "regions": value["regions"],
+            "endpoint_template": value["endpoint_template"],
+            "credential_hint": value["credential_hint"],
+        }
+        for key, value in PROVIDER_PRESETS.items()
+    }
+
