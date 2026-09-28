@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAssetLoader } from "../stores/assetStore";
-import { api, type AnimationResult } from "../api/client";
+import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, cx } from "../components/ui";
 
 const ACTIONS = ["idle", "walk", "run", "attack", "jump"];
@@ -14,6 +14,26 @@ const ACTION_LABELS: Record<string, string> = {
 };
 const SIZES = [256, 384, 512, 768];
 
+const POSE_PARAMS: Array<{ key: keyof PoseConfig; label: string; min: number; max: number; step: number }> = [
+  { key: "bob", label: "上下起伏", min: 0, max: 2, step: 0.05 },
+  { key: "stride", label: "步幅 / 腿部摆动", min: 0, max: 2, step: 0.05 },
+  { key: "arm", label: "摆臂幅度", min: 0, max: 2, step: 0.05 },
+  { key: "lift", label: "抬脚高度", min: 0, max: 2, step: 0.05 },
+  { key: "lean", label: "身体前倾 (°)", min: -15, max: 30, step: 1 },
+  { key: "lag", label: "手臂滞后 (重叠)", min: 0, max: 1.2, step: 0.05 },
+  { key: "cycles", label: "循环周期数", min: 0.25, max: 3, step: 0.25 },
+];
+
+const DEFAULT_POSE_CONFIG: PoseConfig = {
+  bob: 1,
+  stride: 1,
+  arm: 1,
+  lift: 1,
+  lean: 0,
+  lag: 0.45,
+  cycles: 1,
+};
+
 interface SeqFrame {
   name: string;
   dataUrl: string;
@@ -21,8 +41,10 @@ interface SeqFrame {
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
-  const [mode, setMode] = useState<"smart" | "sequence">("smart");
+  const [mode, setMode] = useState<"smart" | "editor" | "sequence">("smart");
   const [skeletal, setSkeletal] = useState(true);
+  const [useVideo, setUseVideo] = useState(false);
+  const [view, setView] = useState("side");
   const [action, setAction] = useState("walk");
   const [fps, setFps] = useState(12);
   const [duration, setDuration] = useState(1.0);
@@ -39,42 +61,129 @@ export default function AnimationStudio() {
   const [mainError, setMainError] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // -- 动作编辑器状态 -----------------------------------------------------
+  const [editorAction, setEditorAction] = useState("walk");
+  const [editorView, setEditorView] = useState("side");
+  const [poseConfig, setPoseConfig] = useState<PoseConfig>(DEFAULT_POSE_CONFIG);
+  const [phase, setPhase] = useState(0);
+  const [frameUrl, setFrameUrl] = useState<string | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [presets, setPresets] = useState<Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>>([]);
+  const [presetName, setPresetName] = useState("");
+  const [editorBusy, setEditorBusy] = useState(false);
+
   const assetImage =
     (asset as { image?: { url?: string } } | null)?.image?.url ||
     (asset?.source as { ai_image?: { url?: string } } | undefined)?.ai_image?.url ||
     (asset?.id ? `/api/assets/${asset.id}/image.png?view=front&size=512` : undefined);
 
-  const generate = useCallback(async () => {
-    setBusy(true);
-    setError(null);
-    setMainError(false);
-    try {
-      const payload: Parameters<typeof api.createAnimation>[0] = {
-        action,
-        fps,
-        duration,
-        size,
-        skeletal,
-      };
-      if (upload) {
-        payload.image = upload.dataUrl.split(",")[1];
-      } else if (asset?.id) {
-        payload.asset_id = asset.id;
+  const generate = useCallback(
+    async (opts?: { action?: string; view?: string; pose_config?: PoseConfig }) => {
+      if (busy) return;
+      setBusy(true);
+      setError(null);
+      setMainError(false);
+      try {
+        const payload: Parameters<typeof api.createAnimation>[0] = {
+          action: opts?.action ?? action,
+          fps,
+          duration,
+          size,
+          skeletal,
+          view: opts?.view ?? view,
+          pose_config: opts?.pose_config,
+          use_video: useVideo,
+        };
+        if (upload) {
+          payload.image = upload.dataUrl.split(",")[1];
+        } else if (asset?.id) {
+          payload.asset_id = asset.id;
+        }
+        setResult(await api.createAnimation(payload));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setBusy(false);
       }
-      // otherwise the backend resolves the latest workbench / history asset
-      setResult(await api.createAnimation(payload));
+    },
+    [action, fps, duration, size, upload, asset?.id, skeletal, view, busy, useVideo],
+  );
+
+  // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
+  useEffect(() => {
+    if (mode !== "editor") return;
+    let alive = true;
+    const timer = setTimeout(() => {
+      api
+        .previewAnimationFrame({ action: editorAction, view: editorView, phase, size: 384, pose_config: poseConfig })
+        .then((url) => {
+          if (!alive) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          setFrameUrl((old) => {
+            if (old) URL.revokeObjectURL(old);
+            return url;
+          });
+        })
+        .catch(() => {});
+    }, 120);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [mode, editorAction, editorView, phase, poseConfig, size]);
+
+  useEffect(() => {
+    if (mode !== "editor" || !playing) return;
+    const timer = setInterval(() => setPhase((p) => (p + 1 / 12) % 1), 90);
+    return () => clearInterval(timer);
+  }, [mode, playing]);
+
+  useEffect(() => {
+    if (mode !== "editor") return;
+    api
+      .listCustomActions()
+      .then((r) => setPresets(r.actions))
+      .catch(() => {});
+  }, [mode]);
+
+  const savePreset = async () => {
+    if (!presetName.trim() || editorBusy) return;
+    setEditorBusy(true);
+    try {
+      await api.saveCustomAction({ name: presetName.trim(), action: editorAction, view: editorView, pose_config: poseConfig });
+      const r = await api.listCustomActions();
+      setPresets(r.actions);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      setEditorBusy(false);
     }
-  }, [action, fps, duration, size, upload, asset?.id, skeletal]);
+  };
+
+  const removePreset = async (name: string) => {
+    try {
+      await api.deleteCustomAction(name);
+      setPresets((prev) => prev.filter((p) => p.name !== name));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
 
   const openPreview = () => {
     if (!result) return;
     setPreviewError(false);
     setPreviewLoading(true);
     setPreview(true);
+  };
+
+  const onFile = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => setUpload({ name: file.name, dataUrl: String(reader.result) });
+    reader.readAsDataURL(file);
   };
 
   const onSeqFiles = (files: FileList | null) => {
@@ -116,13 +225,6 @@ export default function AnimationStudio() {
     }
   }, [seqFrames, fps, size, busy]);
 
-  const onFile = (file?: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setUpload({ name: file.name, dataUrl: String(reader.result) });
-    reader.readAsDataURL(file);
-  };
-
   const quality = asset?.quality?.animation;
   const rootTrack = asset?.animation?.motion?.root_track ?? [];
   const corrections = asset?.animation?.motion?.corrections ?? [];
@@ -134,12 +236,14 @@ export default function AnimationStudio() {
     })
     .join(" ");
 
+  const isLocomotion = editorAction === "walk" || editorAction === "run";
+
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
         overline="Animation Studio"
         title="动画工作台"
-        description="智能生成：读取源图风格 → 提取人物特征 → 生成风格一致帧序列 → 一致性校验 → 输出动画；序列帧导入：按顺序导入帧图直接合成循环动画"
+        description="全身骨骼关节动画（含侧视横版步态）· 源图变形 · 序列帧合成 · 动作自定义编辑"
         actions={
           <>
             {result && <Badge tone="falign">{ACTION_LABELS[result.action] ?? result.action}</Badge>}
@@ -177,7 +281,9 @@ export default function AnimationStudio() {
             }
           >
             <div className="flex h-[320px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
-              {result ? (
+              {mode === "editor" && frameUrl ? (
+                <img src={frameUrl} alt="pose preview" className="max-h-[300px] max-w-full object-contain" />
+              ) : result ? (
                 mainError ? (
                   <div className="px-6 text-center text-sm text-danger">
                     动画预览加载失败。可点击「在线预览」或「下载 GIF」查看。
@@ -201,13 +307,15 @@ export default function AnimationStudio() {
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-ink-3">
               <span>
                 源：
-                {mode === "sequence"
-                  ? `序列帧 · ${seqFrames.length} 张`
-                  : upload
-                    ? `上传 · ${upload.name}`
-                    : asset
-                      ? `资产 · ${asset.name ?? asset.id}`
-                      : "—"}
+                {mode === "editor"
+                  ? `动作编辑 · 相位 ${phase.toFixed(2)}`
+                  : mode === "sequence"
+                    ? `序列帧 · ${seqFrames.length} 张`
+                    : upload
+                      ? `上传 · ${upload.name}`
+                      : asset
+                        ? `资产 · ${asset.name ?? asset.id}`
+                        : "—"}
               </span>
               {result && <span>输出 {result.size}px · {result.duration}s · 循环</span>}
             </div>
@@ -216,123 +324,348 @@ export default function AnimationStudio() {
           <Card title="生成参数 Animation Settings" icon="panel" iconClassName="text-falign">
             <div className="mb-4 flex items-center gap-3">
               <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                <button
-                  onClick={() => setMode("smart")}
-                  className={cx(
-                    "px-3 py-1.5 text-[12px] transition-colors",
-                    mode === "smart" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
-                  )}
-                >
-                  智能生成
-                </button>
-                <button
-                  onClick={() => setMode("sequence")}
-                  className={cx(
-                    "px-3 py-1.5 text-[12px] transition-colors",
-                    mode === "sequence" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
-                  )}
-                >
-                  序列帧导入
-                </button>
+                {([
+                  ["smart", "智能生成"],
+                  ["editor", "动作编辑"],
+                  ["sequence", "序列帧导入"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setMode(value)}
+                    className={cx(
+                      "px-3 py-1.5 text-[12px] transition-colors",
+                      mode === value ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
               <span className="text-[11px] text-ink-4">
                 {mode === "smart"
                   ? "由 AI 原画 / 资产立绘驱动生成风格一致的动作帧"
-                  : "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"}
+                  : mode === "editor"
+                    ? "调节动作参数，时间轴上逐帧预览，可保存为自定义动作复用"
+                    : "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"}
               </span>
             </div>
-            {mode === "smart" ? (
-              <div className="flex flex-wrap items-end gap-6">
-              <div className="flex flex-wrap items-center gap-6">
-                <div>
-                  <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">生成方式</div>
-                  <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                    <button
-                      onClick={() => setSkeletal(true)}
-                      title="姿态引擎驱动的全身关节动画，含预备/跟随/重叠动作"
-                      className={cx(
-                        "px-3 py-1.5 text-[12px] transition-colors",
-                        skeletal ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
-                      )}
-                    >
-                      全身骨骼
-                    </button>
-                    <button
-                      onClick={() => setSkeletal(false)}
-                      title="对源图做变形动画，最大程度保留原画外观"
-                      className={cx(
-                        "px-3 py-1.5 text-[12px] transition-colors",
-                        !skeletal ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
-                      )}
-                    >
-                      源图驱动
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
-                  <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                    {ACTIONS.map((item) => (
+
+            {mode === "smart" && (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-6">
+                  <div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">生成方式</div>
+                    <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                       <button
-                        key={item}
-                        onClick={() => setAction(item)}
+                        onClick={() => {
+                          setUseVideo(false);
+                          setSkeletal(true);
+                        }}
+                        title="姿态引擎驱动的全身关节动画，含预备/跟随/重叠动作"
                         className={cx(
                           "px-3 py-1.5 text-[12px] transition-colors",
-                          action === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          skeletal && !useVideo ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
                         )}
                       >
-                        {ACTION_LABELS[item]}
+                        全身骨骼
+                      </button>
+                      <button
+                        onClick={() => {
+                          setUseVideo(false);
+                          setSkeletal(false);
+                        }}
+                        title="对源图做变形动画，最大程度保留原画外观"
+                        className={cx(
+                          "px-3 py-1.5 text-[12px] transition-colors",
+                          !skeletal && !useVideo ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                        )}
+                      >
+                        源图驱动
+                      </button>
+                      <button
+                        onClick={() => setUseVideo(true)}
+                        title="Windup 式图生视频：AI 原画本身动起来，需自定义模型，耗时约 1~3 分钟"
+                        className={cx(
+                          "px-3 py-1.5 text-[12px] transition-colors",
+                          useVideo ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                        )}
+                      >
+                        AI 视频驱动
+                      </button>
+                    </div>
+                  </div>
+                  {skeletal && (action === "walk" || action === "run") && (
+                    <div>
+                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">视角</div>
+                      <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                        <button
+                          onClick={() => setView("side")}
+                          title="2D 横版侧视步态：腿部交替支撑/摆动，运动最自然"
+                          className={cx(
+                            "px-3 py-1.5 text-[12px] transition-colors",
+                            view === "side" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          )}
+                        >
+                          侧视横版
+                        </button>
+                        <button
+                          onClick={() => setView("front")}
+                          title="正面视角，面向镜头"
+                          className={cx(
+                            "px-3 py-1.5 text-[12px] transition-colors",
+                            view === "front" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          )}
+                        >
+                          正面
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
+                    <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                      {ACTIONS.map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => setAction(item)}
+                          className={cx(
+                            "px-3 py-1.5 text-[12px] transition-colors",
+                            action === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          )}
+                        >
+                          {ACTION_LABELS[item]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-end gap-6">
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
+                    <input type="range" min={4} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
+                  </label>
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-2 block uppercase tracking-widest">时长 {duration.toFixed(1)}s</span>
+                    <input
+                      type="range"
+                      min={0.3}
+                      max={4}
+                      step={0.1}
+                      value={duration}
+                      onChange={(e) => setDuration(Number(e.target.value))}
+                    />
+                  </label>
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-2 block uppercase tracking-widest">分辨率</span>
+                    <select
+                      value={size}
+                      onChange={(e) => setSize(Number(e.target.value))}
+                      className="rounded-lg border border-line-subtle bg-surface-1 px-2 py-1.5 text-[12px]"
+                    >
+                      {SIZES.map((option) => (
+                        <option key={option} value={option}>
+                          {option} x {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="ml-auto flex items-center gap-3">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => onFile(e.target.files?.[0])}
+                    />
+                    <Button variant="secondary" size="sm" icon="image" onClick={() => fileRef.current?.click()}>
+                      上传源图
+                    </Button>
+                    <Button variant="primary" size="sm" icon="spark" onClick={() => generate()} disabled={busy}>
+                      {busy ? (useVideo ? "AI 生成视频中…（1~3 分钟）" : "生成中…") : "生成动画"}
+                    </Button>
+                  </div>
+                </div>
+                {upload && (
+                  <button className="text-[11px] text-ink-3 underline" onClick={() => setUpload(null)}>
+                    清除上传，改用当前资产
+                  </button>
+                )}
+              </div>
+            )}
+
+            {mode === "editor" && (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-6">
+                  <div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">基础动作</div>
+                    <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                      {ACTIONS.map((item) => (
+                        <button
+                          key={item}
+                          onClick={() => setEditorAction(item)}
+                          className={cx(
+                            "px-3 py-1.5 text-[12px] transition-colors",
+                            editorAction === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          )}
+                        >
+                          {ACTION_LABELS[item]}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {isLocomotion && (
+                    <div>
+                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">视角</div>
+                      <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                        {(["side", "front"] as const).map((item) => (
+                          <button
+                            key={item}
+                            onClick={() => setEditorView(item)}
+                            className={cx(
+                              "px-3 py-1.5 text-[12px] transition-colors",
+                              editorView === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                            )}
+                          >
+                            {item === "side" ? "侧视横版" : "正面"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="ml-auto flex items-center gap-2">
+                    <Button variant="secondary" size="sm" icon="play" onClick={() => setPlaying((p) => !p)}>
+                      {playing ? "暂停" : "播放循环"}
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="spark"
+                      loading={busy}
+                      onClick={() => generate({ action: editorAction, view: editorView, pose_config: poseConfig })}
+                    >
+                      用此动作生成
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-8 gap-y-3 md:grid-cols-4">
+                  {POSE_PARAMS.map((param) => (
+                    <label key={param.key} className="text-[11px] text-ink-4">
+                      <span className="mb-1.5 flex justify-between uppercase tracking-widest">
+                        <span>{param.label}</span>
+                        <span className="font-mono text-ink-3">{String(poseConfig[param.key] ?? 0)}</span>
+                      </span>
+                      <input
+                        type="range"
+                        min={param.min}
+                        max={param.max}
+                        step={param.step}
+                        value={Number(poseConfig[param.key] ?? 0)}
+                        onChange={(e) =>
+                          setPoseConfig((prev) => ({ ...prev, [param.key]: Number(e.target.value) }))
+                        }
+                        className="w-full"
+                      />
+                    </label>
+                  ))}
+                </div>
+
+                <div>
+                  <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-widest text-ink-4">
+                    <span>时间轴 · 12 相位</span>
+                    <span className="font-mono normal-case text-ink-3">phase {phase.toFixed(2)}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    {Array.from({ length: 12 }, (_, index) => index / 12).map((value, index) => (
+                      <button
+                        key={value}
+                        onClick={() => {
+                          setPlaying(false);
+                          setPhase(value);
+                        }}
+                        title={`相位 ${value.toFixed(2)}`}
+                        className={cx(
+                          "h-7 flex-1 rounded-md border font-mono text-[10px] transition-colors",
+                          Math.abs(phase - value) < 1 / 24
+                            ? "border-primary bg-primary text-white"
+                            : "border-line-subtle bg-surface-1 text-ink-3 hover:bg-surface-2",
+                        )}
+                      >
+                        {index + 1}
                       </button>
                     ))}
                   </div>
-                </div>
-              </div>
-                <label className="text-[11px] text-ink-4">
-                  <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
-                  <input type="range" min={4} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
-                </label>
-                <label className="text-[11px] text-ink-4">
-                  <span className="mb-2 block uppercase tracking-widest">时长 {duration.toFixed(1)}s</span>
                   <input
                     type="range"
-                    min={0.3}
-                    max={4}
-                    step={0.1}
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
+                    min={0}
+                    max={1}
+                    step={1 / 60}
+                    value={phase}
+                    onChange={(e) => {
+                      setPlaying(false);
+                      setPhase(Number(e.target.value));
+                    }}
+                    className="mt-2 w-full"
                   />
-                </label>
-                <label className="text-[11px] text-ink-4">
-                  <span className="mb-2 block uppercase tracking-widest">分辨率</span>
-                  <select
-                    value={size}
-                    onChange={(e) => setSize(Number(e.target.value))}
-                    className="rounded-lg border border-line-subtle bg-surface-1 px-2 py-1.5 text-[12px]"
-                  >
-                    {SIZES.map((option) => (
-                      <option key={option} value={option}>
-                        {option} x {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div className="ml-auto flex items-center gap-3">
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => onFile(e.target.files?.[0])}
-                  />
-                  <Button variant="secondary" size="sm" icon="image" onClick={() => fileRef.current?.click()}>
-                    上传源图
+                </div>
+
+                <div className="flex flex-wrap items-end gap-4 rounded-lg border border-line-subtle bg-surface-2/40 p-3">
+                  <label className="text-[11px] text-ink-4">
+                    <span className="mb-1.5 block uppercase tracking-widest">保存当前动作</span>
+                    <input
+                      value={presetName}
+                      onChange={(e) => setPresetName(e.target.value)}
+                      placeholder="动作名称，如：轻快小跑"
+                      className="h-8 w-44 rounded-md border border-line bg-surface-1 px-2.5 text-[12px] text-ink outline-none placeholder:text-ink-4 focus:border-primary"
+                    />
+                  </label>
+                  <Button variant="secondary" size="sm" icon="check" loading={editorBusy} onClick={savePreset}>
+                    保存
                   </Button>
-                  <Button variant="primary" size="sm" icon="spark" onClick={generate} disabled={busy}>
-                    {busy ? "生成中…" : "生成动画"}
-                  </Button>
+                  {presets.length > 0 && (
+                    <>
+                      <label className="text-[11px] text-ink-4">
+                        <span className="mb-1.5 block uppercase tracking-widest">已保存动作 ({presets.length})</span>
+                        <select
+                          className="h-8 w-52 rounded-md border border-line bg-surface-1 px-2 text-[12px] text-ink"
+                          onChange={(e) => {
+                            const preset = presets.find((p) => p.name === e.target.value);
+                            if (!preset) return;
+                            setEditorAction(preset.action);
+                            setEditorView(preset.view);
+                            setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...preset.pose_config });
+                            setPhase(0);
+                          }}
+                          value=""
+                        >
+                          <option value="" disabled>
+                            选择要载入的动作…
+                          </option>
+                          {presets.map((preset) => (
+                            <option key={preset.name} value={preset.name}>
+                              {preset.name} · {ACTION_LABELS[preset.action] ?? preset.action}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        icon="x"
+                        onClick={() => {
+                          const selected = presets[0];
+                          if (selected) removePreset(selected.name);
+                        }}
+                      >
+                        删除最新
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
-            ) : (
+            )}
+
+            {mode === "sequence" && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-end gap-6">
                   <label className="text-[11px] text-ink-4">
@@ -412,11 +745,7 @@ export default function AnimationStudio() {
                 )}
               </div>
             )}
-            {(mode === "smart" && upload) && (
-              <button className="mt-2 text-[11px] text-ink-3 underline" onClick={() => setUpload(null)}>
-                清除上传，改用当前资产
-              </button>
-            )}
+
             {error && <p className="mt-3 border-l-2 border-danger pl-3 text-[12.5px] text-danger">{error}</p>}
           </Card>
 
@@ -444,7 +773,7 @@ export default function AnimationStudio() {
               iconClassName="text-falign"
               right={
                 <span className="text-[12px] text-ink-3">
-                  {result.action === "sequence" ? "导入序列 · 原样合成" : skeletal ? "全身骨骼 · 关节动画" : "源图驱动 · 变形动画"}
+                  {result.action === "sequence" ? "导入序列 · 原样合成" : "全身骨骼 · 关节动画"}
                 </span>
               }
             >

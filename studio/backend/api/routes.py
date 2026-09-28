@@ -53,6 +53,25 @@ class AnimationRequest(BaseModel):
     duration: float = 1.0
     size: int = 512
     skeletal: bool = False  # 全身骨骼模式：关节动画而非源图变形
+    view: str = "front"  # walk/run 的视角：front 正面 / side 侧视横版
+    pose_config: dict | None = None  # 动作自定义参数（幅度/滞后/周期等）
+    use_video: bool = False  # AI 视频驱动（Windup 式 i2v）：让 AI 原画本身动起来
+
+
+class PreviewFrameRequest(BaseModel):
+    asset_id: str | None = None
+    action: str = "walk"
+    view: str = "front"
+    phase: float = 0.0  # 0..1 动作循环内相位
+    size: int = 384
+    pose_config: dict | None = None
+
+
+class CustomActionRequest(BaseModel):
+    name: str
+    action: str = "walk"
+    view: str = "front"
+    pose_config: dict
 
 
 class SequenceRequest(BaseModel):
@@ -329,6 +348,25 @@ def build_router(runtime):
                 status_code=404,
                 detail="没有可用资源：请先在工作台生成资产，或上传一张源图",
             )
+        if request.use_video:
+            # Windup 式 i2v：源图 + 动作提示词 → 图生视频 → 抽帧合成
+            source = image_bytes or service._asset_render(asset)
+            if not source:
+                raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
+            settings = runtime.model_settings.effective()
+            if not (settings.get("enabled") and settings.get("api_key")):
+                raise HTTPException(status_code=409, detail="AI 视频驱动需要先在模型设置中启用自定义模型")
+            try:
+                return service.create_video(
+                    source_bytes=source,
+                    settings=settings,
+                    action=request.action,
+                    fps=request.fps,
+                    duration=request.duration,
+                    size=request.size,
+                )
+            except RuntimeError as error:
+                raise HTTPException(status_code=502, detail=str(error))
         return service.create(
             asset=asset,
             image_bytes=image_bytes,
@@ -337,7 +375,55 @@ def build_router(runtime):
             duration=request.duration,
             size=request.size,
             skeletal=request.skeletal,
+            view=request.view,
+            pose_config=request.pose_config,
         )
+
+    @router.post("/animation/preview-frame")
+    def preview_animation_frame(request: PreviewFrameRequest):
+        """渲染动作循环内的单帧 PNG（动作编辑器的时间轴/滑杆实时预览）。"""
+        from artgen import asset_params
+        from artgen.png import encode_rgba
+        from artgen.anim import render_frame_rgba
+        from artgen.sidewalk import render_side_frame_rgba
+
+        params = {"palette": None, "seed": "preview"}
+        if request.asset_id:
+            asset = _resolve_asset(runtime, request.asset_id)
+            if asset is not None:
+                params = asset_params(asset)
+        view = request.view if request.view in ("front", "side") else "front"
+        phase = max(0.0, min(1.0, float(request.phase)))
+        action = request.action if request.action in ("idle", "walk", "run", "attack", "jump") else "walk"
+        if view == "side" and action in ("walk", "run"):
+            w, h, rgba = render_side_frame_rgba(params, action, phase, request.size, request.pose_config)
+        else:
+            w, h, rgba = render_frame_rgba(params, action, phase, request.size, request.pose_config)
+        return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
+
+    @router.get("/animation/custom-actions")
+    def list_custom_actions():
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        return {"actions": CustomActionStore(ANIMATION_DIR + "/custom_actions.json").list()}
+
+    @router.post("/animation/custom-actions")
+    def save_custom_action(request: CustomActionRequest):
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        try:
+            saved = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").save(request.model_dump())
+        except ValueError as error:
+            raise HTTPException(status_code=422, detail=str(error))
+        return saved
+
+    @router.delete("/animation/custom-actions/{name}")
+    def delete_custom_action(name: str):
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        if not CustomActionStore(ANIMATION_DIR + "/custom_actions.json").delete(name):
+            raise HTTPException(status_code=404, detail="unknown custom action")
+        return {"status": "deleted"}
 
     @router.post("/animation/sequence")
     def create_sequence_animation(request: SequenceRequest):

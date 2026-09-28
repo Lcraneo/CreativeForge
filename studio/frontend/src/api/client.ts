@@ -70,6 +70,19 @@ export interface AnimationResult {
   created_at: number;
 }
 
+export interface PoseConfig {
+  [key: string]: number;
+}
+
+export interface CustomActionPreset {
+  name: string;
+  action: string;
+  view: string;
+  pose_config: PoseConfig;
+  created_at: number;
+  updated_at: number;
+}
+
 export interface AnimationRequestPayload {
   asset_id?: string;
   image?: string;
@@ -78,6 +91,9 @@ export interface AnimationRequestPayload {
   duration?: number;
   size?: number;
   skeletal?: boolean;
+  view?: string;
+  pose_config?: PoseConfig;
+  use_video?: boolean;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -126,6 +142,37 @@ export const api = {
     request<AnimationResult>("/api/animation/sequence", {
       method: "POST",
       body: JSON.stringify(payload),
+    }),
+
+  previewAnimationFrame: async (payload: {
+    asset_id?: string;
+    action: string;
+    view: string;
+    phase: number;
+    size?: number;
+    pose_config?: PoseConfig;
+  }): Promise<string> => {
+    const response = await fetch("/api/animation/preview-frame", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
+    return URL.createObjectURL(await response.blob());
+  },
+
+  listCustomActions: () =>
+    request<{ actions: CustomActionPreset[] }>("/api/animation/custom-actions"),
+
+  saveCustomAction: (payload: { name: string; action: string; view: string; pose_config: PoseConfig }) =>
+    request<CustomActionPreset>("/api/animation/custom-actions", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  deleteCustomAction: (name: string) =>
+    request<{ status: string }>(`/api/animation/custom-actions/${encodeURIComponent(name)}`, {
+      method: "DELETE",
     }),
 
   analyzeAnimationSource: (image: string) =>

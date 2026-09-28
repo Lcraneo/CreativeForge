@@ -97,6 +97,7 @@ class ModelSettingsStore:
         "api_key": "",
         "model": "",
         "chat_model": "",
+        "video_model": "",
         "use_chat": True,
         "use_image": True,
         "size": "512x512",
@@ -163,6 +164,74 @@ def _http_error(exc):
         detail = response.text[:220]
         return RuntimeError("HTTP {} {}: {}".format(response.status_code, exc.request.url, detail))
     return exc
+
+
+def poll_video_task(api_key, task_id, timeout_seconds):
+    """Poll a DashScope i2v (图生视频) async task; returns the video URL."""
+
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        poll = httpx.get(
+            DASHSCOPE_HOST + "/api/v1/tasks/" + task_id,
+            headers={"Authorization": "Bearer " + api_key},
+            timeout=30,
+        )
+        body = poll.json() if poll.status_code < 500 else {}
+        output = body.get("output") or {}
+        status = output.get("task_status")
+        if status == "SUCCEEDED":
+            url = output.get("video_url") or ((output.get("results") or [{}])[0].get("url"))
+            if not url:
+                raise RuntimeError("dashscope video task succeeded without video_url")
+            return url
+        if status in ("FAILED", "CANCELED", "UNKNOWN"):
+            message = output.get("message") or status
+            raise RuntimeError("dashscope video task {}: {}".format(task_id, message))
+        time.sleep(5)
+    raise RuntimeError("dashscope video task timeout: " + str(task_id))
+
+
+def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
+    """图生视频 (Windup 式 i2v 路线): source image + motion prompt -> mp4 bytes.
+
+    Tries the configured ``video_model`` first, then the known DashScope
+    i2v model names (naming changed across model generations). Returns
+    ``(video_bytes, model_name)``."""
+    api_key = settings.get("api_key")
+    if not api_key:
+        raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
+    models = [m for m in (settings.get("video_model"), "wan2.1-i2v-turbo", "wanx2.1-i2v-turbo", "wanx-i2v") if m]
+    encoded = base64.b64encode(image_bytes).decode()
+    last_error = None
+    for model in models:
+        create = httpx.post(
+            DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
+            headers={
+                "Authorization": "Bearer " + api_key,
+                "Content-Type": "application/json",
+                "X-DashScope-Async": "enable",
+            },
+            json={
+                "model": model,
+                "input": {"prompt": prompt, "img_url": "data:image/png;base64," + encoded},
+                "parameters": {"size": "960*960", "prompt_extend": True},
+            },
+            timeout=60,
+        )
+        if create.status_code >= 400:
+            last_error = RuntimeError(
+                "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
+            )
+            continue
+        task_id = (create.json().get("output") or {}).get("task_id")
+        if not task_id:
+            last_error = RuntimeError("dashscope: no task_id in response")
+            continue
+        url = poll_video_task(api_key, task_id, timeout_seconds)
+        video = httpx.get(url, timeout=120)
+        video.raise_for_status()
+        return video.content, model
+    raise last_error or RuntimeError("video generation failed")
 
 
 def poll_dashscope_task(api_key, task_id, timeout_seconds):

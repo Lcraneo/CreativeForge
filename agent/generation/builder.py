@@ -75,10 +75,30 @@ STATIC_KEYWORDS = (
     "立绘", "头像", "icon", "tileset", "background", "item",
 )
 ANIM_KEYWORDS = {
-    "attack": ("攻击", "attack"),
-    "walk": ("行走", "walk"),
-    "idle": ("待机", "idle"),
+    "attack": ("攻击", "attack", "斩击", "挥砍", "挥击", "劈砍", "战斗"),
+    "walk": ("行走", "走路", "步行", "walk"),
+    "run": ("奔跑", "跑步", "疾跑", "run"),
+    "idle": ("待机", "站立", "idle", "呼吸"),
+    "jump": ("跳跃", "弹跳", "jump", "跳"),
 }
+
+
+def _actions_of(lower):
+    """动作关键词按“在文本中最早出现”排序（先提到的优先），未提及返回空表。
+
+    之前这里有两个 bug：关键词表只覆盖 attack/walk/idle（"奔跑/跳跃"一律落到
+    默认 idle），且按字典序取第一个命中（用户后写的动作覆盖先写的）。"""
+    hits = []
+    for name, keywords in ANIM_KEYWORDS.items():
+        pos = min((lower.find(kw) for kw in keywords if lower.find(kw) >= 0), default=-1)
+        if pos >= 0:
+            hits.append((pos, name))
+    hits.sort()
+    seen = []
+    for _, name in hits:
+        if name not in seen:
+            seen.append(name)
+    return seen
 
 
 def _slug(text):
@@ -129,16 +149,18 @@ def _resolve_identity(goal_text, overrides):
 
     # Canonical fire-mage identity is preserved only for the pixel-style
     # character prompts (demo + benchmarks); everything else derives its own.
+    # The action still follows the goal text (e.g. "火焰法师带奔跑动画" → run);
+    # only when the text names no action does the canonical demo default to
+    # its historical attack cycle.
+    actions = _actions_of(lower)
     if style == "pixel" and not static and any(keyword in lower for keyword in FIRE_KEYWORDS):
         identity = dict(CANONICAL_FIRE_MAGE)
+        identity["action"] = actions[0] if actions else "attack"
+        identity["actions"] = actions or ["attack"]
         identity["style"] = style
         return _apply_overrides(identity, overrides)
 
-    action = "idle"
-    for name, keywords in ANIM_KEYWORDS.items():
-        if any(keyword in lower for keyword in keywords):
-            action = name
-            break
+    action = actions[0] if actions else "idle"
     if static:
         action = "idle"
 
@@ -150,6 +172,7 @@ def _resolve_identity(goal_text, overrides):
         "type": "character",
         "role": "npc",
         "action": action,
+        "actions": actions or ([action] if not static else ["idle"]),
         "static": static,
         "style": style,
         "palette": _palette_for(_element_of(lower), seed),
@@ -213,6 +236,7 @@ def build_asset(goal, task=None):
     ]
     animation = {
         "action": identity["action"],
+        "actions": identity.get("actions") or [identity["action"]],
         "frames": frames,
         "fps": FPS,
         "loop": True,

@@ -45,21 +45,39 @@ def _two_bone(root, target, l1, l2, bend):
     return mx - uy * h * bend, my + ux * h * bend
 
 
-def _pose(action, phase):
-    t = phase * 2.0 * math.pi
+def _pose(action, phase, config=None):
+    """Pose state for one phase. ``config`` (动作自定义参数) scales/offsets the
+    raw curves: bob 起伏、stride 步幅、arm 摆臂、lift 抬脚、lean 前倾、
+    lag 手臂滞后（重叠动作）、cycles 每循环运动周期数。"""
+    cfg = config or {}
+    cycles = max(0.25, min(4.0, float(cfg.get("cycles", 1.0))))
+    cyclic = action in ("idle", "walk", "run")
+    t = phase * 2.0 * math.pi * (cycles if cyclic else 1.0)
     state = {"bob": 0.0, "jump": 0.0, "arm": 0.0, "leg": 0.0, "lean": 0.0,
-             "weapon": None, "tuck": 0.0, "lift": (0.0, 0.0), "squat": 0.0}
+             "weapon": None, "tuck": 0.0, "lift": (0.0, 0.0), "squat": 0.0,
+             "sway": 0.0}
     if action == "walk":
-        # arms trail the legs slightly (overlapping action)
-        state.update(leg=math.cos(t), arm=-math.cos(t - 0.45),
-                     bob=-abs(math.sin(t)) * 6.0,
-                     lift=(max(0.0, math.sin(t)) * 12.0, max(0.0, -math.sin(t)) * 12.0))
+        # arms trail the legs slightly (overlapping action); hips sway over
+        # the planted foot (weight shift, 2 bobs per cycle like a real gait)
+        state.update(leg=math.cos(t), arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.45)))),
+                     bob=-abs(math.sin(t)) * 6.0 * float(cfg.get("bob", 1.0)),
+                     lean=float(cfg.get("lean", 0.0)),
+                     sway=math.sin(t) * 7.0,
+                     lift=(max(0.0, math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
+                           max(0.0, -math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0))))
+        state["leg"] *= float(cfg.get("stride", 1.0))
+        state["arm"] *= float(cfg.get("arm", 1.0))
     elif action == "run":
-        state.update(leg=math.cos(t) * 1.25, arm=-math.cos(t - 0.5) * 1.25,
-                     bob=-abs(math.sin(t)) * 10.0, lean=7.0,
-                     lift=(max(0.0, math.sin(t)) * 22.0, max(0.0, -math.sin(t)) * 22.0))
+        state.update(leg=math.cos(t) * 1.25, arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.5)))) * 1.25,
+                     bob=-abs(math.sin(t)) * 10.0 * float(cfg.get("bob", 1.0)),
+                     lean=7.0 + float(cfg.get("lean", 0.0)), sway=math.sin(t) * 5.0,
+                     lift=(max(0.0, math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
+                           max(0.0, -math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0))))
+        state["leg"] *= float(cfg.get("stride", 1.0))
+        state["arm"] *= float(cfg.get("arm", 1.0))
     elif action == "attack":
         # anticipation (wind-up) -> fast strike -> follow-through -> recover
+        # (one-shot action: never time-scaled by cycles)
         if phase < 0.3:
             u = phase / 0.3
             k = -0.55 * math.sin(math.pi * u)
@@ -72,7 +90,8 @@ def _pose(action, phase):
         else:
             u = (phase - 0.8) / 0.2
             k = 0.77 - 0.77 * (u * u * (3 - 2 * u))
-        state.update(leg=math.sin(t) * 0.4, arm=0.3 - k * 0.25, lean=4.0 + k * 10.0,
+        state.update(leg=math.sin(t) * 0.4, arm=0.3 - k * 0.25,
+                     lean=4.0 + k * 10.0 + float(cfg.get("lean", 0.0)),
                      weapon=-60.0 + 120.0 * k)
     elif action == "jump":
         if phase < 0.22:
@@ -88,20 +107,24 @@ def _pose(action, phase):
             u = (phase - 0.72) / 0.28
             state.update(jump=-14.0 * (1.0 - u) * math.sin(math.pi * min(1.0, u * 1.6)),
                          arm=-0.3 * (1.0 - u), squat=1.0 - u)
+        state["lean"] += float(cfg.get("lean", 0.0))
     else:  # idle: breathing with lazy arm sway trailing the breath
-        state.update(bob=math.sin(t) * 4.0, arm=math.sin(t - 0.5) * 0.22)
+        state.update(bob=math.sin(t) * 4.0 * float(cfg.get("bob", 1.0)),
+                     arm=math.sin(t - max(0.0, float(cfg.get("lag", 0.5)))) * 0.22 * float(cfg.get("arm", 1.0)),
+                     lean=float(cfg.get("lean", 0.0)))
     return state
 
 
-def _draw_frame(painter, colors, traits, action, phase):
+def _draw_frame(painter, colors, traits, action, phase, config=None):
     c = colors
-    pose = _pose(action, phase)
+    pose = _pose(action, phase, config)
     jump = pose["jump"]
     bob = pose["bob"]
     lean = pose["lean"]
     dy = bob - jump
     body_ry = 104.0 if traits["round_body"] else 96.0
-    cx = 256.0 + lean
+    sway = pose.get("sway", 0.0)
+    cx = 256.0 + lean + sway
 
     # ground shadow (fades as the character leaves the ground)
     if jump < 60:
@@ -111,7 +134,7 @@ def _draw_frame(painter, colors, traits, action, phase):
     # legs: hip -> knee -> ankle (two-bone), feet lift alternately when stepping
     hip_y = 428.0 + dy + pose["squat"] * 8.0
     for side, (sign, lift) in enumerate(((-1, pose["lift"][0]), (1, pose["lift"][1]))):
-        hip = (256.0 + sign * 30, hip_y)
+        hip = (256.0 + sign * 30 + sway * 0.8, hip_y)
         angle = sign * 8 + pose["leg"] * 16 * -sign
         reach = 76.0
         if pose["tuck"]:
@@ -174,25 +197,25 @@ def _draw_frame(painter, colors, traits, action, phase):
         painter.shape(capsule(a[0], a[1], b[0], b[1], 4), c["dark"], None)
 
 
-def render_frame_rgba(params, action, phase, size):
+def render_frame_rgba(params, action, phase, size, config=None):
     """-> (width, height, RGBA bytes) for one frame."""
     size = max(64, min(1024, int(size)))
     colors, traits = _resolve(params)
     painter = Painter(Surface(size, size), colors, 0.0, 0.0, size / DESIGN)
-    _draw_frame(painter, colors, traits, action if action in ACTIONS else "idle", phase)
+    _draw_frame(painter, colors, traits, action if action in ACTIONS else "idle", phase, config)
     return size, size, bytes(painter.s.to_rgba())
 
 
-def render_frame_png(params, action, phase, size):
-    width, height, rgba = render_frame_rgba(params, action, phase, size)
+def render_frame_png(params, action, phase, size, config=None):
+    width, height, rgba = render_frame_rgba(params, action, phase, size, config)
     return encode_rgba(width, height, rgba)
 
 
-def render_action_frames(params, action, count=12, size=512):
+def render_action_frames(params, action, count=12, size=512, config=None):
     """-> list of (width, height, RGBA bytes)."""
     count = max(2, min(60, int(count)))
     return [
-        render_frame_rgba(params, action, index / count, size)
+        render_frame_rgba(params, action, index / count, size, config)
         for index in range(count)
     ]
 

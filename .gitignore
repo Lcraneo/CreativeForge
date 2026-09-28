@@ -5,6 +5,7 @@ studio/backend/exports/
 studio/backend/data/
 tests/release/_tmp_runtime/
 .workbuddy/
+.zcode_tmp_*
 
 # backend (Phase 11-15)
 backend/.env

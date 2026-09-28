@@ -122,6 +122,8 @@ def create_animation(
     source_bytes=None,
     loop=True,
     consistency_floor=0.6,
+    view="front",
+    pose_config=None,
 ):
     """Build a style-consistent animation.
 
@@ -129,6 +131,8 @@ def create_animation(
     real source image (PNG/JPEG bytes) — when present the animation is driven
     from that exact artwork (source-driven), keeping content/style/composition.
     ``reference`` is a style anchor for the vector path when no source is given.
+    ``view="side"`` switches walk/run to the dedicated side-view gait system
+    (2D 平台游戏式横版行走); ``pose_config`` carries the custom-action sliders.
     """
     action = action if action in ACTIONS else "walk"
     render_params = params or (asset_params(asset) if asset is not None else None)
@@ -147,14 +151,19 @@ def create_animation(
         from artgen.sourceanim import animate_source
 
         frames_rgba, source_reference = animate_source(source_bytes, action, frame_count, size)
+    elif view == "side" and action in ("walk", "run"):
+        from artgen.sidewalk import render_side_frames
+
+        frames_rgba = render_side_frames(render_params, action, frame_count, size, pose_config)
     else:
-        frames_rgba = render_action_frames(render_params, action, frame_count, size)
+        frames_rgba = render_action_frames(render_params, action, frame_count, size, pose_config)
 
     # 2) reference for style matching
     reference_rgba = source_reference or _to_rgba(reference)
     if reference_rgba is None:
         # fall back to the asset's still image as the style anchor
-        still = render_character_view(render_params, "front", size)
+        anchor_view = "side" if (view == "side" and action in ("walk", "run")) else "front"
+        still = render_character_view(render_params, anchor_view, size)
         reference_rgba = decode_png(still)
 
     style = analyze_rgba(*reference_rgba)
