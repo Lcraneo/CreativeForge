@@ -99,6 +99,7 @@ export default function Workspace() {
   const [goal, setGoal] = useState(EXAMPLES[0]);
   const [engine, setEngine] = useState("unity");
   const [busy, setBusy] = useState(false);
+  const [enhancing, setEnhancing] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [height, setHeight] = useState<string>("");
   const [overrides, setOverrides] = useState<Record<string, string>>(() =>
@@ -200,6 +201,23 @@ export default function Workspace() {
     }
   }
 
+  async function enhancePromptText() {
+    const text = goal.trim();
+    if (!text || enhancing) return;
+    setEnhancing(true);
+    try {
+      const result = await api.enhancePrompt(text);
+      if (result?.prompt) {
+        setGoal(result.prompt);
+        toast({ tone: "success", title: "提示词已增强", description: `模型 ${result.model}` });
+      }
+    } catch (cause) {
+      toast({ tone: "danger", title: "增强失败", description: String(cause) });
+    } finally {
+      setEnhancing(false);
+    }
+  }
+
   async function openTask(task: TaskSummary) {
     if (task.status === "running") {
       navigate("/agents");
@@ -290,6 +308,17 @@ export default function Workspace() {
                 已输入 {goal.length} 字 · ⌘↵ 提交
               </span>
             </div>
+            <Button
+              variant="secondary"
+              size="lg"
+              icon="spark"
+              loading={enhancing}
+              onClick={enhancePromptText}
+              disabled={!modelSettings.data?.enabled || !modelSettings.data?.chat_model || enhancing}
+              title="用对话模型增强提示词（增强后再生成）"
+            >
+              增强提示词
+            </Button>
             <Button variant="ember" size="lg" icon="spark" loading={busy} onClick={generate}>
               {busy ? "创建中…" : "生成资产"}
             </Button>

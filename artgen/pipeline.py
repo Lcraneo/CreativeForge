@@ -125,6 +125,7 @@ def create_animation(
     view="front",
     pose_config=None,
     segment_mask=None,
+    rigged=False,
 ):
     """Build a style-consistent animation.
 
@@ -148,9 +149,18 @@ def create_animation(
     frame_count = max(2, min(48, frame_count))
     size = max(64, min(1024, int(size)))
 
-    # 1) frames: source-driven (animate the actual artwork) or vector pose
+    # 1) frames: rig-driven (character-bound) > source-driven > side gait > vector
     source_reference = None
-    if source_bytes:
+    rig = None
+    falign = None
+    if rigged and source_bytes:
+        from artgen.riganim import animate_rigged
+
+        frames_rgba, source_reference, rig, falign = animate_rigged(
+            source_bytes, action, frame_count, size,
+            config=pose_config, segment_mask=segment_mask,
+        )
+    elif source_bytes:
         from artgen.sourceanim import animate_source
 
         frames_rgba, source_reference = animate_source(
@@ -204,6 +214,8 @@ def create_animation(
         "character": character,
         "consistency": aggregate,
         "per_frame": per_frame,
+        "rig": rig,
+        "falign": falign,
         "gif": gif,
         "sheet": sheet,
         "sheet_size": [sheet_w, sheet_h],

@@ -114,28 +114,10 @@ class AgentRuntime:
                 })
             return None, None
 
+        # 提示词增强改为「用户手动触发」：对话框上的「增强提示词」按钮会调用
+        # POST /api/prompt/enhance，用户在发送前自行确认增强后的提示词。
+        # 因此这里不再自动增强，直接把用户当前文本作为生成提示词。
         enhanced = None
-        if settings.get("use_chat") and settings.get("chat_model"):
-            self.tasks.append_event(task_id, {
-                "type": "MODEL_START",
-                "stage": "enhance",
-                "provider": settings.get("provider"),
-                "model": settings.get("chat_model"),
-            })
-            try:
-                enhanced = ChatProvider(settings).enhance(goal, spec, overrides)
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_ENHANCE",
-                    "model": enhanced.get("model"),
-                    "prompt": enhanced.get("prompt"),
-                })
-            except Exception as error:
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_FALLBACK",
-                    "stage": "enhance",
-                    "detail": str(error),
-                })
-                enhanced = None
 
         image = None
         if settings.get("use_image") and settings.get("model"):

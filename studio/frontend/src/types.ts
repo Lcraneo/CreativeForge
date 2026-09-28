@@ -53,6 +53,7 @@ export interface TaskEvent {
   asset_id?: string | null;
   id?: string;
   name?: string;
+  image?: string;
   engine?: string;
   scores?: Record<string, number>;
   detail?: string;
@@ -215,11 +216,22 @@ export interface ModelSettings {
   base_url: string;
   model: string;
   chat_model: string;
+  edit_model?: string;
+  video_model?: string;
   use_chat: boolean;
   use_image: boolean;
+  use_video?: boolean;
   size: string;
+  negative_prompt?: string;
+  seed?: string;
+  prompt_extend?: boolean;
+  watermark?: boolean;
+  video_size?: string;
+  video_prompt_extend?: boolean;
   timeout: number;
   style?: string;
+  has_key?: boolean;
+  key_hint?: string;
 }
 
 export interface ProviderPreset {

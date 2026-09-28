@@ -18,7 +18,8 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "生产",
     items: [
-      { to: "/", label: "工作台", icon: "spark", kbd: "1" },
+      { to: "/", label: "创作工作台", icon: "spark", kbd: "1" },
+      { to: "/workspace", label: "经典工作台", icon: "panel" },
       { to: "/agents", label: "智能体", icon: "layers", kbd: "2" },
       { to: "/history", label: "历史记录", icon: "clock" },
     ],
@@ -52,7 +53,9 @@ const MOBILE_TABS: NavItem[] = [
 ];
 
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
-  "/": { group: "生产", label: "工作台" },
+  "/": { group: "生产", label: "创作工作台" },
+  "/creative": { group: "生产", label: "创作工作台" },
+  "/workspace": { group: "生产", label: "经典工作台" },
   "/agents": { group: "生产", label: "智能体指挥中心" },
   "/history": { group: "生产", label: "历史记录" },
   "/asset": { group: "资产", label: "资产检查器" },

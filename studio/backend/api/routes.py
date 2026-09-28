@@ -65,6 +65,18 @@ class PreviewFrameRequest(BaseModel):
     phase: float = 0.0  # 0..1 动作循环内相位
     size: int = 384
     pose_config: dict | None = None
+    skeletal: bool = False  # 骨骼模式：预览当前角色绑定的骨架动画
+    image: str | None = None  # 可选上传源图（base64），优先于 asset_id
+
+
+class PlanRequest(BaseModel):
+    goal: str
+    asset_id: str | None = None
+
+
+class EnhanceRequest(BaseModel):
+    goal: str
+    overrides: dict | None = None
 
 
 class CustomActionRequest(BaseModel):
@@ -96,9 +108,18 @@ class ModelSettingsRequest(BaseModel):
     api_key: str | None = None
     model: str | None = None
     chat_model: str | None = None
+    edit_model: str | None = None
+    video_model: str | None = None
     use_chat: bool | None = None
     use_image: bool | None = None
+    use_video: bool | None = None
     size: str | None = None
+    negative_prompt: str | None = None
+    seed: str | None = None
+    prompt_extend: bool | None = None
+    watermark: bool | None = None
+    video_size: str | None = None
+    video_prompt_extend: bool | None = None
     timeout: int | None = None
 
 
@@ -116,6 +137,16 @@ def build_router(runtime):
             "status": "running",
             "stream_url": "/ws/tasks/{}/stream".format(task_id)
         }
+
+    @router.post("/plan")
+    def plan_task(request: PlanRequest):
+        """Dynamic Creative Planner: goal -> capability plan (before running)."""
+        from studio.backend.plan_service import build_plan
+
+        goal = request.goal.strip()
+        if not goal:
+            raise HTTPException(status_code=422, detail="goal is required")
+        return build_plan(goal, request.asset_id)
 
     @router.get("/tasks")
     def list_tasks():
@@ -282,6 +313,33 @@ def build_router(runtime):
     def clear_model_key():
         return runtime.model_settings.clear_key()
 
+    @router.post("/prompt/enhance")
+    def enhance_prompt(request: EnhanceRequest):
+        """手动提示词增强（对话框按钮触发，替代原先的自动增强）。"""
+        from agent.generation.spec import apply_overrides, parse_prompt
+
+        from studio.backend.model_service.service import ChatProvider
+
+        settings = runtime.model_settings.effective()
+        if not (
+            settings.get("enabled")
+            and settings.get("api_key")
+            and settings.get("chat_model")
+            and settings.get("use_chat", True)
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="提示词增强需要先在「模型设置」启用并配置对话模型（chat_model）",
+            )
+        goal = (request.goal or "").strip()
+        if not goal:
+            raise HTTPException(status_code=422, detail="goal is required")
+        spec = apply_overrides(parse_prompt(goal), request.overrides)
+        try:
+            return ChatProvider(settings).enhance(goal, spec, request.overrides)
+        except Exception as error:  # noqa: BLE001 - surface provider error
+            raise HTTPException(status_code=502, detail=str(error))
+
     @router.get("/generated/{name}")
     def generated_image(name: str):
         from studio.backend.model_service.service import safe_generated_path
@@ -356,6 +414,8 @@ def build_router(runtime):
             settings = runtime.model_settings.effective()
             if not (settings.get("enabled") and settings.get("api_key")):
                 raise HTTPException(status_code=409, detail="AI 视频驱动需要先在模型设置中启用自定义模型")
+            if not settings.get("use_video", True):
+                raise HTTPException(status_code=409, detail="视频生成已在「模型设置」中关闭（视频能力开关）")
             try:
                 return service.create_video(
                     source_bytes=source,
@@ -367,18 +427,21 @@ def build_router(runtime):
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
-        return service.create(
-            asset=asset,
-            image_bytes=image_bytes,
-            action=request.action,
-            fps=request.fps,
-            duration=request.duration,
-            size=request.size,
-            skeletal=request.skeletal,
-            view=request.view,
-            pose_config=request.pose_config,
-            model_settings=runtime.model_settings.effective(),
-        )
+        try:
+            return service.create(
+                asset=asset,
+                image_bytes=image_bytes,
+                action=request.action,
+                fps=request.fps,
+                duration=request.duration,
+                size=request.size,
+                skeletal=request.skeletal,
+                view=request.view,
+                pose_config=request.pose_config,
+                model_settings=runtime.model_settings.effective(),
+            )
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error))
 
     @router.post("/animation/preview-frame")
     def preview_animation_frame(request: PreviewFrameRequest):
@@ -396,6 +459,34 @@ def build_router(runtime):
         view = request.view if request.view in ("front", "side") else "front"
         phase = max(0.0, min(1.0, float(request.phase)))
         action = request.action if request.action in ("idle", "walk", "run", "attack", "jump") else "walk"
+
+        if request.skeletal:
+            # 骨骼预览：使用当前角色绑定的骨架（与工作台生成同一条链路）
+            source = None
+            if request.image:
+                try:
+                    source = base64.b64decode(request.image.split(",")[-1])
+                except (ValueError, TypeError):
+                    raise HTTPException(status_code=422, detail="image 不是合法的 base64")
+            elif request.asset_id:
+                asset = _resolve_asset(runtime, request.asset_id)
+                if asset is not None:
+                    from studio.backend.animation_service.service import AnimationService
+
+                    source = AnimationService(ANIMATION_DIR)._asset_render(asset)
+                    if source is None:
+                        from artgen import render_asset_view
+
+                        source = render_asset_view(asset, "front", max(384, min(1024, request.size)))
+            if source is None:
+                raise HTTPException(status_code=400, detail="骨骼预览需要真实角色源图（资产原画或上传图片）")
+            from artgen.riganim import render_rigged_frame_rgba
+
+            (w, h, rgba), _rig = render_rigged_frame_rgba(
+                source, action, phase, request.size, config=request.pose_config
+            )
+            return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
+
         if view == "side" and action in ("walk", "run"):
             w, h, rgba = render_side_frame_rgba(params, action, phase, request.size, request.pose_config)
         else:

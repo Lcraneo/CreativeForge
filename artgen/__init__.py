@@ -21,6 +21,8 @@ from artgen.character2d import render_asset_view as render_asset_png
 from artgen.character2d import render_character_view as render_character_png
 from artgen.gif import decode_image, decode_png, encode_gif
 from artgen.pipeline import analyze_source, compose_animation, create_animation
+from artgen.rig import build_rig, rig_summary
+from artgen.riganim import animate_rigged, render_rigged_frame_rgba
 from artgen.anim import ACTIONS
 from artgen.png import PNG_MAGIC, encode_rgba
 from artgen.style import STYLE_LABELS
@@ -45,4 +47,8 @@ __all__ = [
     "analyze_source",
     "compose_animation",
     "create_animation",
+    "build_rig",
+    "rig_summary",
+    "animate_rigged",
+    "render_rigged_frame_rgba",
 ]

@@ -107,16 +107,29 @@ class AnimationService:
         source_kind = "builtin"
 
         if skeletal:
-            # 全身骨骼模式：姿态引擎驱动的关节动画（含预备/跟随/重叠动作），
-            # 角色使用资产 CharacterSpec / 上传图调色板，比例全程恒定
+            # 全身骨骼模式：绑定「当前角色的真实源图」做角色专属骨骼动画。
+            # 没有真实源图时直接报错，绝不回退到固定模板角色（修复"任何角色
+            # 都生成同一个橙色角色"的根因）。
             source_kind = "skeletal"
+            params = (
+                asset_params(asset)
+                if asset is not None
+                else {"palette": None, "seed": f"{action}-{fps}"}
+            )
             if image_bytes:
-                w, h, rgba = decode_image(image_bytes)
-                params = {"palette": dominant_palette(w, h, rgba, count=8), "seed": f"upload-{action}"}
+                source_bytes = image_bytes
             elif asset is not None:
-                params = asset_params(asset)
-            else:
-                params = {"palette": None, "seed": f"{action}-{fps}"}
+                source_bytes = self._asset_render(asset)
+                if source_bytes is None:
+                    from artgen import render_asset_view
+
+                    source_bytes = render_asset_view(
+                        asset, "front", max(384, min(1024, int(size)))
+                    )
+            if source_bytes is None:
+                raise ValueError(
+                    "骨骼动画需要真实角色源图（资产原画或上传图片），当前没有可用源图"
+                )
         elif image_bytes:
             source_kind = "upload"
             source_bytes = image_bytes
@@ -160,10 +173,18 @@ class AnimationService:
             view=view,
             pose_config=pose_config,
             segment_mask=segment_mask,
+            rigged=(source_kind == "skeletal"),
         )
 
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, source_kind)
+        meta["skeletal"] = source_kind == "skeletal"
+        if result.get("rig"):
+            from artgen.rig import rig_summary
+
+            meta["rig"] = rig_summary(result["rig"])
+        if result.get("falign"):
+            meta["falign"] = result["falign"]
         if segment_mask is not None:
             meta["subject_segmentation"] = "ai"
         return meta

@@ -100,6 +100,30 @@ export interface AnimationRequestPayload {
   use_video?: boolean;
 }
 
+export interface PlanTask {
+  id: string;
+  capability: string;
+  agent: string;
+  action: string;
+  engine?: string;
+}
+
+export interface PlanResult {
+  goal: string;
+  asset_id?: string | null;
+  mode: string;
+  intent: {
+    engine: string;
+    style: string;
+    animation: boolean;
+    static: boolean;
+    pixel: boolean;
+    modify: boolean;
+    engine_import: boolean;
+  };
+  tasks: PlanTask[];
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json" },
@@ -120,6 +144,18 @@ export const api = {
       "/api/tasks",
       { method: "POST", body: JSON.stringify({ goal, overrides }) },
     ),
+
+  plan: (goal: string, assetId?: string) =>
+    request<PlanResult>("/api/plan", {
+      method: "POST",
+      body: JSON.stringify({ goal, asset_id: assetId }),
+    }),
+
+  enhancePrompt: (goal: string, overrides?: GenerationOverrides) =>
+    request<{ model: string; prompt: string }>("/api/prompt/enhance", {
+      method: "POST",
+      body: JSON.stringify({ goal, overrides }),
+    }),
 
   listTasks: () => request<{ tasks: TaskSummary[] }>("/api/tasks"),
 

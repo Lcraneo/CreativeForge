@@ -149,12 +149,25 @@ class ModelSettingsStore:
         "provider": "openai",
         "base_url": "",
         "api_key": "",
-        "model": "",
-        "chat_model": "",
-        "video_model": "",
+        # 能力 → 模型：文本 / 图像 / 图像编辑 / 视频共用同一套 base_url + api_key
+        "model": "",          # 图像生成（原画）
+        "chat_model": "",     # 文本 / 对话（提示词增强）
+        "edit_model": "",     # 图像编辑（三视图 / 抠图）；留空用服务商默认
+        "video_model": "",    # 视频 / 图生视频（当前仅 DashScope）
         "use_chat": True,
         "use_image": True,
-        "size": "512x512",
+        "use_video": True,
+        "size": "1024x1024",
+        "negative_prompt": (
+            "lowres, bad anatomy, bad hands, extra fingers, missing fingers, "
+            "fused fingers, worst quality, low quality, jpeg artifacts, watermark, "
+            "signature, blurry, deformed, bad proportions"
+        ),
+        "seed": "",
+        "prompt_extend": False,
+        "watermark": False,
+        "video_size": "1280*720",
+        "video_prompt_extend": False,
         "timeout": 60,
         "style": "pixel",
     }
@@ -202,7 +215,13 @@ class ModelSettingsStore:
             override = _dashscope_env_override()
             if override:
                 data.update(override)
+        key = data.get("api_key") or ""
+        hint = ""
+        if key:
+            hint = "{}****{}".format(key[:3], key[-4:]) if len(key) > 8 else "****"
         data.pop("api_key", None)
+        data["has_key"] = bool(key)
+        data["key_hint"] = hint
         return data
 
     def update(self, changes):
@@ -267,8 +286,19 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
     # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
     # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
-    models = [m for m in (settings.get("video_model"), "wan2.2-i2v-flash", "wanx2.1-i2v-turbo") if m]
+    # 画质优先：配置的模型 → plus → flash → turbo 回退
+    models = [m for m in (
+        settings.get("video_model"),
+        "wan2.2-i2v-plus", "wan2.2-i2v-flash", "wanx2.1-i2v-turbo",
+    ) if m]
     encoded = base64.b64encode(image_bytes).decode()
+    parameters = {
+        "size": settings.get("video_size") or "1280*720",
+        "prompt_extend": bool(settings.get("video_prompt_extend", False)),
+        "watermark": False,
+    }
+    if settings.get("negative_prompt"):
+        parameters["negative_prompt"] = settings["negative_prompt"]
     last_error = None
     for model in models:
         create = httpx.post(
@@ -281,7 +311,7 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
             json={
                 "model": model,
                 "input": {"prompt": prompt, "img_url": "data:image/png;base64," + encoded},
-                "parameters": {"size": "960*960", "prompt_extend": True},
+                "parameters": parameters,
             },
             timeout=60,
         )
@@ -338,9 +368,16 @@ class ChatProvider:
         api_key = self.settings.get("api_key")
         if not base_url or not api_key or not model:
             raise RuntimeError("chat provider not configured")
-        prompt = (
-            "Rewrite the following game-asset generation request as a detailed "
-            "art-direction brief for a game character:\n\n" + str(goal)
+        system = (
+            "You rewrite a game-asset request into ONE concise image-generation prompt. "
+            "IMPORTANT: reply in the SAME language as the user's request "
+            "(if the user writes Chinese, output Chinese; if English, output English). "
+            "Rules: strictly follow the style the user asks for "
+            "(anime / pixel / 3d / realistic ...); if unspecified, use the natural default. "
+            "Do NOT impose a fixed style; do NOT mention artist names, studios or copyrighted IP. "
+            "Keep concrete attributes (gender, age, hair, outfit, accessories, pose, colors). "
+            "Keep it short (<=120 words / ~120 汉字). "
+            "Output only the prompt text — no markdown, no explanation."
         )
         response = httpx.post(
             base_url + "/chat/completions",
@@ -350,8 +387,11 @@ class ChatProvider:
             },
             json={
                 "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.7,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": str(goal)},
+                ],
+                "temperature": 0.6,
             },
             timeout=float(self.settings.get("timeout", 60)),
         )
@@ -393,6 +433,18 @@ class ImageProvider:
         api_key = self.settings.get("api_key")
         timeout = float(self.settings.get("timeout", 60))
         size = (self.settings.get("size") or "1024*1024").replace("x", "*").replace("X", "*")
+        parameters = {"size": size, "n": 1,
+                      "watermark": bool(self.settings.get("watermark", False))}
+        if self.settings.get("negative_prompt"):
+            parameters["negative_prompt"] = self.settings["negative_prompt"]
+        if self.settings.get("prompt_extend") is not None:
+            parameters["prompt_extend"] = bool(self.settings.get("prompt_extend"))
+        seed = str(self.settings.get("seed", "")).strip()
+        if seed not in ("", "None"):
+            try:
+                parameters["seed"] = int(seed)
+            except ValueError:
+                pass
         create = httpx.post(
             DASHSCOPE_HOST + "/api/v1/services/aigc/text2image/image-synthesis",
             headers={
@@ -403,7 +455,7 @@ class ImageProvider:
             json={
                 "model": self.settings.get("model"),
                 "input": {"prompt": prompt},
-                "parameters": {"size": size, "n": 1},
+                "parameters": parameters,
             },
             timeout=timeout,
         )
@@ -555,6 +607,7 @@ class ImageEditProvider:
         api_key = self.settings.get("api_key")
         if not api_key:
             raise RuntimeError("image edit not configured")
+        edit_model = self.settings.get("edit_model") or self.QWEN_EDIT_MODEL
         timeout = max(120.0, float(self.settings.get("timeout", 60)) * 2)
         response = httpx.post(
             DASHSCOPE_HOST + "/api/v1/services/aigc/multimodal-generation/generation",
@@ -563,7 +616,7 @@ class ImageEditProvider:
                 "Content-Type": "application/json",
             },
             json={
-                "model": self.QWEN_EDIT_MODEL,
+                "model": edit_model,
                 "input": {
                     "messages": [
                         {
@@ -598,7 +651,7 @@ class ImageEditProvider:
         return {
             "file": self._download(url),
             "url": url,
-            "model": self.QWEN_EDIT_MODEL,
+            "model": edit_model,
         }
 
     def _edit_wanx(self, base_image_url, instruction, poll_timeout):

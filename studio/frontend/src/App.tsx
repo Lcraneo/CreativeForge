@@ -9,6 +9,7 @@ import HistoryCenter from "./pages/HistoryCenter";
 import DesignCenter from "./pages/DesignCenter";
 import SettingsCenter from "./pages/SettingsCenter";
 import PixelStudio from "./pages/PixelStudio";
+import CreativeStudio from "./pages/CreativeStudio";
 import Workspace from "./pages/Workspace";
 import TechnologyCenter from "./pages/TechnologyCenter";
 
@@ -16,7 +17,9 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index element={<Workspace />} />
+        <Route index element={<CreativeStudio />} />
+        <Route path="creative" element={<CreativeStudio />} />
+        <Route path="workspace" element={<Workspace />} />
         <Route path="agents" element={<AgentDashboard />} />
         <Route path="history" element={<HistoryCenter />} />
         <Route path="asset" element={<AssetInspector />} />

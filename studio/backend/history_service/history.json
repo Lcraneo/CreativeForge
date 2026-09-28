@@ -14113,5 +14113,2075 @@
       }
     },
     "id": "T0002-6"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790605997.5882552,
+    "finished_at": 1790606060.505191,
+    "goal": "少女14岁左右，浅栗色短卷发，齐刘海，圆杏眼，琥珀色瞳孔，长长的睫毛，浅浅微笑，脸颊带着圆圆的粉腮红。\n穿搭：米白色宽松针织短上衣，浅蓝背带短裙，白色堆堆袜，棕色小皮鞋，胸前挂着小熊吊坠。\n姿态：自然站立，身体微微侧倾，一只手轻轻抓着裙边，另一只手挥手，站姿稳定，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast54936",
+    "name": "少女14岁左右_浅栗色短卷发_齐刘海_圆杏眼_琥",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 62.917,
+    "character": {
+      "id": "ast54936",
+      "name": "少女14岁左右_浅栗色短卷发_齐刘海_圆杏眼_琥",
+      "type": "character",
+      "role": "npc",
+      "seed": 518454936,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#2b502d",
+        "base": "#4f9452",
+        "highlight": "#c1e8aa",
+        "accent": "#ffd449",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#f2d5dc",
+      "#fce8f4",
+      "#fef7fc",
+      "#e5cbce",
+      "#aa939b",
+      "#d3bac5",
+      "#b6a5ab",
+      "#a38b96",
+      "#918494",
+      "#806a71",
+      "#8d7c87",
+      "#745b61",
+      "#715155",
+      "#846261",
+      "#4d485b",
+      "#454255"
+    ],
+    "image": {
+      "file": "img_1790606023094.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/f7/20260928/77c9ad12/7cbe66f2-7349-4296-a57c-a8b6744169e51416762556.png?Expires=1790692426&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eei9AkzLAnlUoxXDMZKyfrbw9wg%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790606023094.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "🎮 游戏角色艺术方向简报 —— “少女角色14岁”  \n版本：v1.0  \n目标平台：Unity引擎（需适配PBR材质、骨骼绑定、动画导入规范）  \n角色定位：14岁少女，性格温柔、略带羞涩，形象清新可爱，适合用于剧情互动、日常场景或NPC角色。\n\n—\n\n🎨 一、角色外观设计（美术风格统一）\n\n1. 年龄与气质：\n   - 年龄设定：14岁左右，青春期初期，身形纤细但已具少女轮廓。\n   - 气质：温柔、恬静、略带羞涩，笑容自然不刻意，眼神清澈有光。\n   - 整体风格：日系清新校园风 + 轻微萌系元素，色彩柔和，避免过于卡通或写实，强调“可亲可爱”的视觉感受。\n\n2. 发型与面部：\n   - 发色：浅栗色（Light Chestnut Brown），带自然光泽，非纯色，可加入微弱高光与阴影层次。\n   - 发型：短卷发，长度至耳下，发尾微卷，发丝蓬松自然，不显死板。\n   - 刘海：齐刘海，长度至眉上，略带弧度，不遮眼，可随动作轻微飘动。\n   - 眼睛：圆杏眼（杏仁形，略大），眼型柔和，不夸张。\n   - 瞳孔：琥珀色（Amber），带轻微高光点，瞳孔内可加入微小反射光点，增强“有神”感。\n   - 睫毛：长而自然，上睫毛浓密卷翘，下睫毛轻薄，不夸张，避免“假睫毛”感。\n   - 脸颊：圆润饱满，脸颊两侧有自然的粉红色腮红（Soft Blush），呈圆形或椭圆形晕染，颜色为淡粉（Peach Pink），不显俗气。\n   - 表情：浅浅微笑，嘴角自然上扬，不露齿，眼神柔和，传达“友好、安静”的情绪。\n\n—\n\n👕 二、服装与配饰设计\n\n1. 上衣：\n   - 颜色：米白色（Off-White / Creamy White），略带针织纹理。\n   - 款式：宽松短款针织上衣，领口为圆领或小V领，袖口略松，肩部自然下垂，不紧绷。\n   - 材质：针织纹理清晰，可加入轻微毛绒感，适合Unity中使用PBR材质（Albedo + Normal + Roughness + Metallic）。\n   - 细节：衣摆自然垂落，可有轻微褶皱，体现“宽松”与“舒适感”。\n\n2. 裙子：\n   - 颜色：浅蓝色（Light Sky Blue），略带水洗感或轻微褪色效果，增强“日常感”。\n   - 款式：背带短裙，裙长至大腿中部，裙摆自然垂坠，有轻微褶皱。\n   - 背带：细带设计，颜色与裙身一致，可轻微反光（如布料质感）。\n   - 裙摆：可随动作轻微摆动，需在Unity中绑定物理或动画控制。\n\n3. 袜子：\n   - 颜色：纯白色（Pure White），略带蓬松感。\n   - 款式：堆堆袜（Crew Socks），长度至小腿中部，袜口自然堆叠，不紧绷。\n   - 材质：棉质纹理，可加入轻微褶皱与阴影，增强立体感。\n\n4. 鞋子：\n   - 颜色：棕色（Warm Brown），皮革质感。\n   - 款式：小皮鞋，圆头、低跟或平底，鞋带或魔术贴设计（可选）。\n   - 细节：鞋面有轻微光泽，鞋底略厚，体现“可爱+实用”结合。\n   - 鞋带/扣具：可设计为小蝴蝶结或金属扣，增加细节趣味。\n\n5. 配饰：\n   - 吊坠：胸前悬挂一只小熊吊坠（可为毛绒或金属质感），尺寸适中，不遮挡衣领。\n   - 材质：毛绒质感（可选）或金属抛光（如黄铜色），吊坠可轻微晃动，需在Unity中绑定物理或动画。\n   - 挂绳：细绳或链条，颜色与吊坠协调，自然垂落于胸前。\n\n—\n\n🪄 三、姿态与动作设计\n\n1. 姿态：\n   - 站姿：自然站立，身体微微侧倾（约15°），重心稳定，不显僵硬。\n   - 一手轻抓裙边（右手或左手，视角色朝向而定），手指自然弯曲，不紧握，体现“羞涩”或“思考”感。\n   - 另一手：自然挥手（掌心向外，手指微张），动作幅度适中，不夸张，传达“打招呼”或“告别”情绪。\n   - 头部：微微低头或平视前方，眼神柔和，不直视镜头，增强“真实感”。\n   - 脚部：双脚自然并拢或微分，鞋底贴地，无漂浮感，符合Unity物理系统。\n\n2. 动画与导入要求：\n   - 需提供：静态姿势模型（FBX或OBJ） + 动画文件（如：Wave、Idle、LookAround等）。\n   - 骨骼绑定：需符合Unity标准骨骼结构（如：Humanoid或Custom），支持动画重定向。\n   - 材质：使用PBR材质（Albedo, Normal, Roughness, Metallic），支持Unity Shader Graph或Standard Shader。\n   - 导入设置：模型需优化面数（建议<5000面），UV展开合理，无重叠，支持LOD（可选）。\n   - 动画：需支持Root Motion或动画控制器，可与Unity Animator无缝对接。\n\n—\n\n📌 四、美术风格与技术规范\n\n- 风格关键词：清新、温柔、日系、萌系、校园风、柔和色彩、自然光影。\n- 色彩搭配：米白、浅蓝、粉红、浅栗、棕褐，整体色调柔和，避免高饱和。\n- 光影：使用柔和环境光，阴影柔和，避免硬阴影，突出“可爱”氛围。\n- 材质细节：针织、布料、皮革、毛绒等材质需有真实感，但不过度写实。\n- 导入Unity要求：\n  - 模型格式：FBX（推荐）或OBJ（需附带材质贴图）\n  - 材质贴图：Albedo、Normal、Roughness、Metallic（可选）\n  - 动画：需包含Idle、Wave、LookAround等基础动画\n  - 骨骼：需命名规范，支持Unity Humanoid或Custom骨骼系统\n  - 文件命名：角色名_姿态_版本.fbx / .obj\n\n—\n\n✅ 五、交付物清单\n\n1. 静态角色模型（含材质贴图）\n2. 基础动画文件（Wave、Idle、LookAround）\n3. 骨骼绑定说明文档（骨骼命名、权重分配）\n4. Unity导入设置建议（材质、动画、物理）\n5. 角色设计参考图（含正面、侧面、背面、表情特写）\n\n—\n\n📎 附加说明：\n\n- 本角色可作为“日常互动NPC”、“玩家伙伴”、“剧情引导者”等用途。\n- 可扩展设计：不同季节服装、节日装扮、运动装等，建议保留基础模型结构便于扩展。\n- 请确保角色在Unity中运行流畅，无穿模、无抖动、无材质错位。\n\n—\n\n📩 艺术指导联系人：[填写美术负责人或项目组]  \n📅 交付截止日期：[填写日期]  \n🎯 最终目标：打造一个“温柔可爱、视觉舒适、技术适配”的14岁少女角色，融入Unity游戏世界，提升玩家情感代入感。\n\n—— 完 ——\n\n（本简报可作为美术团队、3D建模师、动画师、技术美术的统一执行标准）",
+    "asset": {
+      "id": "ast54936",
+      "name": "少女14岁左右_浅栗色短卷发_齐刘海_圆杏眼_琥",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 518454936,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#2b502d",
+          "base": "#4f9452",
+          "highlight": "#c1e8aa",
+          "accent": "#ffd449",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790606023094.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/f7/20260928/77c9ad12/7cbe66f2-7349-4296-a57c-a8b6744169e51416762556.png?Expires=1790692426&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eei9AkzLAnlUoxXDMZKyfrbw9wg%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790606023094.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "ast54936",
+        "name": "少女14岁左右_浅栗色短卷发_齐刘海_圆杏眼_琥",
+        "type": "character",
+        "role": "npc",
+        "seed": 518454936,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#2b502d",
+          "base": "#4f9452",
+          "highlight": "#c1e8aa",
+          "accent": "#ffd449",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#f2d5dc",
+            "#fce8f4",
+            "#fef7fc",
+            "#e5cbce",
+            "#aa939b",
+            "#d3bac5",
+            "#b6a5ab",
+            "#a38b96",
+            "#918494",
+            "#806a71",
+            "#8d7c87",
+            "#745b61",
+            "#715155",
+            "#846261",
+            "#4d485b",
+            "#454255"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#2b502d",
+            "base": "#4f9452",
+            "highlight": "#c1e8aa",
+            "accent": "#ffd449",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#f2d5dc",
+            "#fce8f4",
+            "#fef7fc",
+            "#e5cbce",
+            "#e5cbce",
+            "#fef7fc",
+            "#fce8f4",
+            "#aa939b"
+          ],
+          [
+            "#e5cbce",
+            "#fce8f4",
+            "#fef7fc",
+            "#d3bac5",
+            "#b6a5ab",
+            "#fce8f4",
+            "#f2d5dc",
+            "#a38b96"
+          ],
+          [
+            "#d3bac5",
+            "#fce8f4",
+            "#fef7fc",
+            "#e5cbce",
+            "#e5cbce",
+            "#fef7fc",
+            "#fce8f4",
+            "#918494"
+          ],
+          [
+            "#806a71",
+            "#8d7c87",
+            "#b6a5ab",
+            "#d3bac5",
+            "#d3bac5",
+            "#aa939b",
+            "#8d7c87",
+            "#745b61"
+          ],
+          [
+            "#715155",
+            "#715155",
+            "#745b61",
+            "#b6a5ab",
+            "#b6a5ab",
+            "#846261",
+            "#715155",
+            "#4d485b"
+          ],
+          [
+            "#846261",
+            "#846261",
+            "#846261",
+            "#aa939b",
+            "#a38b96",
+            "#846261",
+            "#846261",
+            "#715155"
+          ],
+          [
+            "#454255",
+            "#454255",
+            "#4d485b",
+            "#8d7c87",
+            "#8d7c87",
+            "#4d485b",
+            "#454255",
+            "#4d485b"
+          ],
+          [
+            "#918494",
+            "#918494",
+            "#918494",
+            "#806a71",
+            "#806a71",
+            "#918494",
+            "#918494",
+            "#a38b96"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast54936",
+          "type": "character",
+          "resources": {
+            "texture": "ast54936.png",
+            "animation": "ast54936.anim",
+            "prefab": "ast54936.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast54936.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast54936.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast54936.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast54936.png",
+          "Animation": "Assets/Animation/ast54936.anim",
+          "Prefab": "Assets/Prefab/ast54936.prefab",
+          "Controller": "Assets/Controller/ast54936.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "少女14岁左右，浅栗色短卷发，齐刘海，圆杏眼，琥珀色瞳孔，长长的睫毛，浅浅微笑，脸颊带着圆圆的粉腮红。\n穿搭：米白色宽松针织短上衣，浅蓝背带短裙，白色堆堆袜，棕色小皮鞋，胸前挂着小熊吊坠。\n姿态：自然站立，身体微微侧倾，一只手轻轻抓着裙边，另一只手挥手，站姿稳定，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮 游戏角色艺术方向简报 —— “少女角色14岁”  \n版本：v1.0  \n目标平台：Unity引擎（需适配PBR材质、骨骼绑定、动画导入规范）  \n角色定位：14岁少女，性格温柔、略带羞涩，形象清新可爱，适合用于剧情互动、日常场景或NPC角色。\n\n—\n\n🎨 一、角色外观设计（美术风格统一）\n\n1. 年龄与气质：\n   - 年龄设定：14岁左右，青春期初期，身形纤细但已具少女轮廓。\n   - 气质：温柔、恬静、略带羞涩，笑容自然不刻意，眼神清澈有光。\n   - 整体风格：日系清新校园风 + 轻微萌系元素，色彩柔和，避免过于卡通或写实，强调“可亲可爱”的视觉感受。\n\n2. 发型与面部：\n   - 发色：浅栗色（Light Chestnut Brown），带自然光泽，非纯色，可加入微弱高光与阴影层次。\n   - 发型：短卷发，长度至耳下，发尾微卷，发丝蓬松自然，不显死板。\n   - 刘海：齐刘海，长度至眉上，略带弧度，不遮眼，可随动作轻微飘动。\n   - 眼睛：圆杏眼（杏仁形，略大），眼型柔和，不夸张。\n   - 瞳孔：琥珀色（Amber），带轻微高光点，瞳孔内可加入微小反射光点，增强“有神”感。\n   - 睫毛：长而自然，上睫毛浓密卷翘，下睫毛轻薄，不夸张，避免“假睫毛”感。\n   - 脸颊：圆润饱满，脸颊两侧有自然的粉红色腮红（Soft Blush），呈圆形或椭圆形晕染，颜色为淡粉（Peach Pink），不显俗气。\n   - 表情：浅浅微笑，嘴角自然上扬，不露齿，眼神柔和，传达“友好、安静”的情绪。\n\n—\n\n👕 二、服装与配饰设计\n\n1. 上衣：\n   - 颜色：米白色（Off-White / Creamy White），略带针织纹理。\n   - 款式：宽松短款针织上衣，领口为圆领或小V领，袖口略松，肩部自然下垂，不紧绷。\n   - 材质：针织纹理清晰，可加入轻微毛绒感，适合Unity中使用PBR材质（Albedo + Normal + Roughness + Metallic）。\n   - 细节：衣摆自然垂落，可有轻微褶皱，体现“宽松”与“舒适感”。\n\n2. 裙子：\n   - 颜色：浅蓝色（Light Sky Blue），略带水洗感或轻微褪色效果，增强“日常感”。\n   - 款式：背带短裙，裙长至大腿中部，裙摆自然垂坠，有轻微褶皱。\n   - 背带：细带设计，颜色与裙身一致，可轻微反光（如布料质感）。\n   - 裙摆：可随动作轻微摆动，需在Unity中绑定物理或动画控制。\n\n3. 袜子：\n   - 颜色：纯白色（Pure White），略带蓬松感。\n   - 款式：堆堆袜（Crew Socks），长度至小腿中部，袜口自然堆叠，不紧绷。\n   - 材质：棉质纹理，可加入轻微褶皱与阴影，增强立体感。\n\n4. 鞋子：\n   - 颜色：棕色（Warm Brown），皮革质感。\n   - 款式：小皮鞋，圆头、低跟或平底，鞋带或魔术贴设计（可选）。\n   - 细节：鞋面有轻微光泽，鞋底略厚，体现“可爱+实用”结合。\n   - 鞋带/扣具：可设计为小蝴蝶结或金属扣，增加细节趣味。\n\n5. 配饰：\n   - 吊坠：胸前悬挂一只小熊吊坠（可为毛绒或金属质感），尺寸适中，不遮挡衣领。\n   - 材质：毛绒质感（可选）或金属抛光（如黄铜色），吊坠可轻微晃动，需在Unity中绑定物理或动画。\n   - 挂绳：细绳或链条，颜色与吊坠协调，自然垂落于胸前。\n\n—\n\n🪄 三、姿态与动作设计\n\n1. 姿态：\n   - 站姿：自然站立，身体微微侧倾（约15°），重心稳定，不显僵硬。\n   - 一手轻抓裙边（右手或左手，视角色朝向而定），手指自然弯曲，不紧握，体现“羞涩”或“思考”感。\n   - 另一手：自然挥手（掌心向外，手指微张），动作幅度适中，不夸张，传达“打招呼”或“告别”情绪。\n   - 头部：微微低头或平视前方，眼神柔和，不直视镜头，增强“真实感”。\n   - 脚部：双脚自然并拢或微分，鞋底贴地，无漂浮感，符合Unity物理系统。\n\n2. 动画与导入要求：\n   - 需提供：静态姿势模型（FBX或OBJ） + 动画文件（如：Wave、Idle、LookAround等）。\n   - 骨骼绑定：需符合Unity标准骨骼结构（如：Humanoid或Custom），支持动画重定向。\n   - 材质：使用PBR材质（Albedo, Normal, Roughness, Metallic），支持Unity Shader Graph或Standard Shader。\n   - 导入设置：模型需优化面数（建议<5000面），UV展开合理，无重叠，支持LOD（可选）。\n   - 动画：需支持Root Motion或动画控制器，可与Unity Animator无缝对接。\n\n—\n\n📌 四、美术风格与技术规范\n\n- 风格关键词：清新、温柔、日系、萌系、校园风、柔和色彩、自然光影。\n- 色彩搭配：米白、浅蓝、粉红、浅栗、棕褐，整体色调柔和，避免高饱和。\n- 光影：使用柔和环境光，阴影柔和，避免硬阴影，突出“可爱”氛围。\n- 材质细节：针织、布料、皮革、毛绒等材质需有真实感，但不过度写实。\n- 导入Unity要求：\n  - 模型格式：FBX（推荐）或OBJ（需附带材质贴图）\n  - 材质贴图：Albedo、Normal、Roughness、Metallic（可选）\n  - 动画：需包含Idle、Wave、LookAround等基础动画\n  - 骨骼：需命名规范，支持Unity Humanoid或Custom骨骼系统\n  - 文件命名：角色名_姿态_版本.fbx / .obj\n\n—\n\n✅ 五、交付物清单\n\n1. 静态角色模型（含材质贴图）\n2. 基础动画文件（Wave、Idle、LookAround）\n3. 骨骼绑定说明文档（骨骼命名、权重分配）\n4. Unity导入设置建议（材质、动画、物理）\n5. 角色设计参考图（含正面、侧面、背面、表情特写）\n\n—\n\n📎 附加说明：\n\n- 本角色可作为“日常互动NPC”、“玩家伙伴”、“剧情引导者”等用途。\n- 可扩展设计：不同季节服装、节日装扮、运动装等，建议保留基础模型结构便于扩展。\n- 请确保角色在Unity中运行流畅，无穿模、无抖动、无材质错位。\n\n—\n\n📩 艺术指导联系人：[填写美术负责人或项目组]  \n📅 交付截止日期：[填写日期]  \n🎯 最终目标：打造一个“温柔可爱、视觉舒适、技术适配”的14岁少女角色，融入Unity游戏世界，提升玩家情感代入感。\n\n—— 完 ——\n\n（本简报可作为美术团队、3D建模师、动画师、技术美术的统一执行标准）"
+      },
+      "image": {
+        "file": "img_1790606023094.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/f7/20260928/77c9ad12/7cbe66f2-7349-4296-a57c-a8b6744169e51416762556.png?Expires=1790692426&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eei9AkzLAnlUoxXDMZKyfrbw9wg%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790606023094.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/f7/20260928/77c9ad12/7cbe66f2-7349-4296-a57c-a8b6744169e51416762556.png?Expires=1790692426&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=eei9AkzLAnlUoxXDMZKyfrbw9wg%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790606041262.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/c8/20260928/aa4f9372/0b86ff48-e24c-4c2d-8ba0-e23e22382e97-1.png?Expires=1791211845&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=Jr4wqvwrVyWShVj1GRRtKvv%2BinY%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790606059659.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/67/20260928/17bff29b/5d006160-ab10-4c41-b0b7-4d7e7e593d45-1.png?Expires=1791211863&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=djS%2Fc%2BdBJUYW4zpCUW0vZgJ2Utg%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-10"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790607325.1567478,
+    "finished_at": 1790607382.1007655,
+    "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 56.944,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#230000",
+      "#302124",
+      "#230201",
+      "#3c0702",
+      "#2c0403",
+      "#6b4e32",
+      "#340502",
+      "#872c0b",
+      "#290000",
+      "#561907",
+      "#320000",
+      "#8f2304",
+      "#841604",
+      "#cf5107",
+      "#610c01",
+      "#ef7d07"
+    ],
+    "image": {
+      "file": "img_1790607345199.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/2b/20260928/77c9ad12/3c011504-f4a6-48f3-9790-f23629ba84992338120883.png?Expires=1790693747&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=XX3unq3Ocjmi9NUuAevXV8vTiIU%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790607345199.png",
+      "width": 512,
+      "height": 512
+    },
+    "enhanced_prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss（像素RPG风格）\n\n—\n\n📌 项目名称：  \n“烈焰之主” —— 像素RPG风格火焰法师Boss角色\n\n—\n\n🎨 一、整体艺术风格定位：\n\n- 风格类型：复古像素艺术（Pixel Art），致敬经典RPG游戏（如《暗黑地牢》《星露谷物语》《泰拉瑞亚》等），但需具备更高细节表现力与动态表现力。\n- 分辨率建议：16x16 或 32x32 像素（角色主体），支持动画帧按 16x16 或 32x32 分辨率制作。\n- 色彩调性：高饱和度暖色调为主 —— 红、橙、黄、深褐、暗金，辅以黑色/深灰阴影增强立体感。火焰特效需有“燃烧感”与“动态光晕”。\n- 艺术风格关键词：史诗感、压迫感、魔法威严、像素化但不粗糙、细节精致、动态流畅。\n\n—\n\n🧍‍♂️ 二、角色设计要求：\n\n1. 角色身份：  \n   - 高阶火焰法师，掌控元素之力，是玩家在中后期遭遇的终极Boss之一。\n   - 有“魔法施法者”气质，同时兼具“毁灭性力量”的压迫感。\n\n2. 外观特征：\n   - 身穿破旧但华丽的火焰纹章长袍，袍角随风飘动，边缘有燃烧残迹。\n   - 头戴火焰纹饰的尖顶法帽，帽尖有微弱火焰跳动。\n   - 面部可选：半张脸被火焰遮蔽，或戴有火焰纹面罩，仅露出锐利眼神。\n   - 手持法杖或法球，法杖顶端悬浮一团不稳定火焰，随动作闪烁。\n   - 脚下可有火焰残迹或魔法阵纹路（可选，用于地面特效）。\n   - 可选：背后有火焰羽翼或能量漩涡，增强视觉冲击。\n\n3. 动态表现：\n   - 必须包含至少3种攻击动画（可扩展）：\n     a. **蓄力施法**：法师抬起法杖，火焰聚集于顶端，周围空气扭曲，地面出现魔法阵。\n     b. **火焰弹发射**：向前抛出火球，火球轨迹带拖尾，命中后爆炸。\n     c. **范围火焰冲击波**：双手张开，周身爆发出火焰波纹，地面被灼烧。\n   - 所有动画需流畅，帧数建议：每动作至少8–12帧，支持循环或单次播放。\n   - 动画需包含“攻击前摇”、“施法中”、“攻击后摇”三个阶段，增强战斗节奏感。\n\n—\n\n⚙️ 三、技术规格与导入要求：\n\n- 文件格式：  \n  - 角色主图：PNG（透明背景，带Alpha通道）  \n  - 动画帧：PNG序列（命名规范：Boss_FireMage_Attack1_00.png, Boss_FireMage_Attack1_01.png...）  \n  - 可选：带图层的PSD或Sprite Sheet（若需拆分动画帧）\n\n- 导入Unity要求：\n  - 所有资源需按Unity Sprite Atlas或独立Sprite导入，支持Sprite Renderer + Animator组件。\n  - 动画需导出为Unity Animator Controller，支持状态机切换（Idle, Attack1, Attack2, Attack3, Death等）。\n  - 需提供角色“Idle”基础站立动画（至少4帧，循环播放）。\n  - 所有图层需命名清晰，便于Unity中分层管理（如：Base, FireEffect, Particle, Shadow等）。\n  - 需提供角色碰撞体（可选：2D Box Collider或Polygon Collider，用于Unity物理系统）。\n\n—\n\n🔥 四、特效与氛围要求：\n\n- 火焰特效需与角色动作同步，如施法时火焰增强、攻击时火焰扩散。\n- 可添加粒子效果（如：火花、灰烬、热浪扭曲）作为辅助视觉元素（可选，若资源允许）。\n- 背景可选：火焰熔岩地面、燃烧的祭坛、飘浮的符文，增强Boss场景沉浸感（非必需，但建议提供概念图）。\n\n—\n\n🖼️ 五、交付物清单：\n\n1. 主角色静态图（站立姿态，含透明背景）\n2. 所有攻击动画帧（PNG序列，命名规范清晰）\n3. Idle动画帧（至少4帧）\n4. Unity导入包（.unitypackage 或文件夹结构说明）\n5. 动画状态机说明文档（可选，如使用Animator Controller）\n6. 颜色/图层说明文档（如使用PSD或分层图）\n7. 可选：概念草图或参考图（用于风格对齐）\n\n—\n\n🎯 六、参考灵感来源：\n\n- 《暗黑破坏神》系列火焰法师Boss\n- 《泰拉瑞亚》的“克苏鲁之眼”或“熔岩之王”\n- 《星露谷物语》中“火焰祭司”角色（像素化但有魔法感）\n- 《恶魔城》系列中“火焰魔像”Boss\n- 《最终幻想》系列中“炎之魔神”等经典形象\n\n—\n\n✅ 七、验收标准：\n\n- 角色像素风格统一，无模糊或锯齿（需在16x16/32x32下清晰可辨）\n- 动画流畅，无卡顿，帧率稳定（建议30fps）\n- Unity导入后可正常播放动画，无资源丢失或错位\n- 攻击动画与角色动作逻辑匹配，符合战斗节奏\n- 整体视觉压迫感强，符合“Boss级”角色定位\n\n—\n\n📬 附加说明：\n\n- 请在交付前提供预览视频或GIF，展示动画效果。\n- 如有疑问，请在交付前与项目负责人沟通，确保风格与技术实现一致。\n- 本角色需适配未来可能的“升级形态”或“变身阶段”，请预留扩展空间（如图层结构、动画状态设计）。\n\n—\n\n🔥 烈焰之主，即将降临！  \n请以像素之笔，绘就魔法之焰，让玩家在火焰中颤抖！\n\n—— 游戏美术总监 / 项目负责人  \n[日期]\n\n—\n\n✅ 本简报可作为美术外包或内部团队执行的详细指导文件，确保角色设计、动画制作、技术导入三者无缝衔接。",
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790607345199.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/2b/20260928/77c9ad12/3c011504-f4a6-48f3-9790-f23629ba84992338120883.png?Expires=1790693747&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=XX3unq3Ocjmi9NUuAevXV8vTiIU%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790607345199.png",
+          "width": 512,
+          "height": 512
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#230000",
+            "#302124",
+            "#230201",
+            "#3c0702",
+            "#2c0403",
+            "#6b4e32",
+            "#340502",
+            "#872c0b",
+            "#290000",
+            "#561907",
+            "#320000",
+            "#8f2304",
+            "#841604",
+            "#cf5107",
+            "#610c01",
+            "#ef7d07"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#230000",
+            "#302124",
+            "#230201",
+            "#230000",
+            "#3c0702",
+            "#230000",
+            "#230000",
+            "#2c0403"
+          ],
+          [
+            "#230000",
+            "#6b4e32",
+            "#302124",
+            "#340502",
+            "#872c0b",
+            "#302124",
+            "#230000",
+            "#290000"
+          ],
+          [
+            "#290000",
+            "#561907",
+            "#340502",
+            "#561907",
+            "#6b4e32",
+            "#3c0702",
+            "#290000",
+            "#320000"
+          ],
+          [
+            "#290000",
+            "#290000",
+            "#561907",
+            "#872c0b",
+            "#872c0b",
+            "#561907",
+            "#2c0403",
+            "#320000"
+          ],
+          [
+            "#320000",
+            "#290000",
+            "#561907",
+            "#561907",
+            "#872c0b",
+            "#8f2304",
+            "#8f2304",
+            "#320000"
+          ],
+          [
+            "#3c0702",
+            "#340502",
+            "#3c0702",
+            "#841604",
+            "#8f2304",
+            "#cf5107",
+            "#872c0b",
+            "#610c01"
+          ],
+          [
+            "#610c01",
+            "#610c01",
+            "#610c01",
+            "#8f2304",
+            "#cf5107",
+            "#841604",
+            "#841604",
+            "#8f2304"
+          ],
+          [
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07",
+            "#ef7d07"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "prompt_enhance": {
+        "model": "qwen3-omni-flash",
+        "prompt": "🎮【游戏角色艺术指导简报】—— 火焰法师Boss（像素RPG风格）\n\n—\n\n📌 项目名称：  \n“烈焰之主” —— 像素RPG风格火焰法师Boss角色\n\n—\n\n🎨 一、整体艺术风格定位：\n\n- 风格类型：复古像素艺术（Pixel Art），致敬经典RPG游戏（如《暗黑地牢》《星露谷物语》《泰拉瑞亚》等），但需具备更高细节表现力与动态表现力。\n- 分辨率建议：16x16 或 32x32 像素（角色主体），支持动画帧按 16x16 或 32x32 分辨率制作。\n- 色彩调性：高饱和度暖色调为主 —— 红、橙、黄、深褐、暗金，辅以黑色/深灰阴影增强立体感。火焰特效需有“燃烧感”与“动态光晕”。\n- 艺术风格关键词：史诗感、压迫感、魔法威严、像素化但不粗糙、细节精致、动态流畅。\n\n—\n\n🧍‍♂️ 二、角色设计要求：\n\n1. 角色身份：  \n   - 高阶火焰法师，掌控元素之力，是玩家在中后期遭遇的终极Boss之一。\n   - 有“魔法施法者”气质，同时兼具“毁灭性力量”的压迫感。\n\n2. 外观特征：\n   - 身穿破旧但华丽的火焰纹章长袍，袍角随风飘动，边缘有燃烧残迹。\n   - 头戴火焰纹饰的尖顶法帽，帽尖有微弱火焰跳动。\n   - 面部可选：半张脸被火焰遮蔽，或戴有火焰纹面罩，仅露出锐利眼神。\n   - 手持法杖或法球，法杖顶端悬浮一团不稳定火焰，随动作闪烁。\n   - 脚下可有火焰残迹或魔法阵纹路（可选，用于地面特效）。\n   - 可选：背后有火焰羽翼或能量漩涡，增强视觉冲击。\n\n3. 动态表现：\n   - 必须包含至少3种攻击动画（可扩展）：\n     a. **蓄力施法**：法师抬起法杖，火焰聚集于顶端，周围空气扭曲，地面出现魔法阵。\n     b. **火焰弹发射**：向前抛出火球，火球轨迹带拖尾，命中后爆炸。\n     c. **范围火焰冲击波**：双手张开，周身爆发出火焰波纹，地面被灼烧。\n   - 所有动画需流畅，帧数建议：每动作至少8–12帧，支持循环或单次播放。\n   - 动画需包含“攻击前摇”、“施法中”、“攻击后摇”三个阶段，增强战斗节奏感。\n\n—\n\n⚙️ 三、技术规格与导入要求：\n\n- 文件格式：  \n  - 角色主图：PNG（透明背景，带Alpha通道）  \n  - 动画帧：PNG序列（命名规范：Boss_FireMage_Attack1_00.png, Boss_FireMage_Attack1_01.png...）  \n  - 可选：带图层的PSD或Sprite Sheet（若需拆分动画帧）\n\n- 导入Unity要求：\n  - 所有资源需按Unity Sprite Atlas或独立Sprite导入，支持Sprite Renderer + Animator组件。\n  - 动画需导出为Unity Animator Controller，支持状态机切换（Idle, Attack1, Attack2, Attack3, Death等）。\n  - 需提供角色“Idle”基础站立动画（至少4帧，循环播放）。\n  - 所有图层需命名清晰，便于Unity中分层管理（如：Base, FireEffect, Particle, Shadow等）。\n  - 需提供角色碰撞体（可选：2D Box Collider或Polygon Collider，用于Unity物理系统）。\n\n—\n\n🔥 四、特效与氛围要求：\n\n- 火焰特效需与角色动作同步，如施法时火焰增强、攻击时火焰扩散。\n- 可添加粒子效果（如：火花、灰烬、热浪扭曲）作为辅助视觉元素（可选，若资源允许）。\n- 背景可选：火焰熔岩地面、燃烧的祭坛、飘浮的符文，增强Boss场景沉浸感（非必需，但建议提供概念图）。\n\n—\n\n🖼️ 五、交付物清单：\n\n1. 主角色静态图（站立姿态，含透明背景）\n2. 所有攻击动画帧（PNG序列，命名规范清晰）\n3. Idle动画帧（至少4帧）\n4. Unity导入包（.unitypackage 或文件夹结构说明）\n5. 动画状态机说明文档（可选，如使用Animator Controller）\n6. 颜色/图层说明文档（如使用PSD或分层图）\n7. 可选：概念草图或参考图（用于风格对齐）\n\n—\n\n🎯 六、参考灵感来源：\n\n- 《暗黑破坏神》系列火焰法师Boss\n- 《泰拉瑞亚》的“克苏鲁之眼”或“熔岩之王”\n- 《星露谷物语》中“火焰祭司”角色（像素化但有魔法感）\n- 《恶魔城》系列中“火焰魔像”Boss\n- 《最终幻想》系列中“炎之魔神”等经典形象\n\n—\n\n✅ 七、验收标准：\n\n- 角色像素风格统一，无模糊或锯齿（需在16x16/32x32下清晰可辨）\n- 动画流畅，无卡顿，帧率稳定（建议30fps）\n- Unity导入后可正常播放动画，无资源丢失或错位\n- 攻击动画与角色动作逻辑匹配，符合战斗节奏\n- 整体视觉压迫感强，符合“Boss级”角色定位\n\n—\n\n📬 附加说明：\n\n- 请在交付前提供预览视频或GIF，展示动画效果。\n- 如有疑问，请在交付前与项目负责人沟通，确保风格与技术实现一致。\n- 本角色需适配未来可能的“升级形态”或“变身阶段”，请预留扩展空间（如图层结构、动画状态设计）。\n\n—\n\n🔥 烈焰之主，即将降临！  \n请以像素之笔，绘就魔法之焰，让玩家在火焰中颤抖！\n\n—— 游戏美术总监 / 项目负责人  \n[日期]\n\n—\n\n✅ 本简报可作为美术外包或内部团队执行的详细指导文件，确保角色设计、动画制作、技术导入三者无缝衔接。"
+      },
+      "image": {
+        "file": "img_1790607345199.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/2b/20260928/77c9ad12/3c011504-f4a6-48f3-9790-f23629ba84992338120883.png?Expires=1790693747&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=XX3unq3Ocjmi9NUuAevXV8vTiIU%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790607345199.png",
+        "width": 512,
+        "height": 512
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/2b/20260928/77c9ad12/3c011504-f4a6-48f3-9790-f23629ba84992338120883.png?Expires=1790693747&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=XX3unq3Ocjmi9NUuAevXV8vTiIU%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790607363315.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/94/20260928/aa4f9372/e672d6fb-392d-4709-85af-40af0685c40d-1.png?Expires=1791213167&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=AlTJzWTdQe7AL2MSzJtPWxduqqw%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790607381169.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/2f/20260928/aa4f9372/f39998fb-7303-4f8a-8f0a-cdc8a8b23a71-1.png?Expires=1791213185&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=3jqf3JXuvDIweDRYzoFhKRT%2FQJY%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-11"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790608858.6047618,
+    "finished_at": 1790608905.1867964,
+    "goal": "银灰中长发少女，单侧编小麻花辫，天蓝大眼灵动有神，嘴角上扬元气笑容，发丝微扬，背景浅粉渐变，日系动漫风格，柔和光影，清新活泼氛围。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast18962",
+    "name": "银灰中长发少女_单侧编小麻花辫_天蓝大眼灵动有神",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 46.582,
+    "character": {
+      "id": "ast18962",
+      "name": "银灰中长发少女_单侧编小麻花辫_天蓝大眼灵动有神",
+      "type": "character",
+      "role": "npc",
+      "seed": 1203918962,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7b2013",
+        "base": "#ff783e",
+        "highlight": "#e3bb38",
+        "accent": "#ffea90",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#fff8f9",
+      "#fdeced",
+      "#ece0e0",
+      "#d3cfd3",
+      "#fff5f6",
+      "#c4c2c8",
+      "#bdbbc2",
+      "#cdc9cd",
+      "#fff0f2",
+      "#cbc4ca",
+      "#ffe4e8",
+      "#ebcfd0",
+      "#b8b0ba",
+      "#c7bec5",
+      "#a5a3ae",
+      "#cab5bd",
+      "#fedae3",
+      "#e1bbcf",
+      "#90868d",
+      "#e6c7cd",
+      "#fcd0dc",
+      "#a096a5",
+      "#f3c5d8",
+      "#6a6779",
+      "#ebbed5",
+      "#ddb2c5",
+      "#4d485d",
+      "#e6bad5",
+      "#1b1d34",
+      "#272a44",
+      "#dcb3d4",
+      "#c5a9c5"
+    ],
+    "image": {
+      "file": "img_1790608867716.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9c/20260928/77c9ad12/4f33bdb9-fdaf-4f7d-a976-df4616feb002-1.png?Expires=1790695270&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=bjXFQdAvWph%2FFraM7bhhO9NLN%2BI%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790608867716.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast18962",
+      "name": "银灰中长发少女_单侧编小麻花辫_天蓝大眼灵动有神",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1203918962,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7b2013",
+          "base": "#ff783e",
+          "highlight": "#e3bb38",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790608867716.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9c/20260928/77c9ad12/4f33bdb9-fdaf-4f7d-a976-df4616feb002-1.png?Expires=1790695270&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=bjXFQdAvWph%2FFraM7bhhO9NLN%2BI%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790608867716.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast18962",
+        "name": "银灰中长发少女_单侧编小麻花辫_天蓝大眼灵动有神",
+        "type": "character",
+        "role": "npc",
+        "seed": 1203918962,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7b2013",
+          "base": "#ff783e",
+          "highlight": "#e3bb38",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#fff8f9",
+            "#fdeced",
+            "#ece0e0",
+            "#d3cfd3",
+            "#fff5f6",
+            "#c4c2c8",
+            "#bdbbc2",
+            "#cdc9cd",
+            "#fff0f2",
+            "#cbc4ca",
+            "#ffe4e8",
+            "#ebcfd0",
+            "#b8b0ba",
+            "#c7bec5",
+            "#a5a3ae",
+            "#cab5bd",
+            "#fedae3",
+            "#e1bbcf",
+            "#90868d",
+            "#e6c7cd",
+            "#fcd0dc",
+            "#a096a5",
+            "#f3c5d8",
+            "#6a6779",
+            "#ebbed5",
+            "#ddb2c5",
+            "#4d485d",
+            "#e6bad5",
+            "#1b1d34",
+            "#272a44",
+            "#dcb3d4",
+            "#c5a9c5"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7b2013",
+            "base": "#ff783e",
+            "highlight": "#e3bb38",
+            "accent": "#ffea90",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9",
+            "#fdeced",
+            "#ece0e0",
+            "#d3cfd3",
+            "#d3cfd3",
+            "#ece0e0",
+            "#fff5f6",
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9",
+            "#fff8f9"
+          ],
+          [
+            "#fff5f6",
+            "#fff5f6",
+            "#fff5f6",
+            "#fff5f6",
+            "#fff5f6",
+            "#ece0e0",
+            "#c4c2c8",
+            "#bdbbc2",
+            "#c4c2c8",
+            "#c4c2c8",
+            "#cdc9cd",
+            "#d3cfd3",
+            "#fff0f2",
+            "#fff5f6",
+            "#fff5f6",
+            "#fff5f6"
+          ],
+          [
+            "#fff0f2",
+            "#fff0f2",
+            "#fff0f2",
+            "#fff0f2",
+            "#ece0e0",
+            "#d3cfd3",
+            "#c4c2c8",
+            "#cbc4ca",
+            "#c4c2c8",
+            "#bdbbc2",
+            "#d3cfd3",
+            "#d3cfd3",
+            "#ece0e0",
+            "#fff0f2",
+            "#fff0f2",
+            "#fff0f2"
+          ],
+          [
+            "#fdeced",
+            "#fdeced",
+            "#fdeced",
+            "#fdeced",
+            "#cbc4ca",
+            "#c4c2c8",
+            "#d3cfd3",
+            "#d3cfd3",
+            "#d3cfd3",
+            "#cdc9cd",
+            "#cdc9cd",
+            "#c4c2c8",
+            "#cdc9cd",
+            "#fdeced",
+            "#fdeced",
+            "#fdeced"
+          ],
+          [
+            "#ffe4e8",
+            "#ffe4e8",
+            "#ffe4e8",
+            "#ebcfd0",
+            "#bdbbc2",
+            "#b8b0ba",
+            "#c4c2c8",
+            "#cbc4ca",
+            "#c7bec5",
+            "#c4c2c8",
+            "#bdbbc2",
+            "#c4c2c8",
+            "#c4c2c8",
+            "#ffe4e8",
+            "#ffe4e8",
+            "#ffe4e8"
+          ],
+          [
+            "#ffe4e8",
+            "#ffe4e8",
+            "#ffe4e8",
+            "#b8b0ba",
+            "#a5a3ae",
+            "#cab5bd",
+            "#c7bec5",
+            "#cbc4ca",
+            "#cbc4ca",
+            "#bdbbc2",
+            "#bdbbc2",
+            "#c4c2c8",
+            "#c4c2c8",
+            "#ebcfd0",
+            "#ffe4e8",
+            "#fedae3"
+          ],
+          [
+            "#fedae3",
+            "#fedae3",
+            "#fedae3",
+            "#e1bbcf",
+            "#90868d",
+            "#90868d",
+            "#e6c7cd",
+            "#e6c7cd",
+            "#ebcfd0",
+            "#cab5bd",
+            "#b8b0ba",
+            "#c4c2c8",
+            "#b8b0ba",
+            "#d3cfd3",
+            "#fedae3",
+            "#fedae3"
+          ],
+          [
+            "#fcd0dc",
+            "#fcd0dc",
+            "#fcd0dc",
+            "#e6c7cd",
+            "#90868d",
+            "#cbc4ca",
+            "#ece0e0",
+            "#fdeced",
+            "#a096a5",
+            "#90868d",
+            "#cab5bd",
+            "#cab5bd",
+            "#b8b0ba",
+            "#c7bec5",
+            "#fcd0dc",
+            "#fcd0dc"
+          ],
+          [
+            "#fcd0dc",
+            "#fcd0dc",
+            "#fcd0dc",
+            "#ebcfd0",
+            "#90868d",
+            "#ebcfd0",
+            "#ffe4e8",
+            "#ffe4e8",
+            "#fcd0dc",
+            "#ece0e0",
+            "#cab5bd",
+            "#a5a3ae",
+            "#b8b0ba",
+            "#e1bbcf",
+            "#fcd0dc",
+            "#fcd0dc"
+          ],
+          [
+            "#f3c5d8",
+            "#f3c5d8",
+            "#f3c5d8",
+            "#e6c7cd",
+            "#a5a3ae",
+            "#a5a3ae",
+            "#ffe4e8",
+            "#fdeced",
+            "#ffe4e8",
+            "#e6c7cd",
+            "#6a6779",
+            "#90868d",
+            "#90868d",
+            "#ebbed5",
+            "#f3c5d8",
+            "#f3c5d8"
+          ],
+          [
+            "#f3c5d8",
+            "#f3c5d8",
+            "#f3c5d8",
+            "#f3c5d8",
+            "#cab5bd",
+            "#b8b0ba",
+            "#cab5bd",
+            "#e6c7cd",
+            "#ddb2c5",
+            "#a096a5",
+            "#90868d",
+            "#a5a3ae",
+            "#cbc4ca",
+            "#f3c5d8",
+            "#f3c5d8",
+            "#f3c5d8"
+          ],
+          [
+            "#ebbed5",
+            "#ebbed5",
+            "#ebbed5",
+            "#ebbed5",
+            "#cab5bd",
+            "#e1bbcf",
+            "#a5a3ae",
+            "#4d485d",
+            "#90868d",
+            "#a096a5",
+            "#a096a5",
+            "#b8b0ba",
+            "#e1bbcf",
+            "#ebbed5",
+            "#ebbed5",
+            "#ebbed5"
+          ],
+          [
+            "#e6bad5",
+            "#e6bad5",
+            "#e6bad5",
+            "#e6bad5",
+            "#a5a3ae",
+            "#4d485d",
+            "#1b1d34",
+            "#1b1d34",
+            "#272a44",
+            "#bdbbc2",
+            "#b8b0ba",
+            "#dcb3d4",
+            "#e6bad5",
+            "#e6bad5",
+            "#e6bad5",
+            "#e6bad5"
+          ],
+          [
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#c5a9c5",
+            "#4d485d",
+            "#272a44",
+            "#1b1d34",
+            "#4d485d",
+            "#a5a3ae",
+            "#a096a5",
+            "#6a6779",
+            "#4d485d",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4"
+          ],
+          [
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#90868d",
+            "#272a44",
+            "#272a44",
+            "#272a44",
+            "#6a6779",
+            "#a5a3ae",
+            "#6a6779",
+            "#1b1d34",
+            "#272a44",
+            "#6a6779",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4"
+          ],
+          [
+            "#dcb3d4",
+            "#dcb3d4",
+            "#dcb3d4",
+            "#6a6779",
+            "#272a44",
+            "#272a44",
+            "#6a6779",
+            "#6a6779",
+            "#272a44",
+            "#272a44",
+            "#272a44",
+            "#272a44",
+            "#272a44",
+            "#a5a3ae",
+            "#dcb3d4",
+            "#dcb3d4"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast18962",
+          "type": "character",
+          "resources": {
+            "texture": "ast18962.png",
+            "animation": "ast18962.anim",
+            "prefab": "ast18962.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast18962.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast18962.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast18962.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast18962.png",
+          "Animation": "Assets/Animation/ast18962.anim",
+          "Prefab": "Assets/Prefab/ast18962.prefab",
+          "Controller": "Assets/Controller/ast18962.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "银灰中长发少女，单侧编小麻花辫，天蓝大眼灵动有神，嘴角上扬元气笑容，发丝微扬，背景浅粉渐变，日系动漫风格，柔和光影，清新活泼氛围。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790608867716.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9c/20260928/77c9ad12/4f33bdb9-fdaf-4f7d-a976-df4616feb002-1.png?Expires=1790695270&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=bjXFQdAvWph%2FFraM7bhhO9NLN%2BI%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790608867716.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9c/20260928/77c9ad12/4f33bdb9-fdaf-4f7d-a976-df4616feb002-1.png?Expires=1790695270&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=bjXFQdAvWph%2FFraM7bhhO9NLN%2BI%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790608886207.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/aa/20260928/aa4f9372/9668ad1f-f28a-47fe-bbf1-5995638929e6-1.png?Expires=1791214690&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=xYsofbQa%2Fy%2B1XGevM4cY3jYv1Qg%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790608904537.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/f4/20260928/17bff29b/5185d3cc-7219-4ed6-bf4f-ef104aaabe51-1.png?Expires=1791214708&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=GmqnKApJI8lDjINQKgoz4r%2F7F2g%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-12"
   }
 ]
