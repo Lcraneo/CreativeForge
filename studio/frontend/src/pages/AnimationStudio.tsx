@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useAssetLoader } from "../stores/assetStore";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
-import { Badge, Button, Card, PageHeader, ScoreBar, cx } from "../components/ui";
+import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
+import { toast } from "../stores/toastStore";
 
 const ACTIONS = ["idle", "walk", "run", "attack", "jump"];
 const ACTION_LABELS: Record<string, string> = {
@@ -44,6 +46,12 @@ export default function AnimationStudio() {
   const asset = useAssetLoader();
   const [mode, setMode] = useState<"smart" | "editor" | "sequence" | "cloud">("smart");
   const [skeletal, setSkeletal] = useState(true);
+  const rigCheck = useQuery({
+    queryKey: ["rig-check", asset?.id],
+    queryFn: () => api.rigCheck(asset?.id ?? undefined),
+    enabled: Boolean(asset?.id),
+    staleTime: 60000,
+  });
   const [useVideo, setUseVideo] = useState(false);
   const [view, setView] = useState("side");
   const [action, setAction] = useState("walk");
@@ -66,6 +74,66 @@ export default function AnimationStudio() {
   const [editorAction, setEditorAction] = useState("walk");
   const [editorView, setEditorView] = useState("side");
   const [poseConfig, setPoseConfig] = useState<PoseConfig>(DEFAULT_POSE_CONFIG);
+  // 自然语言自定义动作（P1 体验）：描述 → 润色 → 结构化参数套用编辑器
+  const [nlText, setNlText] = useState("");
+  const [nlBusy, setNlBusy] = useState<"enhance" | "apply" | null>(null);
+  const nlPast = useRef<string[]>([]);
+  const nlFuture = useRef<string[]>([]);
+
+  function nlChange(value: string) {
+    nlPast.current.push(nlText);
+    if (nlPast.current.length > 50) nlPast.current.shift();
+    nlFuture.current = [];
+    setNlText(value);
+  }
+  function nlUndo() {
+    const previous = nlPast.current.pop();
+    if (previous === undefined) return;
+    nlFuture.current.push(nlText);
+    setNlText(previous);
+  }
+  function nlRedo() {
+    const next = nlFuture.current.pop();
+    if (next === undefined) return;
+    nlPast.current.push(nlText);
+    setNlText(next);
+  }
+  async function nlEnhance() {
+    const text = nlText.trim();
+    if (!text || nlBusy) return;
+    setNlBusy("enhance");
+    try {
+      const result = await api.enhanceActionText(text);
+      nlChange(result.text);
+      toast({ tone: "success", title: "文案已增强", description: "润色后的动作说明已填入" });
+    } catch (cause) {
+      toast({ tone: "danger", title: "文案增强失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setNlBusy(null);
+    }
+  }
+  async function nlApply() {
+    const text = nlText.trim();
+    if (!text || nlBusy) return;
+    setNlBusy("apply");
+    try {
+      const action = await api.interpretActionText(text);
+      setEditorAction(action.base_action);
+      setEditorView(action.view as "front" | "side");
+      setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...action.pose_config });
+      setPhase(0);
+      setPresetName(action.label);
+      toast({
+        tone: "success",
+        title: `已套用动作「${action.label}」`,
+        description: `${action.base_action} · ${action.view} · 滑杆参数已更新，可直接生成或微调后保存`,
+      });
+    } catch (cause) {
+      toast({ tone: "danger", title: "动作解读失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setNlBusy(null);
+    }
+  }
   const [phase, setPhase] = useState(0);
   const [frameUrl, setFrameUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -431,6 +499,17 @@ export default function AnimationStudio() {
                       </div>
                     </div>
                   )}
+                  {skeletal && !useVideo && rigCheck.data?.proportion === "chibi" && (
+                    <div className="w-full rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-[12px] leading-[18px] text-ink">
+                      ⚠ {rigCheck.data.message}
+                      <button
+                        onClick={() => setUseVideo(true)}
+                        className="ml-2 font-medium text-primary underline-offset-2 hover:underline"
+                      >
+                        切换到 AI 视频驱动
+                      </button>
+                    </div>
+                  )}
                   <div>
                     <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
                     <div className="flex overflow-hidden rounded-lg border border-line-subtle">
@@ -555,6 +634,56 @@ export default function AnimationStudio() {
                     >
                       用此动作生成
                     </Button>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-line-subtle bg-surface-2/40 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] uppercase tracking-widest text-ink-4">
+                      自然语言自定义动作 · 用一句话描述你想要的动作
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Button variant="ghost" size="sm" onClick={nlUndo} disabled={nlPast.current.length === 0}>
+                        撤销
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={nlRedo} disabled={nlFuture.current.length === 0}>
+                        重做
+                      </Button>
+                    </div>
+                  </div>
+                  <Textarea
+                    value={nlText}
+                    onChange={(event) => nlChange(event.target.value)}
+                    rows={2}
+                    placeholder="例：角色快速挥刀两下，然后向后跳开，落地时微微下蹲。支持换行与 Ctrl+Z 撤销。"
+                    className="w-full"
+                  />
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="spark"
+                      loading={nlBusy === "enhance"}
+                      onClick={nlEnhance}
+                      disabled={!nlText.trim()}
+                      title="用对话模型把描述润色成专业动作说明"
+                    >
+                      文案增强
+                    </Button>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="zap"
+                      loading={nlBusy === "apply"}
+                      onClick={nlApply}
+                      disabled={!nlText.trim()}
+                      title="把描述解读成动作参数，自动套用到下方滑杆与时间轴"
+                    >
+                      套用到动作编辑器
+                    </Button>
+                    <span className="text-[10.5px] text-ink-4">
+                      套用后可在下方滑杆微调，再点「用此动作生成」
+                    </span>
                   </div>
                 </div>
 

@@ -36,6 +36,9 @@ export default function DesignCenter() {
   const navigate = useNavigate();
   const [pose, setPose] = useState<ViewId>("front");
   const [generating, setGenerating] = useState(false);
+  const [restyleStyle, setRestyleStyle] = useState("anime");
+  const [restyleBusy, setRestyleBusy] = useState(false);
+  const [cutoutBusy, setCutoutBusy] = useState(false);
   const setAsset = useAssetStore((state) => state.set);
 
   if (!asset?.character) {
@@ -84,6 +87,34 @@ export default function DesignCenter() {
       toast({ tone: "danger", title: "三视图生成失败", description: String(cause).slice(0, 200) });
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function doRestyle() {
+    if (!asset || restyleBusy) return;
+    setRestyleBusy(true);
+    try {
+      const payload = await api.restyleAsset(asset.id, restyleStyle);
+      setAsset({ ...asset, restyle: payload });
+      toast({ tone: "success", title: "风格迁移完成", description: `${restyleStyle} · ${payload.model ?? ""}` });
+    } catch (cause) {
+      toast({ tone: "danger", title: "风格迁移失败", description: String(cause).slice(0, 200) });
+    } finally {
+      setRestyleBusy(false);
+    }
+  }
+
+  async function doCutout() {
+    if (!asset || cutoutBusy) return;
+    setCutoutBusy(true);
+    try {
+      const payload = await api.cutoutAsset(asset.id);
+      setAsset({ ...asset, cutout_png: payload.cutout_png });
+      toast({ tone: "success", title: "透明底立绘已生成", description: "可在资产检查器查看与导出" });
+    } catch (cause) {
+      toast({ tone: "danger", title: "透明底生成失败", description: String(cause).slice(0, 200) });
+    } finally {
+      setCutoutBusy(false);
     }
   }
 
@@ -225,13 +256,62 @@ export default function DesignCenter() {
             title="AI 原画 Concept"
             icon="spark"
             right={
-              asset.image ? (
-                <Badge tone="primary">{asset.image.provider}</Badge>
-              ) : (
-                <Badge tone="neutral">未生成</Badge>
-              )
+              <div className="flex flex-wrap items-center gap-1.5">
+                {asset.image ? <Badge tone="primary">{asset.image.provider}</Badge> : <Badge tone="neutral">未生成</Badge>}
+                {aiImageAvailable(asset) && (
+                  <>
+                    <Segmented
+                      options={[
+                        { id: "anime", label: "动漫" },
+                        { id: "pixel", label: "像素" },
+                        { id: "ink", label: "水墨" },
+                      ]}
+                      value={restyleStyle}
+                      onChange={setRestyleStyle}
+                    />
+                    <Button variant="secondary" size="sm" icon="spark" loading={restyleBusy} onClick={doRestyle}>
+                      风格迁移
+                    </Button>
+                    <Button variant="secondary" size="sm" icon="eraser" loading={cutoutBusy} onClick={doCutout}>
+                      透明底
+                    </Button>
+                  </>
+                )}
+              </div>
             }
           >
+            {asset.restyle?.url && (
+              <div className="mb-3 overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
+                <p className="px-3 pt-2 text-[11px] text-ink-3">
+                  风格迁移 · {asset.restyle.style}（点击放大另存）
+                </p>
+                <a href={asset.restyle.url} target="_blank" rel="noreferrer">
+                  <img
+                    src={asset.restyle.url}
+                    alt={`restyle ${asset.restyle.style}`}
+                    className="mx-auto h-[200px] object-contain"
+                  />
+                </a>
+              </div>
+            )}
+            {asset.cutout_png && (
+              <div className="mb-3 overflow-hidden rounded-[10px] border border-dashed border-primary/40 bg-white">
+                <p className="px-3 pt-2 text-[11px] text-ink-3">透明底立绘（棋盘格外的都是透明像素）</p>
+                <a href={asset.cutout_png} target="_blank" rel="noreferrer">
+                  <img
+                    src={asset.cutout_png}
+                    alt="cutout"
+                    className="mx-auto h-[200px] object-contain"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(45deg,#eee 25%,transparent 25%,transparent 75%,#eee 75%),linear-gradient(45deg,#eee 25%,transparent 25%,transparent 75%,#eee 75%)",
+                      backgroundSize: "16px 16px",
+                      backgroundPosition: "0 0, 8px 8px",
+                    }}
+                  />
+                </a>
+              </div>
+            )}
             {asset.image?.url ? (
               <div className="overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
                 <img

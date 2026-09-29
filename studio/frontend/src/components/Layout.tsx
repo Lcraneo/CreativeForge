@@ -23,6 +23,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { to: "/agents", label: "智能体", icon: "layers", kbd: "2" },
       { to: "/history", label: "历史记录", icon: "clock" },
       { to: "/batch", label: "批量生产线", icon: "package" },
+      { to: "/playtest", label: "试玩舞台", icon: "film" },
     ],
   },
   {
@@ -61,6 +62,7 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/agents": { group: "生产", label: "智能体指挥中心" },
   "/history": { group: "生产", label: "历史记录" },
   "/batch": { group: "生产", label: "批量生产线" },
+  "/playtest": { group: "生产", label: "试玩舞台" },
   "/versions": { group: "资产", label: "版本控制中心" },
   "/asset": { group: "资产", label: "资产检查器" },
   "/design": { group: "资产", label: "角色设计三视图" },

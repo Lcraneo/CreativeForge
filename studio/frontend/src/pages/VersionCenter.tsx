@@ -66,6 +66,21 @@ export default function VersionCenter() {
     });
   }
 
+  async function tagVersion(tag: string) {
+    if (checked.length !== 1) return;
+    try {
+      await api.tagVersion(checked[0].record_id, tag);
+      toast({
+        tone: tag === "approved" ? "success" : "info",
+        title: tag === "approved" ? "已标记定稿" : tag === "needs-work" ? "已标记待改" : "已清除标记",
+        description: `v${checked[0].version_no} · ${checked[0].name ?? ""}`,
+      });
+      tree.refetch();
+    } catch (cause) {
+      toast({ tone: "danger", title: "标记失败", description: String(cause).slice(0, 160) });
+    }
+  }
+
   async function doRollback() {
     if (checked.length === 0) return;
     setRollingBack(true);
@@ -173,6 +188,16 @@ export default function VersionCenter() {
                         回滚选中（{checked.length}）
                       </Button>
                     )}
+                    {checked.length === 1 && (
+                      <>
+                        <Button variant="ghost" size="sm" icon="check" onClick={() => tagVersion("approved")}>
+                          标记定稿
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => tagVersion("needs-work")}>
+                          待改
+                        </Button>
+                      </>
+                    )}
                     {confirming && (
                       <>
                         <Button
@@ -242,6 +267,8 @@ export default function VersionCenter() {
                                   {version.goal || version.name}
                                 </span>
                                 {isLatest && <Badge tone="success">当前</Badge>}
+                                {version.review_tag === "approved" && <Badge tone="primary">定稿</Badge>}
+                                {version.review_tag === "needs-work" && <Badge tone="warning">待改</Badge>}
                               </span>
                               <span className="mt-0.5 block truncate text-[11px] text-ink-3">
                                 {timeLabel(version.created_at)} · seed {version.seed ?? "—"}

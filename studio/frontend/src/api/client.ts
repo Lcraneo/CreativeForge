@@ -168,6 +168,49 @@ export const api = {
     }),
   rollbackLog: () =>
     request<{ rollbacks: RollbackRecord[] }>("/api/versions/rollbacks"),
+  tagVersion: (recordId: string, tag: string) =>
+    request<{ status: string; record_id: string; tag: string }>("/api/versions/tag", {
+      method: "POST",
+      body: JSON.stringify({ record_id: recordId, tag }),
+    }),
+  reviewAsset: (assetId: string, approved: boolean, note?: string) =>
+    request<{ status: string; asset_id: string | null; review: import("../types").ReviewInfo }>(
+      "/api/assets/review",
+      { method: "POST", body: JSON.stringify({ asset_id: assetId, approved, note }) },
+    ),
+  restyleAsset: (assetId: string, style: string) =>
+    request<import("../types").RestyleInfo>("/api/design/restyle", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId, style }),
+    }),
+  cutoutAsset: (assetId: string) =>
+    request<{ status: string; cutout_png: string; asset_id: string | null }>("/api/design/cutout", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId }),
+    }),
+  rigCheck: (assetId?: string | null) =>
+    request<{
+      proportion: string;
+      head_ratio: number;
+      head_height: number;
+      confidence: number;
+      recommendation: string;
+      message: string;
+    }>(`/api/animation/rig-check${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`),
+  enhanceActionText: (text: string) =>
+    request<{ text: string }>("/api/animation/custom-actions/enhance", {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  interpretActionText: (text: string) =>
+    request<import("../types").InterpretedAction>("/api/animation/custom-actions/interpret", {
+      method: "POST",
+      body: JSON.stringify({ text }),
+    }),
+  playtestPreviews: (assetId?: string | null) =>
+    request<import("../types").PlaytestPreviews>(
+      `/api/playtest/previews${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
+    ),
 
   /* ── P1-B 批量生产线 ── */
   startBatch: (goal: string, count: number, mode: string, overrides?: Record<string, unknown>) =>
@@ -190,10 +233,10 @@ export const api = {
       body: JSON.stringify({ pixels, palette }),
     }),
 
-  createTask: (goal: string, overrides?: GenerationOverrides) =>
+  createTask: (goal: string, overrides?: GenerationOverrides, turbo?: boolean) =>
     request<{ task_id: string; status: string; stream_url: string }>(
       "/api/tasks",
-      { method: "POST", body: JSON.stringify({ goal, overrides }) },
+      { method: "POST", body: JSON.stringify({ goal, overrides, turbo }) },
     ),
 
   plan: (goal: string, assetId?: string) =>

@@ -11,6 +11,7 @@ import SettingsCenter from "./pages/SettingsCenter";
 import PixelStudio from "./pages/PixelStudio";
 import CreativeStudio from "./pages/CreativeStudio";
 import BatchCenter from "./pages/BatchCenter";
+import PlaytestStage from "./pages/PlaytestStage";
 import VersionCenter from "./pages/VersionCenter";
 import Workspace from "./pages/Workspace";
 import TechnologyCenter from "./pages/TechnologyCenter";
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="settings" element={<SettingsCenter />} />
         <Route path="pixel" element={<PixelStudio />} />
         <Route path="animation" element={<AnimationStudio />} />
+        <Route path="playtest" element={<PlaytestStage />} />
         <Route path="benchmark" element={<BenchmarkCenter />} />
         <Route path="export" element={<ExportCenter />} />
         <Route path="technology" element={<TechnologyCenter />} />

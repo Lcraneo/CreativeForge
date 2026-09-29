@@ -58,8 +58,44 @@ class HistoryStore:
                 rid = "{}-{}".format(rid, suffix)
             record["id"] = rid
             self._records.append(record)
+            self._rotate_locked()
             self._save()
         return rid
+
+    MAX_RECORDS = 240
+    ARCHIVE_CHUNK = 60
+
+    def _rotate_locked(self):
+        """容量轮转（P2 资源优化）：超过上限时把最老的一批记录归档到
+        ``<path>.archive.json``，主文件保持小而快（全量重写成本可控）。"""
+
+        if len(self._records) <= self.MAX_RECORDS:
+            return
+        overflow = self._records[:-self.MAX_RECORDS]
+        self._records = self._records[-self.MAX_RECORDS:]
+        archive_path = self.path + ".archive.json"
+        try:
+            existing = []
+            if os.path.isfile(archive_path):
+                with open(archive_path, "r", encoding="utf-8") as handle:
+                    data = json.load(handle)
+                existing = data if isinstance(data, list) else []
+            existing.extend(overflow)
+            with open(archive_path, "w", encoding="utf-8") as handle:
+                json.dump(existing, handle, ensure_ascii=False)
+        except (ValueError, OSError):
+            pass
+
+    def tag_record(self, record_id, key, value):
+        """给单条历史记录打标记（如版本定稿 review_tag），返回是否命中。"""
+
+        with self._lock:
+            for record in self._records:
+                if record.get("id") == record_id or record.get("task_id") == record_id:
+                    record[key] = value
+                    self._save()
+                    return True
+        return False
 
     def get(self, record_id):
         with self._lock:

@@ -44,6 +44,7 @@ def _resolve_asset(runtime, asset_id: str | None) -> dict | None:
 class CreateTaskRequest(BaseModel):
     goal: str
     overrides: dict | None = None
+    turbo: bool = False  # 极速档：跳过三视图等增值步骤，最快出结果
 
 
 class AnimationRequest(BaseModel):
@@ -123,6 +124,30 @@ class PixelEditRequest(BaseModel):
     palette: list[str] | None = None
 
 
+class ReviewRequest(BaseModel):
+    asset_id: str
+    approved: bool
+    note: str | None = None
+
+
+class VersionTagRequest(BaseModel):
+    record_id: str
+    tag: str  # approved / needs-work / none
+
+
+class RestyleRequest(BaseModel):
+    asset_id: str
+    style: str  # pixel / anime / ink
+
+
+class ActionPackRequest(BaseModel):
+    actions: list
+
+
+class ActionTextRequest(BaseModel):
+    text: str
+
+
 class ModelSettingsRequest(BaseModel):
     enabled: bool | None = None
     provider: str | None = None
@@ -153,7 +178,7 @@ def build_router(runtime):
         goal = request.goal.strip()
         if not goal:
             raise HTTPException(status_code=422, detail="goal is required")
-        task_id = runtime.start_task(goal, overrides=request.overrides)
+        task_id = runtime.start_task(goal, overrides=request.overrides, turbo=request.turbo)
         return {
             "task_id": task_id,
             "status": "running",
@@ -515,6 +540,186 @@ def build_router(runtime):
             w, h, rgba = render_frame_rgba(params, action, phase, request.size, request.pose_config)
         return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
 
+    @router.get("/animation/rig-check")
+    def animation_rig_check(asset_id: str | None = None):
+        """骨骼绑定体检：检测角色头身比，Q 版角色全身骨骼会系统性错位，
+        建议改用 AI 视频驱动（P1 生成质量）。"""
+
+        from artgen.rig import build_rig
+        from studio.backend.animation_service.service import AnimationService
+
+        service = AnimationService(ANIMATION_DIR)
+        asset = _resolve_asset(runtime, asset_id)
+        source = service._asset_render(asset) if asset is not None else None
+        if not source:
+            raise HTTPException(status_code=409, detail="没有可用源图，无法评估骨骼绑定")
+        rig = build_rig(source, 384)
+        chibi = rig.get("proportion") == "chibi"
+        return {
+            "proportion": rig.get("proportion"),
+            "head_ratio": rig.get("head_ratio"),
+            "head_height": rig.get("head_height"),
+            "confidence": rig.get("confidence"),
+            "recommendation": "video" if chibi else "skeletal",
+            "message": (
+                "检测到 Q 版 / 大头比例（头宽≈躯干宽）。比例带骨骼对这类角色会系统性错位，"
+                "建议改用「AI 视频驱动」生成动作，效果会好很多。"
+                if chibi
+                else "身体比例适合全身骨骼绑定。"
+            ),
+        }
+
+    def _chat_once(settings: dict, prompt: str) -> str:
+        """单轮对话模型调用（OpenAI 兼容），返回纯文本。"""
+
+        import httpx as _httpx
+
+        base_url = (settings.get("base_url") or "").rstrip("/")
+        api_key = settings.get("api_key")
+        model = settings.get("chat_model") or settings.get("model")
+        if not base_url or not api_key or not model:
+            raise RuntimeError("对话模型未配置完整")
+        response = _httpx.post(
+            base_url + "/chat/completions",
+            headers={"Authorization": "Bearer " + api_key, "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.4,
+            },
+            timeout=float(settings.get("timeout", 60)),
+        )
+        response.raise_for_status()
+        return response.json()["choices"][0]["message"]["content"].strip()
+
+    @router.post("/animation/custom-actions/enhance")
+    def enhance_action_text(request: ActionTextRequest):
+        """动作描述润色（P1 体验）：对话模型把口语化描述改写成专业、具体的
+        动作说明。失败抛 502，由前端提示。"""
+
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="自定义模型未启用，无法使用文案增强")
+        text = (request.text or "").strip()
+        if not text:
+            raise HTTPException(status_code=422, detail="text 不能为空")
+        prompt = (
+            "你是资深游戏动作设计指导。把下面这段用户写的角色动作描述润色成清晰、具体、"
+            "专业的动作说明（80 字以内中文，只输出润色后的描述本身，不要任何解释、"
+            "不要列表、不要引号）。保留用户描述的全部意图，补全缺失的动作细节"
+            "（预备、发力、跟随、收势）。\n\n用户描述：" + text
+        )
+        try:
+            polished = _chat_once(settings, prompt)
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+        return {"text": polished}
+
+    @router.post("/animation/custom-actions/interpret")
+    def interpret_action_text(request: ActionTextRequest):
+        """动作结构化解读（P1 体验）：对话模型把动作描述转成 pose_config 参数
+        JSON，直接套用动作编辑器。解析失败回退安全默认值。"""
+
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="自定义模型未启用，无法解读动作描述")
+        text = (request.text or "").strip()
+        if not text:
+            raise HTTPException(status_code=422, detail="text 不能为空")
+        import json as _json
+
+        prompt = (
+            "你是游戏动画参数师。把用户的动作描述转换成 JSON（只输出 JSON 本体，"
+            "不要 markdown 代码块、不要解释）。JSON 格式：\n"
+            '{"label": "动作名，4字以内中文", '
+            '"base_action": "idle/walk/run/attack/jump 之一（最接近的整体动作类型）", '
+            '"view": "front 或 side（side=侧视横版步态，仅 walk/run 建议）", '
+            '"pose_config": {"bob": 上下起伏0~2, "stride": 步幅0~2, "arm": 摆臂0~2, '
+            '"lift": 抬脚0~2, "lean": 前倾角度-15~30, "lag": 手臂滞后0~1.2, "cycles": 循环周期0.25~3}}\n'
+            "数值必须落在范围内。\n\n用户描述：" + text
+        )
+        try:
+            raw = _chat_once(settings, prompt)
+            start, end = raw.find("{"), raw.rfind("}")
+            if start < 0 or end <= start:
+                raise ValueError("no JSON in model output")
+            data = _json.loads(raw[start:end + 1])
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail="解读失败：{}".format(str(exc)[:120]))
+
+        label = str(data.get("label") or text[:6])
+        base_action = str(data.get("base_action") or "attack")
+        if base_action not in ("idle", "walk", "run", "attack", "jump"):
+            base_action = "attack"
+        view = str(data.get("view") or "front")
+        if view not in ("front", "side"):
+            view = "front"
+
+        raw_pose = data.get("pose_config") or {}
+
+        def clamp(value, lo, hi, default):
+            try:
+                return max(lo, min(hi, float(value)))
+            except (TypeError, ValueError):
+                return default
+
+        pose_config = {
+            "bob": clamp(raw_pose.get("bob"), 0, 2, 1),
+            "stride": clamp(raw_pose.get("stride"), 0, 2, 1),
+            "arm": clamp(raw_pose.get("arm"), 0, 2, 1),
+            "lift": clamp(raw_pose.get("lift"), 0, 2, 1),
+            "lean": clamp(raw_pose.get("lean"), -15, 30, 0),
+            "lag": clamp(raw_pose.get("lag"), 0, 1.2, 0.45),
+            "cycles": clamp(raw_pose.get("cycles"), 0.25, 3, 1),
+        }
+        return {
+            "label": label[:12],
+            "base_action": base_action,
+            "view": view,
+            "pose_config": pose_config,
+            "source_text": text,
+        }
+
+    @router.get("/animation/action-pack")
+    def export_action_pack():
+        """动作包导出（扩展性）：全部自定义动作打包为可分享 JSON。"""
+
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        store = CustomActionStore(ANIMATION_DIR + "/custom_actions.json")
+        actions = store.list()
+        return {
+            "format": "creativeforge-action-pack/1",
+            "count": len(actions),
+            "actions": actions,
+        }
+
+    @router.post("/animation/action-pack")
+    def import_action_pack(request: ActionPackRequest):
+        """动作包导入：批量写入自定义动作（同名覆盖）。"""
+
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        store = CustomActionStore(ANIMATION_DIR + "/custom_actions.json")
+        imported = 0
+        errors = []
+        for item in request.actions or []:
+            try:
+                if not isinstance(item, dict) or not item.get("name"):
+                    raise ValueError("missing name")
+                store.save({
+                    "name": str(item["name"]),
+                    "action": str(item.get("action") or "walk"),
+                    "view": str(item.get("view") or "front"),
+                    "pose_config": item.get("pose_config") or {},
+                })
+                imported += 1
+            except Exception as error:  # noqa: BLE001
+                errors.append(str(error)[:80])
+        return {"status": "ok", "imported": imported, "errors": errors}
+
     @router.get("/animation/custom-actions")
     def list_custom_actions():
         from studio.backend.animation_service.custom_actions import CustomActionStore
@@ -573,7 +778,7 @@ def build_router(runtime):
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error))
 
-    @router.get("/animation/{name}")
+    @router.get("/animation/{name:path}")
     def get_animation_file(name: str):
         from studio.backend.animation_service.service import AnimationService
 
@@ -665,6 +870,162 @@ def build_router(runtime):
         from studio.backend.version_service import VersionService
 
         return {"rollbacks": VersionService().rollback_log()}
+
+    @router.post("/versions/tag")
+    def tag_version(request: VersionTagRequest):
+        """版本定稿标记（协作）：approved / needs-work / none。"""
+
+        if request.tag not in ("approved", "needs-work", "none"):
+            raise HTTPException(status_code=422, detail="tag 仅支持 approved / needs-work / none")
+        ok = runtime.history.tag_record(
+            request.record_id, "review_tag",
+            None if request.tag == "none" else request.tag,
+        )
+        if not ok:
+            raise HTTPException(status_code=404, detail="unknown record")
+        return {"status": "ok", "record_id": request.record_id, "tag": request.tag}
+
+    @router.post("/assets/review")
+    def review_asset(request: ReviewRequest):
+        """人工审核（体验）：生成结果通过 / 重做，写回资产与历史。"""
+
+        asset = _resolve_asset(runtime, request.asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        review = {
+            "approved": request.approved,
+            "note": request.note,
+            "at": time.time(),
+        }
+        asset["review"] = review
+        saved = dict(asset)
+        runtime.assets.save(saved)
+        runtime.history.patch_asset(request.asset_id, {"review": review})
+        return {"status": "ok", "asset_id": saved.get("id"), "review": review}
+
+    @router.post("/design/restyle")
+    def restyle_asset(request: RestyleRequest):
+        """风格迁移（功能）：保持角色与构图，把原画转成目标风格。"""
+
+        from studio.backend.model_service.service import ImageEditProvider
+
+        asset = _resolve_asset(runtime, request.asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get("ai_image", {}).get("url")
+        if not base:
+            raise HTTPException(status_code=409, detail="该资产没有 AI 原画，无法风格迁移")
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
+
+        prompts = {
+            "pixel": "把这张图转换成像素艺术风格游戏素材：干净的1像素描边、有限的16色调色板、清晰的网格感，保持角色的姿势、服装、配色和所有细节不变，纯色背景",
+            "anime": "把这张图转换成2D动漫赛璐璐上色风格：干净的线稿、平整的色块、柔和阴影，保持角色的姿势、服装、配色和所有细节不变，纯色背景",
+            "ink": "把这张图转换成中国水墨画风格：写意笔触、墨分五色、留白构图，保持角色的姿势、服装和所有细节可辨识，浅色宣纸底",
+        }
+        instruction = prompts.get(request.style)
+        if not instruction:
+            raise HTTPException(status_code=422, detail="style 仅支持 pixel / anime / ink")
+
+        editor = ImageEditProvider(settings)
+        try:
+            result = editor.edit(base, instruction)
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+        payload = {"style": request.style, "url": result.get("url"),
+                   "file": result.get("file"), "model": result.get("model")}
+        asset["restyle"] = payload
+        saved = dict(asset)
+        runtime.assets.save(saved)
+        runtime.history.patch_asset(request.asset_id, {"restyle": payload})
+        return payload
+
+    @router.post("/design/cutout")
+    def cutout_asset(request: dict):
+        """一键透明底（功能）：AI 分割抠出角色，导出透明底立绘 PNG。"""
+
+        from studio.backend.model_service.service import GENERATED_DIR
+
+        asset = _resolve_asset(runtime, (request or {}).get("asset_id") or "")
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="透明底需要自定义模型（AI 主体分割）")
+
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+
+        from studio.backend.animation_service.service import (
+            AnimationService,
+            ai_segment_subject,
+        )
+        from artgen.sourceanim import _fit
+
+        source_bytes = AnimationService(ANIMATION_DIR)._asset_render(asset)
+        if not source_bytes:
+            raise HTTPException(status_code=409, detail="该资产没有可用的源图")
+        size = 512
+        mask = ai_segment_subject(source_bytes, size, settings, deadline=time.time() + 150.0)
+        if mask is None:
+            raise HTTPException(status_code=502, detail="主体分割失败，请重试")
+        original = _fit(PILImage.open(BytesIO(source_bytes)), size)
+        cutout = original.copy()
+        cutout.putalpha(mask)
+        name = "cutout_{:.0f}.png".format(time.time() * 1000)
+        buffer = BytesIO()
+        cutout.save(buffer, "PNG")
+        with open(os.path.join(GENERATED_DIR, name), "wb") as handle:
+            handle.write(buffer.getvalue())
+
+        url = "/api/generated/" + name
+        asset["cutout_png"] = url
+        saved = dict(asset)
+        runtime.assets.save(saved)
+        runtime.history.patch_asset(saved.get("id"), {"cutout_png": url})
+        return {"status": "ok", "cutout_png": url, "asset_id": saved.get("id")}
+
+    @router.get("/plan/capabilities")
+    def plan_capabilities():
+        """能力自省（扩展性）：规划器可调度能力清单。"""
+
+        from studio.backend.plan_service import capabilities
+
+        return capabilities()
+
+    @router.get("/playtest/previews")
+    def playtest_previews(asset_id: str | None = None):
+        """动作画廊（体验）：5 个内置动作的确定性预览条（每动作 8 帧）。"""
+
+        import hashlib
+
+        from PIL import Image as PILImage
+
+        from artgen import asset_params
+        from artgen.anim import render_action_frames
+
+        asset = _resolve_asset(runtime, asset_id)
+        params = asset_params(asset) if asset is not None else {"palette": None, "seed": "playtest"}
+        seed_key = str(params.get("seed") or "playtest")
+        actions = ["idle", "walk", "run", "attack", "jump"]
+        cache_dir = os.path.join(ANIMATION_DIR, "play_cache")
+        os.makedirs(cache_dir, exist_ok=True)
+
+        previews = {}
+        for action in actions:
+            digest = hashlib.sha1((seed_key + "|" + action).encode()).hexdigest()[:10]
+            name = "play_{}_{}.png".format(action, digest)
+            strip_path = os.path.join(cache_dir, name)
+            if not os.path.isfile(strip_path):
+                frames = render_action_frames(params, action, 8, 96, None)
+                sheet = PILImage.new("RGBA", (96 * len(frames), 96), (0, 0, 0, 0))
+                for i, (w, h, rgba) in enumerate(frames):
+                    sheet.paste(PILImage.frombytes("RGBA", (w, h), bytes(rgba)), (i * 96, 0))
+                sheet.save(strip_path, "PNG")
+            previews[action] = "/api/animation/play_cache/" + name
+        return {"previews": previews, "actions": actions}
 
     # ------------------------------------------------------------------
     # P1-B 批量生成与批量导出

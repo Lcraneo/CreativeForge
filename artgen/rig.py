@@ -88,6 +88,29 @@ def build_rig(image_bytes, size=384, segment_mask=None):
     shoulder_span = max(1.0, shoulder[1] - shoulder[0])
     hip_span = max(1.0, hip[1] - hip[0])
 
+    # ── 头身比检测（Q 版识别）───────────────────────────────────────
+    # 比例带（肩 42% / 髋 60%）只对六七头身成立；Q 版二头身角色关节会
+    # 系统性错位。用逐行宽度剖面找"颈线"：头高占比 > 33% 或 头宽≈躯干宽
+    # 即判为 chibi，置信度减半并向上游暴露，供前端建议改用 AI 视频驱动。
+    pixels = mask.load()
+    widths = []
+    for y in range(y0, y1):
+        row_w = sum(1 for x in range(x0, x1) if pixels[x, y] > 128)
+        widths.append(row_w)
+    # 颈线搜索：跳过头顶弧线（前 12%），在 12%~55% 高度内找最窄行（颈部）
+    search_lo = max(1, int(len(widths) * 0.12))
+    search_hi = max(search_lo + 4, int(len(widths) * 0.55))
+    upper_band = widths[search_lo:search_hi]
+    neck_index = (
+        search_lo + upper_band.index(min(upper_band)) if upper_band else int(len(widths) * 0.3)
+    )
+    head_h = neck_index / max(1, len(widths))
+    head_w = max(widths[: max(1, neck_index + 1)], default=0)
+    torso_w = max(widths[neck_index:], default=0)
+    head_ratio = head_w / max(1, torso_w)
+    chibi = head_h > 0.33 or head_ratio > 0.85
+    proportion = "chibi" if chibi else "normal"
+
     def point(x, y):
         return [round(float(x), 1), round(float(y), 1)]
 
@@ -110,12 +133,17 @@ def build_rig(image_bytes, size=384, segment_mask=None):
     }
 
     confidence = 0.92 if transparent else (0.7 if mask.getbbox() else 0.45)
+    if chibi:
+        confidence = round(confidence * 0.45, 3)
     return {
         "bbox": [x0, y0, x1, y1],
         "size": [size, size],
         "source_size": source_size,
         "transparent": bool(transparent),
-        "confidence": round(confidence, 3),
+        "confidence": confidence,
+        "proportion": proportion,
+        "head_ratio": round(head_ratio, 3),
+        "head_height": round(head_h, 3),
         "source_hash": hashlib.sha1(bytes(image_bytes)).hexdigest()[:12],
         "points": points,
     }

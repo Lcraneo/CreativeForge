@@ -11,7 +11,7 @@ animations; no fixed template character is ever produced.
 import io
 import math
 
-from PIL import Image
+from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from artgen.anim import ACTIONS, _pose
 from artgen.rig import build_rig
@@ -21,14 +21,23 @@ from artgen.style import similarity_rgba
 CANVAS_BG = (0, 0, 0, 0)
 
 
-def _region_layer(subject, rect, size):
-    """Full-canvas transparent layer containing only ``rect`` of ``subject``."""
+def _region_layer(subject, rect, size, feather=5.0):
+    """Full-canvas transparent layer containing only ``rect`` of ``subject``,
+    with a **feathered** mask: adjacent regions blend into each other instead
+    of cutting hard seams (P1 生成质量：消除分区旋转的接缝)."""
+
     layer = Image.new("RGBA", (size, size), CANVAS_BG)
     box = (max(0, int(rect[0])), max(0, int(rect[1])),
            min(size, int(rect[2])), min(size, int(rect[3])))
     if box[2] <= box[0] or box[3] <= box[1]:
         return layer
     layer.paste(subject.crop(box), (box[0], box[1]))
+
+    rect_mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(rect_mask).rectangle(box, fill=255)
+    if feather > 0:
+        rect_mask = rect_mask.filter(ImageFilter.GaussianBlur(feather))
+    layer.putalpha(ImageChops.multiply(layer.getchannel("A"), rect_mask))
     return layer
 
 
@@ -106,23 +115,23 @@ def animate_rigged(
 
     regions = {
         "upper": (
-            _region_layer(subject, (x0, y0, x1, hip_y + 16), size),
+            _region_layer(subject, (x0, y0, x1, hip_y + 16), size, feather=8.0),
             points["neck"],
         ),
         "arm_l": (
-            _region_layer(subject, (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12), size),
+            _region_layer(subject, (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12), size, feather=4.0),
             points["shoulder_l"],
         ),
         "arm_r": (
-            _region_layer(subject, (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12), size),
+            _region_layer(subject, (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12), size, feather=4.0),
             points["shoulder_r"],
         ),
         "leg_l": (
-            _region_layer(subject, (x0, hip_y - 26, cx + w * 0.12, y1), size),
+            _region_layer(subject, (x0, hip_y - 26, cx + w * 0.12, y1), size, feather=5.0),
             points["hip_l"],
         ),
         "leg_r": (
-            _region_layer(subject, (cx - w * 0.12, hip_y - 26, x1, y1), size),
+            _region_layer(subject, (cx - w * 0.12, hip_y - 26, x1, y1), size, feather=5.0),
             points["hip_r"],
         ),
     }

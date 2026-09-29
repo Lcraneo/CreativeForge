@@ -28,40 +28,46 @@ FRAMING_CLAUSE = (
     "body from head to feet stays inside the frame at all times."
 )
 
-# 动作提示词（借鉴 Windup 的 i2v 模板：整体位移优先、锁定侧视角、强调外观不变）
+# 动作提示词（i2v 模板）：**视角无关**——旧版硬编码 "seen from the side"，
+# 而用户原画多为正面站姿，模型被迫把角色扭成侧面，是肢体缺失的主要诱因之一。
+# 现在要求保持输入图的朝向不变，只描述肢体动作本身。
 MOTION_PROMPTS = {
     "walk": (
-        "The character walks steadily in place, seen from the side facing right the whole time: "
-        "the front foot lifts, swings forward and plants heel first, the rear foot pushes off the ground, "
-        "the hips and torso sway naturally with each step, the upper body stays calm and upright, "
-        "the character's design, outfit, colors and proportions stay exactly the same as the input image, "
-        "both legs clearly visible, the motion loops seamlessly."
+        "The character walks in place, keeping exactly the same facing direction, "
+        "viewpoint and pose orientation as the input image: the legs alternate lifting "
+        "and stepping naturally, the arms swing gently in counter-phase, the hips and "
+        "torso sway subtly with each step, the upper body stays upright and calm, "
+        "the character's design, outfit, colors and proportions stay exactly the same "
+        "as the input image, the camera stays locked, the motion loops seamlessly."
     ),
     "run": (
-        "The character runs in place, seen from the side facing right the whole time, "
-        "with a clear forward lean: long quick strides, the front foot reaching out and the rear foot pushing off, "
-        "the arms pumping rhythmically, hair and clothes bouncing with the motion, "
-        "the character's design, outfit, colors and proportions stay exactly the same as the input image, "
-        "the motion loops seamlessly."
+        "The character runs in place, keeping exactly the same facing direction and "
+        "viewpoint as the input image: quick energetic strides, the arms pumping in "
+        "counter-phase, hair and clothes bouncing with the motion, "
+        "the character's design, outfit, colors and proportions stay exactly the same "
+        "as the input image, the camera stays locked, the motion loops seamlessly."
     ),
     "attack": (
-        "The character makes ONE single committed strike, seen from the side facing right: "
-        "starting coiled with the weight on the back foot, the whole body uncoils and the hips drive forward "
-        "as the arm sweeps in one continuous path to full extension, "
-        "then the torso settles back upright into guard and holds that stance, "
-        "the character's design, outfit, colors and proportions stay exactly the same as the input image."
+        "The character performs one single committed attack in place, keeping exactly "
+        "the same facing direction and viewpoint as the input image: a brief coil back, "
+        "then a decisive strike with the leading arm extending naturally, then settle "
+        "back into the original stance, "
+        "the character's design, outfit, colors and proportions stay exactly the same "
+        "as the input image, the camera stays locked."
     ),
     "jump": (
-        "The character jumps straight up in place, seen from the side: "
-        "crouching down in anticipation, leaping vertically with the legs tucking in the air, "
-        "then landing softly back into the starting stance, "
-        "the character's design, outfit, colors and proportions stay exactly the same as the input image."
+        "The character jumps straight up in place, keeping exactly the same facing "
+        "direction and viewpoint as the input image: a small crouch, a vertical hop "
+        "with the legs tucking slightly, then landing back into the starting stance, "
+        "the character's design, outfit, colors and proportions stay exactly the same "
+        "as the input image, the camera stays locked."
     ),
     "idle": (
-        "The character breathes gently in place, facing the viewer: "
-        "the torso slowly rises and falls, subtle head and shoulder movement, "
-        "everything else stays still, the character's design, outfit, colors and proportions stay "
-        "exactly the same as the input image, the motion loops seamlessly."
+        "The character breathes gently in place, keeping exactly the same facing "
+        "direction and viewpoint as the input image: the torso slowly rises and falls, "
+        "subtle head and shoulder movement, everything else stays still, "
+        "the character's design, outfit, colors and proportions stay exactly the same "
+        "as the input image, the camera stays locked, the motion loops seamlessly."
     ),
 }
 
@@ -262,24 +268,136 @@ class AnimationService:
         duration: float = 1.0,
         size: int = 384,
     ) -> dict[str, Any]:
-        """Windup 式 AI 视频驱动：源图 + 动作提示词 → 图生视频 → 均匀抽帧 →
-        脚底锚定合成序列。真正让 AI 原画本身动起来。"""
+        """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
+        → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。"""
+
         from studio.backend.model_service.service import generate_video
 
         action = action if action in ACTIONS else "walk"
+
+        # 送 i2v 前自动裁掉白边/留白：主体占比从 ~60% 提到 ~90%，
+        # 对齐官方 demo 的输入形态（主体小+平面白底会显著拉低 i2v 质量）
+        work_bytes = source_bytes
+        crop_info = None
+        try:
+            work_bytes, crop_info = self._crop_to_subject(source_bytes, settings)
+        except Exception:  # noqa: BLE001 - crop is best-effort
+            work_bytes = source_bytes
+
         prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
-        video_bytes, video_model = generate_video(settings, prompt, source_bytes, timeout_seconds=420.0)
-        frames_rgba = self._slice_video(video_bytes, source_bytes, fps, duration, size)
+        video_bytes, video_model = generate_video(settings, prompt, work_bytes, timeout_seconds=420.0)
+        frames_rgba = self._slice_video(video_bytes, source_bytes, fps, duration, size, min_count=20)
+
+        # 弱背景稳定（仅 idle）：i2v 背景会随生成轻微漂移。用 AI 分割 mask
+        # 的**大幅膨胀区**之外贴回第 0 帧背景——只锁远处背景，绝不裁切肢体
+        # （旧实现用静立 mask 硬抠角色，肢体一动就被切掉 → "少胳膊"）。
+        # 步态/攻击/跳跃的肢体位移大，一律不做合成，保肢体完整优先。
+        subject_locked = False
+        if action == "idle" and len(frames_rgba) >= 2:
+            try:
+                mask = ai_segment_subject(work_bytes, size, settings, deadline=time.time() + 150.0)
+            except Exception:  # noqa: BLE001
+                mask = None
+            if mask is not None:
+                try:
+                    frames_rgba = self._stabilize_background(frames_rgba, mask, size)
+                    subject_locked = True
+                except Exception:  # noqa: BLE001
+                    subject_locked = False
+
         from artgen import compose_animation
 
         result = compose_animation(frames_rgba=frames_rgba, fps=fps, size=size)
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, "video")
         meta["video_model"] = video_model
+        if crop_info:
+            meta["source_cropped"] = crop_info
+        if subject_locked:
+            meta["subject_locked"] = True
         return meta
 
-    def _slice_video(self, video_bytes: bytes, source_bytes: bytes, fps: int, duration: float, size: int):
-        """mp4 bytes -> evenly sampled, stabilized (w,h,RGBA) frames."""
+    def _crop_to_subject(self, source_bytes: bytes, settings: dict[str, Any]):
+        """自动裁掉源图四周的留白/白边，让主体占满画面再送 i2v。
+        分割不可用时回退洪泛 mask；再失败返回原图。"""
+
+        import io
+
+        from PIL import Image, ImageFilter
+
+        from artgen.sourceanim import _subject_mask
+
+        original = Image.open(io.BytesIO(source_bytes)).convert("RGB")
+        mask = ai_segment_subject(source_bytes, 384, settings, deadline=time.time() + 90.0)
+        if mask is None:
+            fitted = original.resize((384, 384))
+            mask, _, _ = _subject_mask(fitted)
+        bbox = mask.getbbox()
+        if not bbox:
+            return source_bytes, None
+
+        # bbox 映射回原图坐标 + 6% 余量
+        fw, fh = original.size
+        x0 = max(0, int(bbox[0] / 384 * fw) - int(fw * 0.03))
+        y0 = max(0, int(bbox[1] / 384 * fh) - int(fh * 0.03))
+        x1 = min(fw, int(bbox[2] / 384 * fw) + int(fw * 0.03))
+        y1 = min(fh, int(bbox[3] / 384 * fh) + int(fh * 0.03))
+        if (x1 - x0) < fw * 0.3 or (y1 - y0) < fh * 0.3:
+            return source_bytes, None  # 裁得太狠说明 mask 不可信，放弃
+        cropped = original.crop((x0, y0, x1, y1))
+
+        buffer = io.BytesIO()
+        cropped.save(buffer, "PNG")
+        info = {"box": [x0, y0, x1, y1], "original": [fw, fh]}
+        return buffer.getvalue(), info
+
+    @staticmethod
+    def _stabilize_background(frames_rgba, mask, size):
+        """弱背景稳定：把「第 0 帧挖掉角色后的背景」贴回每帧的**mask 膨胀区
+        之外**——远处背景锁定为静止，角色及其近邻区域保持原视频帧，
+        肢体无论如何运动都不会被裁切。"""
+
+        import io
+
+        from PIL import Image, ImageChops, ImageFilter
+
+        images = [
+            Image.frombytes("RGBA", (w, h), bytes(data))
+            for w, h, data in frames_rgba
+        ]
+        # 大幅膨胀（31px）+ 羽化：角色 ±40px 内的一切原样保留
+        zone = mask.filter(ImageFilter.MaxFilter(31)).filter(ImageFilter.GaussianBlur(6))
+        outside = zone.point(lambda v: 255 - v)
+
+        first = images[0]
+        static_bg = first.copy()
+        rgb = first.convert("RGB")
+        step = max(1, first.width // 64)
+        samples = [rgb.getpixel((x, 0)) for x in range(0, first.width, step)]
+        samples += [rgb.getpixel((x, first.height - 1)) for x in range(0, first.width, step)]
+        bg = tuple(sorted(c[i] for c in samples)[len(samples) // 2] for i in range(3))
+        # 第 0 帧挖掉角色（膨胀区）补底色 → 得到"无人的静态背景"
+        hole = mask.filter(ImageFilter.MaxFilter(15))
+        static_bg.paste(
+            Image.new("RGBA", first.size, (bg[0], bg[1], bg[2], 255)),
+            (0, 0),
+            hole,
+        )
+
+        stabilized = []
+        for frame in images:
+            canvas = frame.copy()
+            # 膨胀区之外 → 贴回第 0 帧的静态背景（背景漂移归零）
+            canvas.paste(static_bg, (0, 0), outside)
+            stabilized.append((size, size, bytearray(canvas.tobytes())))
+        return stabilized
+
+    def _slice_video(self, video_bytes: bytes, source_bytes: bytes, fps: int, duration: float, size: int, min_count: int | None = None):
+        """mp4 bytes -> evenly sampled, stabilized (w,h,RGBA) frames.
+
+        流式解码：逐帧读取、即时缩略、只保留采样目标帧——避免旧实现把
+        全部帧解码进内存（161 帧 960×960 ≈ 425MB）的内存峰值。"""
+
         import imageio.v2 as imageio
         from PIL import Image
 
@@ -290,45 +408,105 @@ class AnimationService:
             handle.write(video_bytes)
         try:
             reader = imageio.get_reader(tmp)
-            decoded = [frame for frame in reader]
+            try:
+                total = int(reader.count_frames())
+            except Exception:  # noqa: BLE001 - metadata unavailable
+                total = 0
+            count = max(2, min(60, round(fps * duration)))
+            if min_count:
+                # i2v 的 5 秒视频压到 12 帧会丢掉大部分动作信息；至少抽
+                # min_count 帧让动作周期完整、播放更顺滑
+                count = max(count, min(int(min_count), 60))
+
+            if total >= 4:
+                lo = max(1, int(total * 0.02))
+                hi = total - max(1, int(total * 0.04))
+                if hi - lo < 4:
+                    lo, hi = 0, total - 1
+                wanted = {
+                    round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)
+                }
+            else:
+                wanted = None  # 元数据缺失：逐帧保留后本地重采样
+
+            def small(gray_prev, frame):
+                small = Image.fromarray(frame).resize((48, 48)).convert("L")
+                data = list(small.getdata())
+                if gray_prev is None:
+                    return 0.0, data
+                diff = sum(abs(a - b) for a, b in zip(gray_prev, data)) / len(data)
+                return diff, data
+
+            # 流式扫描：在线帧差定位动作起点（开头是静态原图），即时缩略落盘
+            kept: dict[int, Image.Image] = {}
+            consecutive: list[float] = []
+            gray_prev = None
+            index = 0
+            for frame in reader:
+                diff, gray_prev = small(gray_prev, frame)
+                if index > 0:
+                    consecutive.append(diff)
+                if wanted is None or index in wanted:
+                    canvas = _fit(Image.fromarray(frame), max(64, min(1024, int(size))))
+                    kept[index] = canvas
+                index += 1
             reader.close()
         finally:
             try:
                 os.remove(tmp)
             except OSError:
                 pass
-        total = len(decoded)
-        if total < 4:
+
+        total = max(total, index)
+        if index < 4:
             raise RuntimeError("生成的视频过短，无法抽帧")
-        count = max(2, min(60, round(fps * duration)))
 
-        def mean_diff(a, b):
-            small_a = Image.fromarray(a).resize((48, 48)).convert("L")
-            small_b = Image.fromarray(b).resize((48, 48)).convert("L")
-            pa, pb = list(small_a.getdata()), list(small_b.getdata())
-            return sum(abs(x - y) for x, y in zip(pa, pb)) / len(pa)
-
-        # 视频开头是静态原图（相邻帧几乎不动）：用相邻帧差定位动作真正开始处
-        consecutive = [
-            mean_diff(decoded[index], decoded[index - 1]) for index in range(1, total)
-        ]
         start = 0
         for offset, diff in enumerate(consecutive):
             if diff > 3.0 and offset + 1 < len(consecutive) and consecutive[offset + 1] > 3.0:
                 start = offset + 1
                 break
-        lo = min(start + max(1, int(total * 0.02)), max(0, total - 4))
-        hi = total - max(1, int(total * 0.04))
-        if hi - lo < 4:
-            lo, hi = 0, total - 1
-        indices = [round(lo + (hi - lo) * index / max(1, count - 1)) for index in range(count)]
-        indices = sorted(set(indices))[:count]
+
+        if wanted is not None:
+            indices = sorted(kept.keys())[:count]
+        else:
+            lo = min(start + max(1, int(total * 0.02)), max(0, total - 4))
+            hi = total - max(1, int(total * 0.04))
+            if hi - lo < 4:
+                lo, hi = 0, total - 1
+            indices = sorted(set(
+                round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)
+            ))[:count]
 
         frames_rgba = []
-        for index in indices:
-            image = Image.fromarray(decoded[index]).convert("RGBA")
-            canvas = _fit(image, max(64, min(1024, int(size))))
-            frames_rgba.append((canvas.width, canvas.height, bytearray(canvas.tobytes())))
+        for frame_index in indices:
+            canvas = kept.get(frame_index)
+            if canvas is None:
+                continue
+            frames_rgba.append(
+                (canvas.width, canvas.height, bytearray(canvas.tobytes()))
+            )
+        if len(frames_rgba) < 2:
+            raise RuntimeError("生成的视频有效帧不足，无法抽帧")
+
+        # 循环接缝优化：GIF 首尾相接，把相邻帧差最大的那一对切到循环边界，
+        # 循环回跳感最小。O(n) 的 48×48 灰度差，代价可忽略。
+        if len(frames_rgba) > 2:
+            from PIL import Image as PILImage
+
+            def gray_small(item):
+                return PILImage.frombytes("RGBA", (item[0], item[1]), bytes(item[2])) \
+                    .convert("L").resize((48, 48))
+
+            def pair_diff(a, b):
+                da, db = list(gray_small(a).getdata()), list(gray_small(b).getdata())
+                return sum(abs(x - y) for x, y in zip(da, db)) / len(da)
+
+            pairs = [pair_diff(frames_rgba[i], frames_rgba[(i + 1) % len(frames_rgba)])
+                     for i in range(len(frames_rgba))]
+            cut = pairs.index(max(pairs)) + 1
+            if 0 < cut < len(frames_rgba):
+                frames_rgba = frames_rgba[cut:] + frames_rgba[:cut]
         return frames_rgba
 
     def _asset_render(self, asset: dict[str, Any]):
@@ -386,11 +564,11 @@ class AnimationService:
             handle.write(payload)
 
     def path(self, name: str) -> str | None:
-        safe = os.path.basename(name)
-        if safe != name:
+        # 允许一级子目录（play_cache/…），但拒绝任何目录穿越
+        candidate = os.path.normpath(os.path.join(self.directory, name))
+        if not candidate.startswith(os.path.abspath(self.directory)):
             return None
-        full = os.path.join(self.directory, safe)
-        return full if os.path.isfile(full) else None
+        return candidate if os.path.isfile(candidate) else None
 
 
 def analyze_only(image_bytes: bytes) -> dict[str, Any]:

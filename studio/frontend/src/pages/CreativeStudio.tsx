@@ -23,6 +23,14 @@ const CAP_LABEL: Record<string, string> = {
   GImport: "引擎导入",
   quality_check: "质量校验",
 };
+const CAP_HINT: Record<string, string> = {
+  generation: "角色生成：自然语言 → 角色原画 + 资产结构（未配置模型时走离线管线）",
+  edit_asset: "角色编辑：在现有资产上改，不重掷身份",
+  PReCon: "像素重建：256 色 → 语义 16 色调色板 + 轮廓修复",
+  FAlign: "动画对齐：锚点检测 / 根运动纠偏，帧间时间轴一致",
+  GImport: "引擎导入：图集 / 动画剪辑 / Prefab → 一键引擎 zip",
+  quality_check: "质量校验：像素/动画/引擎三路阈值门 + 修复轮",
+};
 const CAP_ICON: Record<string, IconName> = {
   generation: "spark",
   edit_asset: "refresh",
@@ -59,6 +67,8 @@ export default function CreativeStudio() {
     staleTime: 15000,
   });
   const [enhancing, setEnhancing] = useState(false);
+  const [turbo, setTurbo] = useState(false);
+  const [onboard, setOnboard] = useState(() => localStorage.getItem("cf-onboarded") !== "1");
   const chatReady = Boolean(
     modelSettings.data?.enabled && modelSettings.data?.chat_model && modelSettings.data?.use_chat,
   );
@@ -120,7 +130,7 @@ export default function CreativeStudio() {
     setCanvasSrc(null);
     setCanvasCaption("创作中 —— Planner 正在调度能力…");
     try {
-      const { task_id } = await api.createTask(text);
+      const { task_id } = await api.createTask(text, undefined, turbo);
       stopRef.current = streamTask(task_id, {
         onEvent: applyEvent,
         onEnd: (status) => {
@@ -255,6 +265,7 @@ export default function CreativeStudio() {
                     return (
                       <li
                         key={task.id}
+                        title={CAP_HINT[task.capability] ?? CAP_LABEL[task.capability] ?? task.capability}
                         className="flex items-center gap-2.5 rounded-md border border-line-subtle bg-surface-1 px-2.5 py-2"
                       >
                         <Icon name={CAP_ICON[task.capability] ?? "zap"} className={cx("h-4 w-4 shrink-0", tone)} />
@@ -283,6 +294,28 @@ export default function CreativeStudio() {
         </Card>
       </div>
 
+      {onboard && (
+        <div className="shrink-0 rounded-2xl border border-primary/30 bg-primary-tint/30 p-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12.5px] text-ink-2">
+            <span className="font-semibold text-ink">3 步上手：</span>
+            <span>① 直接点「执行创作」—— 内置离线管线，无需任何 API Key</span>
+            <span>② 想要 AI 原画 → 「模型设置」填 Key</span>
+            <span>③ 导出引擎包 / 生成动画 / 试玩</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto"
+              onClick={() => {
+                localStorage.setItem("cf-onboarded", "1");
+                setOnboard(false);
+              }}
+            >
+              知道了
+            </Button>
+          </div>
+        </div>
+      )}
+
       <section className="shrink-0 rounded-2xl border border-line-subtle bg-[linear-gradient(180deg,#f2efe9,#ece9e2)] p-3">
         <div className="flex items-end gap-3">
           <Textarea
@@ -295,6 +328,18 @@ export default function CreativeStudio() {
             className="flex-1"
             placeholder="告诉 CreativeForge 你想得到什么……（⌘↵ 执行）"
           />
+          <label
+            title="极速档：跳过三视图等增值步骤，最快出结果"
+            className="flex cursor-pointer select-none items-center gap-1.5 text-[11.5px] text-ink-3"
+          >
+            <input
+              type="checkbox"
+              checked={turbo}
+              onChange={(event) => setTurbo(event.target.checked)}
+              className="h-3.5 w-3.5 accent-[var(--color-primary,#4a6f8a)]"
+            />
+            极速档
+          </label>
           <Button
             variant="secondary"
             size="lg"

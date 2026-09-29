@@ -4,7 +4,31 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1adb681f-9f5a-4c2e-a026-60424efa0552" name="更改" comment="增强文本改成用户自己选择，优化了视频生成" />
+    <list default="true" id="1adb681f-9f5a-4c2e-a026-60424efa0552" name="更改" comment="进行了版本树，批量生成，像素台，三方面的优化">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/artgen/rig.py" beforeDir="false" afterPath="$PROJECT_DIR$/artgen/rig.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/artgen/riganim.py" beforeDir="false" afterPath="$PROJECT_DIR$/artgen/riganim.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/agent_runtime/runtime.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/agent_runtime/runtime.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/animation_service/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/animation_service/service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/api/routes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/export_service/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/export_service/service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/exports/FireMageGameAsset.zip" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/exports/FireMageGameAsset.zip" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/history_service/history.json" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/history_service/history.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/history_service/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/history_service/service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/plan_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/plan_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/version_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/version_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/dist/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/dist/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/api/client.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/GenerationResult.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/GenerationResult.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/AnimationStudio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/AnimationStudio.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/CreativeStudio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/CreativeStudio.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/DesignCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/DesignCenter.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/VersionCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/VersionCenter.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/src/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/frontend/tsconfig.app.tsbuildinfo" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/tsconfig.app.tsbuildinfo" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -60,6 +84,7 @@
       <updated>1790482795977</updated>
       <workItem from="1790554977156" duration="818000" />
       <workItem from="1790604496308" duration="1762000" />
+      <workItem from="1790666197468" duration="1055000" />
     </task>
     <task id="LOCAL-00001" summary="优化了三视图，动画生成逻辑还有待提升">
       <option name="closed" value="true" />
@@ -85,7 +110,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790610417706</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="进行了版本树，批量生成，像素台，三方面的优化">
+      <option name="closed" value="true" />
+      <created>1790666259177</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1790666259177</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -109,6 +142,7 @@
     <MESSAGE value="优化了三视图，动画生成逻辑还有待提升" />
     <MESSAGE value="优化ai生成视频效果，全身骨骼和原图驱动仍有待提升" />
     <MESSAGE value="增强文本改成用户自己选择，优化了视频生成" />
-    <option name="LAST_COMMIT_MESSAGE" value="增强文本改成用户自己选择，优化了视频生成" />
+    <MESSAGE value="进行了版本树，批量生成，像素台，三方面的优化" />
+    <option name="LAST_COMMIT_MESSAGE" value="进行了版本树，批量生成，像素台，三方面的优化" />
   </component>
 </project>

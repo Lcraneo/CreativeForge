@@ -105,6 +105,7 @@ class VersionService:
             },
             "palette": palette.get("colors") or [],
             "goal": record.get("goal"),
+            "review_tag": record.get("review_tag"),
         }
 
     @classmethod

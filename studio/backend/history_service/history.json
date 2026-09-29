@@ -1130,9 +1130,15 @@
             "M01"
           ]
         }
+      },
+      "review": {
+        "approved": true,
+        "note": "E2E",
+        "at": 1790667785.0572255
       }
     },
-    "id": "T0007"
+    "id": "T0007",
+    "review_tag": "approved"
   },
   {
     "task_id": "T0008",
@@ -23611,5 +23617,4752 @@
       }
     },
     "id": "T0004-2"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790667772.9296718,
+    "finished_at": 1790667782.548678,
+    "goal": "创建一个像素RPG火焰法师Boss，带攻击动画，导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.947,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.619,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#273549",
+      "#3b353e",
+      "#b17b3c",
+      "#494747",
+      "#303848",
+      "#663e2e",
+      "#8c553a",
+      "#2b3749",
+      "#573025",
+      "#3e393f",
+      "#2f303b",
+      "#472418",
+      "#403339",
+      "#594947"
+    ],
+    "image": {
+      "file": "img_1790667781689.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/60/20260929/77c9ad12/11b50cf3-952e-4940-81e2-6691cffbdb70-1.png?Expires=1790754185&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=I7gYTJORScdRSVvx3xbLTU1NN4c%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667781689.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790667781689.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/60/20260929/77c9ad12/11b50cf3-952e-4940-81e2-6691cffbdb70-1.png?Expires=1790754185&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=I7gYTJORScdRSVvx3xbLTU1NN4c%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667781689.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.94,
+          "contour_score": 0.92,
+          "overall": 0.947
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.947,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#273549",
+            "#3b353e",
+            "#b17b3c",
+            "#494747",
+            "#303848",
+            "#663e2e",
+            "#8c553a",
+            "#2b3749",
+            "#573025",
+            "#3e393f",
+            "#2f303b",
+            "#472418",
+            "#403339",
+            "#594947"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#273549",
+            "#273549",
+            "#273549",
+            "#3b353e",
+            "#3b353e",
+            "#273549",
+            "#273549",
+            "#273549"
+          ],
+          [
+            "#273549",
+            "#273549",
+            "#3b353e",
+            "#b17b3c",
+            "#b17b3c",
+            "#273549",
+            "#494747",
+            "#303848"
+          ],
+          [
+            "#273549",
+            "#273549",
+            "#663e2e",
+            "#b17b3c",
+            "#8c553a",
+            "#3b353e",
+            "#b17b3c",
+            "#2b3749"
+          ],
+          [
+            "#273549",
+            "#303848",
+            "#663e2e",
+            "#573025",
+            "#663e2e",
+            "#573025",
+            "#3e393f",
+            "#273549"
+          ],
+          [
+            "#273549",
+            "#2f303b",
+            "#573025",
+            "#472418",
+            "#573025",
+            "#2f303b",
+            "#273549",
+            "#273549"
+          ],
+          [
+            "#273549",
+            "#273549",
+            "#573025",
+            "#472418",
+            "#472418",
+            "#403339",
+            "#273549",
+            "#273549"
+          ],
+          [
+            "#273549",
+            "#303848",
+            "#573025",
+            "#3e393f",
+            "#403339",
+            "#594947",
+            "#494747",
+            "#273549"
+          ],
+          [
+            "#2b3749",
+            "#494747",
+            "#594947",
+            "#594947",
+            "#594947",
+            "#594947",
+            "#494747",
+            "#2b3749"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "创建一个像素RPG火焰法师Boss，带攻击动画，导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790667781689.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/60/20260929/77c9ad12/11b50cf3-952e-4940-81e2-6691cffbdb70-1.png?Expires=1790754185&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=I7gYTJORScdRSVvx3xbLTU1NN4c%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667781689.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "review": {
+        "approved": true,
+        "note": "E2E",
+        "at": 1790667785.0572255
+      }
+    },
+    "id": "T0001-15"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790667915.2218153,
+    "finished_at": 1790667916.333258,
+    "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast46097",
+    "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9209,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 1.111,
+    "character": {
+      "id": "ast46097",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 483046097,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff6f33",
+        "highlight": "#e9c03a",
+        "accent": "#ffeb95",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#07090d",
+      "#411009",
+      "#761e11",
+      "#99431f",
+      "#d15b2a",
+      "#ff6f33",
+      "#ff8f60",
+      "#e9c03a",
+      "#ffeb95",
+      "#bfb070",
+      "#a16207",
+      "#694005",
+      "#f4d58d",
+      "#ab9563",
+      "#94a3b8",
+      "#ff6a2b",
+      "#4c4e51",
+      "#76534e",
+      "#9c5d54",
+      "#b6785e",
+      "#de8966",
+      "#ff976c",
+      "#ffae8d",
+      "#efd271",
+      "#fff1b3",
+      "#d1c698",
+      "#bb8e4c",
+      "#93754b",
+      "#f7e1ad",
+      "#c3b38f",
+      "#b2bdcc",
+      "#ff9466"
+    ],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast46097",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 483046097,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast46097",
+        "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 483046097,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.931,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9209
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9209,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0.344,
+          "phase_y": 0.435,
+          "confidence": 0.931
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#07090d",
+            "#411009",
+            "#761e11",
+            "#99431f",
+            "#d15b2a",
+            "#ff6f33",
+            "#ff8f60",
+            "#e9c03a",
+            "#ffeb95",
+            "#bfb070",
+            "#a16207",
+            "#694005",
+            "#f4d58d",
+            "#ab9563",
+            "#94a3b8",
+            "#ff6a2b",
+            "#4c4e51",
+            "#76534e",
+            "#9c5d54",
+            "#b6785e",
+            "#de8966",
+            "#ff976c",
+            "#ffae8d",
+            "#efd271",
+            "#fff1b3",
+            "#d1c698",
+            "#bb8e4c",
+            "#93754b",
+            "#f7e1ad",
+            "#c3b38f",
+            "#b2bdcc",
+            "#ff9466"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#761e11",
+            "base": "#ff6f33",
+            "highlight": "#e9c03a",
+            "accent": "#ffeb95",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "prompt-2d"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 2
+        },
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast46097",
+          "type": "character",
+          "resources": {
+            "texture": "ast46097.png",
+            "animation": "ast46097.anim",
+            "prefab": "ast46097.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast46097.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast46097.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast46097.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast46097.png",
+          "atlas": "assets/atlas/ast46097_sprite_atlas.plist",
+          "animations": "assets/animations/ast46097.anim",
+          "prefabs": "assets/prefabs/ast46097.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001-16"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790667915.2218263,
+    "finished_at": 1790667964.9519875,
+    "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast61935",
+    "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 49.729,
+    "character": {
+      "id": "ast61935",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 483061935,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff6f33",
+        "highlight": "#e9c03a",
+        "accent": "#ffeb95",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#3436c3",
+      "#3536c3",
+      "#535abc",
+      "#444bb9",
+      "#3d40c2",
+      "#3a3ec2",
+      "#cddae0",
+      "#979dc2",
+      "#b0b4c4",
+      "#3639c2",
+      "#4346bb",
+      "#c5cac9",
+      "#7d84af",
+      "#a4a3ac",
+      "#646499",
+      "#8a877e",
+      "#66739c",
+      "#57576c",
+      "#3e3d58",
+      "#92929f",
+      "#9797a4",
+      "#454787",
+      "#2c2ea4",
+      "#24267c",
+      "#3436b7",
+      "#3536c4",
+      "#4f50b3",
+      "#3436c4",
+      "#3a3cb6",
+      "#3033b4",
+      "#161a50",
+      "#2b2d8e"
+    ],
+    "image": {
+      "file": "img_1790667929037.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/69/20260929/77c9ad12/1499e807-996c-4ff0-9aaf-c8b3f6127eb0-1.png?Expires=1790754333&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=%2FKDiOsyWpC1rjmyP5zEqtTpkK%2BU%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667929037.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast61935",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 483061935,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790667929037.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/69/20260929/77c9ad12/1499e807-996c-4ff0-9aaf-c8b3f6127eb0-1.png?Expires=1790754333&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=%2FKDiOsyWpC1rjmyP5zEqtTpkK%2BU%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667929037.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast61935",
+        "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 483061935,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#3436c3",
+            "#3536c3",
+            "#535abc",
+            "#444bb9",
+            "#3d40c2",
+            "#3a3ec2",
+            "#cddae0",
+            "#979dc2",
+            "#b0b4c4",
+            "#3639c2",
+            "#4346bb",
+            "#c5cac9",
+            "#7d84af",
+            "#a4a3ac",
+            "#646499",
+            "#8a877e",
+            "#66739c",
+            "#57576c",
+            "#3e3d58",
+            "#92929f",
+            "#9797a4",
+            "#454787",
+            "#2c2ea4",
+            "#24267c",
+            "#3436b7",
+            "#3536c4",
+            "#4f50b3",
+            "#3436c4",
+            "#3a3cb6",
+            "#3033b4",
+            "#161a50",
+            "#2b2d8e"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#761e11",
+            "base": "#ff6f33",
+            "highlight": "#e9c03a",
+            "accent": "#ffeb95",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#3436c3",
+            "#3536c3",
+            "#3536c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3536c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#535abc",
+            "#535abc"
+          ],
+          [
+            "#3536c3",
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#444bb9",
+            "#3d40c2",
+            "#3d40c2",
+            "#3d40c2",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3a3ec2",
+            "#cddae0",
+            "#535abc"
+          ],
+          [
+            "#3536c3",
+            "#3536c3",
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#3436c3",
+            "#979dc2",
+            "#b0b4c4",
+            "#b0b4c4",
+            "#535abc",
+            "#3436c3",
+            "#3436c3",
+            "#3536c3",
+            "#979dc2",
+            "#979dc2",
+            "#3639c2"
+          ],
+          [
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#4346bb",
+            "#c5cac9",
+            "#c5cac9",
+            "#cddae0",
+            "#535abc",
+            "#3436c3",
+            "#444bb9",
+            "#7d84af",
+            "#cddae0",
+            "#3a3ec2",
+            "#3436c3"
+          ],
+          [
+            "#3536c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#4346bb",
+            "#b0b4c4",
+            "#a4a3ac",
+            "#c5cac9",
+            "#4346bb",
+            "#3639c2",
+            "#646499",
+            "#8a877e",
+            "#66739c",
+            "#3436c3",
+            "#3436c3"
+          ],
+          [
+            "#3436c3",
+            "#3536c3",
+            "#3536c3",
+            "#3536c3",
+            "#4346bb",
+            "#7d84af",
+            "#57576c",
+            "#3e3d58",
+            "#92929f",
+            "#646499",
+            "#9797a4",
+            "#3e3d58",
+            "#57576c",
+            "#444bb9",
+            "#3436c3",
+            "#3436c3"
+          ],
+          [
+            "#3536c3",
+            "#3436c3",
+            "#3536c3",
+            "#4346bb",
+            "#9797a4",
+            "#8a877e",
+            "#cddae0",
+            "#cddae0",
+            "#92929f",
+            "#454787",
+            "#2c2ea4",
+            "#24267c",
+            "#3436b7",
+            "#3436c3",
+            "#3536c3",
+            "#3536c3"
+          ],
+          [
+            "#3536c4",
+            "#3536c3",
+            "#535abc",
+            "#c5cac9",
+            "#4f50b3",
+            "#454787",
+            "#92929f",
+            "#92929f",
+            "#4f50b3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c4"
+          ],
+          [
+            "#3536c4",
+            "#3a3ec2",
+            "#b0b4c4",
+            "#92929f",
+            "#3a3cb6",
+            "#8a877e",
+            "#3e3d58",
+            "#454787",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3"
+          ],
+          [
+            "#3536c4",
+            "#3a3ec2",
+            "#57576c",
+            "#454787",
+            "#535abc",
+            "#9797a4",
+            "#8a877e",
+            "#a4a3ac",
+            "#979dc2",
+            "#3d40c2",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3536c3",
+            "#3436c3",
+            "#3436c3"
+          ],
+          [
+            "#3536c4",
+            "#3536c4",
+            "#3436c3",
+            "#3536c3",
+            "#c5cac9",
+            "#7d84af",
+            "#3436b7",
+            "#454787",
+            "#92929f",
+            "#a4a3ac",
+            "#3639c2",
+            "#3536c3",
+            "#3536c3",
+            "#3536c3",
+            "#3536c4",
+            "#3436c4"
+          ],
+          [
+            "#3536c4",
+            "#3536c3",
+            "#3436c3",
+            "#4f50b3",
+            "#92929f",
+            "#3436c3",
+            "#3436c4",
+            "#3436c3",
+            "#3436c3",
+            "#3e3d58",
+            "#979dc2",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c4"
+          ],
+          [
+            "#3536c4",
+            "#3536c4",
+            "#3436c3",
+            "#57576c",
+            "#454787",
+            "#3536c4",
+            "#3536c4",
+            "#3536c4",
+            "#3436c3",
+            "#3a3cb6",
+            "#9797a4",
+            "#3d40c2",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3",
+            "#3436c3"
+          ],
+          [
+            "#3536c4",
+            "#3536c4",
+            "#4f50b3",
+            "#57576c",
+            "#3436c3",
+            "#3536c4",
+            "#3536c4",
+            "#3536c4",
+            "#3536c3",
+            "#3436c3",
+            "#646499",
+            "#a4a3ac",
+            "#3536c3",
+            "#3536c3",
+            "#3436c3",
+            "#3436c4"
+          ],
+          [
+            "#3033b4",
+            "#646499",
+            "#8a877e",
+            "#3e3d58",
+            "#161a50",
+            "#161a50",
+            "#161a50",
+            "#161a50",
+            "#24267c",
+            "#24267c",
+            "#3e3d58",
+            "#92929f",
+            "#9797a4",
+            "#2b2d8e",
+            "#3536c3",
+            "#3436c3"
+          ],
+          [
+            "#3436c4",
+            "#3639c2",
+            "#3a3cb6",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#2b2d8e",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#2c2ea4",
+            "#3436b7",
+            "#3436c4",
+            "#3436c3",
+            "#3436c4"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast61935",
+          "type": "character",
+          "resources": {
+            "texture": "ast61935.png",
+            "animation": "ast61935.anim",
+            "prefab": "ast61935.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast61935.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast61935.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast61935.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast61935.png",
+          "atlas": "assets/atlas/ast61935_sprite_atlas.plist",
+          "animations": "assets/animations/ast61935.anim",
+          "prefabs": "assets/prefabs/ast61935.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790667929037.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/69/20260929/77c9ad12/1499e807-996c-4ff0-9aaf-c8b3f6127eb0-1.png?Expires=1790754333&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=%2FKDiOsyWpC1rjmyP5zEqtTpkK%2BU%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667929037.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/69/20260929/77c9ad12/1499e807-996c-4ff0-9aaf-c8b3f6127eb0-1.png?Expires=1790754333&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=%2FKDiOsyWpC1rjmyP5zEqtTpkK%2BU%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790667946394.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/b0/20260929/17bff29b/b20dcf93-9344-4420-892c-8dec5beb2234-1.png?Expires=1791273752&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=9XgGvOe7OmhzZqk35IgX9l0obOA%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790667964231.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/e8/20260929/17bff29b/7b3f4264-43f1-4bc5-87a1-ec3b83544c67-1.png?Expires=1791273770&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=W%2Brp4RtdD3gErwrFTh0CAnEHqYI%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0003-7"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790667915.2218232,
+    "finished_at": 1790667967.579454,
+    "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast54016",
+    "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 52.357,
+    "character": {
+      "id": "ast54016",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 483054016,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff6f33",
+        "highlight": "#e9c03a",
+        "accent": "#ffeb95",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#0dd3b1",
+      "#0dd2b1",
+      "#10ccad",
+      "#33c6ad",
+      "#63a89c",
+      "#13cbac",
+      "#6d8480",
+      "#0dcfaf",
+      "#575757",
+      "#6d7172",
+      "#12bfa2",
+      "#1f7f6c",
+      "#4d4a4b",
+      "#1db69d",
+      "#31554e",
+      "#0dd2b2",
+      "#0cd2b1",
+      "#26a28e",
+      "#3e3737",
+      "#605c5e",
+      "#444c4a",
+      "#3d7e74",
+      "#0fcaab",
+      "#787578",
+      "#3d6760",
+      "#676668",
+      "#36a794",
+      "#324743",
+      "#12bc9f",
+      "#0ec5a4",
+      "#11b18e",
+      "#0ec4a0"
+    ],
+    "image": {
+      "file": "img_1790667924424.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e1/20260929/77c9ad12/fee216e9-16df-4af8-a4e5-c10336dbf995-1.png?Expires=1790754329&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lytg2KWR2UvQnl9O9FMvsImmdts%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667924424.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast54016",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 483054016,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790667924424.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e1/20260929/77c9ad12/fee216e9-16df-4af8-a4e5-c10336dbf995-1.png?Expires=1790754329&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lytg2KWR2UvQnl9O9FMvsImmdts%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667924424.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast54016",
+        "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 483054016,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#0dd3b1",
+            "#0dd2b1",
+            "#10ccad",
+            "#33c6ad",
+            "#63a89c",
+            "#13cbac",
+            "#6d8480",
+            "#0dcfaf",
+            "#575757",
+            "#6d7172",
+            "#12bfa2",
+            "#1f7f6c",
+            "#4d4a4b",
+            "#1db69d",
+            "#31554e",
+            "#0dd2b2",
+            "#0cd2b1",
+            "#26a28e",
+            "#3e3737",
+            "#605c5e",
+            "#444c4a",
+            "#3d7e74",
+            "#0fcaab",
+            "#787578",
+            "#3d6760",
+            "#676668",
+            "#36a794",
+            "#324743",
+            "#12bc9f",
+            "#0ec5a4",
+            "#11b18e",
+            "#0ec4a0"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#761e11",
+            "base": "#ff6f33",
+            "highlight": "#e9c03a",
+            "accent": "#ffeb95",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#0dd3b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd3b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#10ccad",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#33c6ad",
+            "#63a89c",
+            "#33c6ad",
+            "#13cbac",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#13cbac",
+            "#6d8480",
+            "#6d8480",
+            "#63a89c",
+            "#13cbac",
+            "#10ccad",
+            "#0dcfaf",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#575757",
+            "#6d7172",
+            "#33c6ad",
+            "#63a89c",
+            "#6d8480",
+            "#12bfa2",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dcfaf",
+            "#1f7f6c",
+            "#4d4a4b",
+            "#575757",
+            "#12bfa2",
+            "#1db69d",
+            "#575757",
+            "#31554e",
+            "#10ccad",
+            "#0dd2b1",
+            "#0dd2b2"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0cd2b1",
+            "#26a28e",
+            "#3e3737",
+            "#575757",
+            "#605c5e",
+            "#444c4a",
+            "#6d8480",
+            "#3d7e74",
+            "#0fcaab",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#10ccad",
+            "#1db69d",
+            "#787578",
+            "#3d6760",
+            "#605c5e",
+            "#6d7172",
+            "#1f7f6c",
+            "#3d7e74",
+            "#0dcfaf",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#26a28e",
+            "#605c5e",
+            "#6d7172",
+            "#3d6760",
+            "#605c5e",
+            "#676668",
+            "#0fcaab",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0cd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#1db69d",
+            "#3d7e74",
+            "#4d4a4b",
+            "#6d7172",
+            "#4d4a4b",
+            "#63a89c",
+            "#0dcfaf",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#1f7f6c",
+            "#787578",
+            "#575757",
+            "#3e3737",
+            "#6d7172",
+            "#36a794",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#12bfa2",
+            "#3e3737",
+            "#676668",
+            "#31554e",
+            "#31554e",
+            "#3e3737",
+            "#575757",
+            "#12bfa2",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#10ccad",
+            "#4d4a4b",
+            "#324743",
+            "#12bc9f",
+            "#0ec5a4",
+            "#31554e",
+            "#324743",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#36a794",
+            "#3d7e74",
+            "#0dcfaf",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#11b18e",
+            "#444c4a",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#12bfa2",
+            "#444c4a",
+            "#31554e",
+            "#11b18e",
+            "#11b18e",
+            "#11b18e",
+            "#1f7f6c",
+            "#3e3737",
+            "#1f7f6c",
+            "#1db69d",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b1"
+          ],
+          [
+            "#0dd2b2",
+            "#0dd2b2",
+            "#0dd2b1",
+            "#13cbac",
+            "#1db69d",
+            "#0ec4a0",
+            "#0ec4a0",
+            "#0ec4a0",
+            "#0ec4a0",
+            "#0ec4a0",
+            "#12bfa2",
+            "#12bc9f",
+            "#0fcaab",
+            "#0dd2b1",
+            "#0dd2b1",
+            "#0dd2b2"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast54016",
+          "type": "character",
+          "resources": {
+            "texture": "ast54016.png",
+            "animation": "ast54016.anim",
+            "prefab": "ast54016.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast54016.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast54016.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast54016.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast54016.png",
+          "atlas": "assets/atlas/ast54016_sprite_atlas.plist",
+          "animations": "assets/animations/ast54016.anim",
+          "prefabs": "assets/prefabs/ast54016.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790667924424.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e1/20260929/77c9ad12/fee216e9-16df-4af8-a4e5-c10336dbf995-1.png?Expires=1790754329&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lytg2KWR2UvQnl9O9FMvsImmdts%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667924424.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e1/20260929/77c9ad12/fee216e9-16df-4af8-a4e5-c10336dbf995-1.png?Expires=1790754329&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=lytg2KWR2UvQnl9O9FMvsImmdts%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790667942796.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/0a/20260929/aa4f9372/02b24a51-156a-4525-8387-019cbac24cc5-1.png?Expires=1791273748&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=uo5Esr3q5IF9zVie7f3ns%2BUjQVo%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790667966937.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/20/20260929/aa4f9372/c61ebef7-c0c1-4a97-bd81-803fd79a6b90-1.png?Expires=1791273772&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=HIidxX0jgyLdqsS3P6yWOokMP%2F4%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-9"
+  },
+  {
+    "task_id": "T0004",
+    "created_at": 1790667915.2218277,
+    "finished_at": 1790667971.3647826,
+    "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast69854",
+    "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+    "type": "character",
+    "role": "npc",
+    "action": "attack",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 54.996,
+    "character": {
+      "id": "ast69854",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 483069854,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff6f33",
+        "highlight": "#e9c03a",
+        "accent": "#ffeb95",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#1c253c",
+      "#212c45",
+      "#545b75",
+      "#455374",
+      "#1e2941",
+      "#202a42",
+      "#4c4658",
+      "#3b455e",
+      "#2b344d",
+      "#94848a",
+      "#24304b",
+      "#222e49",
+      "#2c3958",
+      "#26324f",
+      "#786c7c",
+      "#bab8c4",
+      "#283552",
+      "#948e9f",
+      "#2e3e5e",
+      "#34415f",
+      "#9698a9",
+      "#36486c",
+      "#314163",
+      "#5c6f93",
+      "#495b7e",
+      "#928c9a",
+      "#526893",
+      "#6079a6",
+      "#6682b0",
+      "#6d89b6",
+      "#738eb8"
+    ],
+    "image": {
+      "file": "img_1790667934496.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/05/20260929/77c9ad12/67a92233-bd03-4ebb-b925-e56f31143777-1.png?Expires=1790754340&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1iodCnR3gnLg%2BDMnTQG7jASCoSg%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667934496.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast69854",
+      "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 483069854,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790667934496.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/05/20260929/77c9ad12/67a92233-bd03-4ebb-b925-e56f31143777-1.png?Expires=1790754340&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1iodCnR3gnLg%2BDMnTQG7jASCoSg%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667934496.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast69854",
+        "name": "创建一个2d动漫风星辉剑士角色_带攻击动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 483069854,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff6f33",
+          "highlight": "#e9c03a",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "attack"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "attack"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#1c253c",
+            "#212c45",
+            "#545b75",
+            "#455374",
+            "#1e2941",
+            "#202a42",
+            "#4c4658",
+            "#3b455e",
+            "#2b344d",
+            "#94848a",
+            "#24304b",
+            "#222e49",
+            "#2c3958",
+            "#26324f",
+            "#786c7c",
+            "#bab8c4",
+            "#283552",
+            "#948e9f",
+            "#2e3e5e",
+            "#34415f",
+            "#9698a9",
+            "#36486c",
+            "#314163",
+            "#5c6f93",
+            "#495b7e",
+            "#928c9a",
+            "#526893",
+            "#6079a6",
+            "#6682b0",
+            "#6d89b6",
+            "#738eb8"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#761e11",
+            "base": "#ff6f33",
+            "highlight": "#e9c03a",
+            "accent": "#ffeb95",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#1c253c",
+            "#1c253c",
+            "#1c253c",
+            "#1c253c",
+            "#1c253c",
+            "#1c253c",
+            "#212c45",
+            "#545b75",
+            "#455374",
+            "#212c45",
+            "#1e2941",
+            "#1e2941",
+            "#1e2941",
+            "#1e2941",
+            "#1e2941",
+            "#1e2941"
+          ],
+          [
+            "#1c253c",
+            "#1c253c",
+            "#1c253c",
+            "#1e2941",
+            "#1e2941",
+            "#202a42",
+            "#455374",
+            "#4c4658",
+            "#4c4658",
+            "#3b455e",
+            "#212c45",
+            "#212c45",
+            "#212c45",
+            "#212c45",
+            "#212c45",
+            "#212c45"
+          ],
+          [
+            "#1e2941",
+            "#1e2941",
+            "#202a42",
+            "#202a42",
+            "#2b344d",
+            "#212c45",
+            "#212c45",
+            "#94848a",
+            "#94848a",
+            "#2b344d",
+            "#24304b",
+            "#24304b",
+            "#222e49",
+            "#222e49",
+            "#222e49",
+            "#222e49"
+          ],
+          [
+            "#202a42",
+            "#212c45",
+            "#212c45",
+            "#222e49",
+            "#3b455e",
+            "#3b455e",
+            "#4c4658",
+            "#94848a",
+            "#94848a",
+            "#2c3958",
+            "#26324f",
+            "#26324f",
+            "#26324f",
+            "#26324f",
+            "#26324f",
+            "#26324f"
+          ],
+          [
+            "#222e49",
+            "#222e49",
+            "#24304b",
+            "#26324f",
+            "#3b455e",
+            "#786c7c",
+            "#94848a",
+            "#bab8c4",
+            "#786c7c",
+            "#455374",
+            "#2c3958",
+            "#2c3958",
+            "#2c3958",
+            "#2c3958",
+            "#2c3958",
+            "#2c3958"
+          ],
+          [
+            "#24304b",
+            "#26324f",
+            "#26324f",
+            "#283552",
+            "#455374",
+            "#bab8c4",
+            "#948e9f",
+            "#948e9f",
+            "#bab8c4",
+            "#786c7c",
+            "#2e3e5e",
+            "#2e3e5e",
+            "#2e3e5e",
+            "#2e3e5e",
+            "#2e3e5e",
+            "#2e3e5e"
+          ],
+          [
+            "#26324f",
+            "#283552",
+            "#283552",
+            "#2c3958",
+            "#34415f",
+            "#545b75",
+            "#545b75",
+            "#9698a9",
+            "#786c7c",
+            "#9698a9",
+            "#36486c",
+            "#314163",
+            "#314163",
+            "#314163",
+            "#314163",
+            "#314163"
+          ],
+          [
+            "#283552",
+            "#2c3958",
+            "#2c3958",
+            "#2e3e5e",
+            "#314163",
+            "#314163",
+            "#545b75",
+            "#545b75",
+            "#786c7c",
+            "#4c4658",
+            "#4c4658",
+            "#36486c",
+            "#36486c",
+            "#36486c",
+            "#36486c",
+            "#36486c"
+          ],
+          [
+            "#2c3958",
+            "#2e3e5e",
+            "#2e3e5e",
+            "#314163",
+            "#314163",
+            "#36486c",
+            "#4c4658",
+            "#1c253c",
+            "#94848a",
+            "#5c6f93",
+            "#545b75",
+            "#94848a",
+            "#545b75",
+            "#36486c",
+            "#36486c",
+            "#36486c"
+          ],
+          [
+            "#314163",
+            "#314163",
+            "#36486c",
+            "#36486c",
+            "#36486c",
+            "#495b7e",
+            "#4c4658",
+            "#2b344d",
+            "#94848a",
+            "#9698a9",
+            "#455374",
+            "#545b75",
+            "#94848a",
+            "#94848a",
+            "#455374",
+            "#36486c"
+          ],
+          [
+            "#455374",
+            "#455374",
+            "#455374",
+            "#455374",
+            "#455374",
+            "#495b7e",
+            "#9698a9",
+            "#928c9a",
+            "#bab8c4",
+            "#545b75",
+            "#495b7e",
+            "#495b7e",
+            "#495b7e",
+            "#545b75",
+            "#495b7e",
+            "#495b7e"
+          ],
+          [
+            "#526893",
+            "#526893",
+            "#526893",
+            "#526893",
+            "#526893",
+            "#495b7e",
+            "#9698a9",
+            "#928c9a",
+            "#bab8c4",
+            "#545b75",
+            "#526893",
+            "#526893",
+            "#526893",
+            "#526893",
+            "#526893",
+            "#526893"
+          ],
+          [
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#545b75",
+            "#3b455e",
+            "#2b344d",
+            "#526893",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6",
+            "#6079a6"
+          ],
+          [
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#5c6f93",
+            "#36486c",
+            "#3b455e",
+            "#526893",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0",
+            "#6682b0"
+          ],
+          [
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6079a6",
+            "#495b7e",
+            "#5c6f93",
+            "#6079a6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6",
+            "#6d89b6"
+          ],
+          [
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#948e9f",
+            "#5c6f93",
+            "#738eb8",
+            "#9698a9",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8",
+            "#738eb8"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast69854",
+          "type": "character",
+          "resources": {
+            "texture": "ast69854.png",
+            "animation": "ast69854.anim",
+            "prefab": "ast69854.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast69854.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast69854.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast69854.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast69854.png",
+          "atlas": "assets/atlas/ast69854_sprite_atlas.plist",
+          "animations": "assets/animations/ast69854.anim",
+          "prefabs": "assets/prefabs/ast69854.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风星辉剑士角色，带攻击动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790667934496.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/05/20260929/77c9ad12/67a92233-bd03-4ebb-b925-e56f31143777-1.png?Expires=1790754340&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1iodCnR3gnLg%2BDMnTQG7jASCoSg%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790667934496.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/05/20260929/77c9ad12/67a92233-bd03-4ebb-b925-e56f31143777-1.png?Expires=1790754340&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=1iodCnR3gnLg%2BDMnTQG7jASCoSg%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790667952580.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/91/20260929/17bff29b/e5773226-08cb-44c6-9a4e-3dbf9f63524c-1.png?Expires=1791273758&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=YTvULAa3JKek%2FcaCORoLYxop%2B08%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790667970651.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/6d/20260929/17bff29b/7cf628f1-7d32-4214-b1e8-a2cc6757f04c-1.png?Expires=1791273776&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=j4FuyD6hn%2FCPGlSHGnsawkuElb4%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      },
+      "restyle": {
+        "style": "pixel",
+        "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/8e/20260929/aa4f9372/d5d15f6b-3d7e-440f-b449-b2455349a769-1.png?Expires=1791273971&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=6S%2BBtwJfr9dT%2BDvL%2BNdOVzLlcs8%3D",
+        "file": "edit_1790668165336.png",
+        "model": "qwen-image-edit"
+      },
+      "cutout_png": "/api/generated/cutout_1790668186763.png"
+    },
+    "id": "T0004-3"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790668588.469349,
+    "finished_at": 1790668635.1036808,
+    "goal": "2D游戏Sprite角色，蒸汽朋克少年，17岁，深棕利落短发，单侧黄铜护目镜推至头顶，浅灰工装短外套配皮带束腰，金属管线装饰，帆布长裤与厚底工装靴，柔和平涂画风，干净轮廓线，背景留白。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast80592",
+    "name": "2d游戏sprite角色_蒸汽朋克少年_17岁_",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 46.634,
+    "character": {
+      "id": "ast80592",
+      "name": "2d游戏sprite角色_蒸汽朋克少年_17岁_",
+      "type": "character",
+      "role": "npc",
+      "seed": 324180592,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#751e11",
+        "base": "#ff773e",
+        "highlight": "#ffd64f",
+        "accent": "#f9e487",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#cfcbc2",
+      "#bdb8b0",
+      "#969188",
+      "#523f2f",
+      "#a29a92",
+      "#cfcbc1",
+      "#c3bfb6",
+      "#5d4634",
+      "#584e48",
+      "#cecac1",
+      "#48382f",
+      "#c5ac9e",
+      "#8e776d",
+      "#7e726b",
+      "#ac9689",
+      "#cbc7be",
+      "#928b82",
+      "#a8a39a",
+      "#443b36",
+      "#837c74",
+      "#625953",
+      "#362e28",
+      "#706962",
+      "#9e988f",
+      "#665d55",
+      "#c8c3bb",
+      "#7a726a",
+      "#8a837b",
+      "#ccc8bf",
+      "#a19b93",
+      "#302720"
+    ],
+    "image": {
+      "file": "img_1790668597132.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9f/20260929/77c9ad12/f72c47de-64c9-4d30-8664-fdbc73b290fd-1.png?Expires=1790755001&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=46YhVNXupEZ3J0Cw2juaUA7N5aY%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790668597132.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast80592",
+      "name": "2d游戏sprite角色_蒸汽朋克少年_17岁_",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 324180592,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#751e11",
+          "base": "#ff773e",
+          "highlight": "#ffd64f",
+          "accent": "#f9e487",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790668597132.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9f/20260929/77c9ad12/f72c47de-64c9-4d30-8664-fdbc73b290fd-1.png?Expires=1790755001&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=46YhVNXupEZ3J0Cw2juaUA7N5aY%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790668597132.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast80592",
+        "name": "2d游戏sprite角色_蒸汽朋克少年_17岁_",
+        "type": "character",
+        "role": "npc",
+        "seed": 324180592,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#751e11",
+          "base": "#ff773e",
+          "highlight": "#ffd64f",
+          "accent": "#f9e487",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#cfcbc2",
+            "#bdb8b0",
+            "#969188",
+            "#523f2f",
+            "#a29a92",
+            "#cfcbc1",
+            "#c3bfb6",
+            "#5d4634",
+            "#584e48",
+            "#cecac1",
+            "#48382f",
+            "#c5ac9e",
+            "#8e776d",
+            "#7e726b",
+            "#ac9689",
+            "#cbc7be",
+            "#928b82",
+            "#a8a39a",
+            "#443b36",
+            "#837c74",
+            "#625953",
+            "#362e28",
+            "#706962",
+            "#9e988f",
+            "#665d55",
+            "#c8c3bb",
+            "#7a726a",
+            "#8a837b",
+            "#ccc8bf",
+            "#a19b93",
+            "#302720"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#751e11",
+            "base": "#ff773e",
+            "highlight": "#ffd64f",
+            "accent": "#f9e487",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#bdb8b0",
+            "#bdb8b0",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#969188",
+            "#523f2f",
+            "#523f2f",
+            "#a29a92",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#c3bfb6",
+            "#5d4634",
+            "#5d4634",
+            "#523f2f",
+            "#584e48",
+            "#cecac1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#48382f",
+            "#c5ac9e",
+            "#8e776d",
+            "#7e726b",
+            "#cecac1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#a29a92",
+            "#ac9689",
+            "#ac9689",
+            "#cbc7be",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#bdb8b0",
+            "#584e48",
+            "#928b82",
+            "#a8a39a",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#928b82",
+            "#443b36",
+            "#837c74",
+            "#969188",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#bdb8b0",
+            "#625953",
+            "#362e28",
+            "#443b36",
+            "#969188",
+            "#c3bfb6",
+            "#cfcbc1",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#a8a39a",
+            "#443b36",
+            "#625953",
+            "#443b36",
+            "#706962",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#9e988f",
+            "#584e48",
+            "#625953",
+            "#584e48",
+            "#665d55",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#c8c3bb",
+            "#7a726a",
+            "#7e726b",
+            "#584e48",
+            "#7a726a",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#7a726a",
+            "#969188",
+            "#8a837b",
+            "#7e726b",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#ccc8bf",
+            "#665d55",
+            "#837c74",
+            "#a19b93",
+            "#625953",
+            "#c3bfb6",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cecac1",
+            "#584e48",
+            "#706962",
+            "#a8a39a",
+            "#302720",
+            "#cbc7be",
+            "#cfcbc2",
+            "#cfcbc1",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#969188",
+            "#362e28",
+            "#625953",
+            "#cbc7be",
+            "#302720",
+            "#837c74",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ],
+          [
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#9e988f",
+            "#7a726a",
+            "#9e988f",
+            "#cfcbc2",
+            "#665d55",
+            "#8a837b",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2",
+            "#cfcbc2"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast80592",
+          "type": "character",
+          "resources": {
+            "texture": "ast80592.png",
+            "animation": "ast80592.anim",
+            "prefab": "ast80592.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast80592.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast80592.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast80592.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast80592.png",
+          "Animation": "Assets/Animation/ast80592.anim",
+          "Prefab": "Assets/Prefab/ast80592.prefab",
+          "Controller": "Assets/Controller/ast80592.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "2D游戏Sprite角色，蒸汽朋克少年，17岁，深棕利落短发，单侧黄铜护目镜推至头顶，浅灰工装短外套配皮带束腰，金属管线装饰，帆布长裤与厚底工装靴，柔和平涂画风，干净轮廓线，背景留白。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790668597132.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9f/20260929/77c9ad12/f72c47de-64c9-4d30-8664-fdbc73b290fd-1.png?Expires=1790755001&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=46YhVNXupEZ3J0Cw2juaUA7N5aY%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790668597132.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/9f/20260929/77c9ad12/f72c47de-64c9-4d30-8664-fdbc73b290fd-1.png?Expires=1790755001&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=46YhVNXupEZ3J0Cw2juaUA7N5aY%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790668615436.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/fc/20260929/aa4f9372/2c829d5b-a01d-4d87-8261-b09d4d0c0e8c-1.png?Expires=1791274421&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=AgXmrPZSzeIEtZk8%2B4wGmUzlWdU%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790668633866.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/25/20260929/aa4f9372/143f9e1d-ab6d-4f76-9de9-a9510a10185f-1.png?Expires=1791274439&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=xRdseqoLHee2fulqMZI2%2Bov4t%2Fs%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-17"
   }
 ]

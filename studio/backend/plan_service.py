@@ -35,6 +35,58 @@ AGENT_FOR_CAPABILITY = {
 
 CYCLE = ["generation", "PReCon", "FAlign", "GImport", "quality_check"]
 
+CAPABILITY_CATALOG = {
+    "generation": {
+        "agent": "ArtAgent",
+        "action": "create_character",
+        "label": "角色生成",
+        "description": "自然语言 → 角色原画 + 资产结构（自定义模型或离线管线）",
+    },
+    "edit_asset": {
+        "agent": "ArtAgent",
+        "action": "edit_character",
+        "label": "角色编辑",
+        "description": "在现有资产基础上修改（换装/换色/风格迁移），不重掷身份",
+    },
+    "PReCon": {
+        "agent": "ArtAgent",
+        "action": "pixel_reconstruction",
+        "label": "像素重建",
+        "description": "网格推断 + 语义 16 色调色板 + 轮廓修复，产出像素游戏可用的精灵",
+    },
+    "FAlign": {
+        "agent": "AnimationAgent",
+        "action": "create_animation",
+        "label": "动画对齐",
+        "description": "锚点检测 / 运动相位对齐 / 根运动纠偏，动作帧时间轴一致",
+    },
+    "GImport": {
+        "agent": "EngineAgent",
+        "action": "export_engine",
+        "label": "引擎导入",
+        "description": "图集 / 动画剪辑 / Prefab / 运行时校验，一键导出引擎 zip",
+    },
+    "quality_check": {
+        "agent": "QAAgent",
+        "action": "quality_check",
+        "label": "质量校验",
+        "description": "像素 / 动画 / 引擎三路阈值门 + 修复轮",
+    },
+}
+
+
+def capabilities() -> dict:
+    """能力自省（P2 扩展性）：规划器当前可调度的能力清单及其语义，
+    供前端/集成方发现能力，而无需读源码。"""
+
+    return {
+        "capabilities": [
+            dict({"id": cap}, **meta) for cap, meta in CAPABILITY_CATALOG.items()
+        ],
+        "engines": sorted(ENGINE_KEYWORDS.keys()),
+        "cycle": CYCLE,
+    }
+
 
 def _has(text, keywords):
     return any(keyword in text for keyword in keywords)

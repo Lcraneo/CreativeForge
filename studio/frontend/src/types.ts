@@ -197,6 +197,9 @@ export interface CreativeAsset {
     side?: DesignViewImage;
     back?: DesignViewImage;
   };
+  restyle?: RestyleInfo;
+  cutout_png?: string;
+  review?: ReviewInfo;
   prompt_enhance?: PromptEnhance;
   memory?: Record<string, unknown>;
 }
@@ -486,6 +489,7 @@ export interface VersionView {
   scores: { pixel?: number; animation?: number; engine?: number };
   palette: string[];
   goal: string | null;
+  review_tag?: string | null;
 }
 
 export interface VersionGroup {
@@ -554,6 +558,32 @@ export interface BatchExportResult {
   size_bytes: number;
   download_url: string;
   assets: Array<{ asset_id: string; name?: string | null; ok: boolean; error?: string; validation_score?: number }>;
+}
+
+export interface ReviewInfo {
+  approved: boolean;
+  note?: string | null;
+  at?: number;
+}
+
+export interface RestyleInfo {
+  style: string;
+  url: string;
+  file?: string;
+  model?: string;
+}
+
+export interface InterpretedAction {
+  label: string;
+  base_action: string;
+  view: string;
+  pose_config: Record<string, number>;
+  source_text?: string;
+}
+
+export interface PlaytestPreviews {
+  previews: Record<string, string>;
+  actions: string[];
 }
 
 export interface PixelEditResult {
