@@ -188,6 +188,14 @@ def _apply_overrides(identity, overrides):
             identity[key] = overrides[key]
     if "action" in overrides and isinstance(overrides["action"], str):
         identity["action"] = overrides["action"]
+    if overrides.get("seed") is not None:
+        # 批量多变体：显式 seed 覆盖确定性派生 seed，asset id 随之重算，
+        # 否则同一目标的不同变体会共用一个 id 互相覆盖
+        try:
+            identity["seed"] = int(overrides["seed"]) % (2 ** 31)
+            identity["id"] = "ast{:05d}".format(identity["seed"] % 100000)
+        except (TypeError, ValueError):
+            pass
     return identity
 
 

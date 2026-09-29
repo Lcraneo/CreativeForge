@@ -10,6 +10,8 @@ import DesignCenter from "./pages/DesignCenter";
 import SettingsCenter from "./pages/SettingsCenter";
 import PixelStudio from "./pages/PixelStudio";
 import CreativeStudio from "./pages/CreativeStudio";
+import BatchCenter from "./pages/BatchCenter";
+import VersionCenter from "./pages/VersionCenter";
 import Workspace from "./pages/Workspace";
 import TechnologyCenter from "./pages/TechnologyCenter";
 
@@ -22,6 +24,8 @@ export default function App() {
         <Route path="workspace" element={<Workspace />} />
         <Route path="agents" element={<AgentDashboard />} />
         <Route path="history" element={<HistoryCenter />} />
+        <Route path="batch" element={<BatchCenter />} />
+        <Route path="versions" element={<VersionCenter />} />
         <Route path="asset" element={<AssetInspector />} />
         <Route path="design" element={<DesignCenter />} />
         <Route path="settings" element={<SettingsCenter />} />

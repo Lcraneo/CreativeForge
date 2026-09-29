@@ -4,26 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1adb681f-9f5a-4c2e-a026-60424efa0552" name="更改" comment="增强文本改成用户自己选择，优化了视频生成">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/agent/generation/external.py" beforeDir="false" afterPath="$PROJECT_DIR$/agent/generation/external.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/artgen/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/artgen/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/artgen/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/artgen/pipeline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/agent_runtime/runtime.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/agent_runtime/runtime.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/animation_service/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/animation_service/service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/api/routes.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/api/routes.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/history_service/history.json" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/history_service/history.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/model_service/model_settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/model_service/model_settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/backend/model_service/service.py" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/model_service/service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/dist/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/dist/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/api/client.ts" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/api/client.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/SettingsCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/SettingsCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/Workspace.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/Workspace.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/tsconfig.app.tsbuildinfo" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/tsconfig.app.tsbuildinfo" afterDir="false" />
-    </list>
+    <list default="true" id="1adb681f-9f5a-4c2e-a026-60424efa0552" name="更改" comment="增强文本改成用户自己选择，优化了视频生成" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -78,7 +59,7 @@
       <option name="presentableId" value="Default" />
       <updated>1790482795977</updated>
       <workItem from="1790554977156" duration="818000" />
-      <workItem from="1790604496308" duration="1272000" />
+      <workItem from="1790604496308" duration="1762000" />
     </task>
     <task id="LOCAL-00001" summary="优化了三视图，动画生成逻辑还有待提升">
       <option name="closed" value="true" />
@@ -96,7 +77,15 @@
       <option name="project" value="LOCAL" />
       <updated>1790558422774</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="增强文本改成用户自己选择，优化了视频生成">
+      <option name="closed" value="true" />
+      <created>1790610417706</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1790610417706</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

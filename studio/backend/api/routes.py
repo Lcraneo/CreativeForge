@@ -2,6 +2,7 @@
 
 import base64
 import os
+import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
@@ -99,6 +100,27 @@ class AnalyzeRequest(BaseModel):
 class ExportRequest(BaseModel):
     asset_id: str
     engine: str = "cocos"
+
+
+class BatchExportRequest(BaseModel):
+    asset_ids: list[str]
+    engine: str = "cocos"
+
+
+class BatchRequest(BaseModel):
+    goal: str
+    count: int = 4  # 4 / 9 / 12
+    mode: str = "seed"  # seed = 多变体 / pose = 多姿势
+    overrides: dict | None = None
+
+
+class RollbackRequest(BaseModel):
+    record_ids: list[str]
+
+
+class PixelEditRequest(BaseModel):
+    pixels: list  # [[hex|null]] 方形颜色矩阵
+    palette: list[str] | None = None
 
 
 class ModelSettingsRequest(BaseModel):
@@ -565,6 +587,208 @@ def build_router(runtime):
         else:
             media = "application/octet-stream"
         return FileResponse(path, media_type=media)
+
+    # ------------------------------------------------------------------
+    # P1-A 资产版本树 / 差异对比 / 一键回滚
+    # ------------------------------------------------------------------
+
+    @router.get("/versions/groups")
+    def version_groups():
+        from studio.backend.version_service import VersionService
+
+        return {"groups": VersionService.groups(runtime.history)}
+
+    @router.get("/versions/tree")
+    def version_tree(name: str):
+        from studio.backend.version_service import VersionService
+
+        tree = VersionService.tree(runtime.history, name)
+        if not tree["versions"]:
+            raise HTTPException(status_code=404, detail="unknown character name")
+        return tree
+
+    @router.get("/versions/diff")
+    def version_diff(name: str, a: int, b: int):
+        from studio.backend.version_service import VersionService
+
+        tree = VersionService.tree(runtime.history, name)
+        result = VersionService.diff(tree, a, b)
+        if result is None:
+            raise HTTPException(status_code=404, detail="version not found")
+        return result
+
+    @router.post("/versions/rollback")
+    def rollback_versions(request: RollbackRequest):
+        """一键回滚：把选中的历史版本快照恢复为当前资产（批量=按顺序恢复，
+        最后一个成为"当前版本"），并写入回滚审计日志。"""
+
+        from studio.backend.version_service import VersionService
+
+        if not request.record_ids:
+            raise HTTPException(status_code=422, detail="record_ids 不能为空")
+        entries = []
+        restored_asset = None
+        for record_id in request.record_ids:
+            record = runtime.history.get(record_id)
+            asset = (record or {}).get("asset")
+            if not isinstance(asset, dict) or not asset.get("id"):
+                entries.append({"record_id": record_id, "ok": False, "error": "record has no asset snapshot"})
+                continue
+            restored = dict(asset)
+            runtime.assets.save(restored)
+            restored_asset = restored
+            tree = VersionService.tree(runtime.history, record.get("name") or "未命名资产")
+            version_no = next(
+                (v["version_no"] for v in tree["versions"] if v["record_id"] == record_id), None
+            )
+            entries.append({
+                "ok": True,
+                "record_id": record_id,
+                "asset_id": restored.get("id"),
+                "name": record.get("name"),
+                "version_no": version_no,
+            })
+        ok_entries = [entry for entry in entries if entry.get("ok")]
+        if not ok_entries:
+            raise HTTPException(status_code=404, detail="没有可恢复的资产快照")
+        audit = VersionService().log_rollback(ok_entries)
+        return {
+            "status": "ok",
+            "restored": len(ok_entries),
+            "entries": entries,
+            "rollback_id": audit["id"],
+            "current_asset_id": restored_asset.get("id"),
+        }
+
+    @router.get("/versions/rollbacks")
+    def rollback_history():
+        from studio.backend.version_service import VersionService
+
+        return {"rollbacks": VersionService().rollback_log()}
+
+    # ------------------------------------------------------------------
+    # P1-B 批量生成与批量导出
+    # ------------------------------------------------------------------
+
+    @router.post("/batch", status_code=202)
+    def start_batch(request: BatchRequest):
+        goal = request.goal.strip()
+        if not goal:
+            raise HTTPException(status_code=422, detail="goal is required")
+        if request.count not in (4, 9, 12):
+            raise HTTPException(status_code=422, detail="count 仅支持 4 / 9 / 12")
+        batch_id = runtime.start_batch(
+            goal, count=request.count, mode=request.mode, overrides=request.overrides
+        )
+        return {"batch_id": batch_id, "count": request.count, "mode": request.mode}
+
+    @router.get("/batch/{batch_id}")
+    def batch_status(batch_id: str):
+        snapshot = runtime.batch_snapshot(batch_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="unknown batch")
+        return snapshot
+
+    @router.post("/export/batch")
+    def export_batch(request: BatchExportRequest):
+        from studio.backend.export_service.service import ExportService
+
+        if not request.asset_ids:
+            raise HTTPException(status_code=422, detail="asset_ids 不能为空")
+        assets = []
+        for asset_id in request.asset_ids:
+            asset = _resolve_asset(runtime, asset_id)
+            if asset is not None:
+                assets.append(dict(asset))
+        if not assets:
+            raise HTTPException(status_code=404, detail="没有可导出的资产")
+        result = ExportService(EXPORTS_DIR).export_batch(assets, request.engine)
+        result.pop("path", None)
+        return result
+
+    # ------------------------------------------------------------------
+    # P2 像素工作台：编辑保存 + 编辑版渲染图
+    # ------------------------------------------------------------------
+
+    @router.put("/assets/{asset_id}/pixel")
+    def save_pixel_edit(asset_id: str, request: PixelEditRequest):
+        """保存像素编辑：更新 CreativeAsset 的 pixel.pixels / 调色板，
+        服务端把编辑矩阵渲染为 PNG 落盘（edited_png），资产与历史同步。"""
+
+        import re as _re
+
+        from studio.backend.model_service.service import GENERATED_DIR
+
+        asset = _resolve_asset(runtime, asset_id)
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+
+        pixels = request.pixels
+        size = len(pixels)
+        if size == 0 or size > 128 or any(len(row) != size for row in pixels):
+            raise HTTPException(status_code=422, detail="pixels 必须是 1..128 的方形矩阵")
+        hex_pattern = _re.compile(r"^#[0-9a-fA-F]{6}$")
+        cleaned = []
+        for row in pixels:
+            out_row = []
+            for cell in row:
+                if cell is None:
+                    out_row.append(None)
+                elif isinstance(cell, str) and hex_pattern.match(cell):
+                    out_row.append(cell.lower())
+                else:
+                    raise HTTPException(status_code=422, detail="颜色格式必须是 #RRGGBB 或 null")
+            cleaned.append(out_row)
+
+        pixel = asset.setdefault("pixel", {})
+        pixel["pixels"] = cleaned
+        palette_colors = None
+        if request.palette:
+            palette_colors = []
+            for color in request.palette:
+                if isinstance(color, str) and hex_pattern.match(color) and color.lower() not in palette_colors:
+                    palette_colors.append(color.lower())
+            palette_block = pixel.setdefault("palette", {})
+            palette_block["colors"] = palette_colors
+            palette_block["max_colors"] = max(palette_block.get("max_colors", 0), len(palette_colors))
+
+        # 编辑矩阵 -> PNG（每格 8px，透明底），供资产页/导出直接消费
+        try:
+            from io import BytesIO
+
+            from PIL import Image as PILImage
+
+            scale = 8
+            image = PILImage.new("RGBA", (size * scale, size * scale), (0, 0, 0, 0))
+            load = image.load()
+            for y, row in enumerate(cleaned):
+                for x, color in enumerate(row):
+                    if not color:
+                        continue
+                    rgb = (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
+                    for dy in range(scale):
+                        for dx in range(scale):
+                            load[x * scale + dx, y * scale + dy] = rgb + (255,)
+            buffer = BytesIO()
+            image.save(buffer, "PNG")
+            name = "{}_edited_{:.0f}.png".format(asset_id, time.time() * 1000)
+            with open(os.path.join(GENERATED_DIR, name), "wb") as handle:
+                handle.write(buffer.getvalue())
+            pixel["edited_png"] = "/api/generated/" + name
+            pixel["edited_at"] = time.time()
+        except Exception:  # noqa: BLE001 - PNG render is best-effort
+            pass
+
+        saved = dict(asset)
+        runtime.assets.save(saved)
+        runtime.history.patch_asset(asset_id, {"pixel": pixel})
+        return {
+            "status": "ok",
+            "asset_id": saved.get("id"),
+            "size": size,
+            "edited_png": pixel.get("edited_png"),
+            "image_url": "/api/assets/{}/image.png?v={:.0f}".format(saved.get("id"), time.time()),
+        }
 
     @router.get("/health")
     def health():

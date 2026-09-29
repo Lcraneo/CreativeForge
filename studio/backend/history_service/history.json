@@ -16183,5 +16183,7433 @@
       }
     },
     "id": "T0001-12"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790644436.111755,
+    "finished_at": 1790644481.5240185,
+    "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast39405",
+    "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 45.412,
+    "character": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 779639405,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#5bc1e9",
+        "highlight": "#cfeaf4",
+        "accent": "#a5e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#8c80b7",
+      "#8b82b6",
+      "#8a8bb2",
+      "#8c80b8",
+      "#aeb0c4",
+      "#bfcbdc",
+      "#93a9c7",
+      "#cfcad6",
+      "#8d81b8",
+      "#9890bd",
+      "#9a9cc0",
+      "#8d80b8",
+      "#8074a1",
+      "#32323f",
+      "#564c5a",
+      "#7c5e6f",
+      "#6a6184",
+      "#766c98",
+      "#412b36",
+      "#9b87a5",
+      "#282526",
+      "#5c5368",
+      "#4a475f",
+      "#3f435b",
+      "#332f39",
+      "#8377a7",
+      "#887db3",
+      "#cbbccb",
+      "#8b80b7",
+      "#8c81b8",
+      "#867bb1"
+    ],
+    "image": {
+      "file": "img_1790644444693.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/8f/20260929/77c9ad12/c9e1817a-429d-414d-9d8c-617549bdf39b-1.png?Expires=1790730848&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=M%2FT4pTzeUOCoufkHV%2BWh%2F8VcyKk%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644444693.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 779639405,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644444693.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/8f/20260929/77c9ad12/c9e1817a-429d-414d-9d8c-617549bdf39b-1.png?Expires=1790730848&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=M%2FT4pTzeUOCoufkHV%2BWh%2F8VcyKk%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644444693.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast39405",
+        "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 779639405,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#8c80b7",
+            "#8b82b6",
+            "#8a8bb2",
+            "#8c80b8",
+            "#aeb0c4",
+            "#bfcbdc",
+            "#93a9c7",
+            "#cfcad6",
+            "#8d81b8",
+            "#9890bd",
+            "#9a9cc0",
+            "#8d80b8",
+            "#8074a1",
+            "#32323f",
+            "#564c5a",
+            "#7c5e6f",
+            "#6a6184",
+            "#766c98",
+            "#412b36",
+            "#9b87a5",
+            "#282526",
+            "#5c5368",
+            "#4a475f",
+            "#3f435b",
+            "#332f39",
+            "#8377a7",
+            "#887db3",
+            "#cbbccb",
+            "#8b80b7",
+            "#8c81b8",
+            "#867bb1"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#5bc1e9",
+            "highlight": "#cfeaf4",
+            "accent": "#a5e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8b82b6",
+            "#8a8bb2",
+            "#8b82b6",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#aeb0c4",
+            "#bfcbdc",
+            "#93a9c7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8a8bb2",
+            "#cfcad6",
+            "#93a9c7",
+            "#8d81b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#9890bd",
+            "#aeb0c4",
+            "#aeb0c4",
+            "#cfcad6",
+            "#9a9cc0",
+            "#8d80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8074a1",
+            "#32323f",
+            "#564c5a",
+            "#7c5e6f",
+            "#564c5a",
+            "#6a6184",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#766c98",
+            "#412b36",
+            "#9b87a5",
+            "#7c5e6f",
+            "#282526",
+            "#5c5368",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8"
+          ],
+          [
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#6a6184",
+            "#412b36",
+            "#4a475f",
+            "#3f435b",
+            "#282526",
+            "#4a475f",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#6a6184",
+            "#412b36",
+            "#3f435b",
+            "#32323f",
+            "#282526",
+            "#332f39",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8377a7",
+            "#332f39",
+            "#3f435b",
+            "#32323f",
+            "#282526",
+            "#332f39",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b8",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b8",
+            "#887db3",
+            "#6a6184",
+            "#cbbccb",
+            "#4a475f",
+            "#564c5a",
+            "#6a6184",
+            "#8074a1",
+            "#8b80b7",
+            "#8c81b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c81b8"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#cbbccb",
+            "#8c80b7",
+            "#cbbccb",
+            "#9890bd",
+            "#8c80b7",
+            "#8074a1",
+            "#8a8bb2",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c81b8"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8d81b8",
+            "#cfcad6",
+            "#8c80b7",
+            "#9890bd",
+            "#cfcad6",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c81b8"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b8",
+            "#8d81b8",
+            "#cbbccb",
+            "#8c80b7",
+            "#8c80b8",
+            "#cfcad6",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b8",
+            "#8c80b7",
+            "#9a9cc0",
+            "#8c80b7",
+            "#8c80b7",
+            "#9a9cc0",
+            "#9890bd",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#766c98",
+            "#4a475f",
+            "#887db3",
+            "#887db3",
+            "#5c5368",
+            "#5c5368",
+            "#8c80b7",
+            "#8c80b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ],
+          [
+            "#8c81b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#887db3",
+            "#867bb1",
+            "#867bb1",
+            "#867bb1",
+            "#8377a7",
+            "#867bb1",
+            "#8b80b7",
+            "#8c81b8",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7",
+            "#8c80b7"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast39405",
+          "type": "character",
+          "resources": {
+            "texture": "ast39405.png",
+            "animation": "ast39405.anim",
+            "prefab": "ast39405.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast39405.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast39405.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast39405.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast39405.png",
+          "atlas": "assets/atlas/ast39405_sprite_atlas.plist",
+          "animations": "assets/animations/ast39405.anim",
+          "prefabs": "assets/prefabs/ast39405.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644444693.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/8f/20260929/77c9ad12/c9e1817a-429d-414d-9d8c-617549bdf39b-1.png?Expires=1790730848&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=M%2FT4pTzeUOCoufkHV%2BWh%2F8VcyKk%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644444693.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/8f/20260929/77c9ad12/c9e1817a-429d-414d-9d8c-617549bdf39b-1.png?Expires=1790730848&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=M%2FT4pTzeUOCoufkHV%2BWh%2F8VcyKk%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644462829.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/d6/20260929/aa4f9372/c2a04489-bfb1-402e-ba7a-2550133252f1-1.png?Expires=1791250268&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=vLevpA9JxY53gN2dCHpPJGF7mYU%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644480822.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/89/20260929/17bff29b/c6a3ee48-2d96-4604-a85d-ef3f72231536-1.png?Expires=1791250286&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=1vxV6jIn4OZuREHsn7ouR8IVBwQ%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-13"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790644481.5530496,
+    "finished_at": 1790644526.307574,
+    "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast39405",
+    "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 44.755,
+    "character": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 779639405,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#5bc1e9",
+        "highlight": "#cfeaf4",
+        "accent": "#a5e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#af0200",
+      "#ae0807",
+      "#ae0301",
+      "#a75b64",
+      "#8c7079",
+      "#a22329",
+      "#ada1b5",
+      "#cbdcf1",
+      "#e1e1ea",
+      "#cbcedf",
+      "#9e1112",
+      "#a6acca",
+      "#c1c3d5",
+      "#878d9e",
+      "#535360",
+      "#a4090a",
+      "#ae0200",
+      "#4c3a49",
+      "#60626c",
+      "#7d8391",
+      "#3c3b44",
+      "#35353d",
+      "#6d6f77",
+      "#494545",
+      "#741e23",
+      "#3f3f46",
+      "#464857",
+      "#3c3c46",
+      "#3e3e45",
+      "#393b4c",
+      "#4c4e63"
+    ],
+    "image": {
+      "file": "img_1790644489985.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/46/20260929/77c9ad12/dc050aa0-8fc4-4c92-adfc-eb94922d030d-1.png?Expires=1790730894&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=GiB0rvgvpMIRit5FsUPRtQZkjh0%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644489985.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 779639405,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644489985.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/46/20260929/77c9ad12/dc050aa0-8fc4-4c92-adfc-eb94922d030d-1.png?Expires=1790730894&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=GiB0rvgvpMIRit5FsUPRtQZkjh0%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644489985.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast39405",
+        "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 779639405,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#af0200",
+            "#ae0807",
+            "#ae0301",
+            "#a75b64",
+            "#8c7079",
+            "#a22329",
+            "#ada1b5",
+            "#cbdcf1",
+            "#e1e1ea",
+            "#cbcedf",
+            "#9e1112",
+            "#a6acca",
+            "#c1c3d5",
+            "#878d9e",
+            "#535360",
+            "#a4090a",
+            "#ae0200",
+            "#4c3a49",
+            "#60626c",
+            "#7d8391",
+            "#3c3b44",
+            "#35353d",
+            "#6d6f77",
+            "#494545",
+            "#741e23",
+            "#3f3f46",
+            "#464857",
+            "#3c3c46",
+            "#3e3e45",
+            "#393b4c",
+            "#4c4e63"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#5bc1e9",
+            "highlight": "#cfeaf4",
+            "accent": "#a5e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0807",
+            "#ae0807",
+            "#af0200",
+            "#af0200",
+            "#ae0807",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0301",
+            "#a75b64",
+            "#a75b64",
+            "#8c7079",
+            "#a22329",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ada1b5",
+            "#cbdcf1",
+            "#cbdcf1",
+            "#a75b64",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0807",
+            "#cbdcf1",
+            "#e1e1ea",
+            "#cbdcf1",
+            "#cbcedf",
+            "#ae0301",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#9e1112",
+            "#a6acca",
+            "#c1c3d5",
+            "#a6acca",
+            "#cbdcf1",
+            "#a22329",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0301",
+            "#c1c3d5",
+            "#e1e1ea",
+            "#e1e1ea",
+            "#cbdcf1",
+            "#a75b64",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ada1b5",
+            "#cbcedf",
+            "#cbcedf",
+            "#a6acca",
+            "#a6acca",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#9e1112",
+            "#878d9e",
+            "#ada1b5",
+            "#c1c3d5",
+            "#535360",
+            "#878d9e",
+            "#a4090a",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0200",
+            "#4c3a49",
+            "#60626c",
+            "#878d9e",
+            "#7d8391",
+            "#3c3b44",
+            "#35353d",
+            "#a4090a",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#9e1112",
+            "#3c3b44",
+            "#6d6f77",
+            "#878d9e",
+            "#6d6f77",
+            "#3c3b44",
+            "#494545",
+            "#741e23",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#741e23",
+            "#3c3b44",
+            "#535360",
+            "#7d8391",
+            "#6d6f77",
+            "#494545",
+            "#3f3f46",
+            "#741e23",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#741e23",
+            "#3c3b44",
+            "#464857",
+            "#6d6f77",
+            "#60626c",
+            "#3f3f46",
+            "#35353d",
+            "#3c3c46",
+            "#ae0301",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#4c3a49",
+            "#3c3b44",
+            "#535360",
+            "#ada1b5",
+            "#60626c",
+            "#3e3e45",
+            "#35353d",
+            "#393b4c",
+            "#9e1112",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0807",
+            "#464857",
+            "#3c3b44",
+            "#3e3e45",
+            "#464857",
+            "#3f3f46",
+            "#3e3e45",
+            "#3c3b44",
+            "#393b4c",
+            "#a22329",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#a4090a",
+            "#4c4e63",
+            "#3c3c46",
+            "#3e3e45",
+            "#6d6f77",
+            "#494545",
+            "#3f3f46",
+            "#393b4c",
+            "#4c4e63",
+            "#9e1112",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ],
+          [
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#ae0301",
+            "#60626c",
+            "#3f3f46",
+            "#3f3f46",
+            "#6d6f77",
+            "#494545",
+            "#3f3f46",
+            "#464857",
+            "#4c3a49",
+            "#af0200",
+            "#af0200",
+            "#af0200",
+            "#af0200"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast39405",
+          "type": "character",
+          "resources": {
+            "texture": "ast39405.png",
+            "animation": "ast39405.anim",
+            "prefab": "ast39405.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast39405.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast39405.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast39405.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast39405.png",
+          "atlas": "assets/atlas/ast39405_sprite_atlas.plist",
+          "animations": "assets/animations/ast39405.anim",
+          "prefabs": "assets/prefabs/ast39405.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644489985.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/46/20260929/77c9ad12/dc050aa0-8fc4-4c92-adfc-eb94922d030d-1.png?Expires=1790730894&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=GiB0rvgvpMIRit5FsUPRtQZkjh0%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644489985.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/46/20260929/77c9ad12/dc050aa0-8fc4-4c92-adfc-eb94922d030d-1.png?Expires=1790730894&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=GiB0rvgvpMIRit5FsUPRtQZkjh0%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644507760.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/64/20260929/aa4f9372/b1899fc2-e417-423f-bc3e-95ea9ea6a571-1.png?Expires=1791250313&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=QhG%2FIS0KqcaT6QL%2BM3lcN5KVh5k%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644525633.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/bb/20260929/17bff29b/9e9c802d-3730-474e-b574-63130c08b336-1.png?Expires=1791250331&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=6vJ3VX%2FL6EaRpJ8%2FEYF1qJ4RIIY%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-7"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790644526.323713,
+    "finished_at": 1790644571.1074762,
+    "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast39405",
+    "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 44.784,
+    "character": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 779639405,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#5bc1e9",
+        "highlight": "#cfeaf4",
+        "accent": "#a5e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#f5a4fe",
+      "#f5a5fe",
+      "#f2a4fa",
+      "#d796de",
+      "#e4a0eb",
+      "#9d94c9",
+      "#c3c9e0",
+      "#a7afda",
+      "#f0a3fa",
+      "#b1b5d0",
+      "#ba85c6",
+      "#bf94d7",
+      "#efc0e8",
+      "#c489ca",
+      "#605064",
+      "#897390",
+      "#84638b",
+      "#e7b6e7",
+      "#514b57",
+      "#433f4a",
+      "#49474f",
+      "#49484f",
+      "#4b4952",
+      "#4a4951",
+      "#494850",
+      "#af7ab8",
+      "#ec9ff5",
+      "#785f80",
+      "#f5a5fd",
+      "#d2a1c4",
+      "#d3addb",
+      "#e89dec"
+    ],
+    "image": {
+      "file": "img_1790644535094.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ab/20260929/77c9ad12/e72b834b-ec86-4028-883e-0db4239d1aae-1.png?Expires=1790730939&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VbNZyOd%2Bs6oZ%2FtCXvITceqheo%2BU%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644535094.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 779639405,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644535094.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ab/20260929/77c9ad12/e72b834b-ec86-4028-883e-0db4239d1aae-1.png?Expires=1790730939&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VbNZyOd%2Bs6oZ%2FtCXvITceqheo%2BU%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644535094.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast39405",
+        "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 779639405,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f2a4fa",
+            "#d796de",
+            "#e4a0eb",
+            "#9d94c9",
+            "#c3c9e0",
+            "#a7afda",
+            "#f0a3fa",
+            "#b1b5d0",
+            "#ba85c6",
+            "#bf94d7",
+            "#efc0e8",
+            "#c489ca",
+            "#605064",
+            "#897390",
+            "#84638b",
+            "#e7b6e7",
+            "#514b57",
+            "#433f4a",
+            "#49474f",
+            "#49484f",
+            "#4b4952",
+            "#4a4951",
+            "#494850",
+            "#af7ab8",
+            "#ec9ff5",
+            "#785f80",
+            "#f5a5fd",
+            "#d2a1c4",
+            "#d3addb",
+            "#e89dec"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#5bc1e9",
+            "highlight": "#cfeaf4",
+            "accent": "#a5e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f2a4fa",
+            "#d796de",
+            "#e4a0eb",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#9d94c9",
+            "#c3c9e0",
+            "#a7afda",
+            "#f0a3fa",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#9d94c9",
+            "#b1b5d0",
+            "#9d94c9",
+            "#ba85c6",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#9d94c9",
+            "#c3c9e0",
+            "#a7afda",
+            "#bf94d7",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#bf94d7",
+            "#b1b5d0",
+            "#c3c9e0",
+            "#bf94d7",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f2a4fa",
+            "#efc0e8",
+            "#c489ca",
+            "#605064",
+            "#897390",
+            "#897390",
+            "#84638b",
+            "#bf94d7",
+            "#e7b6e7",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe"
+          ],
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe",
+            "#514b57",
+            "#433f4a",
+            "#433f4a",
+            "#49474f",
+            "#49484f",
+            "#433f4a",
+            "#4b4952",
+            "#c489ca",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe"
+          ],
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#c489ca",
+            "#84638b",
+            "#514b57",
+            "#4a4951",
+            "#494850",
+            "#605064",
+            "#af7ab8",
+            "#ec9ff5",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#ec9ff5",
+            "#514b57",
+            "#49474f",
+            "#49484f",
+            "#605064",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a4fe",
+            "#ba85c6",
+            "#4a4951",
+            "#4a4951",
+            "#4a4951",
+            "#494850",
+            "#d796de",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#785f80",
+            "#4a4951",
+            "#4a4951",
+            "#4a4951",
+            "#4a4951",
+            "#84638b",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fd",
+            "#785f80",
+            "#4b4952",
+            "#4a4951",
+            "#4a4951",
+            "#4b4952",
+            "#785f80",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#e4a0eb",
+            "#d2a1c4",
+            "#d2a1c4",
+            "#e4a0eb",
+            "#f5a4fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f0a3fa",
+            "#efc0e8",
+            "#efc0e8",
+            "#f0a3fa",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f0a3fa",
+            "#d3addb",
+            "#e7b6e7",
+            "#e4a0eb",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ],
+          [
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#e89dec",
+            "#af7ab8",
+            "#ba85c6",
+            "#c489ca",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe",
+            "#f5a5fe"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast39405",
+          "type": "character",
+          "resources": {
+            "texture": "ast39405.png",
+            "animation": "ast39405.anim",
+            "prefab": "ast39405.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast39405.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast39405.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast39405.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast39405.png",
+          "atlas": "assets/atlas/ast39405_sprite_atlas.plist",
+          "animations": "assets/animations/ast39405.anim",
+          "prefabs": "assets/prefabs/ast39405.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644535094.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ab/20260929/77c9ad12/e72b834b-ec86-4028-883e-0db4239d1aae-1.png?Expires=1790730939&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VbNZyOd%2Bs6oZ%2FtCXvITceqheo%2BU%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644535094.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ab/20260929/77c9ad12/e72b834b-ec86-4028-883e-0db4239d1aae-1.png?Expires=1790730939&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VbNZyOd%2Bs6oZ%2FtCXvITceqheo%2BU%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644552720.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/e5/20260929/17bff29b/7ca96ee9-18e5-4f51-955f-6628edb57aaa-1.png?Expires=1791250358&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=AqUBziLAkDkaR7XBggTeLPIlIU4%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644570356.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/6e/20260929/17bff29b/e63d4429-63c4-4f3d-aae4-bf1c1d2baf30-1.png?Expires=1791250376&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=70veu5ui1BNjHGHnZkCLvdWZSPk%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0003-5"
+  },
+  {
+    "task_id": "T0004",
+    "created_at": 1790644571.1281457,
+    "finished_at": 1790644616.3766649,
+    "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast39405",
+    "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 45.249,
+    "character": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 779639405,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#34506e",
+        "base": "#5bc1e9",
+        "highlight": "#cfeaf4",
+        "accent": "#a5e9ff",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#5e84b6",
+      "#5e84b5",
+      "#5b7aa6",
+      "#5e7fac",
+      "#5d81b1",
+      "#59779f",
+      "#90b4dd",
+      "#5f84b6",
+      "#698ab6",
+      "#92a2ba",
+      "#a4b3c8",
+      "#7f9bc1",
+      "#6786b0",
+      "#748196",
+      "#6084b4",
+      "#8092aa",
+      "#6f8eb7",
+      "#c4c7cc",
+      "#aab6c6",
+      "#92a6c2",
+      "#5f82b1",
+      "#5b7ca8",
+      "#38393f",
+      "#363639",
+      "#627b9c",
+      "#6587b4",
+      "#4a5a6f",
+      "#48464e",
+      "#97abc7",
+      "#b1bfd2",
+      "#5f84b5",
+      "#547197"
+    ],
+    "image": {
+      "file": "img_1790644579537.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e4/20260929/77c9ad12/4815a2ce-4f07-4b46-b3ea-bdb6ad68679f-1.png?Expires=1790730983&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=kApTbkEkfOoV5wrZ%2FPZO%2BDoH9DI%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644579537.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast39405",
+      "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 779639405,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644579537.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e4/20260929/77c9ad12/4815a2ce-4f07-4b46-b3ea-bdb6ad68679f-1.png?Expires=1790730983&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=kApTbkEkfOoV5wrZ%2FPZO%2BDoH9DI%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644579537.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast39405",
+        "name": "创建一个2d动漫风冰霜法师少女_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 779639405,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#34506e",
+          "base": "#5bc1e9",
+          "highlight": "#cfeaf4",
+          "accent": "#a5e9ff",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#5e84b6",
+            "#5e84b5",
+            "#5b7aa6",
+            "#5e7fac",
+            "#5d81b1",
+            "#59779f",
+            "#90b4dd",
+            "#5f84b6",
+            "#698ab6",
+            "#92a2ba",
+            "#a4b3c8",
+            "#7f9bc1",
+            "#6786b0",
+            "#748196",
+            "#6084b4",
+            "#8092aa",
+            "#6f8eb7",
+            "#c4c7cc",
+            "#aab6c6",
+            "#92a6c2",
+            "#5f82b1",
+            "#5b7ca8",
+            "#38393f",
+            "#363639",
+            "#627b9c",
+            "#6587b4",
+            "#4a5a6f",
+            "#48464e",
+            "#97abc7",
+            "#b1bfd2",
+            "#5f84b5",
+            "#547197"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#34506e",
+            "base": "#5bc1e9",
+            "highlight": "#cfeaf4",
+            "accent": "#a5e9ff",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b5",
+            "#5e84b5",
+            "#5e84b6",
+            "#5e84b5",
+            "#5b7aa6",
+            "#5e7fac",
+            "#5d81b1",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#59779f",
+            "#90b4dd",
+            "#90b4dd",
+            "#5b7aa6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b5",
+            "#5e84b6",
+            "#5e84b6",
+            "#698ab6",
+            "#92a2ba",
+            "#a4b3c8",
+            "#7f9bc1",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e7fac",
+            "#5e84b5",
+            "#6786b0",
+            "#748196",
+            "#698ab6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#6084b4",
+            "#8092aa",
+            "#6f8eb7",
+            "#c4c7cc",
+            "#c4c7cc",
+            "#aab6c6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b5"
+          ],
+          [
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#6786b0",
+            "#748196",
+            "#92a6c2",
+            "#aab6c6",
+            "#92a2ba",
+            "#a4b3c8",
+            "#698ab6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f82b1",
+            "#6786b0",
+            "#5b7ca8",
+            "#38393f",
+            "#363639",
+            "#627b9c",
+            "#92a2ba",
+            "#6587b4",
+            "#5e84b6",
+            "#5f84b6",
+            "#5f84b6",
+            "#5f84b6"
+          ],
+          [
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#4a5a6f",
+            "#363639",
+            "#363639",
+            "#4a5a6f",
+            "#6f8eb7",
+            "#6587b4",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5f84b6"
+          ],
+          [
+            "#5f84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#4a5a6f",
+            "#48464e",
+            "#48464e",
+            "#48464e",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#6f8eb7",
+            "#c4c7cc",
+            "#a4b3c8",
+            "#97abc7",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#6587b4",
+            "#aab6c6",
+            "#7f9bc1",
+            "#92a6c2",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5f84b6",
+            "#5f84b6",
+            "#6f8eb7",
+            "#92a2ba",
+            "#6587b4",
+            "#a4b3c8",
+            "#5e84b6",
+            "#5f84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#92a6c2",
+            "#7f9bc1",
+            "#5e84b6",
+            "#b1bfd2",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5f84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#7f9bc1",
+            "#6f8eb7",
+            "#5e84b6",
+            "#97abc7",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b5",
+            "#627b9c",
+            "#59779f",
+            "#5d81b1",
+            "#4a5a6f",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6"
+          ],
+          [
+            "#5e84b5",
+            "#5f84b6",
+            "#5f84b5",
+            "#5e84b5",
+            "#5e84b5",
+            "#5e84b6",
+            "#59779f",
+            "#547197",
+            "#5b7aa6",
+            "#547197",
+            "#5e84b5",
+            "#5e84b5",
+            "#5e84b5",
+            "#5e84b6",
+            "#5f84b6",
+            "#5e84b6"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast39405",
+          "type": "character",
+          "resources": {
+            "texture": "ast39405.png",
+            "animation": "ast39405.anim",
+            "prefab": "ast39405.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast39405.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast39405.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast39405.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast39405.png",
+          "atlas": "assets/atlas/ast39405_sprite_atlas.plist",
+          "animations": "assets/animations/ast39405.anim",
+          "prefabs": "assets/prefabs/ast39405.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风冰霜法师少女，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644579537.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e4/20260929/77c9ad12/4815a2ce-4f07-4b46-b3ea-bdb6ad68679f-1.png?Expires=1790730983&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=kApTbkEkfOoV5wrZ%2FPZO%2BDoH9DI%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644579537.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e4/20260929/77c9ad12/4815a2ce-4f07-4b46-b3ea-bdb6ad68679f-1.png?Expires=1790730983&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=kApTbkEkfOoV5wrZ%2FPZO%2BDoH9DI%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644597491.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/6a/20260929/17bff29b/686a3965-d08e-4c24-888f-86a13b2d4cfc-1.png?Expires=1791250403&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=KA1jqo52sWGDhpbYpqOqK5y9%2FbM%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644615672.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/44/20260929/17bff29b/bf87c173-6f74-4e4d-bddc-9594ca5d04d7-1.png?Expires=1791250421&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=q2QmfLRkRjXfZQot2odDEHxvDI0%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0004"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1790644749.7126913,
+    "finished_at": 1790644795.9238207,
+    "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast12242",
+    "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 46.211,
+    "character": {
+      "id": "ast12242",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 984112242,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#284e2a",
+        "base": "#6cb06f",
+        "highlight": "#c9f0b1",
+        "accent": "#ffd342",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#63afc7",
+      "#62afc7",
+      "#62adc3",
+      "#64b0a6",
+      "#62afc6",
+      "#508f67",
+      "#68ba93",
+      "#4f898f",
+      "#39812a",
+      "#17530d",
+      "#589c9c",
+      "#0f3e0e",
+      "#226324",
+      "#4f9291",
+      "#5ea6a8",
+      "#0f2a0c",
+      "#216226",
+      "#376f5b",
+      "#3e7276",
+      "#2e6251",
+      "#3e7876",
+      "#1a4421",
+      "#1c4824",
+      "#5191a3",
+      "#11220b",
+      "#0e1e0c",
+      "#173c1c",
+      "#173518",
+      "#589db0",
+      "#5497a9",
+      "#458489"
+    ],
+    "image": {
+      "file": "img_1790644758193.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260929/77c9ad12/a1244b40-0a3a-4204-ba2c-9785e154dc9c-1.png?Expires=1790731162&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=plgzh8Xz94znD50vl8vldAaEHOg%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644758193.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast12242",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 984112242,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644758193.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260929/77c9ad12/a1244b40-0a3a-4204-ba2c-9785e154dc9c-1.png?Expires=1790731162&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=plgzh8Xz94znD50vl8vldAaEHOg%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644758193.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast12242",
+        "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 984112242,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#63afc7",
+            "#62afc7",
+            "#62adc3",
+            "#64b0a6",
+            "#62afc6",
+            "#508f67",
+            "#68ba93",
+            "#4f898f",
+            "#39812a",
+            "#17530d",
+            "#589c9c",
+            "#0f3e0e",
+            "#226324",
+            "#4f9291",
+            "#5ea6a8",
+            "#0f2a0c",
+            "#216226",
+            "#376f5b",
+            "#3e7276",
+            "#2e6251",
+            "#3e7876",
+            "#1a4421",
+            "#1c4824",
+            "#5191a3",
+            "#11220b",
+            "#0e1e0c",
+            "#173c1c",
+            "#173518",
+            "#589db0",
+            "#5497a9",
+            "#458489"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#284e2a",
+            "base": "#6cb06f",
+            "highlight": "#c9f0b1",
+            "accent": "#ffd342",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#63afc7",
+            "#62afc7",
+            "#63afc7",
+            "#62afc7",
+            "#62adc3",
+            "#64b0a6",
+            "#63afc7",
+            "#63afc7",
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#62afc7",
+            "#62afc6",
+            "#62afc7",
+            "#62afc7",
+            "#62adc3",
+            "#508f67",
+            "#63afc7",
+            "#68ba93",
+            "#68ba93",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#62afc7"
+          ],
+          [
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#62afc7",
+            "#4f898f",
+            "#4f898f",
+            "#39812a",
+            "#17530d",
+            "#589c9c",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc6",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#62afc7",
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#62adc3",
+            "#68ba93",
+            "#39812a",
+            "#0f3e0e",
+            "#0f3e0e",
+            "#226324",
+            "#68ba93",
+            "#62adc3",
+            "#62afc6",
+            "#62afc6",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc6",
+            "#62afc6",
+            "#62afc7",
+            "#4f9291",
+            "#17530d",
+            "#0f3e0e",
+            "#0f3e0e",
+            "#0f3e0e",
+            "#0f3e0e",
+            "#17530d",
+            "#4f9291",
+            "#62afc7",
+            "#62afc6",
+            "#62afc6",
+            "#62afc7"
+          ],
+          [
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#5ea6a8",
+            "#39812a",
+            "#17530d",
+            "#0f2a0c",
+            "#216226",
+            "#216226",
+            "#0f3e0e",
+            "#0f3e0e",
+            "#39812a",
+            "#5ea6a8",
+            "#62afc6",
+            "#62afc6",
+            "#62afc6"
+          ],
+          [
+            "#62afc6",
+            "#62afc6",
+            "#62afc6",
+            "#508f67",
+            "#216226",
+            "#376f5b",
+            "#3e7276",
+            "#17530d",
+            "#17530d",
+            "#2e6251",
+            "#3e7876",
+            "#216226",
+            "#39812a",
+            "#62afc6",
+            "#62afc6",
+            "#62afc6"
+          ],
+          [
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#3e7876",
+            "#1a4421",
+            "#3e7276",
+            "#3e7276",
+            "#1c4824",
+            "#1c4824",
+            "#2e6251",
+            "#3e7876",
+            "#1a4421",
+            "#376f5b",
+            "#62afc7",
+            "#62afc6",
+            "#63afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc6",
+            "#62afc7",
+            "#5191a3",
+            "#11220b",
+            "#1c4824",
+            "#376f5b",
+            "#0e1e0c",
+            "#0e1e0c",
+            "#2e6251",
+            "#1c4824",
+            "#0e1e0c",
+            "#4f898f",
+            "#62afc7",
+            "#62afc7",
+            "#63afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc6",
+            "#62afc6",
+            "#62adc3",
+            "#3e7276",
+            "#4f9291",
+            "#226324",
+            "#173c1c",
+            "#173518",
+            "#226324",
+            "#4f9291",
+            "#3e7276",
+            "#62adc3",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#589db0",
+            "#216226",
+            "#3e7876",
+            "#3e7876",
+            "#216226",
+            "#5497a9",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#63afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#63afc7",
+            "#3e7276",
+            "#0f3e0e",
+            "#589db0",
+            "#589db0",
+            "#173518",
+            "#3e7876",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#63afc7",
+            "#63afc7",
+            "#173c1c",
+            "#0e1e0c",
+            "#5191a3",
+            "#5191a3",
+            "#11220b",
+            "#1c4824",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#5ea6a8",
+            "#173518",
+            "#11220b",
+            "#589db0",
+            "#5497a9",
+            "#11220b",
+            "#173518",
+            "#5ea6a8",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7",
+            "#2e6251",
+            "#0f2a0c",
+            "#0e1e0c",
+            "#589db0",
+            "#589db0",
+            "#0e1e0c",
+            "#0f2a0c",
+            "#2e6251",
+            "#63afc7",
+            "#62afc7",
+            "#62afc7",
+            "#62afc7"
+          ],
+          [
+            "#63afc7",
+            "#63afc7",
+            "#63afc7",
+            "#63afc7",
+            "#4f898f",
+            "#3e7876",
+            "#458489",
+            "#5191a3",
+            "#5191a3",
+            "#4f898f",
+            "#3e7876",
+            "#4f898f",
+            "#63afc7",
+            "#63afc7",
+            "#63afc7",
+            "#63afc7"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast12242",
+          "type": "character",
+          "resources": {
+            "texture": "ast12242.png",
+            "animation": "ast12242.anim",
+            "prefab": "ast12242.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast12242.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast12242.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast12242.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast12242.png",
+          "atlas": "assets/atlas/ast12242_sprite_atlas.plist",
+          "animations": "assets/animations/ast12242.anim",
+          "prefabs": "assets/prefabs/ast12242.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644758193.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260929/77c9ad12/a1244b40-0a3a-4204-ba2c-9785e154dc9c-1.png?Expires=1790731162&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=plgzh8Xz94znD50vl8vldAaEHOg%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644758193.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/c3/20260929/77c9ad12/a1244b40-0a3a-4204-ba2c-9785e154dc9c-1.png?Expires=1790731162&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=plgzh8Xz94znD50vl8vldAaEHOg%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644776660.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/49/20260929/aa4f9372/8220ad35-6cac-4982-81e7-ed9435c7e113-1.png?Expires=1791250582&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=qKQ%2BIvGgRKypVdibf6rrrEjCbeE%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644795252.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/d9/20260929/aa4f9372/62736297-c660-4138-ba2f-e44aabf6d14b-1.png?Expires=1791250601&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=iro2RLnvIxUHFk%2BckB01FcTrsYE%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-14"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1790644795.945173,
+    "finished_at": 1790644846.3552659,
+    "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast20161",
+    "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 50.41,
+    "character": {
+      "id": "ast20161",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 984120161,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#284e2a",
+        "base": "#6cb06f",
+        "highlight": "#c9f0b1",
+        "accent": "#ffd342",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#3f685a",
+      "#3f695a",
+      "#3f6859",
+      "#406759",
+      "#395e50",
+      "#3b6053",
+      "#345547",
+      "#3e6658",
+      "#3b5347",
+      "#39493a",
+      "#2b443a",
+      "#8e7e6b",
+      "#3d6556",
+      "#325244",
+      "#31493b",
+      "#385c4e",
+      "#243a30",
+      "#213229",
+      "#22352b",
+      "#273f35",
+      "#131e1a",
+      "#182720",
+      "#40695a",
+      "#2a362e",
+      "#232821",
+      "#1e2f27",
+      "#304e41",
+      "#3e6758",
+      "#1d2d26",
+      "#1a231c",
+      "#3c6456",
+      "#181a17"
+    ],
+    "image": {
+      "file": "img_1790644809322.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ae/20260929/77c9ad12/a3e2e769-84f1-4833-a124-ffc4fd9b476f-1.png?Expires=1790731213&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=9udrItfTmepODuU5IIpQUIJQgJg%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644809322.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast20161",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 984120161,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644809322.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ae/20260929/77c9ad12/a3e2e769-84f1-4833-a124-ffc4fd9b476f-1.png?Expires=1790731213&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=9udrItfTmepODuU5IIpQUIJQgJg%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644809322.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast20161",
+        "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 984120161,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#3f685a",
+            "#3f695a",
+            "#3f6859",
+            "#406759",
+            "#395e50",
+            "#3b6053",
+            "#345547",
+            "#3e6658",
+            "#3b5347",
+            "#39493a",
+            "#2b443a",
+            "#8e7e6b",
+            "#3d6556",
+            "#325244",
+            "#31493b",
+            "#385c4e",
+            "#243a30",
+            "#213229",
+            "#22352b",
+            "#273f35",
+            "#131e1a",
+            "#182720",
+            "#40695a",
+            "#2a362e",
+            "#232821",
+            "#1e2f27",
+            "#304e41",
+            "#3e6758",
+            "#1d2d26",
+            "#1a231c",
+            "#3c6456",
+            "#181a17"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#284e2a",
+            "base": "#6cb06f",
+            "highlight": "#c9f0b1",
+            "accent": "#ffd342",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f6859",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#406759",
+            "#3f695a",
+            "#3f685a",
+            "#395e50",
+            "#3b6053",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#345547",
+            "#3b6053",
+            "#3e6658",
+            "#3b5347",
+            "#39493a",
+            "#3f695a",
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a",
+            "#2b443a",
+            "#345547",
+            "#8e7e6b",
+            "#8e7e6b",
+            "#3b6053",
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3d6556",
+            "#325244",
+            "#325244",
+            "#39493a",
+            "#31493b",
+            "#325244",
+            "#385c4e",
+            "#3e6658",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#395e50",
+            "#243a30",
+            "#213229",
+            "#39493a",
+            "#243a30",
+            "#22352b",
+            "#273f35",
+            "#3d6556",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f685a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#385c4e",
+            "#213229",
+            "#131e1a",
+            "#213229",
+            "#182720",
+            "#182720",
+            "#22352b",
+            "#3d6556",
+            "#3f695a",
+            "#40695a",
+            "#3f695a",
+            "#40695a"
+          ],
+          [
+            "#3f685a",
+            "#40695a",
+            "#40695a",
+            "#3d6556",
+            "#2b443a",
+            "#182720",
+            "#131e1a",
+            "#2a362e",
+            "#232821",
+            "#131e1a",
+            "#1e2f27",
+            "#304e41",
+            "#3e6758",
+            "#40695a",
+            "#3f695a",
+            "#3f685a"
+          ],
+          [
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#304e41",
+            "#1d2d26",
+            "#243a30",
+            "#213229",
+            "#182720",
+            "#22352b",
+            "#1d2d26",
+            "#273f35",
+            "#1d2d26",
+            "#345547",
+            "#40695a",
+            "#3f695a",
+            "#3f695a"
+          ],
+          [
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#3e6758",
+            "#3e6758",
+            "#395e50",
+            "#273f35",
+            "#1d2d26",
+            "#1e2f27",
+            "#2b443a",
+            "#406759",
+            "#3e6658",
+            "#3f6859",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#273f35",
+            "#22352b",
+            "#345547",
+            "#243a30",
+            "#22352b",
+            "#395e50",
+            "#40695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a",
+            "#3b6053",
+            "#182720",
+            "#131e1a",
+            "#345547",
+            "#22352b",
+            "#131e1a",
+            "#2b443a",
+            "#3f695a",
+            "#40695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a",
+            "#385c4e",
+            "#182720",
+            "#1a231c",
+            "#325244",
+            "#1e2f27",
+            "#182720",
+            "#273f35",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#3c6456",
+            "#181a17",
+            "#181a17",
+            "#3f6859",
+            "#31493b",
+            "#181a17",
+            "#2b443a",
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#345547",
+            "#232821",
+            "#304e41",
+            "#3f695a",
+            "#3d6556",
+            "#232821",
+            "#2a362e",
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ],
+          [
+            "#3f695a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#3f695a",
+            "#3f685a",
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#3f685a",
+            "#3f685a",
+            "#3f695a",
+            "#40695a",
+            "#40695a",
+            "#40695a",
+            "#40695a"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast20161",
+          "type": "character",
+          "resources": {
+            "texture": "ast20161.png",
+            "animation": "ast20161.anim",
+            "prefab": "ast20161.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast20161.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast20161.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast20161.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast20161.png",
+          "atlas": "assets/atlas/ast20161_sprite_atlas.plist",
+          "animations": "assets/animations/ast20161.anim",
+          "prefabs": "assets/prefabs/ast20161.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644809322.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ae/20260929/77c9ad12/a3e2e769-84f1-4833-a124-ffc4fd9b476f-1.png?Expires=1790731213&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=9udrItfTmepODuU5IIpQUIJQgJg%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644809322.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/ae/20260929/77c9ad12/a3e2e769-84f1-4833-a124-ffc4fd9b476f-1.png?Expires=1790731213&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=9udrItfTmepODuU5IIpQUIJQgJg%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644827568.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/11/20260929/aa4f9372/83d9da3f-071a-4c1a-9c0b-c6e323bce07a-1.png?Expires=1791250633&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=7jXWuRRvlnKgQTZFdynFl6A%2BMqw%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644845745.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/28/20260929/17bff29b/43bd950d-af19-4c95-97cf-a50a9e1083d2-1.png?Expires=1791250651&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=FDm%2BHjqwmkjbRrO58fVXyeEQczs%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-8"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1790644846.371968,
+    "finished_at": 1790644891.8216639,
+    "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast28080",
+    "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9365,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 45.45,
+    "character": {
+      "id": "ast28080",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 984128080,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#284e2a",
+        "base": "#6cb06f",
+        "highlight": "#c9f0b1",
+        "accent": "#ffd342",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#456f58",
+      "#446d57",
+      "#426a54",
+      "#456e58",
+      "#3f9654",
+      "#456e57",
+      "#295e36",
+      "#255830",
+      "#30683f",
+      "#3b734c",
+      "#3b644b",
+      "#3e5341",
+      "#607255",
+      "#296335",
+      "#2b5339",
+      "#368448",
+      "#244d2f",
+      "#3b5d49",
+      "#1d3f25",
+      "#396d49",
+      "#30613e",
+      "#172a1d",
+      "#334732",
+      "#4c6e58",
+      "#958660",
+      "#a3937b",
+      "#496f58",
+      "#7e836a",
+      "#456d57",
+      "#608361",
+      "#466451",
+      "#3d6048"
+    ],
+    "image": {
+      "file": "img_1790644854738.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260929/77c9ad12/410a99dd-f7c9-457a-b76f-a4c74e29d185-1.png?Expires=1790731259&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VPzYyQME%2FiRtE6jRKPgriutRYlY%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644854738.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast28080",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 984128080,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644854738.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260929/77c9ad12/410a99dd-f7c9-457a-b76f-a4c74e29d185-1.png?Expires=1790731259&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VPzYyQME%2FiRtE6jRKPgriutRYlY%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644854738.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast28080",
+        "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 984128080,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.91,
+          "contour_score": 0.92,
+          "overall": 0.9365
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9365,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#456f58",
+            "#446d57",
+            "#426a54",
+            "#456e58",
+            "#3f9654",
+            "#456e57",
+            "#295e36",
+            "#255830",
+            "#30683f",
+            "#3b734c",
+            "#3b644b",
+            "#3e5341",
+            "#607255",
+            "#296335",
+            "#2b5339",
+            "#368448",
+            "#244d2f",
+            "#3b5d49",
+            "#1d3f25",
+            "#396d49",
+            "#30613e",
+            "#172a1d",
+            "#334732",
+            "#4c6e58",
+            "#958660",
+            "#a3937b",
+            "#496f58",
+            "#7e836a",
+            "#456d57",
+            "#608361",
+            "#466451",
+            "#3d6048"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#284e2a",
+            "base": "#6cb06f",
+            "highlight": "#c9f0b1",
+            "accent": "#ffd342",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#446d57",
+            "#426a54",
+            "#456e58",
+            "#456e58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#3f9654",
+            "#3f9654",
+            "#3f9654",
+            "#456e57",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#295e36",
+            "#255830",
+            "#30683f",
+            "#295e36",
+            "#3b734c",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#3b644b",
+            "#295e36",
+            "#3e5341",
+            "#607255",
+            "#296335",
+            "#2b5339",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#2b5339",
+            "#295e36",
+            "#368448",
+            "#368448",
+            "#255830",
+            "#2b5339",
+            "#446d57",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#3b644b",
+            "#295e36",
+            "#244d2f",
+            "#296335",
+            "#255830",
+            "#296335",
+            "#244d2f",
+            "#2b5339",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#3b5d49",
+            "#1d3f25",
+            "#30683f",
+            "#295e36",
+            "#255830",
+            "#1d3f25",
+            "#30683f",
+            "#396d49",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456e58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#30613e",
+            "#244d2f",
+            "#30683f",
+            "#368448",
+            "#296335",
+            "#3f9654",
+            "#396d49",
+            "#172a1d",
+            "#426a54",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#2b5339",
+            "#172a1d",
+            "#172a1d",
+            "#244d2f",
+            "#368448",
+            "#1d3f25",
+            "#172a1d",
+            "#334732",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456e58",
+            "#3b5d49",
+            "#3e5341",
+            "#3e5341",
+            "#172a1d",
+            "#3e5341",
+            "#3b644b",
+            "#446d57",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456e58"
+          ],
+          [
+            "#456e58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#4c6e58",
+            "#958660",
+            "#446d57",
+            "#a3937b",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58"
+          ],
+          [
+            "#456e58",
+            "#456e58",
+            "#456f58",
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#4c6e58",
+            "#a3937b",
+            "#456e57",
+            "#a3937b",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456e58"
+          ],
+          [
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456f58",
+            "#456e58",
+            "#496f58",
+            "#7e836a",
+            "#456e57",
+            "#7e836a",
+            "#456e58",
+            "#456f58",
+            "#456f58",
+            "#456f58",
+            "#456e58",
+            "#456e58"
+          ],
+          [
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456f58",
+            "#607255",
+            "#7e836a",
+            "#456e58",
+            "#7e836a",
+            "#456e58",
+            "#456f58",
+            "#456e58",
+            "#456f58",
+            "#456e58",
+            "#456e58"
+          ],
+          [
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#426a54",
+            "#426a54",
+            "#958660",
+            "#7e836a",
+            "#3b644b",
+            "#a3937b",
+            "#607255",
+            "#426a54",
+            "#456f58",
+            "#456e58",
+            "#456e58",
+            "#456e58"
+          ],
+          [
+            "#456e58",
+            "#456e58",
+            "#456e58",
+            "#456d57",
+            "#3b644b",
+            "#3b5d49",
+            "#608361",
+            "#466451",
+            "#3b5d49",
+            "#608361",
+            "#4c6e58",
+            "#3d6048",
+            "#456e57",
+            "#456e58",
+            "#456e58",
+            "#456e58"
+          ]
+        ],
+        "style": "2d"
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast28080",
+          "type": "character",
+          "resources": {
+            "texture": "ast28080.png",
+            "animation": "ast28080.anim",
+            "prefab": "ast28080.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast28080.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast28080.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast28080.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast28080.png",
+          "atlas": "assets/atlas/ast28080_sprite_atlas.plist",
+          "animations": "assets/animations/ast28080.anim",
+          "prefabs": "assets/prefabs/ast28080.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644854738.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260929/77c9ad12/410a99dd-f7c9-457a-b76f-a4c74e29d185-1.png?Expires=1790731259&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VPzYyQME%2FiRtE6jRKPgriutRYlY%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644854738.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/01/20260929/77c9ad12/410a99dd-f7c9-457a-b76f-a4c74e29d185-1.png?Expires=1790731259&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=VPzYyQME%2FiRtE6jRKPgriutRYlY%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644872550.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/1d/20260929/aa4f9372/02c91ba9-6338-4b61-8fba-fc2d63380a94-1.png?Expires=1791250678&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=6iEEnSB2yn5j9rxEFfzf6L7Nsv8%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644891051.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/1f/20260929/aa4f9372/dee020ab-b18f-4686-b07b-bf11aa67cc0f-1.png?Expires=1791250696&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=We8h56Evd815OGSHmcNCajgStVg%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0003-6"
+  },
+  {
+    "task_id": "T0004",
+    "created_at": 1790644891.838079,
+    "finished_at": 1790644936.6791599,
+    "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+    "engine": "cocos",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast35999",
+    "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.926,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 44.841,
+    "character": {
+      "id": "ast35999",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "seed": 984135999,
+      "static": false,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#284e2a",
+        "base": "#6cb06f",
+        "highlight": "#c9f0b1",
+        "accent": "#ffd342",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#3b7362",
+      "#3b7363",
+      "#407262",
+      "#467664",
+      "#407565",
+      "#44715f",
+      "#537a69",
+      "#c2af9a",
+      "#a2a091",
+      "#3e7362",
+      "#807964",
+      "#3c6e5d",
+      "#556f5c",
+      "#606e58",
+      "#776d58",
+      "#647763",
+      "#53584f",
+      "#445244",
+      "#56426d",
+      "#3c7262",
+      "#574b62",
+      "#6b524a",
+      "#6f6155",
+      "#446d5c",
+      "#634a6b",
+      "#474f53",
+      "#474656",
+      "#3b7463",
+      "#586c59",
+      "#496c5a"
+    ],
+    "image": {
+      "file": "img_1790644900079.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/db/20260929/77c9ad12/af5d7a87-f4e1-43a8-bd9b-729b877b82c4-1.png?Expires=1790731304&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=WUW8H7ZjV5zG6ULiZIyW%2BhegDv0%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644900079.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast35999",
+      "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 984135999,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1790644900079.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/db/20260929/77c9ad12/af5d7a87-f4e1-43a8-bd9b-729b877b82c4-1.png?Expires=1790731304&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=WUW8H7ZjV5zG6ULiZIyW%2BhegDv0%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644900079.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast35999",
+        "name": "创建一个2d动漫风森林游侠角色_带待机动画",
+        "type": "character",
+        "role": "npc",
+        "seed": 984135999,
+        "static": false,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#284e2a",
+          "base": "#6cb06f",
+          "highlight": "#c9f0b1",
+          "accent": "#ffd342",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.1429,
+            0.2857,
+            0.4286,
+            0.5714,
+            0.7143,
+            0.8571,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.88,
+          "contour_score": 0.92,
+          "overall": 0.926
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.926,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 16,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 32,
+          "colors": [
+            "#3b7362",
+            "#3b7363",
+            "#407262",
+            "#467664",
+            "#407565",
+            "#44715f",
+            "#537a69",
+            "#c2af9a",
+            "#a2a091",
+            "#3e7362",
+            "#807964",
+            "#3c6e5d",
+            "#556f5c",
+            "#606e58",
+            "#776d58",
+            "#647763",
+            "#53584f",
+            "#445244",
+            "#56426d",
+            "#3c7262",
+            "#574b62",
+            "#6b524a",
+            "#6f6155",
+            "#446d5c",
+            "#634a6b",
+            "#474f53",
+            "#474656",
+            "#3b7463",
+            "#586c59",
+            "#496c5a"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#284e2a",
+            "base": "#6cb06f",
+            "highlight": "#c9f0b1",
+            "accent": "#ffd342",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "soft",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ff0000",
+            "#ff0000",
+            "#ff0000",
+            "#3b7362",
+            "#3b7362",
+            "#3b7362",
+            "#3b7362",
+            "#467664",
+            "#407565",
+            "#3b7363",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363",
+            "#3b7362",
+            "#3b7362"
+          ],
+          [
+            "#ff0000",
+            "#ff0000",
+            "#ff0000",
+            "#44715f",
+            "#537a69",
+            "#3b7362",
+            "#3b7362",
+            "#c2af9a",
+            "#a2a091",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7362",
+            "#3b7363",
+            "#3b7362",
+            "#3b7362"
+          ],
+          [
+            "#ff0000",
+            "#ff0000",
+            "#ff0000",
+            "#807964",
+            "#537a69",
+            "#3b7362",
+            "#3c6e5d",
+            "#c2af9a",
+            "#a2a091",
+            "#3c6e5d",
+            "#3b7362",
+            "#3b7363",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7362"
+          ],
+          [
+            "#3b7362",
+            "#3b7363",
+            "#407262",
+            "#556f5c",
+            "#407262",
+            "#606e58",
+            "#776d58",
+            "#a2a091",
+            "#807964",
+            "#776d58",
+            "#606e58",
+            "#3b7362",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#44715f",
+            "#647763",
+            "#647763",
+            "#776d58",
+            "#53584f",
+            "#445244",
+            "#a2a091",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7362"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7362",
+            "#3e7362",
+            "#807964",
+            "#807964",
+            "#56426d",
+            "#445244",
+            "#445244",
+            "#a2a091",
+            "#3c7262",
+            "#3b7362",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363",
+            "#3b7362"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7362",
+            "#537a69",
+            "#574b62",
+            "#56426d",
+            "#6b524a",
+            "#6b524a",
+            "#6f6155",
+            "#446d5c",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#634a6b",
+            "#574b62",
+            "#445244",
+            "#445244",
+            "#6b524a",
+            "#574b62",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3c6e5d",
+            "#634a6b",
+            "#574b62",
+            "#445244",
+            "#445244",
+            "#807964",
+            "#634a6b",
+            "#3c7262",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#446d5c",
+            "#56426d",
+            "#474f53",
+            "#445244",
+            "#445244",
+            "#474656",
+            "#634a6b",
+            "#44715f",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#446d5c",
+            "#446d5c",
+            "#586c59",
+            "#53584f",
+            "#445244",
+            "#586c59",
+            "#647763",
+            "#407565",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3c7262",
+            "#496c5a",
+            "#606e58",
+            "#6f6155",
+            "#556f5c",
+            "#3b7362",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#44715f",
+            "#807964",
+            "#586c59",
+            "#44715f",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7463",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#556f5c",
+            "#556f5c",
+            "#606e58",
+            "#496c5a",
+            "#3b7363",
+            "#3b7363",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7463",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3e7362",
+            "#556f5c",
+            "#3e7362",
+            "#446d5c",
+            "#6f6155",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363"
+          ],
+          [
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#407565",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            "#3b7363",
+            null
+          ]
+        ],
+        "style": "2d",
+        "edited_png": "/api/generated/ast35999_edited_1790645023756.png",
+        "edited_at": 1790645023.756811
+      },
+      "engine": {
+        "target": "cocos",
+        "manifest": {
+          "asset_id": "ast35999",
+          "type": "character",
+          "resources": {
+            "texture": "ast35999.png",
+            "animation": "ast35999.anim",
+            "prefab": "ast35999.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast35999.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast35999.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast35999.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:cocos",
+              "passed": true,
+              "detail": [
+                "textures",
+                "atlas",
+                "animations",
+                "prefabs"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "textures": "assets/textures/ast35999.png",
+          "atlas": "assets/atlas/ast35999_sprite_atlas.plist",
+          "animations": "assets/animations/ast35999.anim",
+          "prefabs": "assets/prefabs/ast35999.prefab"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 32,
+          "engine": "cocos"
+        },
+        "checkpoint": {
+          "goal": "创建一个2D动漫风森林游侠角色，带待机动画",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1790644900079.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/db/20260929/77c9ad12/af5d7a87-f4e1-43a8-bd9b-729b877b82c4-1.png?Expires=1790731304&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=WUW8H7ZjV5zG6ULiZIyW%2BhegDv0%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790644900079.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/db/20260929/77c9ad12/af5d7a87-f4e1-43a8-bd9b-729b877b82c4-1.png?Expires=1790731304&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=WUW8H7ZjV5zG6ULiZIyW%2BhegDv0%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1790644918000.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/ba/20260929/aa4f9372/4040f237-60b1-4c4e-997c-23a34bec20c5-1.png?Expires=1791250723&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=rw5RnUN%2Bouunp3H2%2BG82Cot7eG4%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1790644936125.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/c3/20260929/17bff29b/e21298c9-26b5-4ca1-a1cd-664eac4a69a9-1.png?Expires=1791250741&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=ECBe4S0OXDxKn1uhZ8br0QOjsxk%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0004-2"
   }
 ]

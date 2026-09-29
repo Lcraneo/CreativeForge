@@ -11,8 +11,15 @@ import type {
   StorageConfigList,
   StorageConfigPublic,
   StorageTestResult,
+  BatchExportResult,
+  BatchStatus,
+  PixelEditResult,
+  RollbackRecord,
   TaskEvent,
   TaskSummary,
+  VersionDiff,
+  VersionGroup,
+  VersionTree,
 } from "../types";
 
 export interface TaskDetail {
@@ -138,6 +145,50 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   health: () => request<{ status: string }>("/api/health"),
+
+  /* ── P1-A 版本控制 ── */
+  versionGroups: () =>
+    request<{ groups: VersionGroup[] }>("/api/versions/groups"),
+  versionTree: (name: string) =>
+    request<VersionTree>(`/api/versions/tree?name=${encodeURIComponent(name)}`),
+  versionDiff: (name: string, a: number, b: number) =>
+    request<VersionDiff>(
+      `/api/versions/diff?name=${encodeURIComponent(name)}&a=${a}&b=${b}`,
+    ),
+  rollbackVersions: (recordIds: string[]) =>
+    request<{
+      status: string;
+      restored: number;
+      entries: { ok?: boolean; record_id: string; asset_id?: string; name?: string | null; version_no?: number | null; error?: string }[];
+      rollback_id: string;
+      current_asset_id: string | null;
+    }>("/api/versions/rollback", {
+      method: "POST",
+      body: JSON.stringify({ record_ids: recordIds }),
+    }),
+  rollbackLog: () =>
+    request<{ rollbacks: RollbackRecord[] }>("/api/versions/rollbacks"),
+
+  /* ── P1-B 批量生产线 ── */
+  startBatch: (goal: string, count: number, mode: string, overrides?: Record<string, unknown>) =>
+    request<{ batch_id: string; count: number; mode: string }>("/api/batch", {
+      method: "POST",
+      body: JSON.stringify({ goal, count, mode, overrides }),
+    }),
+  batchStatus: (batchId: string) =>
+    request<BatchStatus>(`/api/batch/${batchId}`),
+  batchExport: (assetIds: string[], engine: string) =>
+    request<BatchExportResult>("/api/export/batch", {
+      method: "POST",
+      body: JSON.stringify({ asset_ids: assetIds, engine }),
+    }),
+
+  /* ── P2 像素编辑 ── */
+  savePixelEdit: (assetId: string, pixels: Array<Array<string | null>>, palette?: string[]) =>
+    request<PixelEditResult>(`/api/assets/${assetId}/pixel`, {
+      method: "PUT",
+      body: JSON.stringify({ pixels, palette }),
+    }),
 
   createTask: (goal: string, overrides?: GenerationOverrides) =>
     request<{ task_id: string; status: string; stream_url: string }>(

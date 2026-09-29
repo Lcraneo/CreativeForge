@@ -165,6 +165,8 @@ export interface CreativeAsset {
     palette: { max_colors: number; colors: string[]; semantic_roles: Record<string, string | null> };
     contour: { thickness: number; connectivity: number; style: string; repaired: boolean };
     pixels?: Array<Array<string | null>>;
+    edited_png?: string;
+    edited_at?: number;
     style?: string;
   };
   quality?: {
@@ -466,3 +468,98 @@ export interface MultipartSession {
 }
 
 
+
+/* ── P1-A 资产版本控制 ─────────────────────────────────────────── */
+
+export interface VersionView {
+  version_no: number;
+  record_id: string;
+  asset_id: string | null;
+  task_id: string | null;
+  name: string | null;
+  created_at: number;
+  engine: string | null;
+  seed: number | null;
+  action: string | null;
+  status: string | null;
+  image_url: string | null;
+  scores: { pixel?: number; animation?: number; engine?: number };
+  palette: string[];
+  goal: string | null;
+}
+
+export interface VersionGroup {
+  name: string;
+  count: number;
+  latest_at: number;
+}
+
+export interface VersionTree {
+  name: string;
+  count: number;
+  latest: VersionView | null;
+  versions: VersionView[];
+}
+
+export interface VersionDiff {
+  a: VersionView;
+  b: VersionView;
+  fields: Array<{ field: string; a: unknown; b: unknown }>;
+}
+
+export interface RollbackEntry {
+  ok?: boolean;
+  record_id: string;
+  asset_id?: string;
+  name?: string | null;
+  version_no?: number | null;
+  error?: string;
+}
+
+export interface RollbackRecord {
+  id: string;
+  at: number;
+  count: number;
+  entries: RollbackEntry[];
+}
+
+/* ── P1-B 批量生成与导出 ───────────────────────────────────────── */
+
+export interface BatchTask {
+  task_id: string;
+  index: number;
+  status: string;
+  asset_id?: string | null;
+  name?: string | null;
+  image_url?: string | null;
+  overrides?: { seed?: number; action?: string };
+  scores?: Record<string, number>;
+  error?: string;
+}
+
+export interface BatchStatus {
+  id: string;
+  goal: string;
+  count: number;
+  mode: string;
+  status: string;
+  created_at: number;
+  tasks: BatchTask[];
+}
+
+export interface BatchExportResult {
+  package: string;
+  engine: string;
+  count: number;
+  size_bytes: number;
+  download_url: string;
+  assets: Array<{ asset_id: string; name?: string | null; ok: boolean; error?: string; validation_score?: number }>;
+}
+
+export interface PixelEditResult {
+  status: string;
+  asset_id: string | null;
+  size: number;
+  edited_png: string | null;
+  image_url: string;
+}

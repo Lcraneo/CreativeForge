@@ -101,7 +101,11 @@ class HistoryStore:
 
         with self._lock:
             for record in self._records:
-                if record.get("id") == asset_id or record.get("task_id") == asset_id:
+                if (
+                    record.get("id") == asset_id
+                    or record.get("task_id") == asset_id
+                    or record.get("asset_id") == asset_id
+                ):
                     asset = record.get("asset")
                     if isinstance(asset, dict):
                         asset.update(patch)

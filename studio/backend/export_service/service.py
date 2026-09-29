@@ -47,6 +47,67 @@ class ExportService:
             "validation": result["validation"]
         }
 
+    def export_batch(self, assets, engine="cocos"):
+        """P1-B 批量导出：多个资产合并为一个 zip，包内按 <asset_id>/ 分目录，
+        并附带整批 validation 汇总与 README 清单。"""
+
+        import time
+
+        all_entries = []
+        summary = []
+        for asset in assets:
+            asset_id = asset.get("id", "asset")
+            try:
+                export = OneClickExporter().export(asset, engine)
+                result = export["result"]
+            except Exception as error:  # noqa: BLE001 - skip broken asset, keep batch
+                summary.append({"asset_id": asset_id, "name": asset.get("name"),
+                                "ok": False, "error": str(error)[:120]})
+                continue
+            for name, text in self._entries(asset_id, asset, result):
+                all_entries.append(("{}/{}".format(asset_id, name), text))
+            summary.append({
+                "asset_id": asset_id,
+                "name": asset.get("name"),
+                "ok": True,
+                "validation_score": (result.get("validation") or {}).get("score"),
+            })
+
+        readme = (
+            "# CreativeForge Batch Export\n\n"
+            "engine: {engine}\nassets: {count}\nexported_at: {at:.0f}\n\n"
+            "| asset | name | ok | validation |\n| --- | --- | --- | --- |\n{rows}\n"
+        ).format(
+            engine=engine,
+            count=len(summary),
+            at=time.time(),
+            rows="\n".join(
+                "| {asset_id} | {name} | {ok} | {score} |".format(
+                    asset_id=item.get("asset_id"), name=item.get("name") or "—",
+                    ok="yes" if item.get("ok") else "NO",
+                    score=item.get("validation_score") if item.get("validation_score") is not None else "—",
+                )
+                for item in summary
+            ),
+        )
+        all_entries.append(("README.md", readme))
+
+        package_name = "batch_{}_{}.zip".format(engine, int(time.time() * 1000))
+        package_path = os.path.join(self.output_dir, package_name)
+        with zipfile.ZipFile(package_path, "w", zipfile.ZIP_DEFLATED) as bundle:
+            for name, text in all_entries:
+                bundle.writestr(name, text)
+
+        return {
+            "package": package_name,
+            "engine": engine,
+            "assets": summary,
+            "count": sum(1 for item in summary if item.get("ok")),
+            "files": [name for name, _ in all_entries],
+            "size_bytes": os.path.getsize(package_path),
+            "download_url": "/api/exports/{}".format(package_name),
+        }
+
     @staticmethod
     def _entries(asset_id, asset, result):
         manifest = result["manifest"]
