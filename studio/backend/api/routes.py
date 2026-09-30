@@ -3,6 +3,7 @@
 import base64
 import json
 import os
+import re
 import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
@@ -10,6 +11,7 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "exports")
+_PREVIEW_FRAME_CACHE = {}  # (source_hash, action, config, size) -> [png bytes]
 ANIMATION_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "animation"
 )
@@ -150,6 +152,10 @@ class ActionTextRequest(BaseModel):
     text: str
 
 
+class OpenFolderRequest(BaseModel):
+    target: str  # generated / animation / exports
+
+
 class ModelSettingsRequest(BaseModel):
     enabled: bool | None = None
     provider: str | None = None
@@ -170,6 +176,70 @@ class ModelSettingsRequest(BaseModel):
     video_size: str | None = None
     video_prompt_extend: bool | None = None
     timeout: int | None = None
+
+
+def _localize_asset(asset):
+    """把资产里指向 DashScope OSS 的临时远程 URL 改写为本地代理
+    ``/api/generated/<file>``。
+
+    远程结果链接有三重裂图风险：浏览器网络环境可能无法直连 OSS、
+    防盗链/Referer 策略、24 小时签名过期。生成时图片均已下载落盘
+    （GENERATED_DIR），本地代理同源且永久可达。"""
+
+    if not isinstance(asset, dict):
+        return asset
+
+    from studio.backend.model_service.service import safe_generated_path
+
+    def localized(meta):
+        if isinstance(meta, dict) and meta.get("file"):
+            name = os.path.basename(str(meta["file"]))
+            if safe_generated_path(name):
+                return {**meta, "url": "/api/generated/" + name}
+        return meta
+
+    image = asset.get("image")
+    if isinstance(image, dict):
+        asset["image"] = localized(image)
+    source = asset.get("source")
+    if isinstance(source, dict) and isinstance(source.get("ai_image"), dict):
+        source["ai_image"] = localized(source["ai_image"])
+
+    views = asset.get("design_views")
+    if isinstance(views, dict):
+        image_file = (asset.get("image") or {}).get("file")
+        for view in ("front", "side", "back"):
+            meta = views.get(view)
+            if not isinstance(meta, dict):
+                continue
+            if meta.get("file"):
+                views[view] = localized(meta)
+            elif view == "front" and image_file:
+                # front 视图复用原画：用原画的本地文件回写
+                local = localized({"file": image_file, "url": meta.get("url"), "model": meta.get("model")})
+                if str(local.get("url", "")).startswith("/api/generated/"):
+                    views[view] = {**meta, "url": local["url"]}
+
+    restyle = asset.get("restyle")
+    if isinstance(restyle, dict):
+        asset["restyle"] = localized(restyle)
+    return asset
+
+
+def _localize_history_record(record):
+    """历史记录的顶层 image 与内嵌 asset 都做 URL 本地化。"""
+
+    asset = record.get("asset")
+    if isinstance(asset, dict):
+        record["asset"] = _localize_asset(asset)
+    image = record.get("image")
+    if isinstance(image, dict) and image.get("file"):
+        from studio.backend.model_service.service import safe_generated_path
+
+        name = os.path.basename(str(image["file"]))
+        if safe_generated_path(name):
+            record["image"] = {**image, "url": "/api/generated/" + name}
+    return record
 
 
 def build_router(runtime):
@@ -233,14 +303,14 @@ def build_router(runtime):
         asset = runtime.assets.latest()
         if asset is None:
             raise HTTPException(status_code=404, detail="no asset yet")
-        return asset
+        return _localize_asset(asset)
 
     @router.get("/assets/{asset_id}")
     def get_asset(asset_id: str):
-        asset = runtime.assets.get(asset_id)
+        asset = _resolve_asset(runtime, asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        return asset
+        return _localize_asset(asset)
 
     @router.get("/assets/{asset_id}/image.png")
     def asset_image(asset_id: str, view: str = "front", size: int = 512):
@@ -313,7 +383,10 @@ def build_router(runtime):
         q: str = None,
         limit: int = 100,
     ):
-        records = runtime.history.list(limit=limit, engine=engine, keyword=q)
+        records = [
+            _localize_history_record(record)
+            for record in runtime.history.list(limit=limit, engine=engine, keyword=q)
+        ]
         return {"records": records, "total": runtime.history.count()}
 
     @router.get("/history/{record_id}")
@@ -321,7 +394,7 @@ def build_router(runtime):
         record = runtime.history.get(record_id)
         if record is None:
             raise HTTPException(status_code=404, detail="unknown history record")
-        return record
+        return _localize_history_record(record)
 
     @router.delete("/history/{record_id}")
     def delete_history(record_id: str):
@@ -349,9 +422,48 @@ def build_router(runtime):
 
         return {"presets": PROVIDER_PRESETS}
 
+    _SIZE_PATTERN = re.compile(r"^\d{2,4}[x*]\d{2,4}$")
+
+    def _validate_settings_payload(payload: dict) -> None:
+        """API 配置参数校验（P1）：字段格式 + 启用态跨字段完整性，非法 422。"""
+
+        errors = []
+        base_url = payload.get("base_url")
+        if base_url is not None and base_url and not str(base_url).startswith(("http://", "https://")):
+            errors.append("Base URL 必须以 http:// 或 https:// 开头")
+        api_key = payload.get("api_key")
+        if api_key is not None and api_key and (" " in api_key or api_key != api_key.strip()):
+            errors.append("API Key 不能包含空格")
+        for field, label in (("size", "生图尺寸"), ("video_size", "视频尺寸")):
+            value = payload.get(field)
+            if value is not None and value and not _SIZE_PATTERN.match(str(value)):
+                errors.append("{}格式应为 宽x高（如 1024x1024 或 1280*720）".format(label))
+        timeout = payload.get("timeout")
+        if timeout is not None:
+            try:
+                if not 10 <= int(timeout) <= 600:
+                    raise ValueError
+            except (TypeError, ValueError):
+                errors.append("超时需在 10~600 秒之间")
+
+        # 启用态跨字段完整性：合并现有配置后再检查
+        merged = dict(runtime.model_settings.effective())
+        merged.update({k: v for k, v in payload.items() if v is not None})
+        if merged.get("enabled"):
+            if not merged.get("base_url"):
+                errors.append("启用自定义模型时 Base URL 不能为空")
+            if not merged.get("api_key"):
+                errors.append("启用自定义模型时 API Key 不能为空（留空请关闭开关走离线管线）")
+            if merged.get("use_image") and not merged.get("model"):
+                errors.append("启用图像生成时必须填写图像模型 model（视频模型可留空走服务商默认）")
+        if errors:
+            raise HTTPException(status_code=422, detail="；".join(errors))
+
     @router.put("/settings/model")
     def update_model_settings(request: ModelSettingsRequest):
-        return runtime.model_settings.update(request.model_dump(exclude_unset=True))
+        payload = request.model_dump(exclude_unset=True)
+        _validate_settings_payload(payload)
+        return runtime.model_settings.update(payload)
 
     @router.post("/settings/model/test")
     def test_model_settings():
@@ -480,6 +592,7 @@ def build_router(runtime):
                     fps=request.fps,
                     duration=request.duration,
                     size=request.size,
+                    asset_id=request.asset_id or (asset.get("id") if asset else None),
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -521,7 +634,9 @@ def build_router(runtime):
         )
 
         if request.skeletal:
-            # 骨骼预览：使用当前角色绑定的骨架（与工作台生成同一条链路）
+            # 骨骼预览：使用当前角色绑定的骨架（与工作台生成同一条链路）。
+            # 帧缓存：同一（源图/动作/参数）只渲染一次 24 帧，时间轴拖动与
+            # 播放循环直接取帧——否则每次请求重渲染 24 帧会明显卡顿。
             source = None
             if request.image:
                 try:
@@ -544,12 +659,38 @@ def build_router(runtime):
                 raise HTTPException(
                     status_code=400, detail="骨骼预览需要真实角色源图（资产原画或上传图片）"
                 )
-            from artgen.riganim import render_rigged_frame_rgba
 
-            (w, h, rgba), _rig = render_rigged_frame_rgba(
-                source, action, phase, request.size, config=request.pose_config
-            )
-            return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
+            import hashlib as _hashlib
+
+            source_hash = _hashlib.sha1(source).hexdigest()[:12]
+            config_key = json.dumps(request.pose_config or {}, sort_keys=True, ensure_ascii=False)
+            cache_key = (source_hash, action, config_key, request.size)
+            frames = _PREVIEW_FRAME_CACHE.get(cache_key)
+            if frames is None:
+                from artgen.rig import build_rig
+                from artgen.riganim import animate_rigged
+                from studio.backend.animation_service.service import (
+                    AnimationService as _AnimService,
+                    ai_segment_subject as _segment,
+                )
+
+                settings = runtime.model_settings.effective()
+                mask = None
+                if settings.get("enabled") and settings.get("api_key"):
+                    try:
+                        mask = _segment(source, 384, settings, deadline=time.time() + 90.0)
+                    except Exception:  # noqa: BLE001
+                        mask = None
+                rig = build_rig(source, request.size, segment_mask=mask)
+                frames_rgba, _ref, _rig, _falign = animate_rigged(
+                    source, action, 24, request.size, rig=rig, config=request.pose_config, segment_mask=mask
+                )
+                frames = [encode_rgba(w, h, rgba) for w, h, rgba in frames_rgba]
+                if len(_PREVIEW_FRAME_CACHE) >= 12:
+                    _PREVIEW_FRAME_CACHE.pop(next(iter(_PREVIEW_FRAME_CACHE)))
+                _PREVIEW_FRAME_CACHE[cache_key] = frames
+            index = max(0, min(len(frames) - 1, int(round(phase * (len(frames) - 1)))))
+            return Response(content=frames[index], media_type="image/png")
 
         if view == "side" and action in ("walk", "run"):
             w, h, rgba = render_side_frame_rgba(
@@ -1411,6 +1552,35 @@ def build_router(runtime):
             "edited_png": pixel.get("edited_png"),
             "image_url": "/api/assets/{}/image.png?v={:.0f}".format(saved.get("id"), time.time()),
         }
+
+    @router.post("/open-folder")
+    def open_folder(request: OpenFolderRequest):
+        """在资源管理器中打开生成产物目录（白名单：generated/animation/
+        exports）。仅本机后端可用——浏览器页面无权直接唤起系统文件管理器。"""
+
+        import subprocess
+        import sys
+
+        from studio.backend.model_service.service import GENERATED_DIR
+
+        targets = {
+            "generated": GENERATED_DIR,
+            "animation": ANIMATION_DIR,
+            "exports": EXPORTS_DIR,
+        }
+        folder = targets.get(request.target)
+        if not folder or not os.path.isdir(folder):
+            raise HTTPException(status_code=404, detail="unknown folder")
+        try:
+            if sys.platform == "win32":
+                os.startfile(folder)  # noqa: S606 - 本机受控白名单目录
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", folder])
+            else:
+                subprocess.Popen(["xdg-open", folder])
+        except OSError as exc:
+            raise HTTPException(status_code=500, detail="无法打开文件夹：{}".format(exc))
+        return {"status": "ok", "target": request.target, "path": folder}
 
     @router.get("/health")
     def health():

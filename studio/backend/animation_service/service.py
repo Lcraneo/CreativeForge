@@ -263,6 +263,7 @@ class AnimationService:
         fps: int = 12,
         duration: float = 1.0,
         size: int = 384,
+        asset_id: str | None = None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
         → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。"""
@@ -311,6 +312,11 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, "video")
         meta["video_model"] = video_model
+        # 记录归属资产与真实动作（compose 会把 action 覆盖为 "sequence"），
+        # 试玩舞台按「资产 + 动作」匹配 AI 动画帧
+        if asset_id:
+            meta["asset_id"] = asset_id
+        meta["requested_action"] = action
         if crop_info:
             meta["source_cropped"] = crop_info
         if subject_locked:

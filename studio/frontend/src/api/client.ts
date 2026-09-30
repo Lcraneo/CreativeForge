@@ -247,6 +247,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ asset_id: assetId }),
     }),
+  openFolder: (target: "generated" | "animation" | "exports") =>
+    request<{ status: string; path: string }>("/api/open-folder", {
+      method: "POST",
+      body: JSON.stringify({ target }),
+    }),
   rigCheck: (assetId?: string | null) =>
     request<{
       proportion: string;
@@ -342,6 +347,8 @@ export const api = {
     phase: number;
     size?: number;
     pose_config?: PoseConfig;
+    skeletal?: boolean;
+    image?: string;
   }): Promise<string> => {
     const response = await fetch("/api/animation/preview-frame", {
       method: "POST",

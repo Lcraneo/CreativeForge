@@ -51,7 +51,7 @@ interface SeqFrame {
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
-  const [mode, setMode] = useState<"smart" | "editor" | "sequence" | "cloud">("smart");
+  const [mode, setMode] = useState<"smart" | "sequence" | "cloud">("smart");
   const [skeletal, setSkeletal] = useState(true);
   const rigCheck = useQuery({
     queryKey: ["rig-check", asset?.id],
@@ -199,7 +199,7 @@ export default function AnimationStudio() {
 
   // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
   useEffect(() => {
-    if (mode !== "editor") return;
+    if (mode !== "smart") return;
     let alive = true;
     const timer = setTimeout(() => {
       api
@@ -209,6 +209,9 @@ export default function AnimationStudio() {
           phase,
           size: 384,
           pose_config: poseConfig,
+          skeletal: true,
+          asset_id: asset?.id,
+          image: upload?.dataUrl?.split(",")[1],
         })
         .then((url) => {
           if (!alive) {
@@ -226,16 +229,16 @@ export default function AnimationStudio() {
       alive = false;
       clearTimeout(timer);
     };
-  }, [mode, editorAction, editorView, phase, poseConfig, size]);
+  }, [mode, editorAction, editorView, phase, poseConfig, size, asset?.id, upload]);
 
   useEffect(() => {
-    if (mode !== "editor" || !playing) return;
+    if (mode !== "smart" || !playing) return;
     const timer = setInterval(() => setPhase((p) => (p + 1 / 12) % 1), 90);
     return () => clearInterval(timer);
   }, [mode, playing]);
 
   useEffect(() => {
-    if (mode !== "editor") return;
+    if (mode !== "smart") return;
     api
       .listCustomActions()
       .then((r) => setPresets(r.actions))
@@ -384,7 +387,7 @@ export default function AnimationStudio() {
             }
           >
             <div className="flex h-[320px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
-              {mode === "editor" && frameUrl ? (
+              {frameUrl ? (
                 <img
                   src={frameUrl}
                   alt="pose preview"
@@ -422,9 +425,7 @@ export default function AnimationStudio() {
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-ink-3">
               <span>
                 源：
-                {mode === "editor"
-                  ? `动作编辑 · 相位 ${phase.toFixed(2)}`
-                  : mode === "sequence"
+                {mode === "sequence"
                     ? `序列帧 · ${seqFrames.length} 张`
                     : upload
                       ? `上传 · ${upload.name}`
@@ -449,8 +450,7 @@ export default function AnimationStudio() {
               <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                 {(
                   [
-                    ["smart", "智能生成"],
-                    ["editor", "动作编辑"],
+                    ["smart", "创作工作区"],
                     ["sequence", "序列帧导入"],
                     ["cloud", "云存储"],
                   ] as const
@@ -469,10 +469,8 @@ export default function AnimationStudio() {
               </div>
               <span className="text-[11px] text-ink-4">
                 {mode === "smart"
-                  ? "由 AI 原画 / 资产立绘驱动生成风格一致的动作帧"
-                  : mode === "editor"
-                    ? "调节动作参数，时间轴上逐帧预览，可保存为自定义动作复用"
-                    : mode === "sequence"
+                  ? "智能生成 + 动作精修一体：调参数、拖时间轴逐帧预览真实人物，可保存为自定义动作复用"
+                  : mode === "sequence"
                       ? "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"
                       : "六厂商对象存储 API 配置：凭证加密存储、脱敏展示、连通性测试"}
               </span>
@@ -482,6 +480,11 @@ export default function AnimationStudio() {
 
             {mode === "smart" && (
               <div className="flex flex-col gap-4">
+                {useVideo && (
+                  <div className="rounded-lg border border-line-subtle bg-surface-2/40 px-3 py-2 text-[11.5px] text-ink-3">
+                    AI 视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。
+                  </div>
+                )}
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
                     <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
@@ -582,7 +585,10 @@ export default function AnimationStudio() {
                       {ACTIONS.map((item) => (
                         <button
                           key={item}
-                          onClick={() => setAction(item)}
+                          onClick={() => {
+                            setAction(item);
+                            setEditorAction(item);
+                          }}
                           className={cx(
                             "px-3 py-1.5 text-[12px] transition-colors",
                             action === item
@@ -672,7 +678,7 @@ export default function AnimationStudio() {
               </div>
             )}
 
-            {mode === "editor" && (
+            {mode === "smart" && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-6">
                   <div>

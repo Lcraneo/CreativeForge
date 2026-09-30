@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Konva from "konva";
-import { Image as KonvaImage, Layer, Rect, Stage, Text as KonvaText } from "react-konva";
+import { Image as KonvaImage, Layer, Rect, Stage, Text as KonvaText, Rect as KonvaRect } from "react-konva";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { Badge, Card, EmptyState, PageHeader, cx } from "../components/ui";
+import { Badge, Button, Card, EmptyState, PageHeader, cx } from "../components/ui";
 import { Icon } from "../components/icons";
-import { useAssetStore } from "../stores/assetStore";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
 import type { PlaytestStrip } from "../types";
@@ -28,7 +27,7 @@ const RUN_SPEED_PX_S = 336;
 const OVERRIDE_TAIL_MS = 150; // attack/jump 播完帧序列后额外停留的余量
 
 const ACTION_HINT: Record<string, string> = {
-  idle: "待机 · 无操作时自动播放",
+  idle: "待机呼吸 · 点击卡片播放",
   walk: "行走 · ← / →",
   run: "奔跑 · ← / → + Shift",
   attack: "攻击 · 空格",
@@ -41,7 +40,21 @@ interface OverrideAction {
 }
 
 export default function PlaytestStage() {
-  const asset = useAssetStore((state) => state.asset);
+  // 人物显式选择（用户要求：不再自动跟随「当前资产」，由用户在此挑选）
+  const [selected, setSelected] = useState<{ id: string; name: string; image_url?: string } | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(true);
+  const selectedAssetId = selected?.id ?? null;
+  const history = useQuery({
+    queryKey: ["playtest-people"],
+    queryFn: () => api.listHistory({ limit: 12 }),
+  });
+  const people = useMemo(
+    () =>
+      (history.data?.records ?? []).filter(
+        (record) => record.asset_id && (record.image?.url || (record.asset ?? {}).image?.url),
+      ),
+    [history.data],
+  );
   const [action, setAction] = useState("idle");
   const [frameIndex, setFrameIndex] = useState(0);
   const [position, setPosition] = useState(320);
@@ -67,10 +80,10 @@ export default function PlaytestStage() {
   const stageBoxRef = useRef<HTMLDivElement>(null);
 
   const previews = useQuery({
-    queryKey: ["playtest-previews", asset?.id],
-    queryFn: () => api.playtestPreviews(asset?.id),
+    queryKey: ["playtest-previews", selectedAssetId],
+    queryFn: () => api.playtestPreviews(selectedAssetId!),
+    enabled: Boolean(selectedAssetId),
   });
-
   // 条带地址表：新结构读 strips，旧响应把 previews 图当条带用
   const stripUrls: Record<string, string> = useMemo(() => {
     const data = previews.data;
@@ -139,6 +152,12 @@ export default function PlaytestStage() {
   useEffect(() => {
     stripReadyRef.current = Boolean(stripImages[action]);
   }, [stripImages, action]);
+
+  // 加载进度：条带就绪数 / 总动作数（让用户知道选人后系统在干什么）
+  const totalActions = Object.keys(stripUrls).length;
+  const readyActions = Object.keys(stripImages).length;
+  const progressPct =
+    totalActions === 0 ? 0 : Math.round((readyActions / totalActions) * 100);
 
   // 各动作帧数表（循环内只读 ref，不触发重渲染）
   useEffect(() => {
@@ -254,6 +273,12 @@ export default function PlaytestStage() {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
+      // idle 自动播放已按需求关闭：未被钉住时 idle 保持静止帧，
+      // 点动作画廊的 idle 卡（pin）才播放呼吸循环
+      if (nextAction === "idle" && pinnedRef.current !== "idle") {
+        rafRef.current = requestAnimationFrame(loop);
+        return;
+      }
       const frames = framesFor(nextAction);
       const frameMs = frameMsRef.current;
       let idx = frameIdxRef.current % frames;
@@ -309,9 +334,19 @@ export default function PlaytestStage() {
         title="试玩舞台"
         description="绑定当前角色原画的骨骼动作——用方向键跑起来试一试，素材好不好，跑起来才知道"
         actions={
-          <Badge tone={rigged ? "primary" : "neutral"} icon="spark">
-            {rigged ? `角色绑定 · ${asset?.name ?? "当前资产"}` : "默认演示角色"}
-          </Badge>
+          <>
+            <Badge tone={rigged ? "primary" : "neutral"} icon="spark">
+              {rigged ? `角色绑定 · ${selected?.name ?? "未选择"}` : "未选择人物"}
+            </Badge>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="cube"
+              onClick={() => setPickerOpen(true)}
+            >
+              更换人物
+            </Button>
+          </>
         }
       />
 
@@ -356,13 +391,41 @@ export default function PlaytestStage() {
                     imageSmoothingEnabled={false}
                   />
                 ) : (
+                  <>
                   <KonvaText
-                    x={stageW / 2 - 60}
-                    y={STAGE_H / 2 - 10}
-                    text="加载动作帧…"
+                    x={stageW / 2 - 110}
+                    y={STAGE_H / 2 - 30}
+                    text={
+                      !selectedAssetId
+                        ? "← 先在下方选择一个试玩人物"
+                        : previews.isLoading
+                          ? "正在为该人物准备动作帧…"
+                          : `动作帧准备中 ${progressPct}%（${readyActions}/${totalActions}）`
+                    }
                     fontSize={14}
                     fill="#6f7d8c"
                   />
+                  {Boolean(selectedAssetId) && (
+                    <KonvaRect
+                      x={stageW / 2 - 110}
+                      y={STAGE_H / 2 + 6}
+                      width={220}
+                      height={6}
+                      cornerRadius={3}
+                      fill="#ddd9cf"
+                    />
+                  )}
+                  {Boolean(selectedAssetId) && (
+                    <KonvaRect
+                      x={stageW / 2 - 110}
+                      y={STAGE_H / 2 + 6}
+                      width={Math.max(4, (220 * progressPct) / 100)}
+                      height={6}
+                      cornerRadius={3}
+                      fill="#0e8ea8"
+                    />
+                  )}
+                  </>
                 )}
               </Layer>
             </Stage>
@@ -442,13 +505,47 @@ export default function PlaytestStage() {
         </Card>
       </div>
 
-      {!asset && (
-        <Card>
-          <EmptyState
-            icon="cube"
-            title="还没有当前资产"
-            description="先在创作工作台生成一个角色，试玩舞台会加载它的动作帧。也可以先用默认演示角色体验操作。"
-          />
+      {pickerOpen && (
+        <Card title="选择试玩人物 · 近期生成" icon="cube" bodyClassName="p-3">
+          {history.isLoading ? (
+            <p className="p-3 text-xs text-ink-3">读取近期生成记录…</p>
+          ) : people.length === 0 ? (
+            <p className="p-3 text-xs text-ink-3">
+              还没有可用的人物——先去创作工作台生成一个角色，再回到这里挑选。
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              {people.map((record) => (
+                <button
+                  key={record.id}
+                  onClick={() => {
+                    setSelected({
+                      id: record.asset_id!,
+                      name: record.name || record.goal,
+                      image_url: record.image?.url ?? undefined,
+                    });
+                    setPickerOpen(false);
+                  }}
+                  className={cx(
+                    "flex flex-col overflow-hidden rounded-xl border transition-all",
+                    selected?.id === record.asset_id
+                      ? "border-primary/60"
+                      : "border-line-subtle hover:border-line",
+                  )}
+                >
+                  <img
+                    src={record.image?.url ?? undefined}
+                    alt={String(record.name ?? record.asset_id ?? "")}
+                    loading="lazy"
+                    className="h-[120px] w-full bg-[#f1efe9] object-contain"
+                  />
+                  <span className="truncate px-2 py-1.5 text-[11px] text-ink-3">
+                    {record.name || record.asset_id}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </Card>
       )}
     </div>

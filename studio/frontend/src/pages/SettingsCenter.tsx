@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
@@ -140,12 +140,15 @@ export default function SettingsCenter() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
 
+  const dirtyRef = useRef(false);
   useEffect(() => {
-    if (settings.data && !form) setForm(toForm(settings.data));
+    // 双向同步：工作台面板保存后共享缓存更新，此处（未编辑时）跟随刷新
+    if (settings.data && (!form || !dirtyRef.current)) setForm(toForm(settings.data));
   }, [settings.data, form]);
 
   async function persist(): Promise<ModelSettings> {
     if (!form) throw new Error("表单未就绪");
+    dirtyRef.current = false;
     const payload: Record<string, unknown> = { ...form };
     if (apiKey.trim()) payload.api_key = apiKey.trim();
     const next = await api.saveModelSettings(
@@ -569,6 +572,59 @@ export default function SettingsCenter() {
                 Key 仅保存在后端本机 model_settings.json，页面不回显。
               </li>
             </ul>
+          </Card>
+
+          <Card title="文件位置 · 打开产物文件夹" icon="download">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="cube"
+                onClick={async () => {
+                  try {
+                    const r = await api.openFolder("generated");
+                    toast({ tone: "success", title: "已打开图片文件夹", description: r.path });
+                  } catch (cause) {
+                    toast({ tone: "danger", title: "打开失败", description: String(cause).slice(0, 140) });
+                  }
+                }}
+              >
+                图片（原画/三视图）
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="film"
+                onClick={async () => {
+                  try {
+                    const r = await api.openFolder("animation");
+                    toast({ tone: "success", title: "已打开动画文件夹", description: r.path });
+                  } catch (cause) {
+                    toast({ tone: "danger", title: "打开失败", description: String(cause).slice(0, 140) });
+                  }
+                }}
+              >
+                动画（GIF/序列帧）
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="package"
+                onClick={async () => {
+                  try {
+                    const r = await api.openFolder("exports");
+                    toast({ tone: "success", title: "已打开导出包文件夹", description: r.path });
+                  } catch (cause) {
+                    toast({ tone: "danger", title: "打开失败", description: String(cause).slice(0, 140) });
+                  }
+                }}
+              >
+                导出包（zip）
+              </Button>
+            </div>
+            <p className="mt-2.5 text-[11px] leading-[17px] text-ink-4">
+              在资源管理器中直接打开生成产物的保存目录（图片与动画均已本地落盘，不依赖远程链接）。
+            </p>
           </Card>
 
           <PreferencesSync />

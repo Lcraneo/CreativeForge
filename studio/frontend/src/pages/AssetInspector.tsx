@@ -13,6 +13,7 @@ import {
 import { AnimPreview } from "../components/AnimPreview";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
+import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
 import AssetViewer from "../three/AssetViewer";
 
@@ -144,7 +145,22 @@ export default function AssetInspector() {
             </>
           )}
           {aiImage && aiImageMeta?.model && (
-            <div className="mt-2 text-[11px] text-ink-3">AI 原画 · {aiImageMeta.model}</div>
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-[11px] text-ink-3">AI 原画 · {aiImageMeta.model}</span>
+              <button
+                onClick={async () => {
+                  try {
+                    const r = await api.openFolder("generated");
+                    toast({ tone: "success", title: "已打开图片文件夹", description: r.path });
+                  } catch (cause) {
+                    toast({ tone: "danger", title: "打开失败", description: String(cause).slice(0, 140) });
+                  }
+                }}
+                className="text-[11px] font-medium text-primary underline-offset-2 hover:underline"
+              >
+                打开所在文件夹
+              </button>
+            </div>
           )}
         </Card>
 

@@ -187,16 +187,6 @@ class AgentRuntime:
                 asset["prompt_enhance"] = enhanced
             if image:
                 asset["image"] = image
-            self.tasks.append_event(
-                task_id,
-                {
-                    "type": "ASSET_UPDATE",
-                    "id": asset.get("id"),
-                    "name": asset.get("name"),
-                    "engine": asset.get("engine", {}).get("target"),
-                    "image": (image or {}).get("url"),
-                },
-            )
 
         if asset and views_thread is not None:
             views, failures = views_getter()
@@ -213,21 +203,37 @@ class AgentRuntime:
                         ),
                     },
                 )
-            if views or failures:
-                self.tasks.append_event(
-                    task_id,
-                    {
-                        "type": "ASSET_UPDATE",
-                        "id": asset.get("id"),
-                        "name": asset.get("name"),
-                        "engine": asset.get("engine", {}).get("target"),
-                        "image": (image or {}).get("url"),
-                    },
-                )
 
-        self.tasks.finish(task_id, result)
+        # 先落库再发事件（P0 修复）：此前 ASSET_UPDATE 先于 assets.save 发出，
+        # 前端收到事件立即 GET /api/assets/{id} 会 404（"unknown asset"），
+        # 表现为"生成请求失败"。任何 ASSET_UPDATE 发出前，资产必须已在
+        # AssetStore 中可取。
         if asset:
             self.assets.save(asset)
+        if asset and (enhanced or image):
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "ASSET_UPDATE",
+                    "id": asset.get("id"),
+                    "name": asset.get("name"),
+                    "engine": asset.get("engine", {}).get("target"),
+                    "image": (image or {}).get("url"),
+                },
+            )
+        if asset and views_thread is not None:
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "ASSET_UPDATE",
+                    "id": asset.get("id"),
+                    "name": asset.get("name"),
+                    "engine": asset.get("engine", {}).get("target"),
+                    "image": (image or {}).get("url"),
+                },
+            )
+
+        self.tasks.finish(task_id, result)
         self._record(task_id, goal, result, None, started)
 
     def _start_views_worker(self, task_id, image):

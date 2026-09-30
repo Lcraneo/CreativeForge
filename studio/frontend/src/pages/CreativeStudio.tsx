@@ -6,6 +6,7 @@ import { streamTask } from "../websocket/taskStream";
 import { Badge, Button, Card, StatusDot, Textarea, cx } from "../components/ui";
 import { Icon, type IconName } from "../components/icons";
 import { toast } from "../stores/toastStore";
+import { ModelApiPanel } from "../components/ModelApiPanel";
 import type { TaskEvent } from "../types";
 
 const EXAMPLES = [
@@ -336,6 +337,13 @@ export default function CreativeStudio() {
           </div>
         </Card>
       </div>
+
+      <ModelApiPanel
+        scope="image"
+        title="图像生成 API 配置"
+        contextNote="本工作台生成角色原画使用的图像 API。修改会双向同步至「模型广场」，也影响像素重建的源图来源。"
+        defaultCollapsed
+      />
 
       {onboard && (
         <div className="shrink-0 rounded-2xl border border-primary/30 bg-primary-tint/30 p-3">
