@@ -79,9 +79,7 @@ export default function ExportCenter() {
         overline="Export Center"
         title="导出中心"
         description="GImport 一键导出：CreativeAsset → Manifest → Atlas → Animation → Prefab → 引擎工程包"
-        actions={
-          <Segmented options={ENGINES} value={engine} onChange={setEngine} />
-        }
+        actions={<Segmented options={ENGINES} value={engine} onChange={setEngine} />}
       />
 
       <div className="grid grid-cols-12 gap-5">
@@ -107,7 +105,13 @@ export default function ExportCenter() {
               ]}
             />
             <div className="mt-6 flex flex-wrap items-center gap-3">
-              <Button variant="primary" size="lg" icon="download" loading={busy} onClick={runExport}>
+              <Button
+                variant="primary"
+                size="lg"
+                icon="download"
+                loading={busy}
+                onClick={runExport}
+              >
                 {busy ? "导出中…" : `导出 ${ENGINES.find((e) => e.id === engine)?.label} 工程包`}
               </Button>
               {latest && (
@@ -154,7 +158,10 @@ export default function ExportCenter() {
           <Card title="资产摘要" icon="cube">
             <KV label="id / name" value={`${asset.id} / ${asset.name ?? "—"}`} />
             <KV label="type / role" value={`${asset.type ?? "character"} / ${asset.role ?? "—"}`} />
-            <KV label="frames / fps" value={`${asset.animation?.frames.length ?? 0} / ${asset.animation?.fps ?? "—"}`} />
+            <KV
+              label="frames / fps"
+              value={`${asset.animation?.frames.length ?? 0} / ${asset.animation?.fps ?? "—"}`}
+            />
             <KV label="pixel score" value={asset.quality?.pixel?.overall ?? "—"} />
             <KV label="animation score" value={asset.quality?.animation?.overall ?? "—"} />
           </Card>

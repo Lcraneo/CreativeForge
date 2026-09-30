@@ -68,7 +68,8 @@ export interface Anchor {
   y: number;
 }
 
-export interface CharacterSpec {  goal: string;
+export interface CharacterSpec {
+  goal: string;
   seed: number;
   gender: string;
   gender_label: string;
@@ -162,7 +163,11 @@ export interface CreativeAsset {
   };
   pixel?: {
     grid: { size: number; phase_x: number; phase_y: number; confidence: number };
-    palette: { max_colors: number; colors: string[]; semantic_roles: Record<string, string | null> };
+    palette: {
+      max_colors: number;
+      colors: string[];
+      semantic_roles: Record<string, string | null>;
+    };
     contour: { thickness: number; connectivity: number; style: string; repaired: boolean };
     pixels?: Array<Array<string | null>>;
     edited_png?: string;
@@ -295,11 +300,13 @@ export interface ExportResult {
   files: string[];
   size_bytes: number;
   download_url: string;
-  validation: CreativeAsset["engine"] extends undefined ? never : {
-    status: string;
-    score: number;
-    checks: Array<{ name: string; passed: boolean; detail?: unknown }>;
-  };
+  validation: CreativeAsset["engine"] extends undefined
+    ? never
+    : {
+        status: string;
+        score: number;
+        checks: Array<{ name: string; passed: boolean; detail?: unknown }>;
+      };
 }
 
 export interface BenchmarkReport {
@@ -431,8 +438,8 @@ export interface StorageConfigPublic {
   id: string;
   name: string;
   provider: string;
-  access_key: string;        // 脱敏，如 R8oG****D_Qu
-  secret_key: string;        // 脱敏
+  access_key: string; // 脱敏，如 R8oG****D_Qu
+  secret_key: string; // 脱敏
   has_secret: boolean;
   region: string;
   bucket: string;
@@ -469,8 +476,6 @@ export interface MultipartSession {
   created_at: number;
   updated_at: number;
 }
-
-
 
 /* ── P1-A 资产版本控制 ─────────────────────────────────────────── */
 
@@ -557,7 +562,13 @@ export interface BatchExportResult {
   count: number;
   size_bytes: number;
   download_url: string;
-  assets: Array<{ asset_id: string; name?: string | null; ok: boolean; error?: string; validation_score?: number }>;
+  assets: Array<{
+    asset_id: string;
+    name?: string | null;
+    ok: boolean;
+    error?: string;
+    validation_score?: number;
+  }>;
 }
 
 export interface ReviewInfo {
@@ -581,9 +592,30 @@ export interface InterpretedAction {
   source_text?: string;
 }
 
+export interface PlaytestStrip {
+  url: string;
+  frames: number;
+  /** 播放帧率（fps）；旧响应缺失时前端回落 10 */
+  fps?: number;
+  width: number;
+  height: number;
+  engine: string;
+}
+
+export interface PlaytestCharacter {
+  proportion: "chibi" | "normal" | string;
+  confidence: number | null;
+  head_ratio: number | null;
+  source_hash: string | null;
+}
+
 export interface PlaytestPreviews {
   previews: Record<string, string>;
   actions: string[];
+  strips?: Record<string, PlaytestStrip>;
+  fps?: number;
+  source?: "rigged" | "procedural" | string;
+  character?: PlaytestCharacter | null;
 }
 
 export interface PixelEditResult {

@@ -20,7 +20,6 @@ from agents.supervisor.supervisor import SupervisorAgent
 from studio.backend.asset_service.service import AssetStore, TaskStore
 from studio.backend.history_service.service import DEFAULT_HISTORY_PATH, HistoryStore
 from studio.backend.model_service.service import (
-    ChatProvider,
     ImageProvider,
     ModelSettingsStore,
 )
@@ -37,13 +36,13 @@ class AgentRuntime:
         self._supervisor = supervisor or SupervisorAgent()
         self.batches = {}
 
-    def start_task(self, goal, overrides=None, turbo=False):
+    def start_task(self, goal, overrides=None, turbo=False, asset=None):
         task_id = self.tasks.create(goal)
         thread = threading.Thread(
             target=self._run,
-            args=(task_id, goal, overrides, turbo),
+            args=(task_id, goal, overrides, turbo, asset),
             name="creativeforge-task-{}".format(task_id),
-            daemon=True
+            daemon=True,
         )
         thread.start()
         return task_id
@@ -117,7 +116,9 @@ class AgentRuntime:
                 entry["name"] = asset.get("name")
                 entry["status"] = task.get("status", "done")
                 entry["image_url"] = (asset.get("image") or {}).get("url")
-                entry["scores"] = ((asset.get("quality") or {}).get("report") or {}).get("scores") or {}
+                entry["scores"] = ((asset.get("quality") or {}).get("report") or {}).get(
+                    "scores"
+                ) or {}
             except Exception as error:  # noqa: BLE001 - one failure must not kill the batch
                 entry["status"] = "failed"
                 entry["error"] = str(error)
@@ -133,14 +134,16 @@ class AgentRuntime:
             return None
         view = dict(batch)
         view["tasks"] = [
-            dict(entry, status=entry.get("status") or (
-                (self.tasks.get(entry.get("task_id")) or {}).get("status") or "running"
-            ))
+            dict(
+                entry,
+                status=entry.get("status")
+                or ((self.tasks.get(entry.get("task_id")) or {}).get("status") or "running"),
+            )
             for entry in batch.get("tasks", [])
         ]
         return view
 
-    def _run(self, task_id, goal, overrides=None, turbo=False):
+    def _run(self, task_id, goal, overrides=None, turbo=False, asset=None):
         started = time.time()
         spec = apply_overrides(parse_prompt(goal), overrides)
         enhanced, image = self._call_external(task_id, goal, overrides, spec)
@@ -172,7 +175,7 @@ class AgentRuntime:
             self.tasks.append_event(task_id, event)
 
         try:
-            result = self._supervisor.run(goal, on_event=on_event, overrides=overrides)
+            result = self._supervisor.run(goal, asset=asset, on_event=on_event, overrides=overrides)
         except Exception as error:  # keep the task visible on failure
             self.tasks.fail(task_id, error)
             self._record(task_id, goal, None, error, started)
@@ -184,34 +187,43 @@ class AgentRuntime:
                 asset["prompt_enhance"] = enhanced
             if image:
                 asset["image"] = image
-            self.tasks.append_event(task_id, {
-                "type": "ASSET_UPDATE",
-                "id": asset.get("id"),
-                "name": asset.get("name"),
-                "engine": asset.get("engine", {}).get("target"),
-                "image": (image or {}).get("url"),
-            })
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "ASSET_UPDATE",
+                    "id": asset.get("id"),
+                    "name": asset.get("name"),
+                    "engine": asset.get("engine", {}).get("target"),
+                    "image": (image or {}).get("url"),
+                },
+            )
 
         if asset and views_thread is not None:
             views, failures = views_getter()
             if views:
                 asset["design_views"] = views
             if failures:
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_FALLBACK",
-                    "stage": "views",
-                    "detail": "侧/背视图生成失败（{}），对应视角保留确定性示意；可在设计中心重试".format(
-                        "；".join(failures)
-                    ),
-                })
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "MODEL_FALLBACK",
+                        "stage": "views",
+                        "detail": "侧/背视图生成失败（{}），对应视角保留确定性示意；可在设计中心重试".format(
+                            "；".join(failures)
+                        ),
+                    },
+                )
             if views or failures:
-                self.tasks.append_event(task_id, {
-                    "type": "ASSET_UPDATE",
-                    "id": asset.get("id"),
-                    "name": asset.get("name"),
-                    "engine": asset.get("engine", {}).get("target"),
-                    "image": (image or {}).get("url"),
-                })
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "ASSET_UPDATE",
+                        "id": asset.get("id"),
+                        "name": asset.get("name"),
+                        "engine": asset.get("engine", {}).get("target"),
+                        "image": (image or {}).get("url"),
+                    },
+                )
 
         self.tasks.finish(task_id, result)
         if asset:
@@ -232,30 +244,39 @@ class AgentRuntime:
             generate_turnaround,
         )
 
-        self.tasks.append_event(task_id, {
-            "type": "MODEL_START",
-            "stage": "views",
-            "provider": settings.get("provider"),
-            "model": ImageEditProvider.EDIT_MODEL,
-        })
+        self.tasks.append_event(
+            task_id,
+            {
+                "type": "MODEL_START",
+                "stage": "views",
+                "provider": settings.get("provider"),
+                "model": ImageEditProvider.EDIT_MODEL,
+            },
+        )
 
         def on_result(view, result):
-            self.tasks.append_event(task_id, {
-                "type": "MODEL_IMAGE",
-                "stage": "views",
-                "view": view,
-                "id": result.get("file"),
-                "url": result.get("url"),
-                "model": result.get("model"),
-            })
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "MODEL_IMAGE",
+                    "stage": "views",
+                    "view": view,
+                    "id": result.get("file"),
+                    "url": result.get("url"),
+                    "model": result.get("model"),
+                },
+            )
 
         outcome = {}
 
         def worker():
             try:
                 views, failures = generate_turnaround(
-                    settings, base_url, front_image=image,
-                    deadline=time.time() + 180.0, on_result=on_result,
+                    settings,
+                    base_url,
+                    front_image=image,
+                    deadline=time.time() + 180.0,
+                    on_result=on_result,
                 )
                 outcome["views"] = views
                 outcome["failures"] = failures
@@ -288,11 +309,14 @@ class AgentRuntime:
         if not (settings.get("enabled") and settings.get("base_url") and settings.get("api_key")):
             if settings.get("enabled"):
                 # switch is on but the configuration is incomplete — surface why
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_FALLBACK",
-                    "stage": "configure",
-                    "detail": "自定义模型未配置完整：需要 Base URL 与 API Key（设置 → 模型设置）",
-                })
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "MODEL_FALLBACK",
+                        "stage": "configure",
+                        "detail": "自定义模型未配置完整：需要 Base URL 与 API Key（设置 → 模型设置）",
+                    },
+                )
             return None, None
 
         # 提示词增强改为「用户手动触发」：对话框上的「增强提示词」按钮会调用
@@ -302,30 +326,41 @@ class AgentRuntime:
 
         image = None
         if settings.get("use_image") and settings.get("model"):
-            self.tasks.append_event(task_id, {
-                "type": "MODEL_START",
-                "stage": "image",
-                "provider": settings.get("provider"),
-                "model": settings.get("model"),
-            })
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "MODEL_START",
+                    "stage": "image",
+                    "provider": settings.get("provider"),
+                    "model": settings.get("model"),
+                },
+            )
             try:
                 prompt = build_image_prompt(
-                    goal, overrides, enhanced.get("prompt") if enhanced else None,
+                    goal,
+                    overrides,
+                    enhanced.get("prompt") if enhanced else None,
                     style=spec.get("style"),
                 )
                 image = ImageProvider(settings).generate(prompt)
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_IMAGE",
-                    "id": image.get("file"),
-                    "url": image.get("url"),
-                    "model": image.get("model"),
-                })
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "MODEL_IMAGE",
+                        "id": image.get("file"),
+                        "url": image.get("url"),
+                        "model": image.get("model"),
+                    },
+                )
             except Exception as error:
-                self.tasks.append_event(task_id, {
-                    "type": "MODEL_FALLBACK",
-                    "stage": "image",
-                    "detail": str(error),
-                })
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "MODEL_FALLBACK",
+                        "stage": "image",
+                        "detail": str(error),
+                    },
+                )
                 image = None
 
         return enhanced, image
@@ -343,28 +378,34 @@ class AgentRuntime:
 
         status = "failed" if error is not None else str(supervisor.get("status", "unknown")).lower()
 
-        self.history.add({
-            "task_id": task_id,
-            "created_at": task.get("created_at", started),
-            "finished_at": time.time(),
-            "goal": goal,
-            "engine": engine,
-            "status": status,
-            "report_status": report.get("status"),
-            "error": str(error) if error is not None else None,
-            "asset_id": (asset or {}).get("id"),
-            "name": (asset or {}).get("name"),
-            "type": (asset or {}).get("type"),
-            "role": (asset or {}).get("role"),
-            "action": animation.get("action"),
-            "frames": None if character.get("static") else (len(animation.get("frames") or []) or None),
-            "fps": animation.get("fps"),
-            "scores": report.get("scores") or {},
-            "qa_rounds": supervisor.get("qa_rounds", 0),
-            "elapsed_seconds": round(time.time() - started, 3),
-            "character": character,
-            "palette": palette.get("colors") or [],
-            "image": (asset or {}).get("image"),
-            "enhanced_prompt": ((asset or {}).get("prompt_enhance") or {}).get("prompt"),
-            "asset": asset,
-        })
+        self.history.add(
+            {
+                "task_id": task_id,
+                "created_at": task.get("created_at", started),
+                "finished_at": time.time(),
+                "goal": goal,
+                "engine": engine,
+                "status": status,
+                "report_status": report.get("status"),
+                "error": str(error) if error is not None else None,
+                "asset_id": (asset or {}).get("id"),
+                "name": (asset or {}).get("name"),
+                "type": (asset or {}).get("type"),
+                "role": (asset or {}).get("role"),
+                "action": animation.get("action"),
+                "frames": (
+                    None
+                    if character.get("static")
+                    else (len(animation.get("frames") or []) or None)
+                ),
+                "fps": animation.get("fps"),
+                "scores": report.get("scores") or {},
+                "qa_rounds": supervisor.get("qa_rounds", 0),
+                "elapsed_seconds": round(time.time() - started, 3),
+                "character": character,
+                "palette": palette.get("colors") or [],
+                "image": (asset or {}).get("image"),
+                "enhanced_prompt": ((asset or {}).get("prompt_enhance") or {}).get("prompt"),
+                "asset": asset,
+            }
+        )

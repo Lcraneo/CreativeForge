@@ -23,9 +23,7 @@ def decode_image(data):
     try:
         from PIL import Image  # optional dependency
     except ImportError as error:  # pragma: no cover
-        raise ValueError(
-            "unsupported image format — install Pillow for JPEG/WebP/GIF"
-        ) from error
+        raise ValueError("unsupported image format — install Pillow for JPEG/WebP/GIF") from error
     import io
 
     try:
@@ -39,6 +37,7 @@ def decode_image(data):
 # --------------------------------------------------------------------------
 # PNG decode
 # --------------------------------------------------------------------------
+
 
 def _paeth(a, b, c):
     p = a + b - c
@@ -60,18 +59,16 @@ def decode_png(data: bytes):
     palette = None
     trns = None
     while pos + 8 <= len(data):
-        (length,) = struct.unpack(">I", data[pos:pos + 4])
-        tag = data[pos + 4:pos + 8]
-        chunk = data[pos + 8:pos + 8 + length]
+        (length,) = struct.unpack(">I", data[pos : pos + 4])
+        tag = data[pos + 4 : pos + 8]
+        chunk = data[pos + 8 : pos + 8 + length]
         pos += 12 + length
         if tag == b"IHDR":
-            width, height, bit_depth, color_type, _, _, interlace = struct.unpack(
-                ">IIBBBBB", chunk
-            )
+            width, height, bit_depth, color_type, _, _, interlace = struct.unpack(">IIBBBBB", chunk)
             if interlace:
                 raise ValueError("interlaced PNG not supported")
         elif tag == b"PLTE":
-            palette = [tuple(chunk[i:i + 3]) for i in range(0, len(chunk), 3)]
+            palette = [tuple(chunk[i : i + 3]) for i in range(0, len(chunk), 3)]
         elif tag == b"tRNS":
             trns = chunk
         elif tag == b"IDAT":
@@ -94,7 +91,7 @@ def decode_png(data: bytes):
     for y in range(height):
         filter_type = raw[offset]
         offset += 1
-        line = bytearray(raw[offset:offset + stride])
+        line = bytearray(raw[offset : offset + stride])
         offset += stride
         if filter_type == 1:
             for i in range(channels, stride):
@@ -115,25 +112,25 @@ def decode_png(data: bytes):
             raise ValueError(f"unknown filter {filter_type}")
         row = y * width * 4
         if color_type == 6:
-            out[row:row + width * 4] = line
+            out[row : row + width * 4] = line
         elif color_type == 2:
             for x in range(width):
-                r, g, b = line[x * 3:x * 3 + 3]
-                out[row + x * 4:row + x * 4 + 4] = bytes((r, g, b, 255))
+                r, g, b = line[x * 3 : x * 3 + 3]
+                out[row + x * 4 : row + x * 4 + 4] = bytes((r, g, b, 255))
         elif color_type == 0:
             for x in range(width):
                 v = line[x]
-                out[row + x * 4:row + x * 4 + 4] = bytes((v, v, v, 255))
+                out[row + x * 4 : row + x * 4 + 4] = bytes((v, v, v, 255))
         elif color_type == 4:
             for x in range(width):
-                v, a = line[x * 2:x * 2 + 2]
-                out[row + x * 4:row + x * 4 + 4] = bytes((v, v, v, a))
+                v, a = line[x * 2 : x * 2 + 2]
+                out[row + x * 4 : row + x * 4 + 4] = bytes((v, v, v, a))
         elif color_type == 3:
             for x in range(width):
                 idx = line[x]
                 r, g, b = palette[idx]
                 a = trns[idx] if trns and idx < len(trns) else 255
-                out[row + x * 4:row + x * 4 + 4] = bytes((r, g, b, a))
+                out[row + x * 4 : row + x * 4 + 4] = bytes((r, g, b, a))
         prev = line
     return width, height, out
 
@@ -141,6 +138,7 @@ def decode_png(data: bytes):
 # --------------------------------------------------------------------------
 # GIF encode
 # --------------------------------------------------------------------------
+
 
 def _median_cut(pixels, max_colors):
     boxes = [pixels]
@@ -161,9 +159,7 @@ def _median_cut(pixels, max_colors):
 def _spread(box):
     if not box:
         return (0, 0, 0)
-    return tuple(
-        max(p[i] for p in box) - min(p[i] for p in box) for i in range(3)
-    )
+    return tuple(max(p[i] for p in box) - min(p[i] for p in box) for i in range(3))
 
 
 def _average(box):
@@ -195,7 +191,10 @@ def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
         return _encode_gif_stdlib(frames, width, height, fps, loop, max_colors)
 
     duration_ms = max(20, round(1000.0 / max(1, fps)))
-    quantized = [_quantize_frame(Image.frombytes("RGBA", (width, height), bytes(frame)), max_colors) for frame in frames]
+    quantized = [
+        _quantize_frame(Image.frombytes("RGBA", (width, height), bytes(frame)), max_colors)
+        for frame in frames
+    ]
 
     buf = io.BytesIO()
     kwargs = {
@@ -281,7 +280,7 @@ def _encode_gif_stdlib(frames, width, height, fps=12, loop=0, max_colors=255):
         out += b"\x00\x00\x00"
 
     # netscape loop extension
-    out += b"\x21\xFF\x0BNETSCAPE2.0\x03\x01" + struct.pack("<H", loop) + b"\x00"
+    out += b"\x21\xff\x0bNETSCAPE2.0\x03\x01" + struct.pack("<H", loop) + b"\x00"
 
     delay = max(2, round(100.0 / max(1, fps)))
     min_code_size = 8
@@ -290,10 +289,10 @@ def _encode_gif_stdlib(frames, width, height, fps=12, loop=0, max_colors=255):
         # transparency index; with plain 0x01 browsers keep showing the
         # previous frame through transparent pixels, so moving subjects ghost
         # and the loop appears to flicker
-        out += b"\x21\xF9\x04\x05" + struct.pack("<H", delay) + b"\x00\x00"  # GCE
-        out += b"\x2C" + struct.pack("<HHHH", 0, 0, width, height) + b"\x00"
+        out += b"\x21\xf9\x04\x05" + struct.pack("<H", delay) + b"\x00\x00"  # GCE
+        out += b"\x2c" + struct.pack("<HHHH", 0, 0, width, height) + b"\x00"
         out += bytes((min_code_size,)) + _lzw_encode(indexed, min_code_size)
-    out += b"\x3B"
+    out += b"\x3b"
     return bytes(out)
 
 
@@ -345,7 +344,7 @@ def _lzw_encode(indexed, min_code_size):
         out.append(bit_buffer & 0xFF)
     blocks = bytearray()
     for i in range(0, len(out), 255):
-        chunk = out[i:i + 255]
+        chunk = out[i : i + 255]
         blocks.append(len(chunk))
         blocks += chunk
     blocks.append(0)

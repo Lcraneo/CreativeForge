@@ -148,7 +148,9 @@ class StorageProvider(Protocol):
       - 抛出的异常归入上面的分级体系，文本经过 redact。
     """
 
-    def upload(self, data: bytes, key: str, *, content_type: str = "application/octet-stream") -> StoredObject: ...
+    def upload(
+        self, data: bytes, key: str, *, content_type: str = "application/octet-stream"
+    ) -> StoredObject: ...
 
     def download(self, key: str) -> bytes: ...
 

@@ -23,17 +23,40 @@ FEATHER_RADIUS = 1.0
 def _motion(action, phase):
     t = phase * 2.0 * math.pi
     if action == "walk":
-        return {"dy": -abs(math.sin(t)) * 8, "dx": math.cos(t) * 3, "rot": math.cos(t) * 3.0, "sx": 1.0, "sy": 1.0}
+        return {
+            "dy": -abs(math.sin(t)) * 8,
+            "dx": math.cos(t) * 3,
+            "rot": math.cos(t) * 3.0,
+            "sx": 1.0,
+            "sy": 1.0,
+        }
     if action == "run":
-        return {"dy": -abs(math.sin(t)) * 12, "dx": math.cos(t) * 5, "rot": math.cos(t) * 4.5, "sx": 1.02, "sy": 1.04}
+        return {
+            "dy": -abs(math.sin(t)) * 12,
+            "dx": math.cos(t) * 5,
+            "rot": math.cos(t) * 4.5,
+            "sx": 1.02,
+            "sy": 1.04,
+        }
     if action == "attack":
         k = 0.5 + 0.5 * math.cos(t)
-        return {"dy": -abs(math.sin(t)) * 3, "dx": k * 18, "rot": k * 6.0, "sx": 1.0 + k * 0.02, "sy": 1.0 - k * 0.015}
+        return {
+            "dy": -abs(math.sin(t)) * 3,
+            "dx": k * 18,
+            "rot": k * 6.0,
+            "sx": 1.0 + k * 0.02,
+            "sy": 1.0 - k * 0.015,
+        }
     if action == "jump":
         k = abs(math.sin(math.pi * phase))
         return {"dy": -k * 46, "dx": 0.0, "rot": 0.0, "sx": 1.0 + 0.05 * k, "sy": 1.0 - 0.05 * k}
-    return {"dy": math.cos(t) * 5, "dx": 0.0, "rot": math.cos(t) * 2.0,
-            "sx": 1.0 + 0.008 * math.cos(t), "sy": 1.0 + 0.012 * math.cos(t)}
+    return {
+        "dy": math.cos(t) * 5,
+        "dx": 0.0,
+        "rot": math.cos(t) * 2.0,
+        "sx": 1.0 + 0.008 * math.cos(t),
+        "sy": 1.0 + 0.012 * math.cos(t),
+    }
 
 
 def _fit(image, size):
@@ -73,15 +96,18 @@ def _flood_subject(rgb):
     sentinel = (255, 0, 254)
     step = max(4, w // 16)
     seeds = [(x, 0) for x in range(0, w, step)] + [(x, h - 1) for x in range(0, w, step)]
-    seeds += [(0, y) for y in range(step, h - 1, step)] + [(w - 1, y) for y in range(step, h - 1, step)]
+    seeds += [(0, y) for y in range(step, h - 1, step)] + [
+        (w - 1, y) for y in range(step, h - 1, step)
+    ]
     for seed in seeds:
         if work.getpixel(seed) == sentinel:
             continue
         ImageDraw.floodfill(work, seed, sentinel, thresh=BG_DIFF_THRESHOLD)
     r, g, b = work.split()
     flagged = ImageChops.multiply(
-        ImageChops.multiply(r.point(lambda v: 255 if v == 255 else 0),
-                            g.point(lambda v: 255 if v == 0 else 0)),
+        ImageChops.multiply(
+            r.point(lambda v: 255 if v == 255 else 0), g.point(lambda v: 255 if v == 0 else 0)
+        ),
         b.point(lambda v: 255 if v == 254 else 0),
     )
     subject = ImageChops.invert(flagged)

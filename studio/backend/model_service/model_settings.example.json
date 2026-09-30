@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "provider": "",
+  "base_url": "",
+  "api_key": "",
+  "model": "",
+  "chat_model": "",
+  "use_chat": false,
+  "use_image": false,
+  "size": "512x512",
+  "timeout": 60,
+  "style": "pixel"
+}

@@ -10,17 +10,40 @@ This is what ``POST /api/plan`` exposes to the Live Studio so the execution
 plan appears *before* the task runs.
 """
 
-import re
-
 ENGINE_KEYWORDS = {"unity": ("unity",), "cocos": ("cocos",), "godot": ("godot",)}
 
 STATIC_KEYWORDS = (
-    "静态", "static", "单张", "still", "道具", "图标", "图块", "背景", "立绘",
-    "头像", "icon", "tileset", "background", "item", "concept", "概念",
+    "静态",
+    "static",
+    "单张",
+    "still",
+    "道具",
+    "图标",
+    "图块",
+    "背景",
+    "立绘",
+    "头像",
+    "icon",
+    "tileset",
+    "background",
+    "item",
+    "concept",
+    "概念",
 )
 ANIMATION_KEYWORDS = (
-    "动画", "animation", "待机", "idle", "攻击", "attack", "行走", "walk",
-    "奔跑", "run", "跳跃", "jump", "动作",
+    "动画",
+    "animation",
+    "待机",
+    "idle",
+    "攻击",
+    "attack",
+    "行走",
+    "walk",
+    "奔跑",
+    "run",
+    "跳跃",
+    "jump",
+    "动作",
 )
 PIXEL_KEYWORDS = ("像素", "pixel", "pixel art", "16x16", "32x32", "8-bit")
 MODIFY_KEYWORDS = ("修改", "改成", "换成", "替换", "编辑", "调整为", "update", "edit", "modify")
@@ -80,9 +103,7 @@ def capabilities() -> dict:
     供前端/集成方发现能力，而无需读源码。"""
 
     return {
-        "capabilities": [
-            dict({"id": cap}, **meta) for cap, meta in CAPABILITY_CATALOG.items()
-        ],
+        "capabilities": [dict({"id": cap}, **meta) for cap, meta in CAPABILITY_CATALOG.items()],
         "engines": sorted(ENGINE_KEYWORDS.keys()),
         "cycle": CYCLE,
     }

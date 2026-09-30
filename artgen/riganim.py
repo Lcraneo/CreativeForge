@@ -9,7 +9,6 @@ animations; no fixed template character is ever produced.
 """
 
 import io
-import math
 
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
@@ -27,8 +26,12 @@ def _region_layer(subject, rect, size, feather=5.0):
     of cutting hard seams (P1 生成质量：消除分区旋转的接缝)."""
 
     layer = Image.new("RGBA", (size, size), CANVAS_BG)
-    box = (max(0, int(rect[0])), max(0, int(rect[1])),
-           min(size, int(rect[2])), min(size, int(rect[3])))
+    box = (
+        max(0, int(rect[0])),
+        max(0, int(rect[1])),
+        min(size, int(rect[2])),
+        min(size, int(rect[3])),
+    )
     if box[2] <= box[0] or box[3] <= box[1]:
         return layer
     layer.paste(subject.crop(box), (box[0], box[1]))
@@ -52,8 +55,7 @@ def _falign(frames):
     sampled = frames[::step]
     if len(sampled) >= 2:
         diffs = [
-            similarity_rgba(sampled[i - 1], sampled[i])["overall"]
-            for i in range(1, len(sampled))
+            similarity_rgba(sampled[i - 1], sampled[i])["overall"] for i in range(1, len(sampled))
         ]
         temporal = round(sum(diffs) / len(diffs), 4)
     else:
@@ -75,11 +77,16 @@ def animate_rigged(
     rig=None,
     config=None,
     segment_mask=None,
+    keep_background=True,
 ):
     """-> (frames, reference, rig, falign).
 
     ``frames`` is a list of (w, h, RGBA); ``reference`` is the untouched source;
     ``rig`` is the extracted CharacterRig; ``falign`` the alignment report.
+
+    ``keep_background=False`` renders the character as a transparent cutout
+    (no scene background behind the subject) — used by the playtest stage so
+    frames composite onto an arbitrary stage and trim to the subject bounds.
     """
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(60, int(frame_count)))
@@ -96,7 +103,6 @@ def animate_rigged(
     cx = (x0 + x1) / 2.0
     w = max(1.0, x1 - x0)
     torso_half = (x1 - x0) * 0.20
-    neck_y = points["neck"][1]
     hip_y = points["hip_l"][1]
     shoulder_y = points["shoulder_l"][1]
     hand_y = points["hand_l"][1]
@@ -109,9 +115,12 @@ def animate_rigged(
     else:
         subject = canvas.copy()
         subject.putalpha(mask)
-        base_bg = canvas.copy()
-        fill = (bg[0], bg[1], bg[2], 255) if bg else (0, 0, 0, 255)
-        base_bg.paste(Image.new("RGBA", (size, size), fill), (0, 0), mask)
+        if keep_background:
+            base_bg = canvas.copy()
+            fill = (bg[0], bg[1], bg[2], 255) if bg else (0, 0, 0, 255)
+            base_bg.paste(Image.new("RGBA", (size, size), fill), (0, 0), mask)
+        else:
+            base_bg = Image.new("RGBA", (size, size), CANVAS_BG)
 
     regions = {
         "upper": (
@@ -119,11 +128,15 @@ def animate_rigged(
             points["neck"],
         ),
         "arm_l": (
-            _region_layer(subject, (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12), size, feather=4.0),
+            _region_layer(
+                subject, (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12), size, feather=4.0
+            ),
             points["shoulder_l"],
         ),
         "arm_r": (
-            _region_layer(subject, (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12), size, feather=4.0),
+            _region_layer(
+                subject, (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12), size, feather=4.0
+            ),
             points["shoulder_r"],
         ),
         "leg_l": (

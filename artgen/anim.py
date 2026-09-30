@@ -8,8 +8,6 @@ derived from the frame phase for idle / walk / run / attack / jump cycles.
 
 import math
 
-from artgen.png import encode_rgba
-from artgen.raster import Surface, capsule, ellipse
 from artgen.character2d import (
     DESIGN,
     Painter,
@@ -19,6 +17,8 @@ from artgen.character2d import (
     _resolve,
     _scarf,
 )
+from artgen.png import encode_rgba
+from artgen.raster import Surface, capsule, ellipse
 
 ACTIONS = ("idle", "walk", "run", "attack", "jump")
 
@@ -53,26 +53,46 @@ def _pose(action, phase, config=None):
     cycles = max(0.25, min(4.0, float(cfg.get("cycles", 1.0))))
     cyclic = action in ("idle", "walk", "run")
     t = phase * 2.0 * math.pi * (cycles if cyclic else 1.0)
-    state = {"bob": 0.0, "jump": 0.0, "arm": 0.0, "leg": 0.0, "lean": 0.0,
-             "weapon": None, "tuck": 0.0, "lift": (0.0, 0.0), "squat": 0.0,
-             "sway": 0.0}
+    state = {
+        "bob": 0.0,
+        "jump": 0.0,
+        "arm": 0.0,
+        "leg": 0.0,
+        "lean": 0.0,
+        "weapon": None,
+        "tuck": 0.0,
+        "lift": (0.0, 0.0),
+        "squat": 0.0,
+        "sway": 0.0,
+    }
     if action == "walk":
         # arms trail the legs slightly (overlapping action); hips sway over
         # the planted foot (weight shift, 2 bobs per cycle like a real gait)
-        state.update(leg=math.cos(t), arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.45)))),
-                     bob=-abs(math.sin(t)) * 6.0 * float(cfg.get("bob", 1.0)),
-                     lean=float(cfg.get("lean", 0.0)),
-                     sway=math.sin(t) * 7.0,
-                     lift=(max(0.0, math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
-                           max(0.0, -math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0))))
+        state.update(
+            leg=math.cos(t),
+            arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.45)))),
+            bob=-abs(math.sin(t)) * 6.0 * float(cfg.get("bob", 1.0)),
+            lean=float(cfg.get("lean", 0.0)),
+            sway=math.sin(t) * 7.0,
+            lift=(
+                max(0.0, math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
+                max(0.0, -math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
+            ),
+        )
         state["leg"] *= float(cfg.get("stride", 1.0))
         state["arm"] *= float(cfg.get("arm", 1.0))
     elif action == "run":
-        state.update(leg=math.cos(t) * 1.25, arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.5)))) * 1.25,
-                     bob=-abs(math.sin(t)) * 10.0 * float(cfg.get("bob", 1.0)),
-                     lean=7.0 + float(cfg.get("lean", 0.0)), sway=math.sin(t) * 5.0,
-                     lift=(max(0.0, math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
-                           max(0.0, -math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0))))
+        state.update(
+            leg=math.cos(t) * 1.25,
+            arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.5)))) * 1.25,
+            bob=-abs(math.sin(t)) * 10.0 * float(cfg.get("bob", 1.0)),
+            lean=7.0 + float(cfg.get("lean", 0.0)),
+            sway=math.sin(t) * 5.0,
+            lift=(
+                max(0.0, math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
+                max(0.0, -math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
+            ),
+        )
         state["leg"] *= float(cfg.get("stride", 1.0))
         state["arm"] *= float(cfg.get("arm", 1.0))
     elif action == "attack":
@@ -90,9 +110,12 @@ def _pose(action, phase, config=None):
         else:
             u = (phase - 0.8) / 0.2
             k = 0.77 - 0.77 * (u * u * (3 - 2 * u))
-        state.update(leg=math.sin(t) * 0.4, arm=0.3 - k * 0.25,
-                     lean=4.0 + k * 10.0 + float(cfg.get("lean", 0.0)),
-                     weapon=-60.0 + 120.0 * k)
+        state.update(
+            leg=math.sin(t) * 0.4,
+            arm=0.3 - k * 0.25,
+            lean=4.0 + k * 10.0 + float(cfg.get("lean", 0.0)),
+            weapon=-60.0 + 120.0 * k,
+        )
     elif action == "jump":
         if phase < 0.22:
             # anticipation: crouch, arms swing back
@@ -100,18 +123,29 @@ def _pose(action, phase, config=None):
             state.update(jump=-18.0 * math.sin(math.pi * u), arm=0.5 * u, squat=1.0)
         elif phase < 0.72:
             u = (phase - 0.22) / 0.5
-            state.update(jump=-18.0 + 140.0 * math.sin(math.pi * u),
-                         arm=-0.6, leg=0.5, tuck=math.sin(math.pi * u))
+            state.update(
+                jump=-18.0 + 140.0 * math.sin(math.pi * u),
+                arm=-0.6,
+                leg=0.5,
+                tuck=math.sin(math.pi * u),
+            )
         else:
             # landing: absorb the impact with a decaying squat
             u = (phase - 0.72) / 0.28
-            state.update(jump=-14.0 * (1.0 - u) * math.sin(math.pi * min(1.0, u * 1.6)),
-                         arm=-0.3 * (1.0 - u), squat=1.0 - u)
+            state.update(
+                jump=-14.0 * (1.0 - u) * math.sin(math.pi * min(1.0, u * 1.6)),
+                arm=-0.3 * (1.0 - u),
+                squat=1.0 - u,
+            )
         state["lean"] += float(cfg.get("lean", 0.0))
     else:  # idle: breathing with lazy arm sway trailing the breath
-        state.update(bob=math.sin(t) * 4.0 * float(cfg.get("bob", 1.0)),
-                     arm=math.sin(t - max(0.0, float(cfg.get("lag", 0.5)))) * 0.22 * float(cfg.get("arm", 1.0)),
-                     lean=float(cfg.get("lean", 0.0)))
+        state.update(
+            bob=math.sin(t) * 4.0 * float(cfg.get("bob", 1.0)),
+            arm=math.sin(t - max(0.0, float(cfg.get("lag", 0.5))))
+            * 0.22
+            * float(cfg.get("arm", 1.0)),
+            lean=float(cfg.get("lean", 0.0)),
+        )
     return state
 
 
@@ -143,8 +177,12 @@ def _draw_frame(painter, colors, traits, action, phase, config=None):
         foot = _arm_joint(hip, angle, reach)
         foot = (foot[0], foot[1] - lift)
         knee = _two_bone(hip, foot, 40.0, 40.0, bend=sign * (1.0 + pose["tuck"] * 0.6))
-        painter.shape(capsule(hip[0], hip[1], knee[0], knee[1], 30), c["base_dark"], c["outline"], 5)
-        painter.shape(capsule(knee[0], knee[1], foot[0], foot[1], 22), c["base_dark"], c["outline"], 5)
+        painter.shape(
+            capsule(hip[0], hip[1], knee[0], knee[1], 30), c["base_dark"], c["outline"], 5
+        )
+        painter.shape(
+            capsule(knee[0], knee[1], foot[0], foot[1], 22), c["base_dark"], c["outline"], 5
+        )
         painter.shape(ellipse(foot[0], foot[1] + 10, 42, 24), c["base"], c["outline"], 5)
 
     # torso
@@ -154,12 +192,17 @@ def _draw_frame(painter, colors, traits, action, phase, config=None):
     _scarf(painter, cx, 300.0 + dy + pose["squat"] * 8.0, 94, 26, traits)
 
     # arms: shoulder -> elbow -> wrist (two-bone), elbows bend outward
-    shoulders = ((cx - 74, 336.0 + dy + pose["squat"] * 8.0), (cx + 74, 336.0 + dy + pose["squat"] * 8.0))
+    shoulders = (
+        (cx - 74, 336.0 + dy + pose["squat"] * 8.0),
+        (cx + 74, 336.0 + dy + pose["squat"] * 8.0),
+    )
     for index, (sign, shoulder) in enumerate(((-1, shoulders[0]), (1, shoulders[1]))):
         angle = sign * 16 - pose["arm"] * 34 * sign
         hand = _arm_joint(shoulder, angle, 94.0)
         elbow = _two_bone(shoulder, hand, 48.0, 50.0, bend=-sign)
-        painter.shape(capsule(shoulder[0], shoulder[1], elbow[0], elbow[1], 24), c["base"], c["outline"], 5)
+        painter.shape(
+            capsule(shoulder[0], shoulder[1], elbow[0], elbow[1], 24), c["base"], c["outline"], 5
+        )
         painter.shape(capsule(elbow[0], elbow[1], hand[0], hand[1], 19), c["base"], c["outline"], 5)
         painter.shape(ellipse(hand[0], hand[1], 28, 28), c["belly"], c["outline"], 4)
         if index == 1 and traits["has_weapon"]:
@@ -168,14 +211,21 @@ def _draw_frame(painter, colors, traits, action, phase, config=None):
                 weapon_angle = 60.0
             rad = math.radians(weapon_angle)
             tip = (hand[0] + math.sin(rad) * 118.0, hand[1] - math.cos(rad) * 118.0)
-            painter.shape(capsule(hand[0], hand[1], tip[0], tip[1], 11), c["metal"], c["outline"], 4)
-            painter.shape(capsule(hand[0], hand[1], tip[0], tip[1], 4),
-                          _mix(c["metal"], (255, 255, 255), 0.5), None)
+            painter.shape(
+                capsule(hand[0], hand[1], tip[0], tip[1], 11), c["metal"], c["outline"], 4
+            )
+            painter.shape(
+                capsule(hand[0], hand[1], tip[0], tip[1], 4),
+                _mix(c["metal"], (255, 255, 255), 0.5),
+                None,
+            )
             nx, ny = -(tip[1] - hand[1]), (tip[0] - hand[0])
             length = math.hypot(nx, ny) or 1.0
             nx, ny = nx / length * 26, ny / length * 26
             gx, gy = hand[0] + (tip[0] - hand[0]) * 0.12, hand[1] + (tip[1] - hand[1]) * 0.12
-            painter.shape(capsule(gx - nx, gy - ny, gx + nx, gy + ny, 9), c["accent"], c["outline"], 4)
+            painter.shape(
+                capsule(gx - nx, gy - ny, gx + nx, gy + ny, 9), c["accent"], c["outline"], 4
+            )
 
     # ears + horns + head
     head_cx = cx
@@ -192,8 +242,10 @@ def _draw_frame(painter, colors, traits, action, phase, config=None):
         painter.shape(ellipse(eye_x - 7, head_cy - 24, 8, 9), c["white"], None)
     painter.soft_ellipse(ellipse(head_cx - 88, head_cy + 36, 30, 17), c["blush"], alpha=150)
     painter.soft_ellipse(ellipse(head_cx + 88, head_cy + 36, 30, 17), c["blush"], alpha=150)
-    for a, b in (((head_cx - 14, head_cy + 72), (head_cx, head_cy + 80)),
-                 ((head_cx, head_cy + 80), (head_cx + 14, head_cy + 72))):
+    for a, b in (
+        ((head_cx - 14, head_cy + 72), (head_cx, head_cy + 80)),
+        ((head_cx, head_cy + 80), (head_cx + 14, head_cy + 72)),
+    ):
         painter.shape(capsule(a[0], a[1], b[0], b[1], 4), c["dark"], None)
 
 
@@ -215,8 +267,7 @@ def render_action_frames(params, action, count=12, size=512, config=None):
     """-> list of (width, height, RGBA bytes)."""
     count = max(2, min(60, int(count)))
     return [
-        render_frame_rgba(params, action, index / count, size, config)
-        for index in range(count)
+        render_frame_rgba(params, action, index / count, size, config) for index in range(count)
     ]
 
 
@@ -238,5 +289,5 @@ def pack_sheet(frames, columns=None):
         for y in range(frame_h):
             src = y * frame_w * 4
             dst = ((gy + y) * sheet_w + gx) * 4
-            sheet[dst:dst + frame_w * 4] = rgba[src:src + frame_w * 4]
+            sheet[dst : dst + frame_w * 4] = rgba[src : src + frame_w * 4]
     return sheet_w, frame_h * rows, bytes(sheet)

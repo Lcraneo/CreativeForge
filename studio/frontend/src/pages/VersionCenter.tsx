@@ -72,7 +72,8 @@ export default function VersionCenter() {
       await api.tagVersion(checked[0].record_id, tag);
       toast({
         tone: tag === "approved" ? "success" : "info",
-        title: tag === "approved" ? "已标记定稿" : tag === "needs-work" ? "已标记待改" : "已清除标记",
+        title:
+          tag === "approved" ? "已标记定稿" : tag === "needs-work" ? "已标记待改" : "已清除标记",
         description: `v${checked[0].version_no} · ${checked[0].name ?? ""}`,
       });
       tree.refetch();
@@ -127,7 +128,12 @@ export default function VersionCenter() {
       />
 
       <div className="grid grid-cols-12 gap-5">
-        <Card className="col-span-12 lg:col-span-3" title="资产家族" icon="layers" bodyClassName="p-0">
+        <Card
+          className="col-span-12 lg:col-span-3"
+          title="资产家族"
+          icon="layers"
+          bodyClassName="p-0"
+        >
           {groupList.length === 0 ? (
             <p className="p-4 text-xs text-ink-3">还没有历史版本，先去创作工作台生成资产。</p>
           ) : (
@@ -147,8 +153,12 @@ export default function VersionCenter() {
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[13px] font-medium text-ink">{group.name}</span>
-                    <span className="block text-[11px] text-ink-3">{timeLabel(group.latest_at)}</span>
+                    <span className="block truncate text-[13px] font-medium text-ink">
+                      {group.name}
+                    </span>
+                    <span className="block text-[11px] text-ink-3">
+                      {timeLabel(group.latest_at)}
+                    </span>
                   </span>
                   <Badge tone={group.count > 1 ? "precon" : "neutral"}>v{group.count}</Badge>
                 </button>
@@ -184,13 +194,23 @@ export default function VersionCenter() {
                       </Button>
                     )}
                     {checked.length >= 1 && !confirming && (
-                      <Button variant="secondary" size="sm" icon="refresh" onClick={() => setConfirming(true)}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="refresh"
+                        onClick={() => setConfirming(true)}
+                      >
                         回滚选中（{checked.length}）
                       </Button>
                     )}
                     {checked.length === 1 && (
                       <>
-                        <Button variant="ghost" size="sm" icon="check" onClick={() => tagVersion("approved")}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon="check"
+                          onClick={() => tagVersion("approved")}
+                        >
                           标记定稿
                         </Button>
                         <Button variant="ghost" size="sm" onClick={() => tagVersion("needs-work")}>
@@ -225,7 +245,9 @@ export default function VersionCenter() {
                 ) : (
                   <ol className="relative max-h-[560px] space-y-0 overflow-y-auto">
                     {versions.map((version) => {
-                      const isChecked = checked.some((item) => item.version_no === version.version_no);
+                      const isChecked = checked.some(
+                        (item) => item.version_no === version.version_no,
+                      );
                       const isLatest = version.version_no === versions.length;
                       return (
                         <li
@@ -267,8 +289,12 @@ export default function VersionCenter() {
                                   {version.goal || version.name}
                                 </span>
                                 {isLatest && <Badge tone="success">当前</Badge>}
-                                {version.review_tag === "approved" && <Badge tone="primary">定稿</Badge>}
-                                {version.review_tag === "needs-work" && <Badge tone="warning">待改</Badge>}
+                                {version.review_tag === "approved" && (
+                                  <Badge tone="primary">定稿</Badge>
+                                )}
+                                {version.review_tag === "needs-work" && (
+                                  <Badge tone="warning">待改</Badge>
+                                )}
                               </span>
                               <span className="mt-0.5 block truncate text-[11px] text-ink-3">
                                 {timeLabel(version.created_at)} · seed {version.seed ?? "—"}
@@ -277,10 +303,14 @@ export default function VersionCenter() {
                             </span>
                             <span className="hidden shrink-0 items-center gap-2 sm:flex">
                               {version.scores.pixel != null && (
-                                <Badge tone="precon">pixel {Math.round(version.scores.pixel * 100)}%</Badge>
+                                <Badge tone="precon">
+                                  pixel {Math.round(version.scores.pixel * 100)}%
+                                </Badge>
                               )}
                               {version.scores.animation != null && (
-                                <Badge tone="falign">anim {Math.round(version.scores.animation * 100)}%</Badge>
+                                <Badge tone="falign">
+                                  anim {Math.round(version.scores.animation * 100)}%
+                                </Badge>
                               )}
                             </span>
                             <Badge
@@ -323,10 +353,15 @@ export default function VersionCenter() {
                 >
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {[versionA, versionB].map((version) => (
-                      <div key={version.version_no} className="rounded-xl border border-line-subtle p-3">
+                      <div
+                        key={version.version_no}
+                        className="rounded-xl border border-line-subtle p-3"
+                      >
                         <div className="mb-2 flex items-center justify-between">
                           <Badge tone="primary">v{version.version_no}</Badge>
-                          <span className="text-[11px] text-ink-3">{timeLabel(version.created_at)}</span>
+                          <span className="text-[11px] text-ink-3">
+                            {timeLabel(version.created_at)}
+                          </span>
                         </div>
                         {version.image_url ? (
                           <img
@@ -335,7 +370,9 @@ export default function VersionCenter() {
                             className="mx-auto h-[220px] object-contain"
                           />
                         ) : (
-                          <div className="grid h-[220px] place-items-center text-xs text-ink-4">无图</div>
+                          <div className="grid h-[220px] place-items-center text-xs text-ink-4">
+                            无图
+                          </div>
                         )}
                         {version.palette.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-1">
@@ -367,12 +404,17 @@ export default function VersionCenter() {
                         key={record.id}
                         className="flex items-center gap-3 border-b border-ink/[.08] px-[18px] py-2.5 text-[12px] last:border-0"
                       >
-                        <span className="shrink-0 font-mono text-[11px] text-ink-3">{record.id}</span>
+                        <span className="shrink-0 font-mono text-[11px] text-ink-3">
+                          {record.id}
+                        </span>
                         <span className="shrink-0 text-ink-3">{timeLabel(record.at)}</span>
                         <span className="min-w-0 flex-1 truncate text-ink">
                           恢复 {record.count} 个版本：
                           {record.entries
-                            .map((entry) => `v${entry.version_no ?? "?"} ${entry.name ?? entry.record_id}`)
+                            .map(
+                              (entry) =>
+                                `v${entry.version_no ?? "?"} ${entry.name ?? entry.record_id}`,
+                            )
                             .join("、")}
                         </span>
                         <Badge tone="success">
@@ -406,7 +448,9 @@ function DiffTable({ pair }: { pair: [VersionView, VersionView] }) {
   });
   const fields = diff.data?.fields ?? [];
   if (fields.length === 0) {
-    return <p className="mt-3 text-[11px] text-ink-4">两个版本结构参数一致，差异在画面内容本身。</p>;
+    return (
+      <p className="mt-3 text-[11px] text-ink-4">两个版本结构参数一致，差异在画面内容本身。</p>
+    );
   }
   return (
     <div className="mt-4 space-y-0 rounded-xl border border-line-subtle">

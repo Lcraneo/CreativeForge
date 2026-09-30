@@ -1,0 +1,15 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+# 遗留双系统（backend/、frontend/）冻结中，不参与 lint；临时目录跳过
+extend-exclude = ["backend", "frontend", ".zcode_tmp"]
+
+[tool.ruff.lint]
+# Q1 基线：pyflakes 错误 + import 排序 + pycodestyle 警告；
+# B/UP（bugbear、pyupgrade）计划 Q2 引入，避免一次性改动面过大
+select = ["E4", "E7", "E9", "F", "I", "W"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+extend-exclude = "^(backend|frontend|\\.zcode_tmp)/"

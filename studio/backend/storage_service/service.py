@@ -13,7 +13,7 @@ from __future__ import annotations
 import threading
 
 from .interface import StorageConfig, StorageConfigError, StorageError, redact
-from .providers import PROVIDER_PRESETS, S3CompatProvider, create_provider
+from .providers import S3CompatProvider, create_provider
 from .settings import StorageConfigStore
 from .transfer import MultipartManager
 
@@ -42,7 +42,8 @@ class StorageManager:
         if default is None:
             raise StorageConfigError(
                 "尚未配置对象存储：在动画工作台「云存储」页新增 API 配置，"
-                "或在 .env 写入 QINIU_* / STORAGE_* 环境变量")
+                "或在 .env 写入 QINIU_* / STORAGE_* 环境变量"
+            )
         return create_provider(default)
 
     def default_config_id(self) -> str | None:
@@ -51,8 +52,14 @@ class StorageManager:
 
     # ── 统一操作（透传 + 错误规整） ─────────────────────────────────────────
 
-    def upload(self, data: bytes, key: str, *, config_id: str | None = None,
-               content_type: str = "application/octet-stream") -> dict:
+    def upload(
+        self,
+        data: bytes,
+        key: str,
+        *,
+        config_id: str | None = None,
+        content_type: str = "application/octet-stream",
+    ) -> dict:
         try:
             obj = self.provider_for(config_id).upload(data, key, content_type=content_type)
             return {"key": obj.key, "size": obj.size}
@@ -62,10 +69,14 @@ class StorageManager:
     def download(self, key: str, *, config_id: str | None = None) -> bytes:
         return self.provider_for(config_id).download(key)
 
-    def list(self, prefix: str = "", *, config_id: str | None = None, limit: int = 100) -> list[dict]:
+    def list(
+        self, prefix: str = "", *, config_id: str | None = None, limit: int = 100
+    ) -> list[dict]:
         objects = self.provider_for(config_id).list(prefix, limit=limit)
-        return [{"key": o.key, "size": o.size, "last_modified": o.last_modified, "etag": o.etag}
-                for o in objects]
+        return [
+            {"key": o.key, "size": o.size, "last_modified": o.last_modified, "etag": o.etag}
+            for o in objects
+        ]
 
     def delete(self, key: str, *, config_id: str | None = None) -> dict:
         self.provider_for(config_id).delete(key)

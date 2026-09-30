@@ -13,6 +13,7 @@ import {
   Stat,
 } from "../components/ui";
 import { Icon } from "../components/icons";
+import { MOTION, EASE_STANDARD } from "../lib/motion";
 
 function CompareRow({
   name,
@@ -38,11 +39,7 @@ function CompareRow({
   const baseWidth = Math.min(100, (baseline / scale) * 100);
   const methodWidth = Math.min(100, (method / scale) * 100);
   const delta =
-    baseline === 0
-      ? 0
-      : betterDown
-        ? (1 - method / baseline) * 100
-        : (method / baseline - 1) * 100;
+    baseline === 0 ? 0 : betterDown ? (1 - method / baseline) * 100 : (method / baseline - 1) * 100;
 
   const FILLS = {
     precon: "bg-gradient-to-r from-[#4fb3c7] to-precon",
@@ -58,7 +55,7 @@ function CompareRow({
           className="absolute inset-y-0 left-0 rounded-full bg-line-strong"
           initial={{ width: 0 }}
           animate={{ width: `${baseWidth}%` }}
-          transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
+          transition={{ duration: MOTION.reveal, ease: EASE_STANDARD }}
         />
       </div>
       <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3">
@@ -66,7 +63,7 @@ function CompareRow({
           className={`absolute inset-y-0 left-0 rounded-full ${FILLS[tone]}`}
           initial={{ width: 0 }}
           animate={{ width: `${methodWidth}%` }}
-          transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1], delay: 0.05 }}
+          transition={{ duration: MOTION.reveal, ease: EASE_STANDARD, delay: 0.05 }}
         />
       </div>
       <div className="flex items-center justify-end gap-2">
@@ -80,7 +77,13 @@ function CompareRow({
   );
 }
 
-function CompareHeader({ baselineLabel, methodLabel }: { baselineLabel: string; methodLabel: string }) {
+function CompareHeader({
+  baselineLabel,
+  methodLabel,
+}: {
+  baselineLabel: string;
+  methodLabel: string;
+}) {
   return (
     <div className="grid grid-cols-[110px_minmax(0,1fr)_minmax(0,1fr)_118px] gap-3.5 pb-2 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
       <span>指标</span>
@@ -101,7 +104,11 @@ export default function BenchmarkCenter() {
   if (report.isLoading) {
     return (
       <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
-        <PageHeader overline="Benchmark Center" title="基准中心" description="正在运行真实管线评测…" />
+        <PageHeader
+          overline="Benchmark Center"
+          title="基准中心"
+          description="正在运行真实管线评测…"
+        />
         <div className="grid grid-cols-12 gap-5">
           <Skeleton className="col-span-12 h-80 xl:col-span-4" />
           <Skeleton className="col-span-12 h-80 xl:col-span-8" />
@@ -161,10 +168,26 @@ export default function BenchmarkCenter() {
             <ScoreRing value={data.cf_score.overall} label="CF SCORE · 100 分制" size={168} />
           </div>
           <div className="mt-4 space-y-3.5">
-            <ScoreBar label="pixel · 权重 0.30" value={data.cf_score.components.pixel} tone="precon" />
-            <ScoreBar label="animation · 权重 0.30" value={data.cf_score.components.animation} tone="falign" />
-            <ScoreBar label="engine · 权重 0.25" value={data.cf_score.components.engine} tone="gimport" />
-            <ScoreBar label="agent · 权重 0.15" value={data.cf_score.components.agent} tone="primary" />
+            <ScoreBar
+              label="pixel · 权重 0.30"
+              value={data.cf_score.components.pixel}
+              tone="precon"
+            />
+            <ScoreBar
+              label="animation · 权重 0.30"
+              value={data.cf_score.components.animation}
+              tone="falign"
+            />
+            <ScoreBar
+              label="engine · 权重 0.25"
+              value={data.cf_score.components.engine}
+              tone="gimport"
+            />
+            <ScoreBar
+              label="agent · 权重 0.15"
+              value={data.cf_score.components.agent}
+              tone="primary"
+            />
           </div>
         </Card>
 
@@ -174,9 +197,7 @@ export default function BenchmarkCenter() {
             icon="grid"
             iconClassName="text-precon"
             right={
-              <Badge tone="precon">
-                一致性 +{(data.precon.improvement * 100).toFixed(1)}%
-              </Badge>
+              <Badge tone="precon">一致性 +{(data.precon.improvement * 100).toFixed(1)}%</Badge>
             }
           >
             <CompareHeader baselineLabel="Baseline · Pixelate" methodLabel="PReCon" />
@@ -209,9 +230,7 @@ export default function BenchmarkCenter() {
             icon="film"
             iconClassName="text-falign"
             right={
-              <Badge tone="falign">
-                漂移 -{(data.falign.drift_reduction * 100).toFixed(0)}%
-              </Badge>
+              <Badge tone="falign">漂移 -{(data.falign.drift_reduction * 100).toFixed(0)}%</Badge>
             }
           >
             <CompareHeader baselineLabel="Baseline · 原始帧" methodLabel="FAlign" />
@@ -253,7 +272,10 @@ export default function BenchmarkCenter() {
             tone="text-gimport"
           />
           <div className="mt-3">
-            <KV label="流程耗时" value={`1 步 · ${data.gimport.average_pipeline_seconds.toFixed(2)}s`} />
+            <KV
+              label="流程耗时"
+              value={`1 步 · ${data.gimport.average_pipeline_seconds.toFixed(2)}s`}
+            />
             <KV
               label="传统流程"
               value={`${data.gimport.manual_reduction.traditional_steps} 步 · ${data.gimport.time_comparison.traditional_minutes} 分钟`}
@@ -293,7 +315,10 @@ export default function BenchmarkCenter() {
         </Card>
 
         <Card className="col-span-12 xl:col-span-4" title="方法学" icon="book">
-          <KV label="数据集" value={`${data.dataset.size} assets / ${data.dataset.categories.length} categories`} />
+          <KV
+            label="数据集"
+            value={`${data.dataset.size} assets / ${data.dataset.categories.length} categories`}
+          />
           <KV label="对比基线" value="naive pixelate / raw frames" />
           <KV label="质量阈值" value=".80 / .85 / .90" />
           <KV label="复现命令" value="python -m benchmark.run_benchmark" />

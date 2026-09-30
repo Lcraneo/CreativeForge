@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
+import PreferencesSync from "../components/PreferencesSync";
 import {
   Badge,
   Button,
@@ -107,9 +108,7 @@ function Capability(props: {
           <p className="mt-0.5 text-[11.5px] leading-[17px] text-ink-3">{props.purpose}</p>
           <p className="mt-0.5 text-[11px] leading-[16px] text-ink-4">{props.support}</p>
         </div>
-        {props.onEnabled && (
-          <Switch checked={props.enabled} onChange={props.onEnabled} />
-        )}
+        {props.onEnabled && <Switch checked={props.enabled} onChange={props.onEnabled} />}
       </div>
       <label className="mt-3 block">
         <span className="mb-1 block text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
@@ -149,7 +148,9 @@ export default function SettingsCenter() {
     if (!form) throw new Error("表单未就绪");
     const payload: Record<string, unknown> = { ...form };
     if (apiKey.trim()) payload.api_key = apiKey.trim();
-    const next = await api.saveModelSettings(payload as Parameters<typeof api.saveModelSettings>[0]);
+    const next = await api.saveModelSettings(
+      payload as Parameters<typeof api.saveModelSettings>[0],
+    );
     queryClient.setQueryData(["model-settings"], next);
     setForm(toForm(next));
     setApiKey("");
@@ -190,7 +191,11 @@ export default function SettingsCenter() {
             ? `连接失败 · HTTP ${result.status}`
             : "未配置：请填写 Base URL 与 API Key（保存后自动重试）";
       setTestResult({ ok: result.ok, text });
-      toast({ tone: result.ok ? "success" : "danger", title: result.ok ? "连接成功" : "连接失败", description: text });
+      toast({
+        tone: result.ok ? "success" : "danger",
+        title: result.ok ? "连接成功" : "连接失败",
+        description: text,
+      });
     } catch (cause) {
       setTestResult({ ok: false, text: String(cause) });
       toast({ tone: "danger", title: "连接失败", description: String(cause) });
@@ -238,7 +243,12 @@ export default function SettingsCenter() {
     { label: "文本 · 提示词增强", model: form.chat_model || "—", on: on && form.use_chat },
     { label: "图像 · 原画生成", model: form.model || "—", on: on && form.use_image },
     { label: "图像编辑 · 三视图/抠图", model: form.edit_model || "服务商默认（自动）", on },
-    { label: "视频 · 图生视频", model: form.video_model || "服务商默认", on: on && form.use_video, note: videoProviderOk ? "百炼" : "仅百炼支持" },
+    {
+      label: "视频 · 图生视频",
+      model: form.video_model || "服务商默认",
+      on: on && form.use_video,
+      note: videoProviderOk ? "百炼" : "仅百炼支持",
+    },
   ];
 
   return (
@@ -261,14 +271,22 @@ export default function SettingsCenter() {
             <div className="flex items-center justify-between gap-4 rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5">
               <div>
                 <div className="text-[13px] font-semibold text-ink">启用自定义模型</div>
-                <p className="mt-0.5 text-[11.5px] text-ink-3">关闭后所有能力回退离线确定性管线（无需网络与 Key）</p>
+                <p className="mt-0.5 text-[11.5px] text-ink-3">
+                  关闭后所有能力回退离线确定性管线（无需网络与 Key）
+                </p>
               </div>
-              <Switch checked={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} label="启用自定义模型" />
+              <Switch
+                checked={form.enabled}
+                onChange={(enabled) => setForm({ ...form, enabled })}
+                label="启用自定义模型"
+              />
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3.5 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">服务商预设</span>
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  服务商预设
+                </span>
                 <Select
                   value={activePreset}
                   options={presetOptions}
@@ -276,14 +294,19 @@ export default function SettingsCenter() {
                     const preset = presetEntries.find(([id]) => id === event.target.value)?.[1];
                     setForm((current) =>
                       preset && current
-                        ? applyPreset({ ...current, provider: event.target.value }, { ...preset, id: event.target.value })
+                        ? applyPreset(
+                            { ...current, provider: event.target.value },
+                            { ...preset, id: event.target.value },
+                          )
                         : current,
                     );
                   }}
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">Base URL（共用）</span>
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  Base URL（共用）
+                </span>
                 <Input
                   value={form.base_url}
                   onChange={(event) => setForm({ ...form, base_url: event.target.value })}
@@ -304,17 +327,27 @@ export default function SettingsCenter() {
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">生成尺寸 size</span>
-                <Input value={form.size} onChange={(event) => setForm({ ...form, size: event.target.value })} placeholder="1024x1024" />
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  生成尺寸 size
+                </span>
+                <Input
+                  value={form.size}
+                  onChange={(event) => setForm({ ...form, size: event.target.value })}
+                  placeholder="1024x1024"
+                />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">超时 timeout（秒）</span>
+                <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  超时 timeout（秒）
+                </span>
                 <Input
                   type="number"
                   min={5}
                   max={600}
                   value={form.timeout}
-                  onChange={(event) => setForm({ ...form, timeout: Number(event.target.value) || 60 })}
+                  onChange={(event) =>
+                    setForm({ ...form, timeout: Number(event.target.value) || 60 })
+                  }
                 />
               </label>
             </div>
@@ -344,7 +377,9 @@ export default function SettingsCenter() {
                 保存设置
               </Button>
               {testResult && (
-                <span className={cx("text-[12px]", testResult.ok ? "text-success" : "text-danger")}>{testResult.text}</span>
+                <span className={cx("text-[12px]", testResult.ok ? "text-success" : "text-danger")}>
+                  {testResult.text}
+                </span>
               )}
             </div>
           </Card>
@@ -385,7 +420,9 @@ export default function SettingsCenter() {
                       </span>
                       <Input
                         value={form.negative_prompt}
-                        onChange={(event) => setForm({ ...form, negative_prompt: event.target.value })}
+                        onChange={(event) =>
+                          setForm({ ...form, negative_prompt: event.target.value })
+                        }
                         placeholder="lowres, bad hands, extra fingers, watermark, ..."
                       />
                     </label>
@@ -409,7 +446,10 @@ export default function SettingsCenter() {
                       </label>
                       <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle px-3 py-2">
                         <span className="text-[12px] text-ink-2">添加水印 watermark</span>
-                        <Switch checked={form.watermark} onChange={(watermark) => setForm({ ...form, watermark })} />
+                        <Switch
+                          checked={form.watermark}
+                          onChange={(watermark) => setForm({ ...form, watermark })}
+                        />
                       </label>
                     </div>
                   </div>
@@ -456,7 +496,9 @@ export default function SettingsCenter() {
                       <span className="text-[12px] text-ink-2">视频平台改写 prompt_extend</span>
                       <Switch
                         checked={form.video_prompt_extend}
-                        onChange={(video_prompt_extend) => setForm({ ...form, video_prompt_extend })}
+                        onChange={(video_prompt_extend) =>
+                          setForm({ ...form, video_prompt_extend })
+                        }
                       />
                     </label>
                   </div>
@@ -467,18 +509,36 @@ export default function SettingsCenter() {
         </div>
 
         <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">
-          <Card title="能力 → 模型 对照" icon="check" right={<Badge tone={data.enabled ? "primary" : "neutral"}>{data.enabled ? "启用中" : "离线"}</Badge>}>
+          <Card
+            title="能力 → 模型 对照"
+            icon="check"
+            right={
+              <Badge tone={data.enabled ? "primary" : "neutral"}>
+                {data.enabled ? "启用中" : "离线"}
+              </Badge>
+            }
+          >
             <ul className="space-y-2.5">
               {summary.map((row) => (
-                <li key={row.label} className="flex items-center gap-3 rounded-md border border-line-subtle bg-surface-1 px-3 py-2">
-                  <span className={cx("h-2 w-2 shrink-0 rounded-full", row.on ? "bg-success" : "bg-ink-4/40")} />
+                <li
+                  key={row.label}
+                  className="flex items-center gap-3 rounded-md border border-line-subtle bg-surface-1 px-3 py-2"
+                >
+                  <span
+                    className={cx(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      row.on ? "bg-success" : "bg-ink-4/40",
+                    )}
+                  />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[12.5px] text-ink-2">{row.label}</span>
                     <span className="block truncate font-mono text-[11px] text-ink-4">
                       {row.on ? row.model : "使用离线内核"}
                     </span>
                   </span>
-                  {row.note && <span className="shrink-0 text-[10.5px] text-ink-4">{row.note}</span>}
+                  {row.note && (
+                    <span className="shrink-0 text-[10.5px] text-ink-4">{row.note}</span>
+                  )}
                 </li>
               ))}
             </ul>
@@ -492,11 +552,13 @@ export default function SettingsCenter() {
             <ul className="space-y-2.5 text-[12.5px] leading-[19px] text-ink-2">
               <li className="flex items-start gap-2.5">
                 <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                一套 Base URL + API Key 同时供 <b>文本 / 图像 / 图像编辑 / 视频</b> 使用，无需分别填写。
+                一套 Base URL + API Key 同时供 <b>文本 / 图像 / 图像编辑 / 视频</b>{" "}
+                使用，无需分别填写。
               </li>
               <li className="flex items-start gap-2.5">
                 <Icon name="check" className="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                每个能力独立选择模型；某能力关闭或调用失败时，仅该能力回退离线内核（MODEL_FALLBACK 事件），任务不中断。
+                每个能力独立选择模型；某能力关闭或调用失败时，仅该能力回退离线内核（MODEL_FALLBACK
+                事件），任务不中断。
               </li>
               <li className="flex items-start gap-2.5">
                 <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
@@ -508,6 +570,8 @@ export default function SettingsCenter() {
               </li>
             </ul>
           </Card>
+
+          <PreferencesSync />
         </div>
       </div>
     </div>

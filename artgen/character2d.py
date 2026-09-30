@@ -13,6 +13,13 @@ sheet is usable for production modelling.
 import colorsys
 import math
 
+from artgen.character import (
+    ROLE_KEYS,
+    _rgb,
+    _seed_int,
+    _shade_triple,
+    resolve_palette,
+)
 from artgen.png import encode_rgba
 from artgen.raster import (
     Surface,
@@ -20,16 +27,6 @@ from artgen.raster import (
     ellipse,
     fill_polygon,
     offset_polygon,
-    rounded_rect,
-)
-from artgen.character import (
-    DEFAULT_ROLES,
-    ROLE_KEYS,
-    _norm_hex,
-    _rgb,
-    _seed_int,
-    _shade_triple,
-    resolve_palette,
 )
 
 DESIGN = 512.0  # design-space side length; all coordinates below live here
@@ -40,15 +37,16 @@ VIEWS = ("front", "side", "back")
 # colours
 # --------------------------------------------------------------------------
 
+
 def _mix(a, b, t):
     return tuple(int(round(a[i] + (b[i] - a[i]) * t)) for i in range(3))
 
 
 def _hue_shift(rgb, degrees):
     r, g, b = (c / 255.0 for c in rgb)
-    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    h, light, s = colorsys.rgb_to_hls(r, g, b)
     h = (h + degrees / 360.0) % 1.0
-    r, g, b = colorsys.hls_to_rgb(h, l, s)
+    r, g, b = colorsys.hls_to_rgb(h, light, s)
     return (int(round(r * 255)), int(round(g * 255)), int(round(b * 255)))
 
 
@@ -86,9 +84,7 @@ def _colors(roles, hue=0.0):
 
 
 def _ground(painter, cx, cy, rx, ry):
-    painter.soft_ellipse(
-        ellipse(cx, cy, rx, ry), painter.colors["dark"], alpha=48
-    )
+    painter.soft_ellipse(ellipse(cx, cy, rx, ry), painter.colors["dark"], alpha=48)
 
 
 class Painter:
@@ -120,6 +116,7 @@ class Painter:
 # shared body traits
 # --------------------------------------------------------------------------
 
+
 def _traits(seed):
     return {
         "pointy_ears": bool(seed & 1),
@@ -143,7 +140,8 @@ def _ear(painter, cx, cy, side, traits):
         painter.shape(pts, c["base"], c["outline"], 5)
         painter.shape(
             [(cx - side * 12, cy + 16), (cx + side * 2, cy - 18), (cx + side * 20, cy + 18)],
-            c["accent"], None,
+            c["accent"],
+            None,
         )
     else:
         painter.shape(ellipse(cx, cy, 44, 40, rot=side * 0.5), c["base"], c["outline"], 5)
@@ -188,13 +186,18 @@ def _weapon(painter, x, y, angle, traits):
     painter.shape(capsule(bx0, by0, bx1, by1, 4), _mix(c["metal"], (255, 255, 255), 0.5), None)
     gx, gy = x + ux * 6, y + uy * 6
     nx, ny = -uy, ux
-    painter.shape(capsule(gx - nx * 26, gy - ny * 26, gx + nx * 26, gy + ny * 26, 9),
-                  c["accent"], c["outline"], 4)
+    painter.shape(
+        capsule(gx - nx * 26, gy - ny * 26, gx + nx * 26, gy + ny * 26, 9),
+        c["accent"],
+        c["outline"],
+        4,
+    )
 
 
 # --------------------------------------------------------------------------
 # views
 # --------------------------------------------------------------------------
+
 
 def _draw_front(p, traits):
     c = p.colors
@@ -322,6 +325,7 @@ _DRAW = {"front": _draw_front, "side": _draw_side, "back": _draw_back}
 # public API
 # --------------------------------------------------------------------------
 
+
 def _resolve(params):
     params = params or {}
     seed = _seed_int(params.get("seed") or 0)
@@ -374,6 +378,7 @@ def render_character_sheet(params=None, size=512, gap=24):
 
 # -- CreativeAsset -> params (mirrors artgen.character) ---------------------
 
+
 def _palette_from_asset(asset):
     pixel = asset.get("pixel") or {}
     palette = pixel.get("palette") if isinstance(pixel, dict) else None
@@ -399,18 +404,17 @@ def _seed_from_asset(asset):
     if isinstance(source, dict) and source.get("seed") is not None:
         return source["seed"]
     return (
-        identity.get("prompt")
-        or identity.get("name")
-        or asset.get("name")
-        or asset.get("id")
-        or 0
+        identity.get("prompt") or identity.get("name") or asset.get("name") or asset.get("id") or 0
     )
 
 
 def asset_params(asset):
     asset = asset or {}
-    return {"palette": _palette_from_asset(asset), "seed": _seed_from_asset(asset),
-            "traits": asset.get("character")}
+    return {
+        "palette": _palette_from_asset(asset),
+        "seed": _seed_from_asset(asset),
+        "traits": asset.get("character"),
+    }
 
 
 def render_asset_view(asset, view="front", size=512):

@@ -43,7 +43,10 @@ function hexToRgb(hex: string): [number, number, number] {
   const clean = hex.replace("#", "");
   const full =
     clean.length === 3
-      ? clean.split("").map((ch) => ch + ch).join("")
+      ? clean
+          .split("")
+          .map((ch) => ch + ch)
+          .join("")
       : clean.padEnd(6, "0").slice(0, 6);
   return [
     parseInt(full.slice(0, 2), 16) || 0,
@@ -54,7 +57,9 @@ function hexToRgb(hex: string): [number, number, number] {
 
 function rgbToHex(r: number, g: number, b: number): string {
   const part = (v: number) =>
-    Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+    Math.max(0, Math.min(255, Math.round(v)))
+      .toString(16)
+      .padStart(2, "0");
   return `#${part(r)}${part(g)}${part(b)}`;
 }
 

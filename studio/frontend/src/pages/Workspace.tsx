@@ -37,45 +37,118 @@ const ENGINES = [
 ];
 
 const OVERRIDE_OPTIONS: Record<string, Array<[string, string]>> = {
-  style: [["auto", "风格：自动"], ["pixel", "像素"], ["2d", "2D 动漫"]],
-  gender: [["auto", "性别：自动"], ["female", "女性"], ["male", "男性"], ["neutral", "中性"]],
+  style: [
+    ["auto", "风格：自动"],
+    ["pixel", "像素"],
+    ["2d", "2D 动漫"],
+  ],
+  gender: [
+    ["auto", "性别：自动"],
+    ["female", "女性"],
+    ["male", "男性"],
+    ["neutral", "中性"],
+  ],
   class: [
-    ["auto", "职业：自动"], ["mage", "法师"], ["warrior", "战士"], ["archer", "弓箭手"],
-    ["rogue", "刺客"], ["priest", "牧师"], ["summoner", "召唤师"], ["druid", "德鲁伊"],
-    ["monk", "武僧"], ["engineer", "机械师"], ["bard", "吟游诗人"], ["hero", "冒险者"],
+    ["auto", "职业：自动"],
+    ["mage", "法师"],
+    ["warrior", "战士"],
+    ["archer", "弓箭手"],
+    ["rogue", "刺客"],
+    ["priest", "牧师"],
+    ["summoner", "召唤师"],
+    ["druid", "德鲁伊"],
+    ["monk", "武僧"],
+    ["engineer", "机械师"],
+    ["bard", "吟游诗人"],
+    ["hero", "冒险者"],
   ],
   element: [
-    ["auto", "元素：自动"], ["fire", "火焰"], ["ice", "冰霜"], ["lightning", "雷霆"],
-    ["poison", "剧毒"], ["nature", "自然"], ["water", "潮汐"], ["wind", "疾风"],
-    ["holy", "神圣"], ["dark", "暗影"], ["none", "无元素"],
+    ["auto", "元素：自动"],
+    ["fire", "火焰"],
+    ["ice", "冰霜"],
+    ["lightning", "雷霆"],
+    ["poison", "剧毒"],
+    ["nature", "自然"],
+    ["water", "潮汐"],
+    ["wind", "疾风"],
+    ["holy", "神圣"],
+    ["dark", "暗影"],
+    ["none", "无元素"],
   ],
   hair_color: [
-    ["auto", "发色：自动"], ["silver", "银白"], ["white", "白色"], ["gold", "金色"],
-    ["black", "黑色"], ["red", "赤红"], ["blue", "海蓝"], ["violet", "紫罗兰"],
-    ["green", "墨绿"], ["brown", "栗棕"], ["pink", "樱粉"], ["gray", "灰白"],
+    ["auto", "发色：自动"],
+    ["silver", "银白"],
+    ["white", "白色"],
+    ["gold", "金色"],
+    ["black", "黑色"],
+    ["red", "赤红"],
+    ["blue", "海蓝"],
+    ["violet", "紫罗兰"],
+    ["green", "墨绿"],
+    ["brown", "栗棕"],
+    ["pink", "樱粉"],
+    ["gray", "灰白"],
   ],
   hair_style: [
-    ["auto", "发型：自动"], ["long", "长发"], ["short", "短发"], ["ponytail", "马尾"],
-    ["twin_tail", "双马尾"], ["braid", "编发"], ["curly", "卷发"], ["straight", "直发"],
-    ["bangs", "齐刘海"], ["bald", "光头"],
+    ["auto", "发型：自动"],
+    ["long", "长发"],
+    ["short", "短发"],
+    ["ponytail", "马尾"],
+    ["twin_tail", "双马尾"],
+    ["braid", "编发"],
+    ["curly", "卷发"],
+    ["straight", "直发"],
+    ["bangs", "齐刘海"],
+    ["bald", "光头"],
   ],
   expression: [
-    ["auto", "神态：自动"], ["cold", "冷笑高傲"], ["warm", "温和微笑"], ["angry", "愤怒"],
-    ["stern", "严肃"], ["mysterious", "神秘"], ["sad", "忧郁"], ["cute", "可爱"],
+    ["auto", "神态：自动"],
+    ["cold", "冷笑高傲"],
+    ["warm", "温和微笑"],
+    ["angry", "愤怒"],
+    ["stern", "严肃"],
+    ["mysterious", "神秘"],
+    ["sad", "忧郁"],
+    ["cute", "可爱"],
   ],
   build: [
-    ["auto", "体型：自动"], ["slim", "修长偏瘦"], ["muscular", "健壮魁梧"],
-    ["petite", "娇小"], ["tall", "高大修长"], ["plump", "圆润"],
+    ["auto", "体型：自动"],
+    ["slim", "修长偏瘦"],
+    ["muscular", "健壮魁梧"],
+    ["petite", "娇小"],
+    ["tall", "高大修长"],
+    ["plump", "圆润"],
   ],
-  action: [["auto", "动作：自动"], ["attack", "攻击"], ["walk", "行走"], ["idle", "待机"]],
+  action: [
+    ["auto", "动作：自动"],
+    ["attack", "攻击"],
+    ["walk", "行走"],
+    ["idle", "待机"],
+  ],
   weapon: [
-    ["auto", "武器：自动"], ["staff", "法杖"], ["sword", "大剑"], ["bow", "长弓"],
-    ["dagger", "匕首"], ["axe", "战斧"], ["hammer", "战锤"], ["spear", "长枪"],
-    ["scythe", "镰刀"], ["shield", "盾"], ["tome", "魔典"], ["orb", "法球"], ["none", "无"],
+    ["auto", "武器：自动"],
+    ["staff", "法杖"],
+    ["sword", "大剑"],
+    ["bow", "长弓"],
+    ["dagger", "匕首"],
+    ["axe", "战斧"],
+    ["hammer", "战锤"],
+    ["spear", "长枪"],
+    ["scythe", "镰刀"],
+    ["shield", "盾"],
+    ["tome", "魔典"],
+    ["orb", "法球"],
+    ["none", "无"],
   ],
 };
 
-const DEFAULT_STEPS = ["Generation 生成", "PReCon 像素重建", "FAlign 切帧对齐", "GImport 引擎导入", "QA 质量验证"];
+const DEFAULT_STEPS = [
+  "Generation 生成",
+  "PReCon 像素重建",
+  "FAlign 切帧对齐",
+  "GImport 引擎导入",
+  "QA 质量验证",
+];
 
 function statusTone(status: string): Tone {
   return status === "pass" || status === "success"
@@ -174,7 +247,9 @@ export default function Workspace() {
       resetWorkflow();
       setAsset(null);
       const engineLabel = ENGINES.find((item) => item.id === engine)?.label ?? "Unity";
-      const text = /unity|cocos|godot/i.test(goal) ? goal.trim() : `${goal.trim()}，并导入${engineLabel}`;
+      const text = /unity|cocos|godot/i.test(goal)
+        ? goal.trim()
+        : `${goal.trim()}，并导入${engineLabel}`;
 
       const cleaned: GenerationOverrides = {};
       for (const [key, value] of Object.entries(overrides)) {
@@ -266,7 +341,7 @@ export default function Workspace() {
               <button
                 key={example}
                 onClick={() => setGoal(example)}
-                className="rounded-full border border-line-subtle bg-canvas/50 px-2.5 py-1 text-xs text-ink-3 transition-colors duration-150 ease-standard hover:border-primary/45 hover:text-primary"
+                className="rounded-full border border-line-subtle bg-canvas/50 px-2.5 py-1 text-xs text-ink-3 transition-colors duration-(--motion-fast) ease-standard hover:border-primary/45 hover:text-primary"
               >
                 {example.length > 26 ? `${example.slice(0, 26)}…` : example}
               </button>
@@ -304,9 +379,7 @@ export default function Workspace() {
               >
                 {advanced ? "收起参数" : "高级参数"}
               </Button>
-              <span className="text-[11.5px] text-ink-3">
-                已输入 {goal.length} 字 · ⌘↵ 提交
-              </span>
+              <span className="text-[11.5px] text-ink-3">已输入 {goal.length} 字 · ⌘↵ 提交</span>
             </div>
             <Button
               variant="secondary"
@@ -314,7 +387,9 @@ export default function Workspace() {
               icon="spark"
               loading={enhancing}
               onClick={enhancePromptText}
-              disabled={!modelSettings.data?.enabled || !modelSettings.data?.chat_model || enhancing}
+              disabled={
+                !modelSettings.data?.enabled || !modelSettings.data?.chat_model || enhancing
+              }
               title="用对话模型增强提示词（增强后再生成）"
             >
               增强提示词
@@ -487,10 +562,7 @@ export default function Workspace() {
                 {Math.round(kpis.gimport.import_success_rate * 100)}
                 <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
               </span>
-              <Sparkline
-                points="M0 26 20 26 40 26 60 26 80 26 100 26 120 26"
-                stroke="#3e7d5a"
-              />
+              <Sparkline points="M0 26 20 26 40 26 60 26 80 26 100 26 120 26" stroke="#3e7d5a" />
               <span className="text-[11px] text-ink-3">
                 {kpis.gimport.manual_reduction.traditional_steps} 步 →{" "}
                 {kpis.gimport.manual_reduction.gimport_steps} 步 ·{" "}
@@ -552,7 +624,15 @@ export default function Workspace() {
                   <td className="px-4 py-3">
                     <Badge tone={statusTone(task.status)}>
                       <StatusDot
-                        tone={task.status === "running" ? "running" : task.status === "pass" ? "success" : task.status === "failed" ? "failed" : "idle"}
+                        tone={
+                          task.status === "running"
+                            ? "running"
+                            : task.status === "pass"
+                              ? "success"
+                              : task.status === "failed"
+                                ? "failed"
+                                : "idle"
+                        }
                       />
                       {task.status}
                     </Badge>

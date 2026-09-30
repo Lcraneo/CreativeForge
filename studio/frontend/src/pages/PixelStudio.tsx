@@ -21,13 +21,31 @@ import { GRID, buildSprite, seedFromString } from "../lib/character";
 const CELL = 26;
 
 const FALLBACK_PALETTE = [
-  "#07090d", "#4cc2ff", "#22d3ee", "#f4d58d", "#ff9d3d", "#a16207", "#dc2626", "#7f1d1d",
-  "#0ea5e9", "#075985", "#16a34a", "#14532d", "#e4e4e7", "#a1a1aa", "#3a4658", "#1b2230",
+  "#07090d",
+  "#4cc2ff",
+  "#22d3ee",
+  "#f4d58d",
+  "#ff9d3d",
+  "#a16207",
+  "#dc2626",
+  "#7f1d1d",
+  "#0ea5e9",
+  "#075985",
+  "#16a34a",
+  "#14532d",
+  "#e4e4e7",
+  "#a1a1aa",
+  "#3a4658",
+  "#1b2230",
 ];
 
 type Tool = "pencil" | "spray" | "brush" | "eraser" | "picker";
 
-const TOOLS: Array<{ id: Tool; label: string; icon: "pencil" | "spark" | "brush" | "eraser" | "search" }> = [
+const TOOLS: Array<{
+  id: Tool;
+  label: string;
+  icon: "pencil" | "spark" | "brush" | "eraser" | "search";
+}> = [
   { id: "pencil", label: "铅笔", icon: "pencil" },
   { id: "spray", label: "喷枪", icon: "spark" },
   { id: "brush", label: "毛笔", icon: "brush" },
@@ -70,9 +88,7 @@ export default function PixelStudio() {
   );
 
   // AI 原图模式：有真实重建矩阵用矩阵，否则退回合成 sprite
-  const cells: Cells = showRaw
-    ? sprite.before
-    : (realPixels ?? sprite.after);
+  const cells: Cells = showRaw ? sprite.before : (realPixels ?? sprite.after);
   const cellsSize = cells.length || GRID;
   const aiImage = asset?.image?.url ?? asset?.source?.ai_image?.url;
   const editedPng = asset?.pixel?.edited_png as string | undefined;
@@ -121,7 +137,10 @@ export default function PixelStudio() {
       for (let i = 0; i < dots; i += 1) {
         const angle = Math.random() * Math.PI * 2;
         const distance = Math.sqrt(Math.random()) * radius;
-        put(Math.round(baseX + Math.cos(angle) * distance), Math.round(baseY + Math.sin(angle) * distance));
+        put(
+          Math.round(baseX + Math.cos(angle) * distance),
+          Math.round(baseY + Math.sin(angle) * distance),
+        );
       }
     }
     setEditCells(next);
@@ -295,7 +314,9 @@ export default function PixelStudio() {
             editing
               ? "像素编辑画布"
               : showRaw
-                ? (aiImage ? "AI 生成原图" : "AI 生成原图 · 64 色 · 网格错位")
+                ? aiImage
+                  ? "AI 生成原图"
+                  : "AI 生成原图 · 64 色 · 网格错位"
                 : "像素资产 · PReCon 重建"
           }
           icon="grid"
@@ -403,7 +424,11 @@ export default function PixelStudio() {
                   className="max-h-[260px] rounded-lg bg-white p-1"
                 />
               ) : (
-                <Stage width={cellsSize * CELL} height={(cells[0]?.length ?? GRID) * CELL} className="rounded-lg">
+                <Stage
+                  width={cellsSize * CELL}
+                  height={(cells[0]?.length ?? GRID) * CELL}
+                  className="rounded-lg"
+                >
                   <Layer>
                     {cells.map((row, y) =>
                       row.map((color, x) => {
@@ -448,7 +473,11 @@ export default function PixelStudio() {
           )}
           <div className="mt-3 flex items-center gap-2">
             <Badge tone={editing ? "precon" : showRaw ? "danger" : "success"}>
-              {editing ? "编辑模式" : showRaw ? "原图" : `${asset?.pixel?.palette?.max_colors ?? 16} colors`}
+              {editing
+                ? "编辑模式"
+                : showRaw
+                  ? "原图"
+                  : `${asset?.pixel?.palette?.max_colors ?? 16} colors`}
             </Badge>
             {!editing && (
               <Badge tone={showRaw ? "warning" : "precon"}>
@@ -491,7 +520,7 @@ export default function PixelStudio() {
                     }
                   }}
                   className={cx(
-                    "h-7 rounded-sm border transition-transform duration-150 ease-standard hover:scale-110",
+                    "h-7 rounded-sm border transition-transform duration-(--motion-fast) ease-standard hover:scale-110",
                     editing && activeColor === color
                       ? "border-2 border-primary"
                       : "border-ink/[.12]",
@@ -502,7 +531,9 @@ export default function PixelStudio() {
               {editing && (
                 <button
                   onClick={() => {
-                    setCustomPalette((current) => [...(current ?? palette), activeColor].slice(0, 32));
+                    setCustomPalette((current) =>
+                      [...(current ?? palette), activeColor].slice(0, 32),
+                    );
                     toast({ tone: "info", title: "已加入自定义色板", description: activeColor });
                   }}
                   title="把当前颜色加入色板"
@@ -515,7 +546,9 @@ export default function PixelStudio() {
 
             {editing && colorHistory.length > 0 && (
               <div className="mt-3">
-                <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-4">颜色历史</p>
+                <p className="mb-1.5 text-[11px] uppercase tracking-[0.08em] text-ink-4">
+                  颜色历史
+                </p>
                 <div className="flex flex-wrap gap-1.5">
                   {colorHistory.map((color, index) => (
                     <button
@@ -534,7 +567,10 @@ export default function PixelStudio() {
               <KV label="outline" value={character?.palette?.outline ?? "#07090D"} />
               <KV label="base / outfit" value={character?.palette?.base ?? "#4CC2FF"} />
               <KV label="hair" value={character?.hair_color_hex ?? "#1B2230"} />
-              <KV label="skin / eyes" value={`${character?.skin_hex ?? "#E8B98A"} · ${character?.eyes_hex ?? "#4CC2FF"}`} />
+              <KV
+                label="skin / eyes"
+                value={`${character?.skin_hex ?? "#E8B98A"} · ${character?.eyes_hex ?? "#4CC2FF"}`}
+              />
             </div>
           </Card>
 
@@ -558,7 +594,10 @@ export default function PixelStudio() {
                     </Layer>
                   </Stage>
                   <div className="flex-1">
-                    <KV label="grid size" value={`${asset?.pixel?.grid.size ?? 8} × ${asset?.pixel?.grid.size ?? 8}`} />
+                    <KV
+                      label="grid size"
+                      value={`${asset?.pixel?.grid.size ?? 8} × ${asset?.pixel?.grid.size ?? 8}`}
+                    />
                     <KV label="confidence" value={asset?.pixel?.grid.confidence ?? 0.92} />
                     <KV label="colors" value={asset?.pixel?.palette.max_colors ?? 16} />
                     <KV label="seed" value={character?.seed ?? "—"} />
@@ -571,7 +610,9 @@ export default function PixelStudio() {
                 title="质量 Quality"
                 icon="gauge"
                 right={
-                  <Badge tone={(asset?.quality?.pixel?.overall ?? 0.9) >= 0.8 ? "success" : "danger"}>
+                  <Badge
+                    tone={(asset?.quality?.pixel?.overall ?? 0.9) >= 0.8 ? "success" : "danger"}
+                  >
                     {(asset?.quality?.pixel?.overall ?? 0.9) >= 0.8 ? "PASS" : "RETRY"}
                   </Badge>
                 }
@@ -601,13 +642,15 @@ export default function PixelStudio() {
             {editing ? (
               <div className="flex items-center gap-2 text-[12.5px] text-ink-3">
                 <Icon name="activity" className="h-4 w-4 text-primary" />
-                编辑闭环：画笔修改 → 保存写回 CreativeAsset → 「重新导出」生成引擎 zip（资产完整性保持）。
+                编辑闭环：画笔修改 → 保存写回 CreativeAsset → 「重新导出」生成引擎
+                zip（资产完整性保持）。
                 {dirty && <Badge tone="warning">有未保存修改</Badge>}
               </div>
             ) : (
               <div className="flex items-center gap-2 text-[12.5px] text-ink-3">
                 <Icon name="activity" className="h-4 w-4 text-primary" />
-                快捷键：<kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
+                快捷键：
+                <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
                 查看原图 ·
                 <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">→</kbd>
                 查看 PReCon 结果 ·

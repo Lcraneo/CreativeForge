@@ -1,5 +1,10 @@
+from agent.capability.capability_registry import (
+    edit_existing_asset,
+    generate_asset,
+    inspect_asset,
+    run_precon,
+)
 from agents.base_agent import BaseAgent
-from agent.capability.capability_registry import generate_asset, run_precon
 
 
 class ArtAgent(BaseAgent):
@@ -12,7 +17,9 @@ class ArtAgent(BaseAgent):
         super().__init__()
         self.actions = {
             "create_character": self.create_character,
-            "pixel_reconstruction": self.pixel_reconstruction
+            "pixel_reconstruction": self.pixel_reconstruction,
+            "edit_asset": self.edit_asset,
+            "inspect_asset": self.inspect_asset,
         }
 
     def create_character(self, task, asset):
@@ -20,3 +27,9 @@ class ArtAgent(BaseAgent):
 
     def pixel_reconstruction(self, task, asset):
         return run_precon(asset, task)
+
+    def edit_asset(self, task, asset):
+        return edit_existing_asset(asset, task)
+
+    def inspect_asset(self, task, asset):
+        return inspect_asset(asset, task)

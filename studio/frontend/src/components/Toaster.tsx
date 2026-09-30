@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useToastStore, type ToastTone } from "../stores/toastStore";
 import { cx } from "./ui";
+import { MOTION, EASE_STANDARD } from "../lib/motion";
 
 const TONE_BAR: Record<ToastTone, string> = {
   info: "bg-ink-3",
@@ -22,8 +23,8 @@ export function Toaster() {
             layout
             initial={{ opacity: 0, y: 14, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 24, transition: { duration: 0.16 } }}
-            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            exit={{ opacity: 0, x: 24, transition: { duration: MOTION.fast } }}
+            transition={{ duration: MOTION.base, ease: EASE_STANDARD }}
             className="pointer-events-auto relative flex w-[330px] max-w-[calc(100vw-2rem)] cursor-pointer gap-3 overflow-hidden rounded-lg border border-line bg-[#faf9f5]/95 py-3 pl-4 pr-3.5 shadow-e3 backdrop-blur-md"
             onClick={() => dismiss(item.id)}
             role="status"

@@ -2,16 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  PageHeader,
-  Segmented,
-  Stat,
-  cx,
-} from "../components/ui";
+import { Badge, Button, Card, EmptyState, PageHeader, Segmented, Stat, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import type { BatchStatus } from "../types";
@@ -55,8 +46,7 @@ export default function BatchCenter() {
     queryKey: ["batch", batchId],
     queryFn: () => api.batchStatus(batchId!),
     enabled: Boolean(batchId),
-    refetchInterval: (query) =>
-      query.state.data?.status === "running" ? 2500 : false,
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
   });
 
   const status: BatchStatus | undefined = batch.data;
@@ -68,10 +58,14 @@ export default function BatchCenter() {
 
   const tasks = useMemo(() => {
     let list = [...(status?.tasks ?? [])];
-    if (filter === "ok") list = list.filter((task) => task.status === "pass" || task.status === "success");
+    if (filter === "ok")
+      list = list.filter((task) => task.status === "pass" || task.status === "success");
     if (filter === "failed") list = list.filter((task) => task.status === "failed");
     if (sort === "score") {
-      list.sort((x, y) => (y.scores?.overall ?? y.scores?.pixel ?? 0) - (x.scores?.overall ?? x.scores?.pixel ?? 0));
+      list.sort(
+        (x, y) =>
+          (y.scores?.overall ?? y.scores?.pixel ?? 0) - (x.scores?.overall ?? x.scores?.pixel ?? 0),
+      );
     } else {
       list.sort((x, y) => x.index - y.index);
     }
@@ -95,7 +89,7 @@ export default function BatchCenter() {
       toast({
         tone: "info",
         title: "批量生产线已启动",
-        description: `${result.count} 个任务串行执行，预计 ${Math.ceil(result.count * 20 / 60)} 分钟内完成`,
+        description: `${result.count} 个任务串行执行，预计 ${Math.ceil((result.count * 20) / 60)} 分钟内完成`,
       });
     } catch (cause) {
       toast({ tone: "danger", title: "启动失败", description: String(cause).slice(0, 160) });
@@ -124,9 +118,7 @@ export default function BatchCenter() {
 
   function toggleSelect(assetId: string) {
     setSelected((current) =>
-      current.includes(assetId)
-        ? current.filter((id) => id !== assetId)
-        : [...current, assetId],
+      current.includes(assetId) ? current.filter((id) => id !== assetId) : [...current, assetId],
     );
   }
 
@@ -190,7 +182,12 @@ export default function BatchCenter() {
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 {EXAMPLE_GOALS.map((example) => (
-                  <Button key={example} variant="secondary" size="sm" onClick={() => setGoal(example)}>
+                  <Button
+                    key={example}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setGoal(example)}
+                  >
                     {example.slice(0, 18)}…
                   </Button>
                 ))}
@@ -206,7 +203,9 @@ export default function BatchCenter() {
             <Stat label="模式" value={status?.mode === "pose" ? "多姿势" : "多变体"} />
             <Stat
               label="批次状态"
-              value={running ? "生产中" : (status?.status === "done" ? "已完成" : (status?.status ?? "—"))}
+              value={
+                running ? "生产中" : status?.status === "done" ? "已完成" : (status?.status ?? "—")
+              }
             />
           </div>
 
@@ -243,7 +242,12 @@ export default function BatchCenter() {
                 >
                   导出选中（{selected.length}）
                 </Button>
-                <Button variant="secondary" size="sm" icon="cube" onClick={() => navigate("/asset")}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="cube"
+                  onClick={() => navigate("/asset")}
+                >
                   查看当前资产
                 </Button>
               </div>
@@ -317,7 +321,9 @@ export default function BatchCenter() {
                               ? `姿势 ${task.overrides.action}`
                               : task.task_id}
                         </span>
-                        <Badge tone={isOk ? "success" : task.status === "failed" ? "danger" : "primary"}>
+                        <Badge
+                          tone={isOk ? "success" : task.status === "failed" ? "danger" : "primary"}
+                        >
                           {isOk ? "OK" : task.status}
                         </Badge>
                       </div>

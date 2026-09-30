@@ -1,0 +1,66 @@
+name: backend
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r studio/backend/requirements.txt
+          pip install ruff black
+
+      - name: Lint (ruff)
+        run: ruff check agent agents artgen adapters tests studio/backend
+
+      - name: Format (black --check)
+        run: black --check agent agents artgen adapters tests studio/backend
+
+      - name: Unit & contract tests
+        shell: bash
+        run: set -o pipefail; python tests/run_tests.py | tee run_tests.log
+
+      - name: Studio API tests
+        shell: bash
+        run: |
+          set -o pipefail
+          python studio/backend/tests/test_dynamic_plan_api.py | tee studio_plan_tests.log
+          python studio/backend/tests/test_playtest_demo_api.py | tee studio_playtest_tests.log
+
+      - name: Release gates L1-L5
+        shell: bash
+        run: set -o pipefail; python tests/release/run_release_tests.py | tee release_tests.log
+
+      - name: Gate summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Backend quality gates"
+            grep -h "checks," run_tests.log 2>/dev/null || true
+            grep -h "passed" studio_playtest_tests.log 2>/dev/null || true
+            grep -h "release checks," release_tests.log 2>/dev/null || true
+            grep -h "execution" release_tests.log 2>/dev/null || true
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  gitleaks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

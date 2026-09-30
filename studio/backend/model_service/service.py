@@ -10,12 +10,13 @@ The chat / image calls speak the OpenAI-compatible ``/chat/completions`` and
 """
 
 import base64
-import json
 import os
 import threading
 import time
 
 import httpx
+
+from studio.backend.persistence import atomic_write_json, read_json_recover
 
 DEFAULT_SETTINGS_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "model_settings.json"
@@ -28,7 +29,7 @@ GENERATED_DIR = os.path.join(
 # ── 凭证 .env 兜底（与 storage_service 同源纪律：密钥仅读取环境变量） ──────────
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _ENV_FILE_CANDIDATES = (
-    os.path.join(_BACKEND_DIR, ".env"),          # studio/backend/.env（推荐）
+    os.path.join(_BACKEND_DIR, ".env"),  # studio/backend/.env（推荐）
     os.path.join(os.path.dirname(_BACKEND_DIR), ".env"),  # studio/.env
     os.path.join(os.path.dirname(os.path.dirname(_BACKEND_DIR)), ".env"),  # 仓库根 .env
 )
@@ -78,6 +79,7 @@ def _dashscope_env_override():
         "size": env.get("DASHSCOPE_SIZE", "1024*1024"),
         "timeout": int(env.get("DASHSCOPE_TIMEOUT", "60")),
     }
+
 
 PROVIDER_PRESETS = {
     "openai": {
@@ -150,10 +152,10 @@ class ModelSettingsStore:
         "base_url": "",
         "api_key": "",
         # 能力 → 模型：文本 / 图像 / 图像编辑 / 视频共用同一套 base_url + api_key
-        "model": "",          # 图像生成（原画）
-        "chat_model": "",     # 文本 / 对话（提示词增强）
-        "edit_model": "",     # 图像编辑（三视图 / 抠图）；留空用服务商默认
-        "video_model": "",    # 视频 / 图生视频（当前仅 DashScope）
+        "model": "",  # 图像生成（原画）
+        "chat_model": "",  # 文本 / 对话（提示词增强）
+        "edit_model": "",  # 图像编辑（三视图 / 抠图）；留空用服务商默认
+        "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
         "use_chat": True,
         "use_image": True,
         "use_video": True,
@@ -179,21 +181,13 @@ class ModelSettingsStore:
         self._load()
 
     def _load(self):
-        if os.path.isfile(self.path):
-            try:
-                with open(self.path, "r", encoding="utf-8") as handle:
-                    data = json.load(handle)
-                if isinstance(data, dict):
-                    self._data.update(
-                        {k: v for k, v in data.items() if k in self._DEFAULTS}
-                    )
-            except (ValueError, OSError):
-                pass
+        data = read_json_recover(self.path)
+        if isinstance(data, dict):
+            self._data.update({k: v for k, v in data.items() if k in self._DEFAULTS})
 
     def _save(self):
         try:
-            with open(self.path, "w", encoding="utf-8") as handle:
-                json.dump(self._data, handle, ensure_ascii=False, indent=2)
+            atomic_write_json(self.path, self._data)
         except OSError:
             pass
 
@@ -287,10 +281,16 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
     # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
     # 画质优先：配置的模型 → plus → flash → turbo 回退
-    models = [m for m in (
-        settings.get("video_model"),
-        "wan2.2-i2v-plus", "wan2.2-i2v-flash", "wanx2.1-i2v-turbo",
-    ) if m]
+    models = [
+        m
+        for m in (
+            settings.get("video_model"),
+            "wan2.2-i2v-plus",
+            "wan2.2-i2v-flash",
+            "wanx2.1-i2v-turbo",
+        )
+        if m
+    ]
     encoded = base64.b64encode(image_bytes).decode()
     parameters = {
         "size": settings.get("video_size") or "1280*720",
@@ -433,8 +433,11 @@ class ImageProvider:
         api_key = self.settings.get("api_key")
         timeout = float(self.settings.get("timeout", 60))
         size = (self.settings.get("size") or "1024*1024").replace("x", "*").replace("X", "*")
-        parameters = {"size": size, "n": 1,
-                      "watermark": bool(self.settings.get("watermark", False))}
+        parameters = {
+            "size": size,
+            "n": 1,
+            "watermark": bool(self.settings.get("watermark", False)),
+        }
         if self.settings.get("negative_prompt"):
             parameters["negative_prompt"] = self.settings["negative_prompt"]
         if self.settings.get("prompt_extend") is not None:
@@ -476,14 +479,17 @@ class ImageProvider:
         return {"file": file_name, "url": url, "model": self.settings.get("model")}
 
     def generate(self, prompt):
-        if not (self.settings.get("base_url") or "").rstrip("/") or not self.settings.get("api_key") or not self.settings.get("model"):
+        if (
+            not (self.settings.get("base_url") or "").rstrip("/")
+            or not self.settings.get("api_key")
+            or not self.settings.get("model")
+        ):
             raise RuntimeError("image provider not configured")
         if self._is_dashscope():
             return self._generate_dashscope(prompt)
 
         base_url = (self.settings.get("base_url") or "").rstrip("/")
         model = self.settings.get("model")
-        api_key = self.settings.get("api_key")
         os.makedirs(GENERATED_DIR, exist_ok=True)
         response = httpx.post(
             base_url + "/images/generations",
@@ -518,8 +524,7 @@ class ImageProvider:
                 handle.write(image_response.content)
         return {
             "file": file_name,
-            "url": url
-            or ("/api/generated/" + file_name if file_name else None),
+            "url": url or ("/api/generated/" + file_name if file_name else None),
             "model": model,
         }
 
@@ -639,9 +644,7 @@ class ImageEditProvider:
         body = response.json()
         choices = (body.get("output") or {}).get("choices") or []
         content = (choices[0].get("message") or {}).get("content") if choices else []
-        url = next(
-            (item.get("image") for item in content if item.get("image")), None
-        )
+        url = next((item.get("image") for item in content if item.get("image")), None)
         if not url:
             raise RuntimeError(
                 "qwen-image-edit: no image in response ({})".format(
@@ -716,8 +719,7 @@ def _near_identical(path_a, path_b, threshold=0.03):
         return False, None
 
 
-def generate_turnaround(settings, base_url, front_image=None, deadline=None,
-                        on_result=None):
+def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
     """Derives the side / back views from the base artwork with a self-check:
     the edit models sometimes echo the input, so each result is compared with
     the front image and regenerated once with a reinforced instruction when
@@ -746,9 +748,7 @@ def generate_turnaround(settings, base_url, front_image=None, deadline=None,
                 result = None
                 reason = str(error)
                 continue
-            duplicate, score = _near_identical(
-                front_path, safe_generated_path(result.get("file"))
-            )
+            duplicate, score = _near_identical(front_path, safe_generated_path(result.get("file")))
             if duplicate:
                 result = None
                 reason = "输出与原图几乎一致（diff={}），未执行视角变换".format(

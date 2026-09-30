@@ -10,14 +10,10 @@ class TaskRouter:
     def route(self, task):
         agent = self.agents.get(task.get("agent"))
         if agent is None:
-            raise LookupError(
-                "no agent registered as '{}'".format(task.get("agent"))
-            )
+            raise LookupError("no agent registered as '{}'".format(task.get("agent")))
         if not agent.can_handle(task.get("action")):
             raise ValueError(
-                "agent '{}' cannot handle action '{}'".format(
-                    task.get("agent"), task.get("action")
-                )
+                "agent '{}' cannot handle action '{}'".format(task.get("agent"), task.get("action"))
             )
         return agent
 

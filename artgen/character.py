@@ -49,15 +49,21 @@ DEFAULT_ROLES = {
 }
 
 _NEIGHBOURS = (
-    (-1, -1), (0, -1), (1, -1),
-    (-1, 0), (1, 0),
-    (-1, 1), (0, 1), (1, 1),
+    (-1, -1),
+    (0, -1),
+    (1, -1),
+    (-1, 0),
+    (1, 0),
+    (-1, 1),
+    (0, 1),
+    (1, 1),
 )
 
 
 # --------------------------------------------------------------------------
 # colour helpers
 # --------------------------------------------------------------------------
+
 
 def _norm_hex(value):
     if not isinstance(value, str):
@@ -108,9 +114,11 @@ def _shade_triple(rgb, amount):
         r = r * (1 + amount)
         g = g * (1 + amount)
         b = b * (1 + amount)
-    return (int(max(0, min(255, round(r)))),
-            int(max(0, min(255, round(g)))),
-            int(max(0, min(255, round(b)))))
+    return (
+        int(max(0, min(255, round(r)))),
+        int(max(0, min(255, round(g)))),
+        int(max(0, min(255, round(b)))),
+    )
 
 
 def _shade(value, amount, alpha=255):
@@ -129,6 +137,7 @@ def _seed_int(seed):
 # --------------------------------------------------------------------------
 # palette resolution: role dict OR flat colour list -> role dict
 # --------------------------------------------------------------------------
+
 
 def resolve_palette(palette, seed=0):
     """Best-effort mapping of any palette payload onto semantic roles."""
@@ -182,6 +191,7 @@ def resolve_palette(palette, seed=0):
 # --------------------------------------------------------------------------
 # canvas
 # --------------------------------------------------------------------------
+
 
 class _Canvas:
     def __init__(self, width, height):
@@ -248,13 +258,14 @@ class _Canvas:
                 for oy in range(factor):
                     row = ((y * factor + oy) * out_w + x * factor) * 4
                     for ox in range(factor):
-                        flat[row + ox * 4: row + ox * 4 + 4] = px
+                        flat[row + ox * 4 : row + ox * 4 + 4] = px
         return out_w, out_h, bytes(flat)
 
 
 # --------------------------------------------------------------------------
 # sprite
 # --------------------------------------------------------------------------
+
 
 def _draw(canvas, roles, seed):
     outline = _rgba(roles["outline"])
@@ -347,6 +358,7 @@ def render_character_png(params=None, size=256):
 # CreativeAsset -> render params
 # --------------------------------------------------------------------------
 
+
 def _palette_from_asset(asset):
     pixel = asset.get("pixel") or {}
     palette = pixel.get("palette") if isinstance(pixel, dict) else None
@@ -375,11 +387,7 @@ def _seed_from_asset(asset):
     if isinstance(source, dict) and source.get("seed") is not None:
         return source["seed"]
     return (
-        identity.get("prompt")
-        or identity.get("name")
-        or asset.get("name")
-        or asset.get("id")
-        or 0
+        identity.get("prompt") or identity.get("name") or asset.get("name") or asset.get("id") or 0
     )
 
 

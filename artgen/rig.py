@@ -31,11 +31,21 @@ from PIL import Image
 from artgen.sourceanim import _fit, _subject_mask
 
 POINT_ORDER = (
-    "root", "head", "neck",
-    "shoulder_l", "elbow_l", "hand_l",
-    "shoulder_r", "elbow_r", "hand_r",
-    "hip_l", "knee_l", "foot_l",
-    "hip_r", "knee_r", "foot_r",
+    "root",
+    "head",
+    "neck",
+    "shoulder_l",
+    "elbow_l",
+    "hand_l",
+    "shoulder_r",
+    "elbow_r",
+    "hand_r",
+    "hip_l",
+    "knee_l",
+    "foot_l",
+    "hip_r",
+    "knee_r",
+    "foot_r",
 )
 
 
@@ -81,7 +91,10 @@ def build_rig(image_bytes, size=384, segment_mask=None):
     knee_y = band(0.78)
     foot_y = float(y1 - 1)
 
-    shoulder = _extent(mask, shoulder_y - 2, shoulder_y + 3) or (int(cx - w * 0.30), int(cx + w * 0.30))
+    shoulder = _extent(mask, shoulder_y - 2, shoulder_y + 3) or (
+        int(cx - w * 0.30),
+        int(cx + w * 0.30),
+    )
     hip = _extent(mask, hip_y - 2, hip_y + 3) or (int(cx - w * 0.18), int(cx + w * 0.18))
     foot = _extent(mask, int(foot_y) - 3, int(foot_y)) or (int(cx - w * 0.20), int(cx + w * 0.20))
 

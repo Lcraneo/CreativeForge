@@ -1,7 +1,15 @@
 import { Canvas, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Group, Mesh } from "three";
+import {
+  DoubleSide,
+  NearestFilter,
+  SRGBColorSpace,
+  TextureLoader,
+  type Group,
+  type Mesh,
+  type Texture,
+} from "three";
 
 import {
   DEFAULT_TOON_PARAMETERS,
@@ -153,7 +161,81 @@ function Grid() {
   );
 }
 
-export default function AssetViewer({ accent = "#a9812f" }: { accent?: string }) {
+/** 真实像素重建贴图牌：把当前资产的像素图作为纹理立在 3D 舞台上，
+ * NearestFilter 保持像素锐利；加载失败由父级回落体素替身。 */
+function TexturedBillboard({
+  url,
+  onFail,
+}: {
+  url: string;
+  onFail: () => void;
+}) {
+  const group = useRef<Group>(null);
+  const [texture, setTexture] = useState<Texture | null>(null);
+
+  useFrame((_, delta) => {
+    if (group.current) {
+      group.current.rotation.y += delta * 0.5;
+    }
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    setTexture(null);
+    const loader = new TextureLoader();
+    loader.load(
+      url,
+      (loaded) => {
+        if (cancelled) return;
+        loaded.magFilter = NearestFilter;
+        loaded.colorSpace = SRGBColorSpace;
+        setTexture(loaded);
+      },
+      undefined,
+      onFail,
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [url, onFail]);
+
+  if (!texture) return null;
+  const image = texture.image as { width?: number; height?: number };
+  const height = 2.6;
+  const aspect =
+    image.width && image.height ? image.width / image.height : 1;
+  return (
+    <group ref={group}>
+      <mesh>
+        <planeGeometry args={[height * aspect, height]} />
+        <meshStandardMaterial
+          map={texture}
+          transparent
+          alphaTest={0.05}
+          side={DoubleSide}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** 有真实贴图用贴图牌，加载失败或未提供时回落体素替身。 */
+function AssetModel({ textureUrl, accent }: { textureUrl?: string; accent: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [textureUrl]);
+  if (!textureUrl || failed) return <VoxelCharacter accent={accent} />;
+  return <TexturedBillboard url={textureUrl} onFail={() => setFailed(true)} />;
+}
+
+export default function AssetViewer({
+  accent = "#a9812f",
+  textureUrl,
+}: {
+  accent?: string;
+  /** 当前资产像素重建图 URL：提供后用真实角色贴图替代体素替身 */
+  textureUrl?: string;
+}) {
   const [params, setParams] = useState<ToonParameters>(loadStoredParams);
   const [toonEnabled, setToonEnabled] = useState(true);
   const [fps, setFps] = useState(60);
@@ -168,16 +250,13 @@ export default function AssetViewer({ accent = "#a9812f" }: { accent?: string })
 
   return (
     <div className="relative h-full w-full">
-      <Canvas
-        camera={{ position: [3.2, 2.2, 4.2], fov: 45 }}
-        style={{ background: "#f1efe9" }}
-      >
+      <Canvas camera={{ position: [3.2, 2.2, 4.2], fov: 45 }} style={{ background: "#f1efe9" }}>
         <FpsProbe onFps={setFps} />
         <ambientLight intensity={0.65} />
         <directionalLight position={[4, 6, 3]} intensity={1.15} />
         <pointLight position={[-3, 2, -2]} intensity={0.55} color="#a9812f" />
-        <ToonGroup params={params} enabled={toonEnabled}>
-          <VoxelCharacter accent={accent} />
+        <ToonGroup params={params} enabled={toonEnabled && !textureUrl}>
+          <AssetModel textureUrl={textureUrl} accent={accent} />
         </ToonGroup>
         <Grid />
         <OrbitControls enablePan={false} minDistance={3} maxDistance={9} />

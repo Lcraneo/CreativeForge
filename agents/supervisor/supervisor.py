@@ -1,17 +1,17 @@
+from agent.recovery.recovery_manager import RecoveryManager
+from agents.animation_agent.animation_agent import AnimationAgent
+from agents.art_agent.art_agent import ArtAgent
+from agents.engine_agent.engine_agent import EngineAgent
+from agents.memory_agent.memory_agent import MemoryAgent
+from agents.qa_agent.qa_agent import QAAgent
 from agents.supervisor.planner import SupervisorPlanner
 from agents.supervisor.task_router import TaskRouter
-from agents.art_agent.art_agent import ArtAgent
-from agents.animation_agent.animation_agent import AnimationAgent
-from agents.engine_agent.engine_agent import EngineAgent
-from agents.qa_agent.qa_agent import QAAgent
-from agents.memory_agent.memory_agent import MemoryAgent
-from agent.recovery.recovery_manager import RecoveryManager
 from protocol.message import AgentMessage, MessageBus
 
 REPAIR_ACTIONS = {
     "pixel": ("ArtAgent", "pixel_reconstruction", "PReCon"),
     "animation": ("AnimationAgent", "create_animation", "FAlign"),
-    "engine": ("EngineAgent", "export_engine", "GImport")
+    "engine": ("EngineAgent", "export_engine", "GImport"),
 }
 
 
@@ -63,52 +63,61 @@ class SupervisorAgent:
                 event.update(payload)
                 on_event(event)
 
-        plan = self.planner.plan(goal)
-        emit("PLAN_CREATED", {
-            "tasks": [task["id"] for task in plan["tasks"]],
-            "plan": plan
-        })
+        plan = self.planner.plan(goal, has_asset=asset is not None)
+        emit("PLAN_CREATED", {"tasks": [task["id"] for task in plan["tasks"]], "plan": plan})
         steps = []
         messages = []
 
         pipeline = list(plan["tasks"]) + [
-            {"id": "QA1", "agent": "QAAgent", "action": "quality_check",
-             "capability": "QA", "goal": plan["goal"]},
-            {"id": "M01", "agent": "MemoryAgent", "action": "save_checkpoint",
-             "capability": "Memory", "goal": plan["goal"]}
+            {
+                "id": "QA1",
+                "agent": "QAAgent",
+                "action": "quality_check",
+                "capability": "QA",
+                "goal": plan["goal"],
+            },
+            {
+                "id": "M01",
+                "agent": "MemoryAgent",
+                "action": "save_checkpoint",
+                "capability": "Memory",
+                "goal": plan["goal"],
+            },
         ]
 
         def announce(task, status):
-            emit("AGENT_DONE", {
-                "task": task["id"],
-                "agent": task["agent"],
-                "action": task["action"],
-                "status": status,
-                "progress": round(
-                    100.0 * len(steps) / len(pipeline))
-            })
+            emit(
+                "AGENT_DONE",
+                {
+                    "task": task["id"],
+                    "agent": task["agent"],
+                    "action": task["action"],
+                    "status": status,
+                    "progress": round(100.0 * len(steps) / len(pipeline)),
+                },
+            )
 
         previous_agent = None
         for task in plan["tasks"]:
             task = dict(task, goal=plan["goal"], overrides=overrides)
-            emit("AGENT_START", {
-                "task": task["id"],
-                "agent": task["agent"],
-                "action": task["action"],
-                "capability": task.get("capability")
-            })
+            emit(
+                "AGENT_START",
+                {
+                    "task": task["id"],
+                    "agent": task["agent"],
+                    "action": task["action"],
+                    "capability": task.get("capability"),
+                },
+            )
             asset = self._execute_task(task, asset, steps, messages)
             if asset is None:
                 emit("TASK_FAILED", {"task": task["id"]})
                 return {
                     "goal": goal,
                     "plan": plan,
-                    "supervisor": {
-                        "status": "failed",
-                        "steps": steps
-                    },
+                    "supervisor": {"status": "failed", "steps": steps},
                     "asset": None,
-                    "messages": messages
+                    "messages": messages,
                 }
             announce(task, steps[-1]["status"])
 
@@ -118,7 +127,7 @@ class SupervisorAgent:
                     task["agent"],
                     "ASSET_READY",
                     {"asset_id": asset.get("id"), "from": previous_agent},
-                    messages
+                    messages,
                 )
             previous_agent = task["agent"]
 
@@ -127,14 +136,17 @@ class SupervisorAgent:
             "agent": "QAAgent",
             "action": "quality_check",
             "capability": "QA",
-            "goal": plan["goal"]
+            "goal": plan["goal"],
         }
-        emit("AGENT_START", {
-            "task": qa_task["id"],
-            "agent": qa_task["agent"],
-            "action": qa_task["action"],
-            "capability": qa_task["capability"]
-        })
+        emit(
+            "AGENT_START",
+            {
+                "task": qa_task["id"],
+                "agent": qa_task["agent"],
+                "action": qa_task["action"],
+                "capability": qa_task["capability"],
+            },
+        )
         asset = self._execute_task(qa_task, asset, steps, messages)
         if asset is None:
             emit("TASK_FAILED", {"task": qa_task["id"]})
@@ -143,7 +155,7 @@ class SupervisorAgent:
                 "plan": plan,
                 "supervisor": {"status": "failed", "steps": steps},
                 "asset": None,
-                "messages": messages
+                "messages": messages,
             }
         announce(qa_task, steps[-1]["status"])
 
@@ -152,13 +164,16 @@ class SupervisorAgent:
         while report.get("status") == "RETRY" and repair_rounds < self.MAX_REPAIR_ROUNDS:
             repair_rounds += 1
             for repair_task in self._repair_tasks(report, plan):
-                emit("AGENT_START", {
-                    "task": repair_task["id"],
-                    "agent": repair_task["agent"],
-                    "action": repair_task["action"],
-                    "capability": repair_task.get("capability"),
-                    "repair": True
-                })
+                emit(
+                    "AGENT_START",
+                    {
+                        "task": repair_task["id"],
+                        "agent": repair_task["agent"],
+                        "action": repair_task["action"],
+                        "capability": repair_task.get("capability"),
+                        "repair": True,
+                    },
+                )
                 asset = self._execute_task(repair_task, asset, steps, messages)
                 if asset is None:
                     emit("TASK_FAILED", {"task": repair_task["id"]})
@@ -167,16 +182,19 @@ class SupervisorAgent:
                         "plan": plan,
                         "supervisor": {"status": "failed", "steps": steps},
                         "asset": None,
-                        "messages": messages
+                        "messages": messages,
                     }
                 announce(repair_task, steps[-1]["status"])
-            emit("AGENT_START", {
-                "task": qa_task["id"],
-                "agent": qa_task["agent"],
-                "action": qa_task["action"],
-                "capability": qa_task["capability"],
-                "round": repair_rounds + 1
-            })
+            emit(
+                "AGENT_START",
+                {
+                    "task": qa_task["id"],
+                    "agent": qa_task["agent"],
+                    "action": qa_task["action"],
+                    "capability": qa_task["capability"],
+                    "round": repair_rounds + 1,
+                },
+            )
             asset = self._execute_task(qa_task, asset, steps, messages)
             announce(qa_task, steps[-1]["status"])
             report = asset.get("quality", {}).get("report", {})
@@ -186,85 +204,82 @@ class SupervisorAgent:
             self.name,
             "QUALITY_REPORT",
             {"status": report.get("status"), "score": report.get("scores")},
-            messages
+            messages,
         )
-        emit("QUALITY_REPORT", {
-            "status": report.get("status"),
-            "scores": report.get("scores")
-        })
+        emit("QUALITY_REPORT", {"status": report.get("status"), "scores": report.get("scores")})
 
         memory_task = {
             "id": "M01",
             "agent": "MemoryAgent",
             "action": "save_checkpoint",
             "capability": "Memory",
-            "goal": plan["goal"]
+            "goal": plan["goal"],
         }
-        emit("AGENT_START", {
-            "task": memory_task["id"],
-            "agent": memory_task["agent"],
-            "action": memory_task["action"],
-            "capability": memory_task["capability"]
-        })
+        emit(
+            "AGENT_START",
+            {
+                "task": memory_task["id"],
+                "agent": memory_task["agent"],
+                "action": memory_task["action"],
+                "capability": memory_task["capability"],
+            },
+        )
         asset = self._execute_task(memory_task, asset, steps, messages)
         announce(memory_task, steps[-1]["status"] if asset else "failed")
 
         status = report.get("status", "success")
-        emit("TASK_COMPLETE", {
-            "status": status,
-            "asset_id": asset.get("id") if asset else None
-        })
+        emit("TASK_COMPLETE", {"status": status, "asset_id": asset.get("id") if asset else None})
         return {
             "goal": goal,
             "plan": plan,
-            "supervisor": {
-                "status": status,
-                "qa_rounds": repair_rounds,
-                "steps": steps
-            },
+            "supervisor": {"status": status, "qa_rounds": repair_rounds, "steps": steps},
             "asset": asset,
             "messages": messages,
-            "memory": asset.get("memory", {}) if asset else {}
+            "memory": asset.get("memory", {}) if asset else {},
         }
 
     def _execute_task(self, task, asset, steps, messages):
         try:
             result = self.router.dispatch(task, asset)
         except Exception as error:
-            result, recovery = self.recovery.recover(
-                task, error, self.executor, asset
-            )
+            result, recovery = self.recovery.recover(task, error, self.executor, asset)
             if result is None:
                 self._send(
                     task.get("agent", "system"),
                     self.name,
                     "RECOVERY_REQUEST",
                     {"task": task.get("id"), "reason": recovery.get("reason")},
-                    messages
+                    messages,
                 )
-                steps.append({
+                steps.append(
+                    {
+                        "task": task.get("id"),
+                        "agent": task.get("agent"),
+                        "action": task.get("action"),
+                        "status": "failed",
+                        "recovery": recovery,
+                    }
+                )
+                return None
+            steps.append(
+                {
                     "task": task.get("id"),
                     "agent": task.get("agent"),
                     "action": task.get("action"),
-                    "status": "failed",
-                    "recovery": recovery
-                })
-                return None
-            steps.append({
+                    "status": "recovered",
+                    "recovery": recovery,
+                }
+            )
+            return result
+
+        steps.append(
+            {
                 "task": task.get("id"),
                 "agent": task.get("agent"),
                 "action": task.get("action"),
-                "status": "recovered",
-                "recovery": recovery
-            })
-            return result
-
-        steps.append({
-            "task": task.get("id"),
-            "agent": task.get("agent"),
-            "action": task.get("action"),
-            "status": "success"
-        })
+                "status": "success",
+            }
+        )
         return result
 
     def _repair_tasks(self, report, plan):
@@ -277,7 +292,7 @@ class SupervisorAgent:
                 "agent": agent,
                 "action": action,
                 "capability": capability,
-                "repair": True
+                "repair": True,
             }
             if capability == "GImport":
                 task["engine"] = engine

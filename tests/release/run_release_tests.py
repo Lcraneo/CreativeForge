@@ -1,12 +1,14 @@
-"""Phase 10 Release Validation — four layers.
+"""Phase 10 Release Validation — five layers.
 
-    python tests/release/run_release_tests.py
+python tests/release/run_release_tests.py [L5 ...]   # 可选：只跑指定层（前缀匹配）
 
-    Layer 1  Contract    CreativeAsset / Processor / Adapter still frozen-consistent
-    Layer 2  Pipeline    Goal -> Agent -> Asset -> Export end to end
-    Layer 3  Runtime     exported package opens: manifest / anim / prefab parse,
-                         animation plays (fps / loop / frames consistent)
-    Layer 4  Performance planning / agent execution / export timings recorded
+Layer 1  Contract    CreativeAsset / Processor / Adapter still frozen-consistent
+Layer 2  Pipeline    Goal -> Agent -> Asset -> Export end to end
+Layer 3  Runtime     exported package opens: manifest / anim / prefab parse,
+                     animation plays (fps / loop / frames consistent)
+Layer 4  Performance planning / agent execution / export timings recorded
+Layer 5  Frontend    build artifacts within size budgets, vitest, eslint + tsc
+                     （node_modules / dist 缺失时 SKIP，不阻断纯后端发布）
 """
 
 import json
@@ -27,6 +29,7 @@ def check(layer, name):
     def decorator(func):
         CHECKS.append((layer, name, func))
         return func
+
     return decorator
 
 
@@ -45,14 +48,11 @@ def make_asset():
                     "id": index,
                     "image": "frame{}.png".format(index),
                     "action": "attack",
-                    "anchor": {
-                        "root": {"x": 32 + index, "y": 60},
-                        "feet": {"x": 32, "y": 64}
-                    }
+                    "anchor": {"root": {"x": 32 + index, "y": 60}, "feet": {"x": 32, "y": 64}},
                 }
                 for index in range(4)
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -60,10 +60,12 @@ def make_asset():
 # Layer 1 — Contract
 # ---------------------------------------------------------------
 
+
 @check("L1 contract", "creative asset schema sections are present")
 def _():
-    with open(os.path.join(ROOT, "schemas", "creative_asset.schema.json"),
-              encoding="utf-8") as handle:
+    with open(
+        os.path.join(ROOT, "schemas", "creative_asset.schema.json"), encoding="utf-8"
+    ) as handle:
         schema = json.load(handle)
     required = set(schema["required"])
     assert required == {"identity", "source", "content", "version", "provenance"}
@@ -73,9 +75,9 @@ def _():
 
 @check("L1 contract", "processors still speak the AssetProcessor shape")
 def _():
-    from precon.pipeline.precon_engine import PReConEngine
     from falign.pipeline.falign_engine import FAlignEngine
     from gimport.pipeline.gimport_engine import GImportEngine
+    from precon.pipeline.precon_engine import PReConEngine
 
     for engine in (PReConEngine(), FAlignEngine(), GImportEngine()):
         assert hasattr(engine, "process")
@@ -97,12 +99,12 @@ def _():
 # Layer 2 — Pipeline
 # ---------------------------------------------------------------
 
+
 @check("L2 pipeline", "goal to engine package in one supervisor run")
 def _():
     from agents.supervisor.supervisor import SupervisorAgent
 
-    result = SupervisorAgent().run(
-        "创建一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")
+    result = SupervisorAgent().run("创建一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")
 
     assert result["supervisor"]["status"] == "PASS"
     asset = result["asset"]
@@ -138,7 +140,10 @@ def _():
     executor = FailingUnity()
     asset, recovery = RecoveryManager(max_retries=1).recover(
         {"id": "T1", "capability": "GImport", "engine": "unity"},
-        ValueError("boom"), executor, {"id": "hero001"})
+        ValueError("boom"),
+        executor,
+        {"id": "hero001"},
+    )
     assert asset is not None
     assert recovery["strategy"] == "fallback"
 
@@ -147,12 +152,12 @@ def _():
 # Layer 3 — Runtime (the exported project opens)
 # ---------------------------------------------------------------
 
-def _build_real_package(tmp_dir):
-    from studio.backend.export_service.service import ExportService
-    from agents.supervisor.supervisor import SupervisorAgent
 
-    asset = SupervisorAgent().run(
-        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")["asset"]
+def _build_real_package(tmp_dir):
+    from agents.supervisor.supervisor import SupervisorAgent
+    from studio.backend.export_service.service import ExportService
+
+    asset = SupervisorAgent().run("生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")["asset"]
     return ExportService(tmp_dir).export(asset, "unity"), asset
 
 
@@ -178,8 +183,7 @@ def _():
     export, asset = _build_real_package(out)
 
     with zipfile.ZipFile(os.path.join(out, export["package"])) as bundle:
-        clip = json.loads(
-            bundle.read("Animation/{}.anim.json".format(asset["id"])).decode())
+        clip = json.loads(bundle.read("Animation/{}.anim.json".format(asset["id"])).decode())
         atlas = json.loads(bundle.read("Config/atlas.json").decode())
 
     assert clip["loop"] is True
@@ -195,14 +199,19 @@ def _():
 
     with zipfile.ZipFile(os.path.join(out, export["package"])) as bundle:
         manifest = json.loads(
-            bundle.read("Character/{}.manifest.json".format(asset["id"])).decode())
-        prefab = json.loads(
-            bundle.read("Prefab/{}.prefab.json".format(asset["id"])).decode())
+            bundle.read("Character/{}.manifest.json".format(asset["id"])).decode()
+        )
+        prefab = json.loads(bundle.read("Prefab/{}.prefab.json".format(asset["id"])).decode())
         controller = json.loads(bundle.read("Config/controller.json").decode())
 
     assert manifest["valid"] is True
     assert prefab["components"] == [
-        "SpriteRenderer", "Animator", "Collider", "Script", "AnimationController"]
+        "SpriteRenderer",
+        "Animator",
+        "Collider",
+        "Script",
+        "AnimationController",
+    ]
     assert controller["clips"]
 
 
@@ -210,29 +219,34 @@ def _():
 # Layer 4 — Performance
 # ---------------------------------------------------------------
 
+
 @check("L4 performance", "planning and execution stay fast and bounded")
 def _():
     from agent.planner.planner import Planner
     from agents.supervisor.supervisor import SupervisorAgent
 
     start = time.perf_counter()
-    plan = Planner().plan("制作一个像素RPG火焰法师，带攻击动画，导入Unity")
+    Planner().plan("制作一个像素RPG火焰法师，带攻击动画，导入Unity")
     planning_ms = (time.perf_counter() - start) * 1000
     assert planning_ms < 50, "planning took {:.1f}ms".format(planning_ms)
 
     tracemalloc.start()
     start = time.perf_counter()
-    result = SupervisorAgent().run(
-        "制作一个像素RPG火焰法师，带攻击动画，导入Unity")
+    result = SupervisorAgent().run("制作一个像素RPG火焰法师，带攻击动画，导入Unity")
     execution_ms = (time.perf_counter() - start) * 1000
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
 
     assert result["supervisor"]["status"] == "PASS"
-    assert execution_ms < 2000, "execution took {:.0f}ms".format(execution_ms)
-    assert peak < 32 * 1024 * 1024, "peak memory {:.1f}MB".format(peak / 1048576)
-    print("       planning {:.2f}ms | execution {:.1f}ms | peak {:.2f}MB".format(
-        planning_ms, execution_ms, peak / 1048576))
+    # Phase 4 起 FAlign 在 Agent 路径真正渲染帧（source-driven，实测约 40s /
+    # 33MB），阈值按真实管线校准并保留约 3 倍余量；门限的意义是防失控回退。
+    assert execution_ms < 120000, "execution took {:.0f}ms".format(execution_ms)
+    assert peak < 128 * 1024 * 1024, "peak memory {:.1f}MB".format(peak / 1048576)
+    print(
+        "       planning {:.2f}ms | execution {:.1f}ms | peak {:.2f}MB".format(
+            planning_ms, execution_ms, peak / 1048576
+        )
+    )
 
 
 @check("L4 performance", "export completes in seconds")
@@ -259,15 +273,104 @@ def _():
     assert cf["overall"] >= 0.9
 
 
+# ---------------------------------------------------------------
+# Layer 5 — Frontend（Q4 可持续质量保障）
+# ---------------------------------------------------------------
+
+FRONTEND_DIR = os.path.join(ROOT, "studio", "frontend")
+DIST_DIR = os.path.join(FRONTEND_DIR, "dist")
+ENTRY_GZIP_BUDGET = 130 * 1024  # perf-baseline：入口 gzip 实测 113KB + 余量
+CHUNK_RAW_BUDGET = 900 * 1024  # three.js 所在页 chunk 实测 852KB + 余量
+
+
+class CheckSkipped(Exception):
+    """环境不满足（无 node_modules / dist 未构建）时跳过而非失败。"""
+
+
+def _frontend_ready():
+    return os.path.isdir(os.path.join(FRONTEND_DIR, "node_modules"))
+
+
+def _run_npm(*args):
+    import subprocess
+
+    return subprocess.run(
+        "npm {}".format(" ".join(args)),
+        cwd=FRONTEND_DIR,
+        shell=True,  # Windows 需要经 shell 解析 npm.cmd
+        capture_output=True,
+        text=True,
+    )
+
+
+@check("L5 frontend", "build artifacts exist within size budgets")
+def _():
+    import glob
+    import gzip
+
+    if not os.path.isdir(DIST_DIR):
+        raise CheckSkipped("dist 未构建（先 npm run build）")
+    assert os.path.isfile(os.path.join(DIST_DIR, "index.html")), "dist/index.html missing"
+    js_files = glob.glob(os.path.join(DIST_DIR, "assets", "*.js"))
+    assert js_files, "no js bundles in dist/assets"
+
+    oversize = [
+        "{} {:.0f}KB".format(os.path.basename(path), os.path.getsize(path) / 1024)
+        for path in js_files
+        if os.path.getsize(path) > CHUNK_RAW_BUDGET
+    ]
+    assert not oversize, "chunks over budget: {}".format("; ".join(oversize))
+
+    entries = [p for p in js_files if os.path.basename(p).startswith("index-")]
+    assert entries, "entry chunk (index-*.js) missing"
+    entry = max(entries, key=os.path.getsize)
+    with open(entry, "rb") as handle:
+        gzipped = len(gzip.compress(handle.read()))
+    assert gzipped <= ENTRY_GZIP_BUDGET, "entry gzip {:.0f}KB > {}KB".format(
+        gzipped / 1024, ENTRY_GZIP_BUDGET / 1024
+    )
+    print("       entry gzip {:.0f}KB | {} js chunks".format(gzipped / 1024, len(js_files)))
+
+
+@check("L5 frontend", "frontend unit tests (vitest) pass")
+def _():
+    if not _frontend_ready():
+        raise CheckSkipped("node_modules 未安装")
+    completed = _run_npm("run", "test")
+    assert completed.returncode == 0, "vitest failed:\n{}".format(
+        (completed.stdout + completed.stderr)[-800:]
+    )
+
+
+@check("L5 frontend", "frontend lint & types (eslint + tsc) pass")
+def _():
+    if not _frontend_ready():
+        raise CheckSkipped("node_modules 未安装")
+    for args, label in ((("run", "lint"), "eslint"), (("run", "typecheck"), "tsc")):
+        completed = _run_npm(*args)
+        assert completed.returncode == 0, "{} failed:\n{}".format(
+            label, (completed.stdout + completed.stderr)[-800:]
+        )
+
+
 def main():
+    wanted = [arg for arg in sys.argv[1:] if not arg.startswith("-")]
     failures = []
+    skipped = 0
+    executed = 0
     current = None
     for layer, name, func in CHECKS:
+        if wanted and not any(layer.startswith(arg) for arg in wanted):
+            continue
+        executed += 1
         if layer != current:
             print("== {} ==".format(layer))
             current = layer
         try:
             func()
+        except CheckSkipped as reason:
+            skipped += 1
+            print("  skip  {} ({})".format(name, reason))
         except AssertionError as error:
             failures.append((layer, name, str(error)))
             print("  FAIL {}".format(name))
@@ -279,9 +382,8 @@ def main():
         else:
             print("  ok   {}".format(name))
 
-    total = len(CHECKS)
     print()
-    print("{} release checks, {} failed".format(total, len(failures)))
+    print("{} release checks, {} failed, {} skipped".format(executed, len(failures), skipped))
     return 1 if failures else 0
 
 

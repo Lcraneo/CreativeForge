@@ -12,7 +12,6 @@ from __future__ import annotations
 import json
 import sys
 import tempfile
-import time
 from pathlib import Path
 
 from .interface import (
@@ -83,26 +82,48 @@ def main() -> int:
 
     # ── 2. 加密配置存储：创建 / 脱敏 / 解密往返 ──────────────────────────────
     store = StorageConfigStore(path=str(configs_file), key_file=str(key_file))
-    created = store.create({
-        "name": "七牛测试", "provider": "kodo", "access_key": "AK1234567890abcdef",
-        "secret_key": "SK0987654321fedcba", "region": "cn-east-1", "bucket": "creatforge",
-    })
-    check("创建返回脱敏视图", created["access_key"] == "AK12****cdef"
-          and "****" in created["secret_key"])
+    created = store.create(
+        {
+            "name": "七牛测试",
+            "provider": "kodo",
+            "access_key": "AK1234567890abcdef",
+            "secret_key": "SK0987654321fedcba",
+            "region": "cn-east-1",
+            "bucket": "creatforge",
+        }
+    )
+    check(
+        "创建返回脱敏视图",
+        created["access_key"] == "AK12****cdef" and "****" in created["secret_key"],
+    )
     raw = json.loads(configs_file.read_text(encoding="utf-8"))
     row = raw["configs"][0]
-    check("落盘密文不含明文 AK", "AK1234567890abcdef" not in configs_file.read_text(encoding="utf-8"))
-    check("落盘密文字段是 Fernet token", row["secret_key"].startswith("gAAA") or len(row["secret_key"]) > 50)
+    check(
+        "落盘密文不含明文 AK", "AK1234567890abcdef" not in configs_file.read_text(encoding="utf-8")
+    )
+    check(
+        "落盘密文字段是 Fernet token",
+        row["secret_key"].startswith("gAAA") or len(row["secret_key"]) > 50,
+    )
     decrypted = store.get(created["id"])
-    check("解密还原明文凭证", decrypted.access_key == "AK1234567890abcdef"
-          and decrypted.secret_key == "SK0987654321fedcba")
+    check(
+        "解密还原明文凭证",
+        decrypted.access_key == "AK1234567890abcdef"
+        and decrypted.secret_key == "SK0987654321fedcba",
+    )
     check("首条配置自动成为默认", store.get_default().id == created["id"])
 
     # ── 3. 编辑（敏感字段缺省保持原值）+ 默认切换 + 删除 ────────────────────
-    second = store.create({
-        "name": "OSS 测试", "provider": "oss", "access_key": "LTAI12345678",
-        "secret_key": "osssecret0123456", "region": "cn-hangzhou", "bucket": "cf-bucket",
-    })
+    second = store.create(
+        {
+            "name": "OSS 测试",
+            "provider": "oss",
+            "access_key": "LTAI12345678",
+            "secret_key": "osssecret0123456",
+            "region": "cn-hangzhou",
+            "bucket": "cf-bucket",
+        }
+    )
     updated = store.update(created["id"], {"region": "cn-north-1"})  # 不带凭证
     check("编辑不动凭证", store.get(created["id"]).secret_key == "SK0987654321fedcba")
     check("编辑更新非敏感字段", updated["region"] == "cn-north-1")
@@ -117,15 +138,34 @@ def main() -> int:
         check("删除不存在的配置报错", True)
 
     # ── 4. 端点解析 ─────────────────────────────────────────────────────────
-    check("七牛 S3 端点", resolve_endpoint(StorageConfig(
-        id="x", name="x", provider="kodo", region="cn-east-1", bucket="b"))
-        == "https://s3.cn-east-1.qiniucs.com")
-    check("腾讯 COS 端点", resolve_endpoint(StorageConfig(
-        id="x", name="x", provider="cos", region="ap-shanghai", bucket="b"))
-        == "https://cos.ap-shanghai.myqcloud.com")
-    check("自定义 Endpoint 优先", resolve_endpoint(StorageConfig(
-        id="x", name="x", provider="oss", region="cn-hangzhou", bucket="b",
-        endpoint="https://my-proxy.example.com/")) == "https://my-proxy.example.com")
+    check(
+        "七牛 S3 端点",
+        resolve_endpoint(
+            StorageConfig(id="x", name="x", provider="kodo", region="cn-east-1", bucket="b")
+        )
+        == "https://s3.cn-east-1.qiniucs.com",
+    )
+    check(
+        "腾讯 COS 端点",
+        resolve_endpoint(
+            StorageConfig(id="x", name="x", provider="cos", region="ap-shanghai", bucket="b")
+        )
+        == "https://cos.ap-shanghai.myqcloud.com",
+    )
+    check(
+        "自定义 Endpoint 优先",
+        resolve_endpoint(
+            StorageConfig(
+                id="x",
+                name="x",
+                provider="oss",
+                region="cn-hangzhou",
+                bucket="b",
+                endpoint="https://my-proxy.example.com/",
+            )
+        )
+        == "https://my-proxy.example.com",
+    )
 
     # ── 5. 分片上传状态机 ───────────────────────────────────────────────────
     fake = FakeProvider()
@@ -173,8 +213,10 @@ def main() -> int:
     check("全部分片后完成", done["status"] == "completed" and done["progress"] == 1.0)
 
     # 会话视图不含凭证字段
-    check("会话视图无凭证字段",
-          not any(k in json.dumps(manager.list_sessions()) for k in ("secret", "password")))
+    check(
+        "会话视图无凭证字段",
+        not any(k in json.dumps(manager.list_sessions()) for k in ("secret", "password")),
+    )
 
     print(f"\n{PASSED} 项全部通过（离线自测；连通性请用界面「测试连接」）")
     return 0

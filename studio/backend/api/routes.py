@@ -1,6 +1,7 @@
 """REST API for the Studio frontend."""
 
 import base64
+import json
 import os
 import time
 
@@ -8,10 +9,10 @@ from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                           "exports")
-ANIMATION_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                             "data", "animation")
+EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "exports")
+ANIMATION_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "animation"
+)
 
 
 def _resolve_asset(runtime, asset_id: str | None) -> dict | None:
@@ -45,6 +46,7 @@ class CreateTaskRequest(BaseModel):
     goal: str
     overrides: dict | None = None
     turbo: bool = False  # 极速档：跳过三视图等增值步骤，最快出结果
+    asset_id: str | None = None  # 有值 → 在该资产上继续（编辑/加动画）；空 → 创建全新资产
 
 
 class AnimationRequest(BaseModel):
@@ -178,11 +180,16 @@ def build_router(runtime):
         goal = request.goal.strip()
         if not goal:
             raise HTTPException(status_code=422, detail="goal is required")
-        task_id = runtime.start_task(goal, overrides=request.overrides, turbo=request.turbo)
+        # 仅当显式传了 asset_id 才继续现有资产；不带 asset_id 一律创建全新
+        # 资产，避免"想新建角色却被历史资产劫持"的上下文污染（Phase 4 §6）。
+        asset = _resolve_asset(runtime, request.asset_id) if request.asset_id else None
+        task_id = runtime.start_task(
+            goal, overrides=request.overrides, turbo=request.turbo, asset=asset
+        )
         return {
             "task_id": task_id,
             "status": "running",
-            "stream_url": "/ws/tasks/{}/stream".format(task_id)
+            "stream_url": "/ws/tasks/{}/stream".format(task_id),
         }
 
     @router.post("/plan")
@@ -214,7 +221,7 @@ def build_router(runtime):
             "error": task["error"],
             "events": task["events"],
             "supervisor": result.get("supervisor"),
-            "messages": result.get("messages")
+            "messages": result.get("messages"),
         }
 
     @router.get("/assets")
@@ -291,11 +298,7 @@ def build_router(runtime):
         path = os.path.join(EXPORTS_DIR, package_name)
         if not os.path.isfile(path) or not package_name.endswith(".zip"):
             raise HTTPException(status_code=404, detail="unknown package")
-        return FileResponse(
-            path,
-            media_type="application/zip",
-            filename=package_name
-        )
+        return FileResponse(path, media_type="application/zip", filename=package_name)
 
     @router.get("/benchmark")
     def benchmark_report():
@@ -364,7 +367,6 @@ def build_router(runtime):
     def enhance_prompt(request: EnhanceRequest):
         """手动提示词增强（对话框按钮触发，替代原先的自动增强）。"""
         from agent.generation.spec import apply_overrides, parse_prompt
-
         from studio.backend.model_service.service import ChatProvider
 
         settings = runtime.model_settings.effective()
@@ -412,15 +414,18 @@ def build_router(runtime):
                     break
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get("ai_image", {}).get("url")
+        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get(
+            "ai_image", {}
+        ).get("url")
         if not base:
-            raise HTTPException(status_code=409, detail="该资产没有 AI 原画，无法生成三视图（先在工作台用自定义模型生成）")
+            raise HTTPException(
+                status_code=409,
+                detail="该资产没有 AI 原画，无法生成三视图（先在工作台用自定义模型生成）",
+            )
 
         settings = runtime.model_settings.effective()
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
-
-        from studio.backend.model_service.service import generate_turnaround
 
         views, failures = generate_turnaround(settings, base, front_image=asset.get("image"))
         if not (views.get("side") or views.get("back")):
@@ -460,9 +465,13 @@ def build_router(runtime):
                 raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
             settings = runtime.model_settings.effective()
             if not (settings.get("enabled") and settings.get("api_key")):
-                raise HTTPException(status_code=409, detail="AI 视频驱动需要先在模型设置中启用自定义模型")
+                raise HTTPException(
+                    status_code=409, detail="AI 视频驱动需要先在模型设置中启用自定义模型"
+                )
             if not settings.get("use_video", True):
-                raise HTTPException(status_code=409, detail="视频生成已在「模型设置」中关闭（视频能力开关）")
+                raise HTTPException(
+                    status_code=409, detail="视频生成已在「模型设置」中关闭（视频能力开关）"
+                )
             try:
                 return service.create_video(
                     source_bytes=source,
@@ -494,8 +503,8 @@ def build_router(runtime):
     def preview_animation_frame(request: PreviewFrameRequest):
         """渲染动作循环内的单帧 PNG（动作编辑器的时间轴/滑杆实时预览）。"""
         from artgen import asset_params
-        from artgen.png import encode_rgba
         from artgen.anim import render_frame_rgba
+        from artgen.png import encode_rgba
         from artgen.sidewalk import render_side_frame_rgba
 
         params = {"palette": None, "seed": "preview"}
@@ -505,7 +514,11 @@ def build_router(runtime):
                 params = asset_params(asset)
         view = request.view if request.view in ("front", "side") else "front"
         phase = max(0.0, min(1.0, float(request.phase)))
-        action = request.action if request.action in ("idle", "walk", "run", "attack", "jump") else "walk"
+        action = (
+            request.action
+            if request.action in ("idle", "walk", "run", "attack", "jump")
+            else "walk"
+        )
 
         if request.skeletal:
             # 骨骼预览：使用当前角色绑定的骨架（与工作台生成同一条链路）
@@ -524,9 +537,13 @@ def build_router(runtime):
                     if source is None:
                         from artgen import render_asset_view
 
-                        source = render_asset_view(asset, "front", max(384, min(1024, request.size)))
+                        source = render_asset_view(
+                            asset, "front", max(384, min(1024, request.size))
+                        )
             if source is None:
-                raise HTTPException(status_code=400, detail="骨骼预览需要真实角色源图（资产原画或上传图片）")
+                raise HTTPException(
+                    status_code=400, detail="骨骼预览需要真实角色源图（资产原画或上传图片）"
+                )
             from artgen.riganim import render_rigged_frame_rgba
 
             (w, h, rgba), _rig = render_rigged_frame_rgba(
@@ -535,7 +552,9 @@ def build_router(runtime):
             return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
 
         if view == "side" and action in ("walk", "run"):
-            w, h, rgba = render_side_frame_rgba(params, action, phase, request.size, request.pose_config)
+            w, h, rgba = render_side_frame_rgba(
+                params, action, phase, request.size, request.pose_config
+            )
         else:
             w, h, rgba = render_frame_rgba(params, action, phase, request.size, request.pose_config)
         return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
@@ -643,7 +662,7 @@ def build_router(runtime):
             start, end = raw.find("{"), raw.rfind("}")
             if start < 0 or end <= start:
                 raise ValueError("no JSON in model output")
-            data = _json.loads(raw[start:end + 1])
+            data = _json.loads(raw[start : end + 1])
         except HTTPException:
             raise
         except Exception as exc:
@@ -709,12 +728,14 @@ def build_router(runtime):
             try:
                 if not isinstance(item, dict) or not item.get("name"):
                     raise ValueError("missing name")
-                store.save({
-                    "name": str(item["name"]),
-                    "action": str(item.get("action") or "walk"),
-                    "view": str(item.get("view") or "front"),
-                    "pose_config": item.get("pose_config") or {},
-                })
+                store.save(
+                    {
+                        "name": str(item["name"]),
+                        "action": str(item.get("action") or "walk"),
+                        "view": str(item.get("view") or "front"),
+                        "pose_config": item.get("pose_config") or {},
+                    }
+                )
                 imported += 1
             except Exception as error:  # noqa: BLE001
                 errors.append(str(error)[:80])
@@ -731,7 +752,9 @@ def build_router(runtime):
         from studio.backend.animation_service.custom_actions import CustomActionStore
 
         try:
-            saved = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").save(request.model_dump())
+            saved = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").save(
+                request.model_dump()
+            )
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error))
         return saved
@@ -837,7 +860,9 @@ def build_router(runtime):
             record = runtime.history.get(record_id)
             asset = (record or {}).get("asset")
             if not isinstance(asset, dict) or not asset.get("id"):
-                entries.append({"record_id": record_id, "ok": False, "error": "record has no asset snapshot"})
+                entries.append(
+                    {"record_id": record_id, "ok": False, "error": "record has no asset snapshot"}
+                )
                 continue
             restored = dict(asset)
             runtime.assets.save(restored)
@@ -846,13 +871,15 @@ def build_router(runtime):
             version_no = next(
                 (v["version_no"] for v in tree["versions"] if v["record_id"] == record_id), None
             )
-            entries.append({
-                "ok": True,
-                "record_id": record_id,
-                "asset_id": restored.get("id"),
-                "name": record.get("name"),
-                "version_no": version_no,
-            })
+            entries.append(
+                {
+                    "ok": True,
+                    "record_id": record_id,
+                    "asset_id": restored.get("id"),
+                    "name": record.get("name"),
+                    "version_no": version_no,
+                }
+            )
         ok_entries = [entry for entry in entries if entry.get("ok")]
         if not ok_entries:
             raise HTTPException(status_code=404, detail="没有可恢复的资产快照")
@@ -878,7 +905,8 @@ def build_router(runtime):
         if request.tag not in ("approved", "needs-work", "none"):
             raise HTTPException(status_code=422, detail="tag 仅支持 approved / needs-work / none")
         ok = runtime.history.tag_record(
-            request.record_id, "review_tag",
+            request.record_id,
+            "review_tag",
             None if request.tag == "none" else request.tag,
         )
         if not ok:
@@ -912,7 +940,9 @@ def build_router(runtime):
         asset = _resolve_asset(runtime, request.asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get("ai_image", {}).get("url")
+        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get(
+            "ai_image", {}
+        ).get("url")
         if not base:
             raise HTTPException(status_code=409, detail="该资产没有 AI 原画，无法风格迁移")
         settings = runtime.model_settings.effective()
@@ -933,8 +963,12 @@ def build_router(runtime):
             result = editor.edit(base, instruction)
         except Exception as exc:
             raise HTTPException(status_code=502, detail=str(exc))
-        payload = {"style": request.style, "url": result.get("url"),
-                   "file": result.get("file"), "model": result.get("model")}
+        payload = {
+            "style": request.style,
+            "url": result.get("url"),
+            "file": result.get("file"),
+            "model": result.get("model"),
+        }
         asset["restyle"] = payload
         saved = dict(asset)
         runtime.assets.save(saved)
@@ -958,11 +992,11 @@ def build_router(runtime):
 
         from PIL import Image as PILImage
 
+        from artgen.sourceanim import _fit
         from studio.backend.animation_service.service import (
             AnimationService,
             ai_segment_subject,
         )
-        from artgen.sourceanim import _fit
 
         source_bytes = AnimationService(ANIMATION_DIR)._asset_render(asset)
         if not source_bytes:
@@ -997,7 +1031,13 @@ def build_router(runtime):
 
     @router.get("/playtest/previews")
     def playtest_previews(asset_id: str | None = None):
-        """动作画廊（体验）：5 个内置动作的确定性预览条（每动作 8 帧）。"""
+        """试玩舞台动作预览。
+
+        有资产时绑定「当前角色的真实源图」：Character Rig 提取 → 分区变形
+        （与动画工作台骨骼模式同一条链路），不同角色得到各自的外观与动作；
+        没有资产（或源图解析失败）时才回退默认演示角色。条带图统一裁掉
+        空白边并返回真实帧尺寸，前端据此按角色实际比例摆放、脚底贴地。
+        """
 
         import hashlib
 
@@ -1006,26 +1046,241 @@ def build_router(runtime):
         from artgen import asset_params
         from artgen.anim import render_action_frames
 
-        asset = _resolve_asset(runtime, asset_id)
-        params = asset_params(asset) if asset is not None else {"palette": None, "seed": "playtest"}
-        seed_key = str(params.get("seed") or "playtest")
+        PLAYTEST_SIZE = 256
+        # 16 帧 @16fps：1s 完整循环、16 个离散步——8 帧 @10fps 的步进感是
+        # 试玩区"卡顿"的主要来源；渲染尺寸 96→256 修复细特征在最近邻放大
+        # 下的块状化（角尖悬浮成"虫角"、手臂细断、描边破碎）
+        PLAYTEST_FRAMES = 16
+        PLAYTEST_FPS = 16
         actions = ["idle", "walk", "run", "attack", "jump"]
+
+        # 仅使用显式传入的 asset：没有 asset_id 时一律默认演示角色，
+        # 不做 latest 回退（避免历史资产劫持试玩区）
+        asset = _resolve_asset(runtime, asset_id) if asset_id else None
+
+        def _source_is_transparent(data: bytes) -> bool:
+            import io as _io
+
+            try:
+                with PILImage.open(_io.BytesIO(data)) as handle:
+                    if handle.mode in ("RGBA", "LA", "PA"):
+                        return handle.getchannel("A").getextrema()[0] < 200
+            except Exception:
+                pass
+            return False
+
         cache_dir = os.path.join(ANIMATION_DIR, "play_cache")
         os.makedirs(cache_dir, exist_ok=True)
 
-        previews = {}
+        PLAYTEST_CACHE_VERSION = 3  # 渲染语义变化（透明底/trim/帧数/尺寸）时 +1，作废旧缓存
+
+        def _digest(engine_name: str, seed: str, action: str) -> str:
+            return hashlib.sha1(
+                "{}|{}|{}|{}|{}".format(
+                    PLAYTEST_CACHE_VERSION, engine_name, PLAYTEST_SIZE, seed, action
+                ).encode()
+            ).hexdigest()[:10]
+
+        def _procedural_seed() -> str:
+            return str(
+                ((asset_params(asset) or {}).get("seed") if asset is not None else None)
+                or "playtest"
+            )
+
+        # 第一步：只解析源图 + 算哈希。全部条带命中缓存时到此为止，
+        # 不做 AI 分割、不建骨架（缓存快路径 ~0ms）
+        source = None
+        source_hash = None
+        if asset is not None:
+            from studio.backend.animation_service.service import AnimationService
+
+            source = AnimationService(ANIMATION_DIR)._asset_render(asset)
+            if source is None:
+                # 重启后无本地文件的历史资产：退回资产正面立绘（与工作台
+                # 展示同一渲染），保证试玩的仍是这个角色而不是模板小人
+                from artgen import render_asset_view
+
+                try:
+                    source = render_asset_view(asset, "front", PLAYTEST_SIZE * 2)
+                except Exception:
+                    source = None
+            if source is not None:
+                source_hash = hashlib.sha1(source).hexdigest()[:12]
+
+        engine = "rigged" if source_hash else "procedural"
+        seed_key = "rig-{}".format(source_hash) if source_hash else _procedural_seed()
+
+        def pack_strip(frames: list) -> "PILImage.Image":
+            frame_w, frame_h = frames[0][0], frames[0][1]
+            sheet = PILImage.new("RGBA", (frame_w * len(frames), frame_h), (0, 0, 0, 0))
+            for index, (w, h, rgba) in enumerate(frames):
+                sheet.paste(PILImage.frombytes("RGBA", (w, h), bytes(rgba)), (index * frame_w, 0))
+            # 裁掉整条空白边：帧紧贴角色本体，比例即角色真实比例，
+            # 帧底 = 脚底线（跳跃/抬脚帧自然留出离地空间）
+            box = sheet.getbbox()
+            if box:
+                pad = 2
+                x0, y0, x1, y1 = box
+                x0 = max(0, x0 - pad)
+                y0 = max(0, y0 - pad)
+                x1 = min(sheet.width, x1 + pad)
+                y1 = min(sheet.height, y1 + pad)
+                # 帧宽对齐：裁剪后总宽必须是帧数的整数倍
+                x1 = x0 + max(1, (x1 - x0) // len(frames)) * len(frames)
+                sheet = sheet.crop((x0, y0, x1, y1))
+            return sheet
+
+        pending = [
+            action
+            for action in actions
+            if not os.path.isfile(
+                os.path.join(
+                    cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
+                )
+            )
+        ]
+
+        # 第二步：真的需要渲染时才做昂贵准备 —— 一次 AI 主体分割（五动作
+        # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底
+        rig = None
+        segment_mask = None
+        if source is not None and pending:
+            if not _source_is_transparent(source):
+                settings = runtime.model_settings.effective()
+                if settings.get("enabled") and settings.get("api_key"):
+                    try:
+                        from studio.backend.animation_service.service import (
+                            ai_segment_subject,
+                        )
+
+                        segment_mask = ai_segment_subject(
+                            source, PLAYTEST_SIZE, settings, deadline=time.time() + 45.0
+                        )
+                    except Exception:
+                        segment_mask = None
+            try:
+                from artgen.rig import build_rig
+
+                rig = build_rig(source, PLAYTEST_SIZE, segment_mask=segment_mask)
+            except Exception:
+                rig = None
+
+        if source is not None and rig is not None and pending:
+            from artgen.riganim import animate_rigged
+
+            def _render(action: str):
+                return animate_rigged(
+                    source,
+                    action,
+                    PLAYTEST_FRAMES,
+                    PLAYTEST_SIZE,
+                    rig=rig,
+                    segment_mask=segment_mask,
+                    keep_background=False,
+                )[0]
+
+            try:
+                from concurrent.futures import ThreadPoolExecutor
+
+                # 有界并发：动作渲染互不依赖，共享只读 rig
+                with ThreadPoolExecutor(max_workers=min(4, len(pending))) as pool:
+                    rendered = dict(zip(pending, list(pool.map(_render, pending))))
+            except Exception:
+                # 任何动作失败都整体回退程序化演示角色，
+                # 避免同一舞台混搭两种外观
+                rendered = None
+            if rendered is None:
+                engine = "procedural"
+                rig = None
+                seed_key = _procedural_seed()
+                pending = actions
+            else:
+                for action, frames in rendered.items():
+                    pack_strip(frames).save(
+                        os.path.join(
+                            cache_dir,
+                            "play_{}_{}.png".format(action, _digest(engine, seed_key, action)),
+                        ),
+                        "PNG",
+                    )
+                if rig is not None:
+                    # rig 摘要落盘：缓存快路径跳过骨架构建时仍能返回角色信息
+                    meta = {
+                        "proportion": rig.get("proportion", "normal"),
+                        "confidence": rig.get("confidence"),
+                        "head_ratio": rig.get("head_ratio"),
+                        "source_hash": rig.get("source_hash"),
+                    }
+                    with open(
+                        os.path.join(cache_dir, "play_meta_{}.json".format(source_hash)),
+                        "w",
+                        encoding="utf-8",
+                    ) as handle:
+                        handle.write(json.dumps(meta, ensure_ascii=False))
+                pending = []
+
+        if pending:
+            # 程序化回退：无资产 / 源图解析失败 / 骨骼渲染失败。
+            # 与 rig 路径同尺寸渲染——渲染器按 512 设计稿等比缩放，
+            # 96px 时细特征低于 1 像素消失（历史上"bug 展品"的根因）
+            params = (
+                asset_params(asset) if asset is not None else {"palette": None, "seed": "playtest"}
+            )
+            for action in pending:
+                frames = render_action_frames(
+                    params, action, PLAYTEST_FRAMES, PLAYTEST_SIZE, None
+                )
+                pack_strip(frames).save(
+                    os.path.join(
+                        cache_dir,
+                        "play_{}_{}.png".format(action, _digest(engine, seed_key, action)),
+                    ),
+                    "PNG",
+                )
+
+        previews: dict[str, str] = {}
+        strips: dict[str, dict] = {}
         for action in actions:
-            digest = hashlib.sha1((seed_key + "|" + action).encode()).hexdigest()[:10]
-            name = "play_{}_{}.png".format(action, digest)
-            strip_path = os.path.join(cache_dir, name)
-            if not os.path.isfile(strip_path):
-                frames = render_action_frames(params, action, 8, 96, None)
-                sheet = PILImage.new("RGBA", (96 * len(frames), 96), (0, 0, 0, 0))
-                for i, (w, h, rgba) in enumerate(frames):
-                    sheet.paste(PILImage.frombytes("RGBA", (w, h), bytes(rgba)), (i * 96, 0))
-                sheet.save(strip_path, "PNG")
-            previews[action] = "/api/animation/play_cache/" + name
-        return {"previews": previews, "actions": actions}
+            strip_path = os.path.join(
+                cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
+            )
+            with PILImage.open(strip_path) as handle:
+                strip_w, strip_h = handle.size
+            url = "/api/animation/play_cache/" + os.path.basename(strip_path)
+            previews[action] = url
+            strips[action] = {
+                "url": url,
+                "frames": PLAYTEST_FRAMES,
+                "fps": PLAYTEST_FPS,
+                "width": max(1, strip_w // PLAYTEST_FRAMES),
+                "height": strip_h,
+                "engine": engine,
+            }
+
+        character = None
+        if engine == "rigged" and source_hash:
+            meta_path = os.path.join(cache_dir, "play_meta_{}.json".format(source_hash))
+            if os.path.isfile(meta_path):
+                try:
+                    with open(meta_path, encoding="utf-8") as handle:
+                        character = json.load(handle)
+                except Exception:
+                    character = None
+            elif rig is not None:
+                character = {
+                    "proportion": rig.get("proportion", "normal"),
+                    "confidence": rig.get("confidence"),
+                    "head_ratio": rig.get("head_ratio"),
+                    "source_hash": rig.get("source_hash"),
+                }
+        return {
+            "previews": previews,
+            "actions": actions,
+            "strips": strips,
+            "fps": PLAYTEST_FPS,
+            "source": engine,
+            "character": character,
+        }
 
     # ------------------------------------------------------------------
     # P1-B 批量生成与批量导出
@@ -1107,11 +1362,17 @@ def build_router(runtime):
         if request.palette:
             palette_colors = []
             for color in request.palette:
-                if isinstance(color, str) and hex_pattern.match(color) and color.lower() not in palette_colors:
+                if (
+                    isinstance(color, str)
+                    and hex_pattern.match(color)
+                    and color.lower() not in palette_colors
+                ):
                     palette_colors.append(color.lower())
             palette_block = pixel.setdefault("palette", {})
             palette_block["colors"] = palette_colors
-            palette_block["max_colors"] = max(palette_block.get("max_colors", 0), len(palette_colors))
+            palette_block["max_colors"] = max(
+                palette_block.get("max_colors", 0), len(palette_colors)
+            )
 
         # 编辑矩阵 -> PNG（每格 8px，透明底），供资产页/导出直接消费
         try:
@@ -1161,7 +1422,7 @@ def build_router(runtime):
     class StorageConfigRequest(BaseModel):
         name: str
         provider: str
-        access_key: str | None = None    # 空串/None 表示编辑时保持原值
+        access_key: str | None = None  # 空串/None 表示编辑时保持原值
         secret_key: str | None = None
         region: str | None = None
         bucket: str | None = None
@@ -1235,44 +1496,61 @@ def build_router(runtime):
     @router.post("/storage/configs/test")
     def test_storage_config(request: StorageTestRequest):
         payload = None
-        if any(request.model_dump().get(k) for k in
-                ("name", "provider", "region", "bucket", "endpoint", "access_key", "secret_key")):
+        if any(
+            request.model_dump().get(k)
+            for k in (
+                "name",
+                "provider",
+                "region",
+                "bucket",
+                "endpoint",
+                "access_key",
+                "secret_key",
+            )
+        ):
             payload = request.model_dump()
         return _storage().test_config(config_id=request.config_id, payload=payload)
 
     # ── 对象存储：文件操作（统一接口：列举 / 上传 / 下载 / 删除 / 临时链接） ──
 
     @router.get("/storage/files")
-    def list_storage_files(config_id: str | None = None,
-                          prefix: str = "", limit: int = 100):
+    def list_storage_files(config_id: str | None = None, prefix: str = "", limit: int = 100):
         try:
-            return {"objects": _storage().list(prefix, config_id=config_id, limit=limit),
-                    "config_id": config_id}
+            return {
+                "objects": _storage().list(prefix, config_id=config_id, limit=limit),
+                "config_id": config_id,
+            }
         except Exception as error:  # noqa: BLE001
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @router.post("/storage/files", status_code=201)
-    async def upload_storage_file(file: "UploadFile" = File(...),
-                                  key: str = Form(None),
-                                  config_id: str | None = Form(None)):
+    async def upload_storage_file(
+        file: "UploadFile" = File(...), key: str = Form(None), config_id: str | None = Form(None)
+    ):
         data = await file.read()
         object_key = key or file.filename or f"upload/{file.filename}"
         try:
-            return _storage().upload(data, object_key, config_id=config_id,
-                                     content_type=file.content_type or "application/octet-stream")
+            return _storage().upload(
+                data,
+                object_key,
+                config_id=config_id,
+                content_type=file.content_type or "application/octet-stream",
+            )
         except Exception as error:  # noqa: BLE001
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @router.get("/storage/files/{key:path}")
-    def get_storage_file(key: str, config_id: str | None = None,
-                         download: bool = True):
+    def get_storage_file(key: str, config_id: str | None = None, download: bool = True):
         manager = _storage()
         try:
             data = manager.download(key, config_id=config_id)
         except Exception as error:  # noqa: BLE001
             raise HTTPException(status_code=404, detail=str(error)) from error
-        return Response(content=data, media_type="application/octet-stream",
-                        headers={"Content-Disposition": f'attachment; filename="{key.rsplit("/", 1)[-1]}"'})
+        return Response(
+            content=data,
+            media_type="application/octet-stream",
+            headers={"Content-Disposition": f'attachment; filename="{key.rsplit("/", 1)[-1]}"'},
+        )
 
     @router.delete("/storage/files/{key:path}")
     def delete_storage_file(key: str, config_id: str | None = None):
@@ -1284,8 +1562,9 @@ def build_router(runtime):
     @router.post("/storage/presign")
     def presign_storage_file(request: PresignRequest):
         try:
-            return _storage().presign(request.key, config_id=request.config_id,
-                                      expires=request.expires)
+            return _storage().presign(
+                request.key, config_id=request.config_id, expires=request.expires
+            )
         except Exception as error:  # noqa: BLE001
             raise HTTPException(status_code=422, detail=str(error)) from error
 
@@ -1296,7 +1575,8 @@ def build_router(runtime):
         try:
             return _storage().multipart.start(
                 request.config_id or _storage().default_config_id(),
-                request.key, request.total_size,
+                request.key,
+                request.total_size,
                 part_size=request.part_size or None,
                 content_type=request.content_type,
             )
@@ -1318,8 +1598,9 @@ def build_router(runtime):
             raise HTTPException(status_code=422, detail=str(error)) from error
 
     @router.put("/storage/multipart/{session_id}/{part_number}")
-    async def upload_multipart_part(session_id: str, part_number: int,
-                                    file: "UploadFile" = File(...)):
+    async def upload_multipart_part(
+        session_id: str, part_number: int, file: "UploadFile" = File(...)
+    ):
         data = await file.read()
         try:
             return _storage().multipart.upload_part(session_id, part_number, data)
@@ -1358,4 +1639,3 @@ def _storage_presets_view() -> dict:
         }
         for key, value in PROVIDER_PRESETS.items()
     }
-

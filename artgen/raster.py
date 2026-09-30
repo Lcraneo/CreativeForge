@@ -110,17 +110,12 @@ def fill_polygon(surface, points, color, alpha=255, ss=4):
         cov = [0.0] * width
         for s in range(ss):
             yy = py + (s + 0.5) / ss
-            xs = [
-                ex0 + (yy - ey0) * slope
-                for (ey0, ey1, ex0, slope) in active
-                if ey0 <= yy < ey1
-            ]
+            xs = [ex0 + (yy - ey0) * slope for (ey0, ey1, ex0, slope) in active if ey0 <= yy < ey1]
             if len(xs) < 2:
                 continue
             xs.sort()
             for j in range(0, len(xs) - 1, 2):
                 _span(cov, width, xs[j], xs[j + 1], weight)
-        row = py * width
         for px in range(width):
             c = cov[px]
             if c <= 0.0:
@@ -136,6 +131,7 @@ def fill_polygon(surface, points, color, alpha=255, ss=4):
 # --------------------------------------------------------------------------
 # primitive point generators (all in a shared coordinate space)
 # --------------------------------------------------------------------------
+
 
 def ellipse(cx, cy, rx, ry, n=64, rot=0.0):
     cos_r = math.cos(rot)

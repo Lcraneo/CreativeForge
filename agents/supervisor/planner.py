@@ -2,15 +2,14 @@ from agent.planner.intent_analyzer import IntentAnalyzer
 
 
 class SupervisorPlanner:
-    """Goal -> task graph with agent assignments (Supervisor brain)."""
+    """Builds a task graph from the current goal and optional asset context."""
 
     def __init__(self, intent_analyzer=None):
         self.intent_analyzer = intent_analyzer or IntentAnalyzer()
 
-    def plan(self, goal):
-        intent = self.intent_analyzer.analyze(goal)
+    def plan(self, goal, has_asset=False):
+        intent = self.intent_analyzer.analyze(goal, has_asset=has_asset)
         requires = intent["requires"]
-
         tasks = []
         counter = [1]
 
@@ -19,13 +18,17 @@ class SupervisorPlanner:
                 "id": "{:03d}".format(counter[0]),
                 "agent": agent,
                 "action": action,
-                "capability": capability
+                "capability": capability,
             }
             task.update(extra)
             tasks.append(task)
             counter[0] += 1
 
-        add("ArtAgent", "create_character", "generation")
+        if requires["generation"]:
+            add("ArtAgent", "create_character", "generation")
+        elif intent.get("modification"):
+            add("ArtAgent", "edit_asset", "generation")
+
         if requires["pixel_reconstruction"]:
             add("ArtAgent", "pixel_reconstruction", "PReCon")
         if requires["animation_alignment"]:
@@ -35,11 +38,14 @@ class SupervisorPlanner:
                 "EngineAgent",
                 "export_{}".format(intent["engine"]),
                 "GImport",
-                engine=intent["engine"]
+                engine=intent["engine"],
             )
+
+        if not tasks:
+            add("ArtAgent", "inspect_asset", "generation")
 
         return {
             "goal": goal,
             "intent": intent,
-            "tasks": tasks
+            "tasks": tasks,
         }

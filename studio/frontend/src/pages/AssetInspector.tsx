@@ -17,8 +17,22 @@ import { toast } from "../stores/toastStore";
 import AssetViewer from "../three/AssetViewer";
 
 const FALLBACK_PALETTE = [
-  "#07090d", "#4cc2ff", "#22d3ee", "#f4d58d", "#ff9d3d", "#a16207", "#dc2626", "#7f1d1d",
-  "#0ea5e9", "#075985", "#16a34a", "#14532d", "#e4e4e7", "#a1a1aa", "#3a4658", "#1b2230",
+  "#07090d",
+  "#4cc2ff",
+  "#22d3ee",
+  "#f4d58d",
+  "#ff9d3d",
+  "#a16207",
+  "#dc2626",
+  "#7f1d1d",
+  "#0ea5e9",
+  "#075985",
+  "#16a34a",
+  "#14532d",
+  "#e4e4e7",
+  "#a1a1aa",
+  "#3a4658",
+  "#1b2230",
 ];
 
 export default function AssetInspector() {
@@ -57,7 +71,10 @@ export default function AssetInspector() {
   const aiImageMeta = asset.image ?? asset.source?.ai_image;
   const label = (value: string | null | undefined) => (value ? value : "—");
   const pair = (...values: Array<string | null | undefined>) =>
-    values.map(label).filter((value) => value !== "—").join(" · ") || "—";
+    values
+      .map(label)
+      .filter((value) => value !== "—")
+      .join(" · ") || "—";
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -116,11 +133,13 @@ export default function AssetInspector() {
           ) : (
             <>
               <div className="h-[230px] overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(240px_160px_at_50%_20%,rgba(26,24,20,.06),transparent_70%),#f1efe9]">
-                <AssetViewer />
+                <AssetViewer
+                  textureUrl={`/api/assets/${encodeURIComponent(asset.id)}/image.png`}
+                />
               </div>
               <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-ink-3">
                 <Icon name="refresh" className="h-3.5 w-3.5" />
-                占位 3D 预览 · 接入模型后此处显示 AI 原画
+                3D 舞台 · 当前角色像素重建实时贴图（拖拽旋转）
               </div>
             </>
           )}
@@ -137,7 +156,10 @@ export default function AssetInspector() {
           iconClassName="text-precon"
           right={<Badge tone="precon">{Math.round((quality?.pixel?.overall ?? 0) * 100)}%</Badge>}
         >
-          <KV label="Grid" value={`${asset.pixel?.grid.size ?? "—"} × ${asset.pixel?.grid.size ?? "—"}`} />
+          <KV
+            label="Grid"
+            value={`${asset.pixel?.grid.size ?? "—"} × ${asset.pixel?.grid.size ?? "—"}`}
+          />
           <KV label="Grid Confidence" value={asset.pixel?.grid.confidence ?? "—"} />
           <KV label="Palette Colors" value={asset.pixel?.palette.max_colors ?? "—"} />
           <KV label="Contour Style" value={asset.pixel?.contour.style ?? "—"} />
@@ -205,8 +227,14 @@ export default function AssetInspector() {
             )
           }
         >
-          <KV label="Action / FPS" value={`${asset.animation?.action ?? "—"} / ${asset.animation?.fps ?? "—"}`} />
-          <KV label="Frames / Loop" value={`${frames.length} / ${asset.animation?.loop ? "true" : "false"}`} />
+          <KV
+            label="Action / FPS"
+            value={`${asset.animation?.action ?? "—"} / ${asset.animation?.fps ?? "—"}`}
+          />
+          <KV
+            label="Frames / Loop"
+            value={`${frames.length} / ${asset.animation?.loop ? "true" : "false"}`}
+          />
           {isStatic ? (
             <>
               <KV label="Type" value={`${asset.type ?? "prop"} · 静态立绘/图标`} />
@@ -241,7 +269,8 @@ export default function AssetInspector() {
                 />
               </div>
               <p className="mt-2 text-[11px] text-ink-3">
-                AI 生成动画：源图风格 → 人物特征提取 → 帧序列 → 一致性校验。可在动画工作台调整动作/帧率/时长。
+                AI 生成动画：源图风格 → 人物特征提取 → 帧序列 →
+                一致性校验。可在动画工作台调整动作/帧率/时长。
               </p>
               <div className="mt-3">
                 <ScoreBar
@@ -267,9 +296,7 @@ export default function AssetInspector() {
                   AI 原画 · {asset.image.model}
                 </Badge>
               )}
-              <Badge tone="primary">
-                {asset.character?.summary ?? "CharacterSpec"}
-              </Badge>
+              <Badge tone="primary">{asset.character?.summary ?? "CharacterSpec"}</Badge>
             </div>
           }
         >
@@ -296,10 +323,7 @@ export default function AssetInspector() {
                 <KV label="Class / Element" value={pair(spec.class_label, spec.element_label)} />
                 <KV label="Role" value={label(spec.role_label)} />
                 <KV label="Height" value={spec.height_cm != null ? `${spec.height_cm} cm` : "—"} />
-                <KV
-                  label="Hair"
-                  value={pair(spec.hair_color_label, spec.hair_style_label)}
-                />
+                <KV label="Hair" value={pair(spec.hair_color_label, spec.hair_style_label)} />
               </div>
               <div className="col-span-12 md:col-span-5">
                 <KV label="Eyes / Skin" value={pair(spec.eyes_label, spec.skin_label)} />
@@ -323,7 +347,9 @@ export default function AssetInspector() {
                     <Icon name="spark" className="h-3.5 w-3.5" />
                     增强提示词 · {asset.prompt_enhance.model}
                   </div>
-                  <p className="text-[12.5px] leading-5 text-ink-2">{asset.prompt_enhance.prompt}</p>
+                  <p className="text-[12.5px] leading-5 text-ink-2">
+                    {asset.prompt_enhance.prompt}
+                  </p>
                 </div>
               )}
             </div>
@@ -340,7 +366,10 @@ export default function AssetInspector() {
           iconClassName="text-gimport"
           right={
             <Badge tone={asset.engine?.validation.status === "success" ? "gimport" : "danger"}>
-              <Icon name={asset.engine?.validation.status === "success" ? "check" : "x"} className="h-3.5 w-3.5" />
+              <Icon
+                name={asset.engine?.validation.status === "success" ? "check" : "x"}
+                className="h-3.5 w-3.5"
+              />
               {asset.engine?.validation.status ?? "—"} · {asset.engine?.validation.score ?? 0}
             </Badge>
           }
@@ -362,7 +391,9 @@ export default function AssetInspector() {
                 className={check.passed ? "h-4 w-4 text-success" : "h-4 w-4 text-danger"}
               />
               <span className="font-mono text-[11.5px]">{check.name}</span>
-              <span className="ml-auto text-[11px] text-ink-3">{check.passed ? "pass" : "fail"}</span>
+              <span className="ml-auto text-[11px] text-ink-3">
+                {check.passed ? "pass" : "fail"}
+              </span>
             </div>
           ))}
         </Card>
@@ -381,7 +412,12 @@ export default function AssetInspector() {
         >
           <div className="flex flex-wrap items-center gap-5">
             <ScoreRing
-              value={report ? Object.values(report.scores).reduce((a, b) => a + b, 0) / Object.keys(report.scores).length : (asset.quality?.pixel?.overall ?? 0)}
+              value={
+                report
+                  ? Object.values(report.scores).reduce((a, b) => a + b, 0) /
+                    Object.keys(report.scores).length
+                  : (asset.quality?.pixel?.overall ?? 0)
+              }
               label="QA 均值"
               size={124}
             />
@@ -414,9 +450,7 @@ export default function AssetInspector() {
               <Badge tone="warning" icon="refresh">
                 修复轮 {report!.retry.length}
               </Badge>
-              <span className="text-[11.5px] text-ink-3">
-                {report!.retry.slice(-1)[0]}
-              </span>
+              <span className="text-[11.5px] text-ink-3">{report!.retry.slice(-1)[0]}</span>
             </div>
           )}
         </Card>

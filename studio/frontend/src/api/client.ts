@@ -21,6 +21,47 @@ import type {
   VersionGroup,
   VersionTree,
 } from "../types";
+import { toast } from "../stores/toastStore";
+
+/* ── 认证：token 从 VITE_STUDIO_TOKEN 或 localStorage 读取 ──
+ * header（fetch 用）与 cookie（<img src="/api/..."> 和 WebSocket 握手用）
+ * 双通道同步，后端 security.py 两边都认。留空 = 后端未启用鉴权。 */
+const TOKEN_STORAGE_KEY = "studio_token";
+
+function readStoredToken(): string {
+  const fromEnv = (import.meta.env.VITE_STUDIO_TOKEN ?? "").trim();
+  if (fromEnv) return fromEnv;
+  try {
+    return localStorage.getItem(TOKEN_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function writeCookie(token: string) {
+  document.cookie = token
+    ? `${TOKEN_STORAGE_KEY}=${encodeURIComponent(token)}; path=/; SameSite=Strict`
+    : `${TOKEN_STORAGE_KEY}=; path=/; Max-Age=0; SameSite=Strict`;
+}
+
+export function setStudioToken(token: string) {
+  studioToken = token.trim();
+  try {
+    if (studioToken) localStorage.setItem(TOKEN_STORAGE_KEY, studioToken);
+    else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  } catch {
+    /* 存储不可用（隐私模式等）：仅内存与 cookie 生效 */
+  }
+  writeCookie(studioToken);
+}
+
+let studioToken = "";
+
+export function authHeaders(): Record<string, string> {
+  return studioToken ? { Authorization: `Bearer ${studioToken}` } : {};
+}
+
+setStudioToken(readStoredToken());
 
 export interface TaskDetail {
   task_id: string;
@@ -131,14 +172,29 @@ export interface PlanResult {
   tasks: PlanTask[];
 }
 
+let lastToastKey = "";
+let lastToastAt = 0;
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
     ...init,
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...init?.headers },
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => response.statusText);
-    throw new Error(`${response.status}: ${detail}`);
+    const error = new Error(`${response.status}: ${detail}`);
+    // 统一错误提示：同一消息 2.5s 内只弹一次；页面层自己的 catch 依旧生效
+    const now = Date.now();
+    if (error.message !== lastToastKey || now - lastToastAt > 2500) {
+      lastToastKey = error.message;
+      lastToastAt = now;
+      toast({
+        tone: "danger",
+        title: "请求失败",
+        description: detail.slice(0, 160) || error.message,
+      });
+    }
+    throw error;
   }
   return response.json() as Promise<T>;
 }
@@ -147,27 +203,30 @@ export const api = {
   health: () => request<{ status: string }>("/api/health"),
 
   /* ── P1-A 版本控制 ── */
-  versionGroups: () =>
-    request<{ groups: VersionGroup[] }>("/api/versions/groups"),
+  versionGroups: () => request<{ groups: VersionGroup[] }>("/api/versions/groups"),
   versionTree: (name: string) =>
     request<VersionTree>(`/api/versions/tree?name=${encodeURIComponent(name)}`),
   versionDiff: (name: string, a: number, b: number) =>
-    request<VersionDiff>(
-      `/api/versions/diff?name=${encodeURIComponent(name)}&a=${a}&b=${b}`,
-    ),
+    request<VersionDiff>(`/api/versions/diff?name=${encodeURIComponent(name)}&a=${a}&b=${b}`),
   rollbackVersions: (recordIds: string[]) =>
     request<{
       status: string;
       restored: number;
-      entries: { ok?: boolean; record_id: string; asset_id?: string; name?: string | null; version_no?: number | null; error?: string }[];
+      entries: {
+        ok?: boolean;
+        record_id: string;
+        asset_id?: string;
+        name?: string | null;
+        version_no?: number | null;
+        error?: string;
+      }[];
       rollback_id: string;
       current_asset_id: string | null;
     }>("/api/versions/rollback", {
       method: "POST",
       body: JSON.stringify({ record_ids: recordIds }),
     }),
-  rollbackLog: () =>
-    request<{ rollbacks: RollbackRecord[] }>("/api/versions/rollbacks"),
+  rollbackLog: () => request<{ rollbacks: RollbackRecord[] }>("/api/versions/rollbacks"),
   tagVersion: (recordId: string, tag: string) =>
     request<{ status: string; record_id: string; tag: string }>("/api/versions/tag", {
       method: "POST",
@@ -218,8 +277,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ goal, count, mode, overrides }),
     }),
-  batchStatus: (batchId: string) =>
-    request<BatchStatus>(`/api/batch/${batchId}`),
+  batchStatus: (batchId: string) => request<BatchStatus>(`/api/batch/${batchId}`),
   batchExport: (assetIds: string[], engine: string) =>
     request<BatchExportResult>("/api/export/batch", {
       method: "POST",
@@ -234,10 +292,10 @@ export const api = {
     }),
 
   createTask: (goal: string, overrides?: GenerationOverrides, turbo?: boolean) =>
-    request<{ task_id: string; status: string; stream_url: string }>(
-      "/api/tasks",
-      { method: "POST", body: JSON.stringify({ goal, overrides, turbo }) },
-    ),
+    request<{ task_id: string; status: string; stream_url: string }>("/api/tasks", {
+      method: "POST",
+      body: JSON.stringify({ goal, overrides, turbo }),
+    }),
 
   plan: (goal: string, assetId?: string) =>
     request<PlanResult>("/api/plan", {
@@ -253,8 +311,7 @@ export const api = {
 
   listTasks: () => request<{ tasks: TaskSummary[] }>("/api/tasks"),
 
-  getTaskDetail: (taskId: string) =>
-    request<TaskDetail>(`/api/tasks/${taskId}`),
+  getTaskDetail: (taskId: string) => request<TaskDetail>(`/api/tasks/${taskId}`),
 
   getAsset: (assetId: string) => request<CreativeAsset>(`/api/assets/${assetId}`),
 
@@ -288,7 +345,7 @@ export const api = {
   }): Promise<string> => {
     const response = await fetch("/api/animation/preview-frame", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authHeaders() },
       body: JSON.stringify(payload),
     });
     if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
@@ -298,7 +355,12 @@ export const api = {
   listCustomActions: () =>
     request<{ actions: CustomActionPreset[] }>("/api/animation/custom-actions"),
 
-  saveCustomAction: (payload: { name: string; action: string; view: string; pose_config: PoseConfig }) =>
+  saveCustomAction: (payload: {
+    name: string;
+    action: string;
+    view: string;
+    pose_config: PoseConfig;
+  }) =>
     request<CustomActionPreset>("/api/animation/custom-actions", {
       method: "POST",
       body: JSON.stringify(payload),
@@ -341,8 +403,7 @@ export const api = {
       method: "DELETE",
     }),
 
-  clearHistory: () =>
-    request<{ status: string }>("/api/history", { method: "DELETE" }),
+  clearHistory: () => request<{ status: string }>("/api/history", { method: "DELETE" }),
 
   getModelSettings: () => request<ModelSettings>("/api/settings/model"),
 
@@ -357,16 +418,13 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  testModelSettings: () =>
-    request<ModelTestResult>("/api/settings/model/test", { method: "POST" }),
+  testModelSettings: () => request<ModelTestResult>("/api/settings/model/test", { method: "POST" }),
 
-  clearModelKey: () =>
-    request<ModelSettings>("/api/settings/model/key", { method: "DELETE" }),
+  clearModelKey: () => request<ModelSettings>("/api/settings/model/key", { method: "DELETE" }),
 
   // ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ─────────────────────
   // 凭证本地加密存储、界面脱敏；新增/编辑时提交明文，后端落盘加密。
-  listStorageConfigs: () =>
-    request<StorageConfigList>("/api/storage/configs"),
+  listStorageConfigs: () => request<StorageConfigList>("/api/storage/configs"),
 
   createStorageConfig: (payload: Record<string, unknown>) =>
     request<StorageConfigPublic>("/api/storage/configs", {
@@ -381,10 +439,9 @@ export const api = {
     }),
 
   deleteStorageConfig: (id: string) =>
-    request<{ status: string; removed: string }>(
-      `/api/storage/configs/${id}`,
-      { method: "DELETE" },
-    ),
+    request<{ status: string; removed: string }>(`/api/storage/configs/${id}`, {
+      method: "DELETE",
+    }),
 
   setDefaultStorageConfig: (id: string) =>
     request<StorageConfigPublic>(`/api/storage/configs/${id}/default`, {
@@ -430,10 +487,11 @@ export const api = {
   uploadMultipartPart: async (sessionId: string, partNumber: number, data: Blob) => {
     const form = new FormData();
     form.append("file", data, `part-${partNumber}`);
-    const response = await fetch(
-      `/api/storage/multipart/${sessionId}/${partNumber}`,
-      { method: "PUT", body: form },
-    );
+    const response = await fetch(`/api/storage/multipart/${sessionId}/${partNumber}`, {
+      method: "PUT",
+      body: form,
+      headers: { ...authHeaders() },
+    });
     if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
     return (await response.json()) as MultipartSession;
   },

@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Background,
-  Controls,
-  ReactFlow,
-  type Edge,
-  type Node,
-} from "@xyflow/react";
+import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { motion } from "framer-motion";
 import { useAgentStore, type NodeStatus } from "../stores/agentStore";
@@ -29,6 +23,7 @@ import {
 import { Icon } from "../components/icons";
 import { GenerationResult } from "../components/GenerationResult";
 import type { CreativeAsset, Plan, TaskEvent, HistorySummary } from "../types";
+import { MOTION } from "../lib/motion";
 
 const KIND_LABEL: Record<string, string> = {
   supervisor: "规划",
@@ -148,7 +143,13 @@ function RecentRuns() {
               </span>
               <Badge tone={statusTone(record.report_status || record.status)}>
                 <StatusDot
-                  tone={record.report_status === "PASS" ? "success" : record.status === "failed" ? "failed" : "idle"}
+                  tone={
+                    record.report_status === "PASS"
+                      ? "success"
+                      : record.status === "failed"
+                        ? "failed"
+                        : "idle"
+                  }
                 />
                 {record.report_status || record.status}
               </Badge>
@@ -234,7 +235,10 @@ export default function AgentDashboard() {
         applyAgentEvent(event);
         applyWorkflowEvent(event);
         if (event.type === "ASSET_UPDATE" && event.id) {
-          api.getAsset(event.id).then(setAsset).catch(() => undefined);
+          api
+            .getAsset(event.id)
+            .then(setAsset)
+            .catch(() => undefined);
         }
       },
       onEnd: (final) => finishAgent(final),
@@ -248,15 +252,17 @@ export default function AgentDashboard() {
     if (status !== "pass" || !taskId || !asset?.id) return;
     if (refreshedAsset.current === asset.id) return;
     refreshedAsset.current = asset.id;
-    api.getAsset(asset.id).then(setAsset).catch(() => undefined);
+    api
+      .getAsset(asset.id)
+      .then(setAsset)
+      .catch(() => undefined);
   }, [status, taskId, asset?.id, setAsset]);
 
   const graphNodes: Node[] = useMemo(() => {
     const positions = layout(nodes);
     return nodes.map((node) => {
       const taskForNode = reverseTask(plan, node.id);
-      const nodeStatus: NodeStatus =
-        (taskForNode && agentStatuses[taskForNode]) || "idle";
+      const nodeStatus: NodeStatus = (taskForNode && agentStatuses[taskForNode]) || "idle";
       const domain = domainOf(node.id);
       return {
         id: node.id,
@@ -336,8 +342,7 @@ export default function AgentDashboard() {
     );
   }
 
-  const statusTone =
-    status === "pass" ? "success" : status === "failed" ? "danger" : "primary";
+  const statusTone = status === "pass" ? "success" : status === "failed" ? "danger" : "primary";
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -349,7 +354,9 @@ export default function AgentDashboard() {
           <>
             <span className="font-mono text-xs text-ink-3">{taskId}</span>
             <Badge tone={statusTone}>
-              <StatusDot tone={status === "pass" ? "success" : status === "failed" ? "failed" : "running"} />
+              <StatusDot
+                tone={status === "pass" ? "success" : status === "failed" ? "failed" : "running"}
+              />
               {status === "running" ? `运行中 ${progress}%` : status.toUpperCase()}
             </Badge>
             {status === "pass" && (
@@ -436,7 +443,11 @@ export default function AgentDashboard() {
 
         <Card className="col-span-12 md:col-span-4" title="质量门" icon="gauge">
           <div className="space-y-3.5">
-            <ScoreBar label="pixel · 阈值 0.80" value={qualityEvent?.scores?.pixel ?? 0} threshold={0.8} />
+            <ScoreBar
+              label="pixel · 阈值 0.80"
+              value={qualityEvent?.scores?.pixel ?? 0}
+              threshold={0.8}
+            />
             <ScoreBar
               label="animation · 阈值 0.85"
               value={qualityEvent?.scores?.animation ?? 0}
@@ -449,9 +460,7 @@ export default function AgentDashboard() {
             />
           </div>
           <p className="mt-3 text-[11px] text-ink-3">
-            {qualityEvent
-              ? `最新报告：${qualityEvent.status ?? "—"}`
-              : "等待 QA Agent 验证…"}
+            {qualityEvent ? `最新报告：${qualityEvent.status ?? "—"}` : "等待 QA Agent 验证…"}
           </p>
         </Card>
 
@@ -465,7 +474,8 @@ export default function AgentDashboard() {
             </Badge>
           </div>
           <p className="mt-3 text-xs leading-[19px] text-ink-3">
-            失败时自动降级：Unity → Cocos → 人工介入。检查点写入 Memory Agent，可从任务图任意节点恢复。
+            失败时自动降级：Unity → Cocos → 人工介入。检查点写入 Memory
+            Agent，可从任务图任意节点恢复。
           </p>
         </Card>
       </div>
@@ -509,7 +519,7 @@ function RightPanel({
                 key={index}
                 initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.18 }}
+                transition={{ duration: MOTION.base }}
                 className="flex items-baseline gap-2.5"
               >
                 <span className="shrink-0 text-ink-4">
@@ -518,7 +528,9 @@ function RightPanel({
                     second: "2-digit",
                   })}
                 </span>
-                <span className={cx("shrink-0 font-medium", EVENT_TONE[event.type] ?? "text-ink-2")}>
+                <span
+                  className={cx("shrink-0 font-medium", EVENT_TONE[event.type] ?? "text-ink-2")}
+                >
                   {event.type}
                 </span>
                 <span className="truncate text-ink-3">
@@ -561,9 +573,7 @@ function RightPanel({
                   key={section}
                   label={section}
                   value={score}
-                  threshold={
-                    section === "pixel" ? 0.8 : section === "animation" ? 0.85 : 0.9
-                  }
+                  threshold={section === "pixel" ? 0.8 : section === "animation" ? 0.85 : 0.9}
                 />
               ))
             ) : (

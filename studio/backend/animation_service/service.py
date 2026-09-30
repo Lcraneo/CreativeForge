@@ -81,8 +81,8 @@ SEGMENT_PROMPT = (
     "不位移、不缩放。只允许背景像素变成纯白。"
 )
 
-MIN_SEGMENT_COVERAGE = 0.02   # mask 面积下限（低于此说明分割失败/人物丢失）
-MAX_SEGMENT_COVERAGE = 0.85   # mask 面积上限（高于此说明背景没抠掉）
+MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/人物丢失）
+MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
 
 class AnimationService:
@@ -129,13 +129,9 @@ class AnimationService:
                 if source_bytes is None:
                     from artgen import render_asset_view
 
-                    source_bytes = render_asset_view(
-                        asset, "front", max(384, min(1024, int(size)))
-                    )
+                    source_bytes = render_asset_view(asset, "front", max(384, min(1024, int(size))))
             if source_bytes is None:
-                raise ValueError(
-                    "骨骼动画需要真实角色源图（资产原画或上传图片），当前没有可用源图"
-                )
+                raise ValueError("骨骼动画需要真实角色源图（资产原画或上传图片），当前没有可用源图")
         elif image_bytes:
             source_kind = "upload"
             source_bytes = image_bytes
@@ -150,9 +146,7 @@ class AnimationService:
                 try:
                     from artgen import render_asset_view
 
-                    source_bytes = render_asset_view(
-                        asset, "front", max(384, min(1024, int(size)))
-                    )
+                    source_bytes = render_asset_view(asset, "front", max(384, min(1024, int(size))))
                 except Exception:
                     source_bytes = None
 
@@ -216,7 +210,9 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         return self._persist(result, animation_id, "sequence")
 
-    def _persist(self, result: dict[str, Any], animation_id: str, source_kind: str) -> dict[str, Any]:
+    def _persist(
+        self, result: dict[str, Any], animation_id: str, source_kind: str
+    ) -> dict[str, Any]:
         gif_name = f"{animation_id}.gif"
         sheet_name = f"{animation_id}_sheet.png"
         thumb_name = f"{animation_id}_thumb.png"
@@ -285,8 +281,12 @@ class AnimationService:
             work_bytes = source_bytes
 
         prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
-        video_bytes, video_model = generate_video(settings, prompt, work_bytes, timeout_seconds=420.0)
-        frames_rgba = self._slice_video(video_bytes, source_bytes, fps, duration, size, min_count=20)
+        video_bytes, video_model = generate_video(
+            settings, prompt, work_bytes, timeout_seconds=420.0
+        )
+        frames_rgba = self._slice_video(
+            video_bytes, source_bytes, fps, duration, size, min_count=20
+        )
 
         # 弱背景稳定（仅 idle）：i2v 背景会随生成轻微漂移。用 AI 分割 mask
         # 的**大幅膨胀区**之外贴回第 0 帧背景——只锁远处背景，绝不裁切肢体
@@ -323,7 +323,7 @@ class AnimationService:
 
         import io
 
-        from PIL import Image, ImageFilter
+        from PIL import Image
 
         from artgen.sourceanim import _subject_mask
 
@@ -357,14 +357,9 @@ class AnimationService:
         之外**——远处背景锁定为静止，角色及其近邻区域保持原视频帧，
         肢体无论如何运动都不会被裁切。"""
 
-        import io
+        from PIL import Image, ImageFilter
 
-        from PIL import Image, ImageChops, ImageFilter
-
-        images = [
-            Image.frombytes("RGBA", (w, h), bytes(data))
-            for w, h, data in frames_rgba
-        ]
+        images = [Image.frombytes("RGBA", (w, h), bytes(data)) for w, h, data in frames_rgba]
         # 大幅膨胀（31px）+ 羽化：角色 ±40px 内的一切原样保留
         zone = mask.filter(ImageFilter.MaxFilter(31)).filter(ImageFilter.GaussianBlur(6))
         outside = zone.point(lambda v: 255 - v)
@@ -392,7 +387,15 @@ class AnimationService:
             stabilized.append((size, size, bytearray(canvas.tobytes())))
         return stabilized
 
-    def _slice_video(self, video_bytes: bytes, source_bytes: bytes, fps: int, duration: float, size: int, min_count: int | None = None):
+    def _slice_video(
+        self,
+        video_bytes: bytes,
+        source_bytes: bytes,
+        fps: int,
+        duration: float,
+        size: int,
+        min_count: int | None = None,
+    ):
         """mp4 bytes -> evenly sampled, stabilized (w,h,RGBA) frames.
 
         流式解码：逐帧读取、即时缩略、只保留采样目标帧——避免旧实现把
@@ -423,9 +426,7 @@ class AnimationService:
                 hi = total - max(1, int(total * 0.04))
                 if hi - lo < 4:
                     lo, hi = 0, total - 1
-                wanted = {
-                    round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)
-                }
+                wanted = {round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)}
             else:
                 wanted = None  # 元数据缺失：逐帧保留后本地重采样
 
@@ -474,18 +475,16 @@ class AnimationService:
             hi = total - max(1, int(total * 0.04))
             if hi - lo < 4:
                 lo, hi = 0, total - 1
-            indices = sorted(set(
-                round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)
-            ))[:count]
+            indices = sorted(
+                set(round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count))
+            )[:count]
 
         frames_rgba = []
         for frame_index in indices:
             canvas = kept.get(frame_index)
             if canvas is None:
                 continue
-            frames_rgba.append(
-                (canvas.width, canvas.height, bytearray(canvas.tobytes()))
-            )
+            frames_rgba.append((canvas.width, canvas.height, bytearray(canvas.tobytes())))
         if len(frames_rgba) < 2:
             raise RuntimeError("生成的视频有效帧不足，无法抽帧")
 
@@ -495,15 +494,20 @@ class AnimationService:
             from PIL import Image as PILImage
 
             def gray_small(item):
-                return PILImage.frombytes("RGBA", (item[0], item[1]), bytes(item[2])) \
-                    .convert("L").resize((48, 48))
+                return (
+                    PILImage.frombytes("RGBA", (item[0], item[1]), bytes(item[2]))
+                    .convert("L")
+                    .resize((48, 48))
+                )
 
             def pair_diff(a, b):
                 da, db = list(gray_small(a).getdata()), list(gray_small(b).getdata())
                 return sum(abs(x - y) for x, y in zip(da, db)) / len(da)
 
-            pairs = [pair_diff(frames_rgba[i], frames_rgba[(i + 1) % len(frames_rgba)])
-                     for i in range(len(frames_rgba))]
+            pairs = [
+                pair_diff(frames_rgba[i], frames_rgba[(i + 1) % len(frames_rgba)])
+                for i in range(len(frames_rgba))
+            ]
             cut = pairs.index(max(pairs)) + 1
             if 0 < cut < len(frames_rgba):
                 frames_rgba = frames_rgba[cut:] + frames_rgba[:cut]
@@ -631,8 +635,6 @@ def ai_segment_subject(
             return None
 
         # 编辑模型输出与源图构图存在毫米级偏差：膨胀 + 羽化吸收边缘误差
-        return mask.filter(ImageFilter.MaxFilter(7)).filter(
-            ImageFilter.GaussianBlur(1.2)
-        )
+        return mask.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(1.2))
     except Exception:  # noqa: BLE001 - segmentation is best-effort
         return None

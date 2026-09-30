@@ -30,7 +30,9 @@ class CustomActionStore:
             json.dump(self._actions, handle, ensure_ascii=False, indent=2)
 
     def list(self) -> list[dict[str, Any]]:
-        return sorted(self._actions.values(), key=lambda item: item.get("updated_at", 0), reverse=True)
+        return sorted(
+            self._actions.values(), key=lambda item: item.get("updated_at", 0), reverse=True
+        )
 
     def save(self, payload: dict[str, Any]) -> dict[str, Any]:
         name = str(payload.get("name") or "").strip()

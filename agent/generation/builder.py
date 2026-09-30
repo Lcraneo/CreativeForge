@@ -49,7 +49,12 @@ ELEMENT_KEYWORDS = {
 ELEMENT_ROLES = {
     "fire": {"shadow": "#7a1f12", "base": "#ff6a2b", "highlight": "#ffd23f", "accent": "#ffe98a"},
     "ice": {"shadow": "#1b3a5c", "base": "#5ec8f2", "highlight": "#d8f4ff", "accent": "#9fe8ff"},
-    "lightning": {"shadow": "#4a3a08", "base": "#f2c94c", "highlight": "#fff3b0", "accent": "#b388ff"},
+    "lightning": {
+        "shadow": "#4a3a08",
+        "base": "#f2c94c",
+        "highlight": "#fff3b0",
+        "accent": "#b388ff",
+    },
     "nature": {"shadow": "#1e4620", "base": "#58a55c", "highlight": "#c8f0b0", "accent": "#ffd23f"},
     "water": {"shadow": "#173a5e", "base": "#3e7cc4", "highlight": "#a8d8ff", "accent": "#66e0d0"},
     "poison": {"shadow": "#2e1b46", "base": "#8e5cc4", "highlight": "#d0a8ff", "accent": "#a8e05f"},
@@ -71,8 +76,20 @@ CANONICAL_FIRE_MAGE = {
 
 FIRE_KEYWORDS = ("火焰", "fire", "法师", "法師", "mage")
 STATIC_KEYWORDS = (
-    "静态", "static", "单张", "still", "道具", "图标", "图块", "背景",
-    "立绘", "头像", "icon", "tileset", "background", "item",
+    "静态",
+    "static",
+    "单张",
+    "still",
+    "道具",
+    "图标",
+    "图块",
+    "背景",
+    "立绘",
+    "头像",
+    "icon",
+    "tileset",
+    "background",
+    "item",
 )
 ANIM_KEYWORDS = {
     "attack": ("攻击", "attack", "斩击", "挥砍", "挥击", "劈砍", "战斗"),
@@ -110,14 +127,12 @@ def _shade(hex_color, amount):
     """Lighten (amount > 0) / darken (amount < 0) a hex colour by a fraction."""
 
     text = hex_color.lstrip("#")
-    rgb = [int(text[i:i + 2], 16) for i in (0, 2, 4)]
+    rgb = [int(text[i : i + 2], 16) for i in (0, 2, 4)]
     if amount >= 0:
         rgb = [c + (255 - c) * amount for c in rgb]
     else:
         rgb = [c * (1 + amount) for c in rgb]
-    return "#" + "".join(
-        "{:02x}".format(max(0, min(255, int(round(c))))) for c in rgb
-    )
+    return "#" + "".join("{:02x}".format(max(0, min(255, int(round(c))))) for c in rgb)
 
 
 def _element_of(lower):
@@ -144,7 +159,11 @@ def _resolve_identity(goal_text, overrides):
     lower = goal_text.lower()
     overrides = overrides or {}
 
-    style = overrides.get("style") if isinstance(overrides.get("style"), str) and overrides.get("style") else parse_style(goal_text)
+    style = (
+        overrides.get("style")
+        if isinstance(overrides.get("style"), str) and overrides.get("style")
+        else parse_style(goal_text)
+    )
     static = any(keyword in lower for keyword in STATIC_KEYWORDS)
 
     # Canonical fire-mage identity is preserved only for the pixel-style
@@ -164,7 +183,7 @@ def _resolve_identity(goal_text, overrides):
     if static:
         action = "idle"
 
-    seed = int(hashlib.sha256(goal_text.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
+    seed = int(hashlib.sha256(goal_text.encode("utf-8")).hexdigest(), 16) % (2**31)
     name = _slug(goal_text).capitalize() or "Asset"
     identity = {
         "id": "ast{:05d}".format(seed % 100000),
@@ -192,7 +211,7 @@ def _apply_overrides(identity, overrides):
         # 批量多变体：显式 seed 覆盖确定性派生 seed，asset id 随之重算，
         # 否则同一目标的不同变体会共用一个 id 互相覆盖
         try:
-            identity["seed"] = int(overrides["seed"]) % (2 ** 31)
+            identity["seed"] = int(overrides["seed"]) % (2**31)
             identity["id"] = "ast{:05d}".format(identity["seed"] % 100000)
         except (TypeError, ValueError):
             pass
@@ -239,8 +258,7 @@ def build_asset(goal, task=None):
         source["ai_image"] = model_image
 
     frames = [
-        {"id": index, "image": None, "action": identity["action"]}
-        for index in range(FRAME_COUNT)
+        {"id": index, "image": None, "action": identity["action"]} for index in range(FRAME_COUNT)
     ]
     animation = {
         "action": identity["action"],
@@ -260,3 +278,68 @@ def build_asset(goal, task=None):
         "animation": animation,
         "quality": {},
     }
+
+
+def edit_asset(asset, goal, task=None):
+    """Apply natural-language intent to an existing CreativeAsset without
+    discarding its source identity or generated artwork."""
+    task = task or {}
+    if not asset:
+        return build_asset(goal, task)
+    text = str(goal or "")
+    lower = text.lower()
+    identity = _resolve_identity(text, task.get("overrides") or {})
+    character = asset.setdefault("character", {})
+    source = asset.setdefault("source", {})
+    animation = asset.setdefault("animation", {})
+
+    if any(k in lower for k in ("火焰", "fire")):
+        element = "fire"
+    elif any(k in lower for k in ("冰霜", "冰", "frost", "ice")):
+        element = "ice"
+    elif any(k in lower for k in ("机械", "机甲", "mecha", "赛博", "cyber")):
+        element = "mecha"
+    else:
+        element = _element_of(lower)
+
+    if element:
+        palette = _palette_for(element, int(character.get("seed") or identity["seed"]))
+        character["palette"] = palette
+        source["palette"] = palette
+
+    actions = _actions_of(lower)
+    if actions:
+        animation["action"] = actions[0]
+        animation["actions"] = actions
+        character["action"] = actions[0]
+
+    if (
+        "像素" in lower
+        or "pixel" in lower
+        or any(x in lower for x in ("32x32", "32×32", "64x64", "64×64"))
+    ):
+        character["style"] = "pixel"
+        source["style"] = "pixel"
+        source["grid_size"] = 8
+    elif any(x in lower for x in ("2d", "动漫", "anime", "插画")):
+        character["style"] = "2d"
+        source["style"] = "2d"
+        source["grid_size"] = 16
+
+    if any(k in lower for k in ("法师", "mage")):
+        character["role"] = "mage"
+    if any(k in lower for k in ("战士", "warrior")):
+        character["role"] = "warrior"
+
+    asset["name"] = character.get("name") or asset.get("name")
+    provenance = asset.setdefault("provenance", {})
+    history = provenance.setdefault("history", [])
+    if isinstance(history, list):
+        history.append(
+            {
+                "operation": "edit",
+                "goal": goal,
+                "source": "creative-agent",
+            }
+        )
+    return asset

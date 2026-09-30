@@ -22,7 +22,7 @@ class WorkflowEngine:
             "goal": plan.get("goal"),
             "current": None,
             "state": "running",
-            "steps": []
+            "steps": [],
         }
 
         if resume:
@@ -34,11 +34,9 @@ class WorkflowEngine:
 
         for task in plan.get("tasks", []):
             if task["id"] in completed:
-                state["steps"].append({
-                    "task": task["id"],
-                    "capability": task["capability"],
-                    "status": "skipped"
-                })
+                state["steps"].append(
+                    {"task": task["id"], "capability": task["capability"], "status": "skipped"}
+                )
                 continue
 
             state["current"] = task["capability"]
@@ -48,21 +46,25 @@ class WorkflowEngine:
 
             if asset is None:
                 state["state"] = "failed"
-                state["steps"].append({
-                    "task": task["id"],
-                    "capability": task["capability"],
-                    "status": "failed",
-                    "recovery": recovery
-                })
+                state["steps"].append(
+                    {
+                        "task": task["id"],
+                        "capability": task["capability"],
+                        "status": "failed",
+                        "recovery": recovery,
+                    }
+                )
                 return {"workflow": state, "asset": None}
 
             self.memory.save_checkpoint(task["id"], asset)
-            state["steps"].append({
-                "task": task["id"],
-                "capability": task["capability"],
-                "status": "success",
-                "recovery": recovery
-            })
+            state["steps"].append(
+                {
+                    "task": task["id"],
+                    "capability": task["capability"],
+                    "status": "success",
+                    "recovery": recovery,
+                }
+            )
 
         state["state"] = "success"
         state["current"] = None

@@ -26,10 +26,30 @@ const SLIDERS: SliderSpec[] = [
     ...TOON_PARAMETER_LIMITS.outlineWidth,
     format: (v) => v.toFixed(3),
   },
-  { key: "colorSteps", label: "明暗色阶", ...TOON_PARAMETER_LIMITS.colorSteps, format: (v) => `${v} 阶` },
-  { key: "shadowThreshold", label: "阴影阈值", ...TOON_PARAMETER_LIMITS.shadowThreshold, format: (v) => v.toFixed(2) },
-  { key: "specularRange", label: "高光范围", ...TOON_PARAMETER_LIMITS.specularRange, format: (v) => v.toFixed(2) },
-  { key: "rimIntensity", label: "边缘光强度", ...TOON_PARAMETER_LIMITS.rimIntensity, format: (v) => v.toFixed(2) },
+  {
+    key: "colorSteps",
+    label: "明暗色阶",
+    ...TOON_PARAMETER_LIMITS.colorSteps,
+    format: (v) => `${v} 阶`,
+  },
+  {
+    key: "shadowThreshold",
+    label: "阴影阈值",
+    ...TOON_PARAMETER_LIMITS.shadowThreshold,
+    format: (v) => v.toFixed(2),
+  },
+  {
+    key: "specularRange",
+    label: "高光范围",
+    ...TOON_PARAMETER_LIMITS.specularRange,
+    format: (v) => v.toFixed(2),
+  },
+  {
+    key: "rimIntensity",
+    label: "边缘光强度",
+    ...TOON_PARAMETER_LIMITS.rimIntensity,
+    format: (v) => v.toFixed(2),
+  },
 ];
 
 interface Props {
@@ -73,7 +93,10 @@ export default function ToonSettingsPanel({ params, fps, enabled, onToggle, onCh
           >
             <Icon
               name="chevron"
-              className={cx("h-3.5 w-3.5 transition-transform", collapsed ? "rotate-90" : "-rotate-90")}
+              className={cx(
+                "h-3.5 w-3.5 transition-transform",
+                collapsed ? "rotate-90" : "-rotate-90",
+              )}
             />
           </button>
         </div>

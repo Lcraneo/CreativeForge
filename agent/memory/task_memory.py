@@ -22,10 +22,7 @@ class TaskMemory:
     def save_checkpoint(self, task_id, asset):
         self.checkpoints[task_id] = copy.deepcopy(asset)
         self.completed_steps.append(task_id)
-        self.asset_versions.append({
-            "task": task_id,
-            "asset": copy.deepcopy(asset)
-        })
+        self.asset_versions.append({"task": task_id, "asset": copy.deepcopy(asset)})
 
     def record_error(self, task_id, message):
         self.errors.append({"task": task_id, "message": message})
@@ -41,5 +38,5 @@ class TaskMemory:
             "goal": self.goal,
             "completed_steps": list(self.completed_steps),
             "errors": list(self.errors),
-            "checkpoints": list(self.checkpoints)
+            "checkpoints": list(self.checkpoints),
         }

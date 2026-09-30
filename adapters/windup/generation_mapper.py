@@ -4,6 +4,6 @@ def map_generation(result):
         "source": {
             "source_type": "ai_generation",
             "provider": "windup",
-            "prompt": result.get("prompt")
+            "prompt": result.get("prompt"),
         }
     }

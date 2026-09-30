@@ -21,7 +21,6 @@ import uuid
 from .interface import (
     StorageConfig,
     StorageConfigError,
-    mask_secret,
 )
 
 __all__ = ["StorageConfigStore", "DATA_DIR"]

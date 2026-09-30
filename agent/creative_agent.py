@@ -1,3 +1,5 @@
+import time
+
 from agent.capability.capability_registry import build_default_registry
 from agent.executor.task_executor import TaskExecutor
 from agent.memory.task_memory import TaskMemory
@@ -18,8 +20,7 @@ class CreativeAgent:
         self.planner = Planner()
         self.quality_gate = QualityGate()
         self.workflow = WorkflowEngine(
-            executor=TaskExecutor(registry or build_default_registry()),
-            memory=self.memory
+            executor=TaskExecutor(registry or build_default_registry()), memory=self.memory
         )
 
     def run(self, goal, asset=None):
@@ -28,7 +29,16 @@ class CreativeAgent:
         self.memory.save_goal(goal)
         self.memory.save_plan(plan)
 
+        # perf_counter 计时开销可忽略；内存峰值留给发布门（tracemalloc 会拖慢 2-4x）
+        started = time.perf_counter()
         result = self.workflow.run(plan, asset)
+        execution_ms = (time.perf_counter() - started) * 1000
+
+        if isinstance(result.get("asset"), dict):
+            asset_out = result["asset"]
+            meta = dict(asset_out.get("meta") or {})
+            meta["performance"] = {"execution_ms": round(execution_ms, 1)}
+            asset_out["meta"] = meta
 
         quality = self.quality_gate.check(result["asset"] or {})
 
@@ -38,5 +48,5 @@ class CreativeAgent:
             "workflow": result["workflow"],
             "asset": result["asset"],
             "quality": quality,
-            "memory": self.memory.summary()
+            "memory": self.memory.summary(),
         }

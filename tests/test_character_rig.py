@@ -20,10 +20,24 @@ from artgen import build_rig, render_character_view  # noqa: E402
 from artgen.riganim import animate_rigged  # noqa: E402
 from studio.backend.animation_service.service import AnimationService  # noqa: E402
 
-BLUE = {"outline": "#1f2a44", "base": "#4aa3e0", "accent": "#ffd166",
-        "hair": "#2b6cb0", "skin": "#ffe9d6", "eyes": "#2b2b2b", "metal": "#cfd8e3"}
-RED = {"outline": "#2a1414", "base": "#e5533d", "accent": "#ffd166",
-       "hair": "#3a1f1f", "skin": "#ffe0c0", "eyes": "#1a1a1a", "metal": "#c0c0c0"}
+BLUE = {
+    "outline": "#1f2a44",
+    "base": "#4aa3e0",
+    "accent": "#ffd166",
+    "hair": "#2b6cb0",
+    "skin": "#ffe9d6",
+    "eyes": "#2b2b2b",
+    "metal": "#cfd8e3",
+}
+RED = {
+    "outline": "#2a1414",
+    "base": "#e5533d",
+    "accent": "#ffd166",
+    "hair": "#3a1f1f",
+    "skin": "#ffe0c0",
+    "eyes": "#1a1a1a",
+    "metal": "#c0c0c0",
+}
 
 
 def _png(seed, palette, size=256):
@@ -53,8 +67,13 @@ def test_skeletal_requires_a_real_source():
 def test_service_passes_asset_source_into_skeletal_pipeline():
     service = AnimationService(tempfile.mkdtemp())
     meta = service.create(
-        asset=None, image_bytes=_png(7, BLUE), skeletal=True,
-        action="walk", fps=6, duration=1.0, size=192,
+        asset=None,
+        image_bytes=_png(7, BLUE),
+        skeletal=True,
+        action="walk",
+        fps=6,
+        duration=1.0,
+        size=192,
     )
     assert meta["skeletal"] is True
     assert meta["source"] == "skeletal"
@@ -64,8 +83,11 @@ def test_service_passes_asset_source_into_skeletal_pipeline():
 
 
 def _run():
-    tests = [(name, fn) for name, fn in sorted(globals().items())
-             if name.startswith("test_") and callable(fn)]
+    tests = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
     passed = 0
     for name, fn in tests:
         try:

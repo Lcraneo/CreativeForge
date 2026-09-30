@@ -46,8 +46,7 @@ export const useAgentStore = create<AgentState>((set) => ({
           agentStatuses[event.task ?? ""] = "running";
           break;
         case "AGENT_DONE":
-          agentStatuses[event.task ?? ""] =
-            event.status === "recovered" ? "recovered" : "success";
+          agentStatuses[event.task ?? ""] = event.status === "recovered" ? "recovered" : "success";
           break;
         case "TASK_FAILED":
           agentStatuses[event.task ?? ""] = "failed";

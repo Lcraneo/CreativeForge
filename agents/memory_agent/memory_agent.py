@@ -1,5 +1,5 @@
-from agents.base_agent import BaseAgent
 from agent.memory.task_memory import TaskMemory
+from agents.base_agent import BaseAgent
 
 
 class MemoryAgent(BaseAgent):
@@ -13,7 +13,7 @@ class MemoryAgent(BaseAgent):
         super().__init__()
         self.actions = {
             "save_checkpoint": self.save_checkpoint,
-            "remember_style": self.remember_style
+            "remember_style": self.remember_style,
         }
         self.memory = TaskMemory()
         self.user_style = None
@@ -28,10 +28,8 @@ class MemoryAgent(BaseAgent):
     def remember_style(self, task, asset):
         self.user_style = {
             "style": "pixel",
-            "palette": (
-                asset.get("pixel", {}).get("palette", {}).get("max_colors", 16)
-            ),
-            "engine": asset.get("engine", {}).get("target")
+            "palette": (asset.get("pixel", {}).get("palette", {}).get("max_colors", 16)),
+            "engine": asset.get("engine", {}).get("target"),
         }
         asset.setdefault("memory", {})["user_style"] = self.user_style
         return asset

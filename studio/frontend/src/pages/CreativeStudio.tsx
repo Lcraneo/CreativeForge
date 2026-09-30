@@ -50,7 +50,9 @@ export default function CreativeStudio() {
   const [statuses, setStatuses] = useState<Record<string, string>>({});
   const [running, setRunning] = useState(false);
   const [canvasSrc, setCanvasSrc] = useState<string | null>(null);
-  const [canvasCaption, setCanvasCaption] = useState("等待创作 —— 输入目标，Planner 会实时给出能力计划");
+  const [canvasCaption, setCanvasCaption] = useState(
+    "等待创作 —— 输入目标，Planner 会实时给出能力计划",
+  );
   const [error, setError] = useState<string | null>(null);
   const stopRef = useRef<null | (() => void)>(null);
   const navigate = useNavigate();
@@ -80,7 +82,10 @@ export default function CreativeStudio() {
         setPlan(null);
         return;
       }
-      api.plan(text).then(setPlan).catch(() => {});
+      api
+        .plan(text)
+        .then(setPlan)
+        .catch(() => {});
     }, 350);
     return () => clearTimeout(timer);
   }, [goal]);
@@ -218,7 +223,11 @@ export default function CreativeStudio() {
           <div className="flex h-full flex-col items-center justify-center gap-3">
             <div className="grid h-[360px] w-full place-items-center overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(320px_180px_at_50%_35%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
               {canvasSrc ? (
-                <img src={canvasSrc} alt="current asset" className="max-h-[340px] max-w-full object-contain" />
+                <img
+                  src={canvasSrc}
+                  alt="current asset"
+                  className="max-h-[340px] max-w-full object-contain"
+                />
               ) : (
                 <div className="px-8 text-center text-[13px] text-ink-3">{canvasCaption}</div>
               )}
@@ -226,13 +235,28 @@ export default function CreativeStudio() {
             {canvasSrc && (
               <div className="flex flex-wrap items-center gap-3 text-[12px] text-ink-3">
                 <span>{canvasCaption}</span>
-                <Button variant="secondary" size="sm" icon="cube" onClick={() => navigate("/asset")}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="cube"
+                  onClick={() => navigate("/asset")}
+                >
                   查看资产
                 </Button>
-                <Button variant="secondary" size="sm" icon="film" onClick={() => navigate("/animation")}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="film"
+                  onClick={() => navigate("/animation")}
+                >
                   制作动画
                 </Button>
-                <Button variant="secondary" size="sm" icon="package" onClick={() => navigate("/export")}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon="package"
+                  onClick={() => navigate("/export")}
+                >
                   导出
                 </Button>
               </div>
@@ -244,11 +268,17 @@ export default function CreativeStudio() {
           className="col-span-12 min-h-0 md:col-span-3"
           title="Execution Plan"
           icon="layers"
-          right={plan ? <Badge tone="neutral">{plan.mode === "modify" ? "修改" : "新建"}</Badge> : undefined}
+          right={
+            plan ? (
+              <Badge tone="neutral">{plan.mode === "modify" ? "修改" : "新建"}</Badge>
+            ) : undefined
+          }
         >
           <div className="cf-scroll h-full overflow-y-auto pr-1">
             {!plan ? (
-              <div className="text-xs text-ink-3">输入目标后，Planner 会在这里给出动态能力计划。</div>
+              <div className="text-xs text-ink-3">
+                输入目标后，Planner 会在这里给出动态能力计划。
+              </div>
             ) : (
               <>
                 <ol className="space-y-2">
@@ -265,19 +295,32 @@ export default function CreativeStudio() {
                     return (
                       <li
                         key={task.id}
-                        title={CAP_HINT[task.capability] ?? CAP_LABEL[task.capability] ?? task.capability}
+                        title={
+                          CAP_HINT[task.capability] ?? CAP_LABEL[task.capability] ?? task.capability
+                        }
                         className="flex items-center gap-2.5 rounded-md border border-line-subtle bg-surface-1 px-2.5 py-2"
                       >
-                        <Icon name={CAP_ICON[task.capability] ?? "zap"} className={cx("h-4 w-4 shrink-0", tone)} />
+                        <Icon
+                          name={CAP_ICON[task.capability] ?? "zap"}
+                          className={cx("h-4 w-4 shrink-0", tone)}
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="truncate text-[12.5px] font-medium text-ink">
                             {CAP_LABEL[task.capability] ?? task.capability}
                             {task.engine ? ` · ${task.engine}` : ""}
                           </div>
-                          <div className="truncate font-mono text-[10.5px] text-ink-4">{task.agent}</div>
+                          <div className="truncate font-mono text-[10.5px] text-ink-4">
+                            {task.agent}
+                          </div>
                         </div>
                         <span className={cx("text-[11px]", tone)}>
-                          {status === "running" ? "⟳" : status === "success" || status === "recovered" ? "✓" : status === "failed" ? "✗" : "○"}
+                          {status === "running"
+                            ? "⟳"
+                            : status === "success" || status === "recovered"
+                              ? "✓"
+                              : status === "failed"
+                                ? "✗"
+                                : "○"}
                         </span>
                       </li>
                     );
@@ -347,7 +390,11 @@ export default function CreativeStudio() {
             loading={enhancing}
             onClick={enhance}
             disabled={!chatReady || enhancing}
-            title={chatReady ? "用对话模型增强提示词（增强后再执行创作）" : "需先在「模型设置」配置对话模型"}
+            title={
+              chatReady
+                ? "用对话模型增强提示词（增强后再执行创作）"
+                : "需先在「模型设置」配置对话模型"
+            }
           >
             增强提示词
           </Button>

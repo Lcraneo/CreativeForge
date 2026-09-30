@@ -125,7 +125,7 @@ export default function Layout() {
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
-          "hidden shrink-0 flex-col border-r border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ebe8e0] transition-[width] duration-200 ease-standard md:flex",
+          "hidden shrink-0 flex-col border-r border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ebe8e0] transition-[width] duration-(--motion-slow) ease-standard md:flex",
           rail ? "w-16 px-2 py-3" : "w-60 p-3",
         )}
       >
@@ -164,7 +164,7 @@ export default function Layout() {
                   title={rail ? item.label : undefined}
                   className={({ isActive }) =>
                     cx(
-                      "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-150 ease-standard",
+                      "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
                       rail ? "justify-center px-0" : "px-2.5",
                       isActive
                         ? "bg-primary-tint font-semibold text-ink"
@@ -207,9 +207,18 @@ export default function Layout() {
         >
           {!rail && <span className="text-[11px] text-ink-3">v1.0 · Studio</span>}
           <span className="flex gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]" title="Unity" />
-            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]" title="Cocos" />
-            <span className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]" title="Godot" />
+            <span
+              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+              title="Unity"
+            />
+            <span
+              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+              title="Cocos"
+            />
+            <span
+              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+              title="Godot"
+            />
           </span>
         </div>
       </aside>
@@ -234,7 +243,17 @@ export default function Layout() {
             to={taskId ? "/agents" : "/"}
             className="mx-auto hidden max-w-md items-center gap-2 rounded-full border border-line-subtle bg-surface-1 px-3 py-1 text-xs text-ink-2 transition-colors hover:border-line hover:text-ink sm:flex"
           >
-            <StatusDot tone={status === "idle" ? "idle" : status === "failed" ? "failed" : status === "pass" ? "success" : "running"} />
+            <StatusDot
+              tone={
+                status === "idle"
+                  ? "idle"
+                  : status === "failed"
+                    ? "failed"
+                    : status === "pass"
+                      ? "success"
+                      : "running"
+              }
+            />
             {taskId ? (
               <>
                 <span className="truncate">

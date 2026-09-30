@@ -21,6 +21,7 @@ def check(group, name):
     def decorator(func):
         CHECKS.append((group, name, func))
         return func
+
     return decorator
 
 
@@ -39,14 +40,11 @@ def make_asset(action="walk", count=4):
                     "id": index,
                     "image": "frame{}.png".format(index),
                     "action": action,
-                    "anchor": {
-                        "root": {"x": 32 + index, "y": 60},
-                        "feet": {"x": 32, "y": 64}
-                    }
+                    "anchor": {"root": {"x": 32 + index, "y": 60}, "feet": {"x": 32, "y": 64}},
                 }
                 for index in range(count)
-            ]
-        }
+            ],
+        },
     }
 
 
@@ -54,13 +52,14 @@ def make_asset(action="walk", count=4):
 # FAlign (Phase 4)
 # ---------------------------------------------------------------
 
+
 @check("falign", "frame extraction normalizes frames and preserves hints")
 def _():
     from falign.extraction.frame_extractor import FrameExtractor
 
     frames = [
         {"image": "a.png", "action": "walk", "anchor": {"root": {"x": 1, "y": 2}}},
-        {"id": 7, "image": "b.png"}
+        {"id": 7, "image": "b.png"},
     ]
     result = FrameExtractor().process(frames)
 
@@ -135,7 +134,7 @@ def _():
     frames = [
         {"id": 0, "image": "a.png"},
         {"id": 1, "image": "b.png", "difference": 0.2},
-        {"id": 2, "image": "c.png", "difference": 0.1}
+        {"id": 2, "image": "c.png", "difference": 0.1},
     ]
     result = TemporalAnalyzer().analyze(frames)
 
@@ -155,7 +154,7 @@ def _():
     quality = AnimationEvaluator().evaluate(
         [{"root": {"x": 32, "y": 60}}],
         {"root_dx": 0, "root_dy": 0, "drift_corrected": True},
-        {"jitter_score": 0.04}
+        {"jitter_score": 0.04},
     )
 
     assert quality["anchor_score"] == 1.0
@@ -191,6 +190,7 @@ def _():
 # ---------------------------------------------------------------
 # GImport (Phase 5)
 # ---------------------------------------------------------------
+
 
 @check("gimport", "manifest generator emits the asset ID card")
 def _():
@@ -257,15 +257,19 @@ def _():
     assert prefab["name"] == "hero001.prefab"
     assert prefab["root"] == "hero001"
     assert prefab["components"] == [
-        "SpriteRenderer", "Animator", "Collider", "Script", "AnimationController"
+        "SpriteRenderer",
+        "Animator",
+        "Collider",
+        "Script",
+        "AnimationController",
     ]
 
 
 @check("gimport", "engine adapters map resources to engine paths")
 def _():
     from gimport.adapters.cocos_adapter import CocosAdapter
-    from gimport.adapters.unity_adapter import UnityAdapter
     from gimport.adapters.godot_adapter import GodotAdapter
+    from gimport.adapters.unity_adapter import UnityAdapter
 
     asset = {"id": "hero001"}
 
@@ -323,6 +327,7 @@ def _():
 # Creative Agent (Phase 6)
 # ---------------------------------------------------------------
 
+
 @check("agent", "intent analyzer detects engine and static goals")
 def _():
     from agent.planner.intent_analyzer import IntentAnalyzer
@@ -331,7 +336,12 @@ def _():
 
     intent = analyzer.analyze("制作角色并导入Unity")
     assert intent["engine"] == "unity"
-    assert intent["requires"]["animation_alignment"] is True
+    assert intent["requires"]["engine_import"] is True
+    # 动态规划（Phase 4）：未提到动画时不再强制 FAlign
+    assert intent["requires"]["animation_alignment"] is False
+
+    animated = analyzer.analyze("制作角色并导入Unity，再做一个攻击动画")
+    assert animated["requires"]["animation_alignment"] is True
 
     static = analyzer.analyze("生成一张静态角色立绘")
     assert static["requires"]["animation_alignment"] is False
@@ -343,11 +353,15 @@ def _():
 def _():
     from agent.planner.planner import Planner
 
-    plan = Planner().plan("制作一个像素RPG火焰法师")
+    plan = Planner().plan("制作一个像素RPG火焰法师，带攻击动画，并导入Unity")
     capabilities = [task["capability"] for task in plan["tasks"]]
 
     assert capabilities == ["generation", "PReCon", "FAlign", "GImport"]
-    assert plan["tasks"][3]["engine"] == "cocos"
+    assert plan["tasks"][3]["engine"] == "unity"
+
+    # 动态规划：只调度目标声明过的能力，而不是固定五段流水线
+    lean_plan = Planner().plan("制作一个像素RPG火焰法师")
+    assert [task["capability"] for task in lean_plan["tasks"]] == ["generation", "PReCon"]
 
     static_plan = Planner().plan("生成一张静态图标")
     assert "FAlign" not in [task["capability"] for task in static_plan["tasks"]]
@@ -404,22 +418,92 @@ def _():
 
     gate = QualityGate()
 
-    assert gate.check({})["status"] == "PENDING"
+    # 无下游处理器 = 合法完成（Phase 4 决策，例如 2D 概念图任务）
+    assert gate.check({})["status"] == "PASS"
 
-    passing = gate.check({"quality": {
-        "pixel": {"overall": 0.94},
-        "animation": {"overall": 0.95},
-        "engine": {"overall": 0.96}
-    }})
+    passing = gate.check(
+        {
+            "quality": {
+                "pixel": {"overall": 0.94},
+                "animation": {"overall": 0.95},
+                "engine": {"overall": 0.96},
+            }
+        }
+    )
     assert passing["status"] == "PASS"
     assert passing["retry"] == []
 
-    failing = gate.check({"quality": {
-        "pixel": {"overall": 0.5},
-        "animation": {"overall": 0.95}
-    }})
+    failing = gate.check({"quality": {"pixel": {"overall": 0.5}, "animation": {"overall": 0.95}}})
     assert failing["status"] == "RETRY"
     assert failing["retry"] == ["pixel"]
+
+
+@check("agent", "quality gate structure/timeline/performance dimensions")
+def _():
+    from agent.monitor.quality_gate import QualityGate
+
+    gate = QualityGate()
+
+    # 结构：manifest 一旦产出就必须带 asset_id（资产身份证）
+    assert gate.check({})["checks"]["structure"]["verdict"] == "SKIP"
+    no_id = gate.check({"manifest": {"name": "x"}})
+    assert no_id["checks"]["structure"]["verdict"] == "FAIL"
+    assert "structure" in no_id["retry"] and no_id["status"] == "RETRY"
+    ok_id = gate.check({"manifest": {"asset_id": "hero001"}})
+    assert ok_id["checks"]["structure"]["verdict"] == "PASS"
+    assert ok_id["status"] == "PASS"
+
+    # 时间轴：帧时长总和与 fps 推导周期矛盾 → FAIL
+    bad = gate.check({"animation": {"fps": 10, "frames": [{"duration": 1.0}, {"duration": 1.0}]}})
+    assert bad["checks"]["timeline"]["verdict"] == "FAIL"
+    assert "timeline" in bad["retry"]
+    good = gate.check({"animation": {"fps": 10, "frames": [{"duration": 0.1}, {"duration": 0.1}]}})
+    assert good["checks"]["timeline"]["verdict"] == "PASS"
+    hintless = gate.check({"animation": {"fps": 10, "frames": [{}, {}]}})
+    assert hintless["checks"]["timeline"]["verdict"] == "PASS"
+
+    # 性能：meta.performance 超预算 → FAIL（阈值与 release L4 同源）
+    over = gate.check({"meta": {"performance": {"execution_ms": 130000}}})
+    assert over["checks"]["performance"]["verdict"] == "FAIL"
+    assert over["status"] == "RETRY"
+    within = gate.check({"meta": {"performance": {"execution_ms": 1000, "peak_mb": 10}}})
+    assert within["checks"]["performance"]["verdict"] == "PASS"
+
+
+@check("agent", "json persistence recovers from corrupted main file via backup")
+def _():
+    import json
+    import os
+    import tempfile
+
+    from studio.backend.history_service.service import HistoryStore
+    from studio.backend.persistence import atomic_write_json, read_json_recover
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "store.json")
+
+        atomic_write_json(path, [{"id": "a"}])
+        assert read_json_recover(path) == [{"id": "a"}]
+
+        # 第二次写入成功后，.bak 保存上一份好副本
+        atomic_write_json(path, [{"id": "b"}])
+        assert read_json_recover(path + ".bak") == [{"id": "a"}]
+
+        # 主文件写一半截断 → 自动回退备份
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write('{"truncated": ')
+        assert read_json_recover(path) == [{"id": "a"}]
+
+        # HistoryStore 全链路：损坏主文件不吞历史（最多丢最后一次写入）
+        store_path = os.path.join(tmp, "history.json")
+        store = HistoryStore(store_path)
+        store.add({"task_id": "t1", "goal": "g"})
+        store.add({"task_id": "t2", "goal": "g2"})
+        with open(store_path, "w", encoding="utf-8") as handle:
+            handle.write("{corrupted")
+        revived = HistoryStore(store_path)
+        assert [r["task_id"] for r in revived._records] == ["t1"]
+        assert json.loads(open(store_path + ".bak", encoding="utf-8").read())[0]["task_id"] == "t1"
 
 
 class ScriptedExecutor:
@@ -444,7 +528,7 @@ def _():
         {"id": "t1", "capability": "GImport", "engine": "unity"},
         ValueError("first failure"),
         executor,
-        {"id": "hero001"}
+        {"id": "hero001"},
     )
 
     assert asset == {"id": "hero001"}
@@ -460,7 +544,7 @@ def _():
         {"id": "t1", "capability": "GImport", "engine": "unity"},
         ValueError("first failure"),
         ScriptedExecutor(fail_engines=("unity", "cocos")),
-        {"id": "hero001"}
+        {"id": "hero001"},
     )
 
     assert asset is None
@@ -470,11 +554,12 @@ def _():
 
 @check("agent", "workflow engine completes plans and resumes from checkpoints")
 def _():
-    from agent.workflow.workflow_engine import WorkflowEngine
     from agent.planner.planner import Planner
+    from agent.workflow.workflow_engine import WorkflowEngine
 
     workflow = WorkflowEngine()
-    plan = Planner().plan("制作一个像素RPG火焰法师")
+    # 动态规划：断言 engine.target 需要在目标里显式请求引擎导入
+    plan = Planner().plan("制作一个像素RPG火焰法师，并导入Cocos")
 
     first = workflow.run(plan)
     assert first["workflow"]["state"] == "success"
@@ -511,6 +596,7 @@ def _():
 # Multi-Agent System (Phase 7)
 # ---------------------------------------------------------------
 
+
 @check("multi-agent", "agent messages serialize and the bus routes them")
 def _():
     from protocol.message import AgentMessage, MessageBus
@@ -520,7 +606,7 @@ def _():
         "from": "ArtAgent",
         "to": "AnimationAgent",
         "type": "ASSET_READY",
-        "payload": {"asset_id": "mage001"}
+        "payload": {"asset_id": "mage001"},
     }
 
     bus = MessageBus()
@@ -558,24 +644,22 @@ def _():
 def _():
     from agents.supervisor.planner import SupervisorPlanner
 
-    plan = SupervisorPlanner().plan(
-        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
-    )
+    plan = SupervisorPlanner().plan("生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")
 
     assignments = [(task["agent"], task["action"]) for task in plan["tasks"]]
     assert assignments == [
         ("ArtAgent", "create_character"),
         ("ArtAgent", "pixel_reconstruction"),
         ("AnimationAgent", "create_animation"),
-        ("EngineAgent", "export_unity")
+        ("EngineAgent", "export_unity"),
     ]
     assert plan["intent"]["engine"] == "unity"
 
 
 @check("multi-agent", "task router dispatches and rejects unknown agents")
 def _():
-    from agents.supervisor.task_router import TaskRouter
     from agents.art_agent.art_agent import ArtAgent
+    from agents.supervisor.task_router import TaskRouter
 
     router = TaskRouter()
     router.register(ArtAgent())
@@ -595,19 +679,18 @@ def _():
         raise AssertionError("unknown action accepted")
 
     asset = router.dispatch(
-        {"agent": "ArtAgent", "action": "create_character", "goal": "火焰法师"},
-        None
+        {"agent": "ArtAgent", "action": "create_character", "goal": "火焰法师"}, None
     )
     assert asset["id"] == "mage001"
 
 
 @check("multi-agent", "each specialist agent handles its own actions")
 def _():
-    from agents.art_agent.art_agent import ArtAgent
     from agents.animation_agent.animation_agent import AnimationAgent
+    from agents.art_agent.art_agent import ArtAgent
     from agents.engine_agent.engine_agent import EngineAgent
-    from agents.qa_agent.qa_agent import QAAgent
     from agents.memory_agent.memory_agent import MemoryAgent
+    from agents.qa_agent.qa_agent import QAAgent
 
     art = ArtAgent()
     assert art.can_handle("create_character")
@@ -637,18 +720,13 @@ def _():
 def _():
     from agents.supervisor.supervisor import SupervisorAgent
 
-    result = SupervisorAgent().run(
-        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
-    )
+    result = SupervisorAgent().run("生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")
 
     types = [message["type"] for message in result["messages"]]
     assert types.count("ASSET_READY") >= 2
     assert "QUALITY_REPORT" in types
 
-    handoffs = [
-        message for message in result["messages"]
-        if message["type"] == "ASSET_READY"
-    ]
+    handoffs = [message for message in result["messages"] if message["type"] == "ASSET_READY"]
     assert handoffs[0]["from"] == "ArtAgent"
     assert handoffs[0]["to"] == "AnimationAgent"
 
@@ -657,16 +735,11 @@ def _():
 def _():
     from agents.supervisor.supervisor import SupervisorAgent
 
-    result = SupervisorAgent().run(
-        "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity"
-    )
+    result = SupervisorAgent().run("生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity")
 
     supervisor = result["supervisor"]
     assert supervisor["status"] == "PASS"
-    assert all(
-        step["status"] in ("success", "recovered")
-        for step in supervisor["steps"]
-    )
+    assert all(step["status"] in ("success", "recovered") for step in supervisor["steps"])
 
     asset = result["asset"]
     assert asset["quality"]["report"]["status"] == "PASS"
@@ -693,6 +766,32 @@ def _():
     assert asset["engine"]["manifest"]["valid"] is True
     assert asset["engine"]["validation"]["status"] == "success"
     assert asset["quality"]["report"]["status"] == "PASS"
+
+
+@check("architecture", "legacy systems stay frozen (no imports from backend/ or frontend/)")
+def _():
+    """Q4 4.2 遗留冻结：backend/（Phase 11-23 旧后端）与 frontend/（MVP）已冻结，
+    活跃代码不得新增对它们的依赖——迁移完成后整体删除（docs/legacy-inventory.md）。"""
+    import os
+    import re
+
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    pattern = re.compile(
+        r"^\s*(?:from|import)\s+(?:backend|frontend)\b",
+        re.MULTILINE,
+    )
+    offenders = []
+    for top in ("agent", "agents", "artgen", "adapters", "studio", "tests"):
+        for dirpath, dirnames, filenames in os.walk(os.path.join(root, top)):
+            dirnames[:] = [d for d in dirnames if d != "__pycache__"]
+            for filename in filenames:
+                if not filename.endswith(".py"):
+                    continue
+                path = os.path.join(dirpath, filename)
+                with open(path, encoding="utf-8") as handle:
+                    if pattern.search(handle.read()):
+                        offenders.append(os.path.relpath(path, root))
+    assert not offenders, "frozen legacy imports in: {}".format(offenders[:5])
 
 
 def main():

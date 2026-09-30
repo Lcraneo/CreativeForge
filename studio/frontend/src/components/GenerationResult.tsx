@@ -54,7 +54,11 @@ export function GenerationResult({ asset }: Props) {
     <Card title="生成结果 Generation Result" icon="spark" iconClassName="text-primary">
       <div className="flex flex-wrap items-center gap-5">
         <div className="grid h-36 w-36 shrink-0 place-items-center overflow-hidden rounded-xl border border-line-subtle bg-surface-1">
-          <img src={image} alt={asset.name ?? "generated"} className="h-full w-full object-contain" />
+          <img
+            src={image}
+            alt={asset.name ?? "generated"}
+            className="h-full w-full object-contain"
+          />
         </div>
         <div className="min-w-[220px] flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -71,7 +75,12 @@ export function GenerationResult({ asset }: Props) {
             <Button variant="primary" size="sm" icon="cube" onClick={() => navigate("/asset")}>
               查看资产
             </Button>
-            <Button variant="secondary" size="sm" icon="film" onClick={() => navigate("/animation")}>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="film"
+              onClick={() => navigate("/animation")}
+            >
               动画工作台
             </Button>
             {!review && (

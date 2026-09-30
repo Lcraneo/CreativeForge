@@ -36,9 +36,16 @@ def analyze_rgba(width, height, rgba):
     """Pixel statistics -> style profile."""
     total = width * height
     if total == 0:
-        return {"style": "2d_semi", "style_label": STYLE_LABELS["2d_semi"],
-                "confidence": 0.0, "palette_size": 0, "edge_density": 0.0,
-                "flat_ratio": 0.0, "saturation": 0.0, "luminance_std": 0.0}
+        return {
+            "style": "2d_semi",
+            "style_label": STYLE_LABELS["2d_semi"],
+            "confidence": 0.0,
+            "palette_size": 0,
+            "edge_density": 0.0,
+            "flat_ratio": 0.0,
+            "saturation": 0.0,
+            "luminance_std": 0.0,
+        }
     colors = set()
     sat_sum = lum_sum = lum_sq = 0.0
     edge = 0
@@ -146,12 +153,15 @@ def extract_character(width, height, rgba, metadata=None):
 
     palette = []
     if isinstance(metadata, dict):
-        roles = (((metadata.get("pixel") or {}).get("palette") or {}).get("semantic_roles")
-                 or ((metadata.get("source") or {}).get("palette")))
+        roles = ((metadata.get("pixel") or {}).get("palette") or {}).get("semantic_roles") or (
+            (metadata.get("source") or {}).get("palette")
+        )
         if isinstance(roles, dict):
-            palette = [roles[k] for k in
-                       ("outline", "base", "highlight", "accent", "hair", "skin", "eyes", "metal")
-                       if roles.get(k)]
+            palette = [
+                roles[k]
+                for k in ("outline", "base", "highlight", "accent", "hair", "skin", "eyes", "metal")
+                if roles.get(k)
+            ]
     return {
         "bbox": bbox,
         "size": [width, height],
@@ -166,6 +176,7 @@ def extract_character(width, height, rgba, metadata=None):
 # consistency / similarity
 # --------------------------------------------------------------------------
 
+
 def _resample(width, height, rgba, target):
     out = bytearray(target * target * 4)
     for ty in range(target):
@@ -174,7 +185,7 @@ def _resample(width, height, rgba, target):
             sx = min(width - 1, int(tx * width / target))
             o = (sy * width + sx) * 4
             d = (ty * target + tx) * 4
-            out[d:d + 4] = rgba[o:o + 4]
+            out[d : d + 4] = rgba[o : o + 4]
     return out
 
 

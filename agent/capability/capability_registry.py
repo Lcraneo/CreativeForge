@@ -1,16 +1,23 @@
+from agent.generation.builder import build_asset, edit_asset
+from gimport.pipeline.gimport_engine import GImportEngine
 from precon.pipeline.precon_engine import PReConEngine
 from precon.quality import evaluate_pixel
-from adapters.creative_asset_adapter import CreativeAssetAdapter
-from gimport.pipeline.gimport_engine import GImportEngine
-from agent.generation.builder import build_asset
 
 
 class Capability:
     """One registered capability: the Planner selects these, never code."""
 
-    def __init__(self, name, type, handler=None, agent=None,
-                 input="CreativeAsset", output="CreativeAsset",
-                 cost=0.0, quality=1.0):
+    def __init__(
+        self,
+        name,
+        type,
+        handler=None,
+        agent=None,
+        input="CreativeAsset",
+        output="CreativeAsset",
+        cost=0.0,
+        quality=1.0,
+    ):
         self.name = name
         self.type = type
         self.handler = handler
@@ -27,7 +34,7 @@ class Capability:
             "input": self.input,
             "output": self.output,
             "cost": self.cost,
-            "quality": self.quality
+            "quality": self.quality,
         }
 
 
@@ -91,7 +98,7 @@ def _reconstruct_from_ai_image(source, style):
         raw_palette = quantized.getpalette() or []
 
         def _hexat(index):
-            r, g, b = raw_palette[index * 3:index * 3 + 3]
+            r, g, b = raw_palette[index * 3 : index * 3 + 3]
             return "#{:02x}{:02x}{:02x}".format(r, g, b)
 
         colors = []
@@ -140,7 +147,7 @@ def _reconstruct_from_ai_image(source, style):
             "connectivity": 8,
             "style": contour_style,
             "repaired": True,
-            "repaired_pixels": 0
+            "repaired_pixels": 0,
         }
         return {
             "pixel": {
@@ -154,6 +161,17 @@ def _reconstruct_from_ai_image(source, style):
         }
     except Exception:
         return None
+
+
+def edit_existing_asset(asset, task):
+    return edit_asset(asset, (task or {}).get("goal", ""), task)
+
+
+def inspect_asset(asset, task):
+    if asset is None:
+        raise ValueError("inspect_asset requires an existing CreativeAsset")
+    asset.setdefault("agent", {})["last_intent"] = (task or {}).get("goal", "")
+    return asset
 
 
 def run_precon(asset, task):
@@ -183,7 +201,80 @@ def run_precon(asset, task):
 
 
 def run_falign(asset, task):
-    return CreativeAssetAdapter().export_asset(asset)
+    if asset is None:
+        raise ValueError("FAlign requires a CreativeAsset")
+
+    animation = asset.setdefault("animation", {})
+    action = (task or {}).get("action_name") or animation.get("action") or "walk"
+    if action not in {"idle", "walk", "run", "attack", "jump", "cast", "hit"}:
+        action = "walk"
+
+    # The Agent path must produce real frames before FAlign. Prefer the actual
+    # AI artwork; when no external artwork exists, render the current asset
+    # itself. This keeps the dynamic Studio workflow useful without inventing
+    # a separate fixed demo character.
+    source_bytes = None
+    source = asset.get("source") or {}
+    image = asset.get("image") or {}
+    candidates = [image, source.get("ai_image") if isinstance(source, dict) else None]
+    for meta in candidates:
+        if not isinstance(meta, dict):
+            continue
+        path = meta.get("path")
+        if path:
+            try:
+                with open(path, "rb") as handle:
+                    source_bytes = handle.read()
+                break
+            except OSError:
+                pass
+
+    if source_bytes is None:
+        try:
+            from artgen import render_asset_view
+
+            source_bytes = render_asset_view(asset, "front", 384)
+        except Exception as error:
+            raise RuntimeError("无法为 FAlign 获取当前角色源图: {}".format(error))
+
+    from artgen.pipeline import create_animation
+    from falign.pipeline.falign_engine import FAlignEngine
+
+    fps = int(animation.get("fps", 12) or 12)
+    result = create_animation(
+        source_bytes=source_bytes,
+        action=action,
+        fps=fps,
+        duration=max(0.5, min(4.0, float(animation.get("duration", 1.0) or 1.0))),
+        size=384,
+        view="front",
+    )
+
+    prepared = [
+        {"id": index, "image": frame, "action": action}
+        for index, frame in enumerate(result["frames"])
+    ]
+    aligned = FAlignEngine().process(prepared)
+
+    # Keep CreativeAsset JSON-safe: raw PNG bytes stay in the animation result
+    # only through derived render metadata, while FAlign keeps its structural
+    # frame/anchor/phase information on the asset contract.
+    animation.update(aligned["animation"])
+    animation["frames"] = [
+        {"id": index, "action": action, "image": None} for index in range(len(result["frames"]))
+    ]
+    animation["fps"] = result["fps"]
+    animation["loop"] = result["loop"]
+    animation["render"] = {
+        "action": result["action"],
+        "frame_count": result["frame_count"],
+        "duration": result["duration"],
+        "size": result["size"],
+        "consistency": result["consistency"],
+        "source": "current-character-source",
+    }
+    asset.setdefault("quality", {})["animation"] = aligned["quality"]["animation"]
+    return asset
 
 
 def run_gimport(asset, task):
@@ -193,11 +284,11 @@ def run_gimport(asset, task):
         "target": engine,
         "manifest": result["manifest"],
         "validation": result["validation"],
-        "resources": result["engine"]["resources"]
+        "resources": result["engine"]["resources"],
     }
     asset.setdefault("quality", {})["engine"] = {
         "overall": result["validation"]["score"],
-        "status": result["validation"]["status"]
+        "status": result["validation"]["status"],
     }
     return asset
 
@@ -205,17 +296,23 @@ def run_gimport(asset, task):
 def build_default_registry():
     """Default capability registry binding the Phase 1-5 engines."""
     registry = CapabilityRegistry()
-    registry.register(Capability(
-        "generation", "generator", handler=generate_asset,
-        input="Prompt", output="CreativeAsset", cost=1.0, quality=0.9
-    ))
-    registry.register(Capability(
-        "PReCon", "processor", handler=run_precon, cost=0.2, quality=0.95
-    ))
-    registry.register(Capability(
-        "FAlign", "processor", handler=run_falign, cost=0.2, quality=0.95
-    ))
-    registry.register(Capability(
-        "GImport", "exporter", handler=run_gimport, cost=0.1, quality=0.96
-    ))
+    registry.register(
+        Capability(
+            "generation",
+            "generator",
+            handler=generate_asset,
+            input="Prompt|CreativeAsset",
+            output="CreativeAsset",
+            cost=1.0,
+            quality=0.9,
+        )
+    )
+    registry.register(Capability("PReCon", "processor", handler=run_precon, cost=0.2, quality=0.95))
+    registry.register(
+        Capability("asset_edit", "transformer", handler=edit_existing_asset, cost=0.1, quality=0.9)
+    )
+    registry.register(Capability("FAlign", "processor", handler=run_falign, cost=0.2, quality=0.95))
+    registry.register(
+        Capability("GImport", "exporter", handler=run_gimport, cost=0.1, quality=0.96)
+    )
     return registry

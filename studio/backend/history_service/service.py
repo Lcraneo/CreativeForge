@@ -4,13 +4,12 @@ Each finished Studio task is appended here so the History view survives
 restarts. Records are kept in a single JSON file keyed by ``task_id``.
 """
 
-import json
 import os
 import threading
 
-DEFAULT_HISTORY_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "history.json"
-)
+from studio.backend.persistence import atomic_write_json, read_json_recover
+
+DEFAULT_HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history.json")
 
 
 class HistoryStore:
@@ -21,18 +20,13 @@ class HistoryStore:
         self._load()
 
     def _load(self):
-        if os.path.isfile(self.path):
-            try:
-                with open(self.path, "r", encoding="utf-8") as handle:
-                    data = json.load(handle)
-                self._records = data if isinstance(data, list) else []
-            except (ValueError, OSError):
-                self._records = []
+        data = read_json_recover(self.path)
+        if isinstance(data, list):
+            self._records = data
 
     def _save(self):
         try:
-            with open(self.path, "w", encoding="utf-8") as handle:
-                json.dump(self._records, handle, ensure_ascii=False, indent=2)
+            atomic_write_json(self.path, self._records)
         except OSError:
             pass
 
@@ -48,8 +42,10 @@ class HistoryStore:
         record = dict(record)
         with self._lock:
             existing = {r.get("id") for r in self._records}
-            rid = record.get("id") or record.get("task_id") or "H{:04d}".format(
-                len(self._records) + 1
+            rid = (
+                record.get("id")
+                or record.get("task_id")
+                or "H{:04d}".format(len(self._records) + 1)
             )
             if rid in existing:
                 suffix = 2
@@ -71,18 +67,14 @@ class HistoryStore:
 
         if len(self._records) <= self.MAX_RECORDS:
             return
-        overflow = self._records[:-self.MAX_RECORDS]
-        self._records = self._records[-self.MAX_RECORDS:]
+        overflow = self._records[: -self.MAX_RECORDS]
+        self._records = self._records[-self.MAX_RECORDS :]
         archive_path = self.path + ".archive.json"
         try:
-            existing = []
-            if os.path.isfile(archive_path):
-                with open(archive_path, "r", encoding="utf-8") as handle:
-                    data = json.load(handle)
-                existing = data if isinstance(data, list) else []
+            existing = read_json_recover(archive_path)
+            existing = existing if isinstance(existing, list) else []
             existing.extend(overflow)
-            with open(archive_path, "w", encoding="utf-8") as handle:
-                json.dump(existing, handle, ensure_ascii=False)
+            atomic_write_json(archive_path, existing, indent=None)
         except (ValueError, OSError):
             pass
 
@@ -155,9 +147,7 @@ class HistoryStore:
 
         with self._lock:
             before = len(self._records)
-            self._records = [
-                record for record in self._records if record.get("id") != record_id
-            ]
+            self._records = [record for record in self._records if record.get("id") != record_id]
             removed = before - len(self._records)
             if removed:
                 self._save()

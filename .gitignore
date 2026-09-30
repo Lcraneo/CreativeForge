@@ -6,6 +6,10 @@ studio/backend/data/
 tests/release/_tmp_runtime/
 .workbuddy/
 .zcode_tmp_*
+.zcode_tmp/
+
+# 含真实密钥，一律本地持有（key 轮换后亦不得重新入库）
+studio/backend/model_service/model_settings.json
 
 # backend (Phase 11-15)
 backend/.env
@@ -17,4 +21,6 @@ studio/backend/.env
 # frontend (Phase 21)
 node_modules/
 frontend/dist/
+studio/frontend/dist/
 *.tsbuildinfo
+*.local

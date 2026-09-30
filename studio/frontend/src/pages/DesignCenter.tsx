@@ -1,16 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  KV,
-  PageHeader,
-  Segmented,
-  cx,
-} from "../components/ui";
+import { Badge, Button, Card, EmptyState, KV, PageHeader, Segmented, cx } from "../components/ui";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
@@ -73,7 +64,10 @@ export default function DesignCenter() {
   ].filter(Boolean);
 
   function viewUrl(view: ViewId): string | undefined {
-    return views?.[view]?.url ?? (view === "front" ? asset?.image?.url ?? asset?.source?.ai_image?.url : undefined);
+    return (
+      views?.[view]?.url ??
+      (view === "front" ? (asset?.image?.url ?? asset?.source?.ai_image?.url) : undefined)
+    );
   }
 
   async function generateViews() {
@@ -82,7 +76,11 @@ export default function DesignCenter() {
     try {
       const next = await api.generateDesignViews(asset.id);
       setAsset({ ...asset, design_views: next });
-      toast({ tone: "success", title: "AI 三视图已生成", description: "基于阿里云图像编辑模型，与原画同源" });
+      toast({
+        tone: "success",
+        title: "AI 三视图已生成",
+        description: "基于阿里云图像编辑模型，与原画同源",
+      });
     } catch (cause) {
       toast({ tone: "danger", title: "三视图生成失败", description: String(cause).slice(0, 200) });
     } finally {
@@ -96,7 +94,11 @@ export default function DesignCenter() {
     try {
       const payload = await api.restyleAsset(asset.id, restyleStyle);
       setAsset({ ...asset, restyle: payload });
-      toast({ tone: "success", title: "风格迁移完成", description: `${restyleStyle} · ${payload.model ?? ""}` });
+      toast({
+        tone: "success",
+        title: "风格迁移完成",
+        description: `${restyleStyle} · ${payload.model ?? ""}`,
+      });
     } catch (cause) {
       toast({ tone: "danger", title: "风格迁移失败", description: String(cause).slice(0, 200) });
     } finally {
@@ -110,7 +112,11 @@ export default function DesignCenter() {
     try {
       const payload = await api.cutoutAsset(asset.id);
       setAsset({ ...asset, cutout_png: payload.cutout_png });
-      toast({ tone: "success", title: "透明底立绘已生成", description: "可在资产检查器查看与导出" });
+      toast({
+        tone: "success",
+        title: "透明底立绘已生成",
+        description: "可在资产检查器查看与导出",
+      });
     } catch (cause) {
       toast({ tone: "danger", title: "透明底生成失败", description: String(cause).slice(0, 200) });
     } finally {
@@ -137,12 +143,7 @@ export default function DesignCenter() {
               seed {spec.seed}
             </Badge>
             {aiImageAvailable(asset) && (
-              <Button
-                variant="ember"
-                icon="image"
-                loading={generating}
-                onClick={generateViews}
-              >
+              <Button variant="ember" icon="image" loading={generating} onClick={generateViews}>
                 {views?.side ? "重新生成三视图" : "生成 AI 三视图"}
               </Button>
             )}
@@ -170,11 +171,7 @@ export default function DesignCenter() {
           title="三视图 Turnaround"
           icon="image"
           right={
-            <Segmented
-              options={VIEWS.map((v) => ({ ...v }))}
-              value={pose}
-              onChange={setPose}
-            />
+            <Segmented options={VIEWS.map((v) => ({ ...v }))} value={pose} onChange={setPose} />
           }
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -185,7 +182,7 @@ export default function DesignCenter() {
                   key={view}
                   onClick={() => setPose(view)}
                   className={cx(
-                    "group flex flex-col items-center gap-3 rounded-xl border p-4 transition-all duration-150 ease-standard",
+                    "group flex flex-col items-center gap-3 rounded-xl border p-4 transition-all duration-(--motion-fast) ease-standard",
                     pose === view
                       ? "border-primary/45 bg-primary-tint/50"
                       : "border-line-subtle bg-[#f1efe9] hover:border-line",
@@ -245,10 +242,7 @@ export default function DesignCenter() {
               value={[spec.eyes_label, spec.skin_label].filter(Boolean).join(" · ") || "—"}
             />
             <KV label="武器" value={spec.weapon_label ?? "—"} />
-            <KV
-              label="配饰"
-              value={spec.accessory?.length ? spec.accessory.join(" / ") : "无"}
-            />
+            <KV label="配饰" value={spec.accessory?.length ? spec.accessory.join(" / ") : "无"} />
             <KV label="身高" value={spec.height_cm != null ? `${spec.height_cm} cm` : "—"} />
           </Card>
 
@@ -257,7 +251,11 @@ export default function DesignCenter() {
             icon="spark"
             right={
               <div className="flex flex-wrap items-center gap-1.5">
-                {asset.image ? <Badge tone="primary">{asset.image.provider}</Badge> : <Badge tone="neutral">未生成</Badge>}
+                {asset.image ? (
+                  <Badge tone="primary">{asset.image.provider}</Badge>
+                ) : (
+                  <Badge tone="neutral">未生成</Badge>
+                )}
                 {aiImageAvailable(asset) && (
                   <>
                     <Segmented
@@ -269,10 +267,22 @@ export default function DesignCenter() {
                       value={restyleStyle}
                       onChange={setRestyleStyle}
                     />
-                    <Button variant="secondary" size="sm" icon="spark" loading={restyleBusy} onClick={doRestyle}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="spark"
+                      loading={restyleBusy}
+                      onClick={doRestyle}
+                    >
                       风格迁移
                     </Button>
-                    <Button variant="secondary" size="sm" icon="eraser" loading={cutoutBusy} onClick={doCutout}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="eraser"
+                      loading={cutoutBusy}
+                      onClick={doCutout}
+                    >
                       透明底
                     </Button>
                   </>
@@ -296,7 +306,9 @@ export default function DesignCenter() {
             )}
             {asset.cutout_png && (
               <div className="mb-3 overflow-hidden rounded-[10px] border border-dashed border-primary/40 bg-white">
-                <p className="px-3 pt-2 text-[11px] text-ink-3">透明底立绘（棋盘格外的都是透明像素）</p>
+                <p className="px-3 pt-2 text-[11px] text-ink-3">
+                  透明底立绘（棋盘格外的都是透明像素）
+                </p>
                 <a href={asset.cutout_png} target="_blank" rel="noreferrer">
                   <img
                     src={asset.cutout_png}
@@ -322,7 +334,8 @@ export default function DesignCenter() {
               </div>
             ) : (
               <p className="text-[12.5px] leading-[19px] text-ink-3">
-                未生成 AI 原画（离线管线或未启用自定义模型）。三视图与像素资产不依赖原图，仍可正常导出。
+                未生成 AI
+                原画（离线管线或未启用自定义模型）。三视图与像素资产不依赖原图，仍可正常导出。
               </p>
             )}
             <button
@@ -350,7 +363,7 @@ export default function DesignCenter() {
                       navigator.clipboard?.writeText(color).catch(() => undefined);
                       toast({ tone: "info", title: "已复制色值", description: color });
                     }}
-                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-150 ease-standard hover:scale-110"
+                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-(--motion-fast) ease-standard hover:scale-110"
                     style={{ background: color }}
                   />
                 ))}
@@ -370,6 +383,9 @@ export default function DesignCenter() {
   );
 }
 
-function aiImageAvailable(asset: { image?: { url?: string } | null; source?: { ai_image?: { url?: string } | null } | null }): boolean {
+function aiImageAvailable(asset: {
+  image?: { url?: string } | null;
+  source?: { ai_image?: { url?: string } | null } | null;
+}): boolean {
   return Boolean(asset.image?.url || asset.source?.ai_image?.url);
 }

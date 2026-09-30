@@ -78,10 +78,14 @@ def _side_frame(painter, colors, traits, action, phase, config=None):
     fdx, fdy = _foot_path(far_p, p["stride"], p["lift"])
     far_foot = (hip[0] + fdx, ground - fdy)
     limb(hip, far_foot, 54.0, 54.0, bend=1.0, w1=26, w2=19, fill=c["base_dark"])
-    painter.shape(ellipse(far_foot[0] + 8.0, far_foot[1] - 6.0, 36, 20), c["base_dark"], c["outline"], 4)
+    painter.shape(
+        ellipse(far_foot[0] + 8.0, far_foot[1] - 6.0, 36, 20), c["base_dark"], c["outline"], 4
+    )
     far_shoulder = (chest[0] - 12.0, chest[1] + 18.0)
-    far_hand = (far_shoulder[0] - p["arm"] * math.cos(2.0 * math.pi * phase) * 0.9 - 6.0,
-                far_shoulder[1] + 66.0 + p["arm"] * 0.35 * math.sin(2.0 * math.pi * phase))
+    far_hand = (
+        far_shoulder[0] - p["arm"] * math.cos(2.0 * math.pi * phase) * 0.9 - 6.0,
+        far_shoulder[1] + 66.0 + p["arm"] * 0.35 * math.sin(2.0 * math.pi * phase),
+    )
     limb(far_shoulder, far_hand, 40.0, 42.0, bend=1.0, w1=19, w2=15, fill=c["base_dark"])
     painter.shape(ellipse(far_hand[0], far_hand[1], 20, 20), c["base_dark"], c["outline"], 3)
 
@@ -90,13 +94,24 @@ def _side_frame(painter, colors, traits, action, phase, config=None):
     tail_root = (hip[0] - 58.0, hip[1] - 6.0)
     tail_mid = (tail_root[0] - 46.0, tail_root[1] - 26.0 + math.sin(tail_phase) * 9.0)
     tail_tip = (tail_mid[0] - 34.0, tail_mid[1] - 18.0 + math.sin(tail_phase + 0.7) * 12.0)
-    painter.shape(capsule(tail_root[0], tail_root[1], tail_mid[0], tail_mid[1], 16), c["base"], c["outline"], 4)
-    painter.shape(capsule(tail_mid[0], tail_mid[1], tail_tip[0], tail_tip[1], 9), c["base"], c["outline"], 4)
+    painter.shape(
+        capsule(tail_root[0], tail_root[1], tail_mid[0], tail_mid[1], 16),
+        c["base"],
+        c["outline"],
+        4,
+    )
+    painter.shape(
+        capsule(tail_mid[0], tail_mid[1], tail_tip[0], tail_tip[1], 9), c["base"], c["outline"], 4
+    )
     painter.shape(ellipse(tail_tip[0], tail_tip[1], 17, 17), c["belly"], c["outline"], 3)
 
     # ---- torso: capsule hip -> chest, carrying the lean --------------------
-    painter.shape(capsule(hip[0], hip[1] - 10.0, chest[0], chest[1], 46), c["base"], c["outline"], 6)
-    painter.shape(ellipse((hip[0] + chest[0]) / 2 + 12.0, (hip[1] + chest[1]) / 2, 42, 52), c["belly"], None)
+    painter.shape(
+        capsule(hip[0], hip[1] - 10.0, chest[0], chest[1], 46), c["base"], c["outline"], 6
+    )
+    painter.shape(
+        ellipse((hip[0] + chest[0]) / 2 + 12.0, (hip[1] + chest[1]) / 2, 42, 52), c["belly"], None
+    )
     _scarf(painter, chest[0] - 6.0, chest[1] - 6.0, 74, 22, traits)
 
     # ---- head (profile: muzzle to the right) -------------------------------
@@ -107,27 +122,40 @@ def _side_frame(painter, colors, traits, action, phase, config=None):
     painter.shape(ellipse(head_c[0] + 21.0, head_c[1] - 11.0, 3.5, 4.5), c["white"], None)
     _side_ear(painter, head_c, c)
     if traits.get("has_horn"):
-        painter.shape(capsule(head_c[0] - 14.0, head_c[1] - 54.0, head_c[0] - 30.0, head_c[1] - 84.0, 7),
-                      c["accent"], c["outline"], 3)
+        painter.shape(
+            capsule(head_c[0] - 14.0, head_c[1] - 54.0, head_c[0] - 30.0, head_c[1] - 84.0, 7),
+            c["accent"],
+            c["outline"],
+            3,
+        )
 
     # ---- near arm (in front of torso, opposite swing to near leg) ----------
     near_shoulder = (chest[0] + 6.0, chest[1] + 14.0)
-    near_hand = (near_shoulder[0] + p["arm"] * math.cos(2.0 * math.pi * phase) * 0.9,
-                 near_shoulder[1] + 64.0 - p["arm"] * 0.35 * math.sin(2.0 * math.pi * phase))
+    near_hand = (
+        near_shoulder[0] + p["arm"] * math.cos(2.0 * math.pi * phase) * 0.9,
+        near_shoulder[1] + 64.0 - p["arm"] * 0.35 * math.sin(2.0 * math.pi * phase),
+    )
     limb(near_shoulder, near_hand, 42.0, 44.0, bend=-1.0, w1=21, w2=16, fill=c["base"])
     painter.shape(ellipse(near_hand[0], near_hand[1], 21, 21), c["belly"], c["outline"], 3)
     if traits.get("has_weapon"):
         rad = math.radians(56.0)
         tip = (near_hand[0] + math.cos(rad) * 108.0, near_hand[1] - math.sin(rad) * 108.0)
-        painter.shape(capsule(near_hand[0], near_hand[1], tip[0], tip[1], 9), c["metal"], c["outline"], 4)
-        painter.shape(capsule(near_hand[0], near_hand[1], tip[0], tip[1], 3.5),
-                      _mix(c["metal"], (255, 255, 255), 0.5), None)
+        painter.shape(
+            capsule(near_hand[0], near_hand[1], tip[0], tip[1], 9), c["metal"], c["outline"], 4
+        )
+        painter.shape(
+            capsule(near_hand[0], near_hand[1], tip[0], tip[1], 3.5),
+            _mix(c["metal"], (255, 255, 255), 0.5),
+            None,
+        )
 
     # ---- near leg (drawn last, in front of the torso) ----------------------
     ndx, ndy = _foot_path(phase, p["stride"], p["lift"])
     near_foot = (hip[0] + ndx, ground - ndy)
     limb(hip, near_foot, 54.0, 54.0, bend=1.0, w1=29, w2=21, fill=c["base"])
-    painter.shape(ellipse(near_foot[0] + 8.0, near_foot[1] - 6.0, 38, 21), c["base"], c["outline"], 5)
+    painter.shape(
+        ellipse(near_foot[0] + 8.0, near_foot[1] - 6.0, 38, 21), c["base"], c["outline"], 5
+    )
 
 
 def _side_ear(painter, head_c, c):

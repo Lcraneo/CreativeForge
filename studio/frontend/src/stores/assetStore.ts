@@ -43,7 +43,8 @@ export function useAssetLoader(assetId?: string | null): CreativeAsset | null {
         if (!fromHistory) throw new Error("no asset yet");
         return fromHistory;
       });
-    loader.then((result) => {
+    loader
+      .then((result) => {
         if (cancelled) return;
         set(result);
         setLoading(false);

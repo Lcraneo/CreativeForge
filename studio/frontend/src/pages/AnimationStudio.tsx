@@ -5,6 +5,7 @@ import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
 import { toast } from "../stores/toastStore";
+import { preloadImages } from "../lib/preload";
 
 const ACTIONS = ["idle", "walk", "run", "attack", "jump"];
 const ACTION_LABELS: Record<string, string> = {
@@ -17,7 +18,13 @@ const ACTION_LABELS: Record<string, string> = {
 };
 const SIZES = [256, 384, 512, 768];
 
-const POSE_PARAMS: Array<{ key: keyof PoseConfig; label: string; min: number; max: number; step: number }> = [
+const POSE_PARAMS: Array<{
+  key: keyof PoseConfig;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+}> = [
   { key: "bob", label: "上下起伏", min: 0, max: 2, step: 0.05 },
   { key: "stride", label: "步幅 / 腿部摆动", min: 0, max: 2, step: 0.05 },
   { key: "arm", label: "摆臂幅度", min: 0, max: 2, step: 0.05 },
@@ -137,7 +144,9 @@ export default function AnimationStudio() {
   const [phase, setPhase] = useState(0);
   const [frameUrl, setFrameUrl] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [presets, setPresets] = useState<Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>>([]);
+  const [presets, setPresets] = useState<
+    Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>
+  >([]);
   const [presetName, setPresetName] = useState("");
   const [editorBusy, setEditorBusy] = useState(false);
 
@@ -178,13 +187,29 @@ export default function AnimationStudio() {
     [action, fps, duration, size, upload, asset?.id, skeletal, view, busy, useVideo],
   );
 
+  // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
+  // 用户往下滚动到逐帧网格/播放时不再有首次解码尖峰
+  useEffect(() => {
+    if (!result) return;
+    void preloadImages(
+      [result.urls.gif, result.urls.sheet, ...(result.frame_urls ?? [])],
+      0,
+    );
+  }, [result]);
+
   // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
   useEffect(() => {
     if (mode !== "editor") return;
     let alive = true;
     const timer = setTimeout(() => {
       api
-        .previewAnimationFrame({ action: editorAction, view: editorView, phase, size: 384, pose_config: poseConfig })
+        .previewAnimationFrame({
+          action: editorAction,
+          view: editorView,
+          phase,
+          size: 384,
+          pose_config: poseConfig,
+        })
         .then((url) => {
           if (!alive) {
             URL.revokeObjectURL(url);
@@ -221,7 +246,12 @@ export default function AnimationStudio() {
     if (!presetName.trim() || editorBusy) return;
     setEditorBusy(true);
     try {
-      await api.saveCustomAction({ name: presetName.trim(), action: editorAction, view: editorView, pose_config: poseConfig });
+      await api.saveCustomAction({
+        name: presetName.trim(),
+        action: editorAction,
+        view: editorView,
+        pose_config: poseConfig,
+      });
       const r = await api.listCustomActions();
       setPresets(r.actions);
       setError(null);
@@ -342,7 +372,11 @@ export default function AnimationStudio() {
                   >
                     在线预览
                   </button>
-                  <a className="text-[12px] text-ink-3 underline decoration-line" href={result.urls.gif} download>
+                  <a
+                    className="text-[12px] text-ink-3 underline decoration-line"
+                    href={result.urls.gif}
+                    download
+                  >
                     下载 GIF
                   </a>
                 </div>
@@ -351,7 +385,11 @@ export default function AnimationStudio() {
           >
             <div className="flex h-[320px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
               {mode === "editor" && frameUrl ? (
-                <img src={frameUrl} alt="pose preview" className="max-h-[300px] max-w-full object-contain" />
+                <img
+                  src={frameUrl}
+                  alt="pose preview"
+                  className="max-h-[300px] max-w-full object-contain"
+                />
               ) : result ? (
                 mainError ? (
                   <div className="px-6 text-center text-sm text-danger">
@@ -366,9 +404,17 @@ export default function AnimationStudio() {
                   />
                 )
               ) : upload ? (
-                <img src={upload.dataUrl} alt="source" className="max-h-[300px] max-w-full object-contain" />
+                <img
+                  src={upload.dataUrl}
+                  alt="source"
+                  className="max-h-[300px] max-w-full object-contain"
+                />
               ) : assetImage ? (
-                <img src={assetImage} alt="source" className="max-h-[300px] max-w-full object-contain" />
+                <img
+                  src={assetImage}
+                  alt="source"
+                  className="max-h-[300px] max-w-full object-contain"
+                />
               ) : (
                 <div className="text-sm text-ink-3">生成资产，或上传一张图片作为动画源。</div>
               )}
@@ -386,7 +432,11 @@ export default function AnimationStudio() {
                         ? `资产 · ${asset.name ?? asset.id}`
                         : "—"}
               </span>
-              {result && <span>输出 {result.size}px · {result.duration}s · 循环</span>}
+              {result && (
+                <span>
+                  输出 {result.size}px · {result.duration}s · 循环
+                </span>
+              )}
             </div>
           </Card>
 
@@ -397,12 +447,14 @@ export default function AnimationStudio() {
           >
             <div className="mb-4 flex items-center gap-3">
               <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                {([
-                  ["smart", "智能生成"],
-                  ["editor", "动作编辑"],
-                  ["sequence", "序列帧导入"],
-                  ["cloud", "云存储"],
-                ] as const).map(([value, label]) => (
+                {(
+                  [
+                    ["smart", "智能生成"],
+                    ["editor", "动作编辑"],
+                    ["sequence", "序列帧导入"],
+                    ["cloud", "云存储"],
+                  ] as const
+                ).map(([value, label]) => (
                   <button
                     key={value}
                     onClick={() => setMode(value)}
@@ -432,7 +484,9 @@ export default function AnimationStudio() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">生成方式</div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                      生成方式
+                    </div>
                     <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                       <button
                         onClick={() => {
@@ -442,7 +496,9 @@ export default function AnimationStudio() {
                         title="姿态引擎驱动的全身关节动画，含预备/跟随/重叠动作"
                         className={cx(
                           "px-3 py-1.5 text-[12px] transition-colors",
-                          skeletal && !useVideo ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          skeletal && !useVideo
+                            ? "bg-primary text-white"
+                            : "text-ink-2 hover:bg-surface-2",
                         )}
                       >
                         全身骨骼
@@ -455,7 +511,9 @@ export default function AnimationStudio() {
                         title="对源图做变形动画，最大程度保留原画外观"
                         className={cx(
                           "px-3 py-1.5 text-[12px] transition-colors",
-                          !skeletal && !useVideo ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                          !skeletal && !useVideo
+                            ? "bg-primary text-white"
+                            : "text-ink-2 hover:bg-surface-2",
                         )}
                       >
                         源图驱动
@@ -474,14 +532,18 @@ export default function AnimationStudio() {
                   </div>
                   {skeletal && (action === "walk" || action === "run") && (
                     <div>
-                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">视角</div>
+                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                        视角
+                      </div>
                       <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                         <button
                           onClick={() => setView("side")}
                           title="2D 横版侧视步态：腿部交替支撑/摆动，运动最自然"
                           className={cx(
                             "px-3 py-1.5 text-[12px] transition-colors",
-                            view === "side" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                            view === "side"
+                              ? "bg-primary text-white"
+                              : "text-ink-2 hover:bg-surface-2",
                           )}
                         >
                           侧视横版
@@ -491,7 +553,9 @@ export default function AnimationStudio() {
                           title="正面视角，面向镜头"
                           className={cx(
                             "px-3 py-1.5 text-[12px] transition-colors",
-                            view === "front" ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                            view === "front"
+                              ? "bg-primary text-white"
+                              : "text-ink-2 hover:bg-surface-2",
                           )}
                         >
                           正面
@@ -511,7 +575,9 @@ export default function AnimationStudio() {
                     </div>
                   )}
                   <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">动作</div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                      动作
+                    </div>
                     <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                       {ACTIONS.map((item) => (
                         <button
@@ -519,7 +585,9 @@ export default function AnimationStudio() {
                           onClick={() => setAction(item)}
                           className={cx(
                             "px-3 py-1.5 text-[12px] transition-colors",
-                            action === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                            action === item
+                              ? "bg-primary text-white"
+                              : "text-ink-2 hover:bg-surface-2",
                           )}
                         >
                           {ACTION_LABELS[item]}
@@ -531,10 +599,18 @@ export default function AnimationStudio() {
                 <div className="flex flex-wrap items-end gap-6">
                   <label className="text-[11px] text-ink-4">
                     <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
-                    <input type="range" min={4} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
+                    <input
+                      type="range"
+                      min={4}
+                      max={30}
+                      value={fps}
+                      onChange={(e) => setFps(Number(e.target.value))}
+                    />
                   </label>
                   <label className="text-[11px] text-ink-4">
-                    <span className="mb-2 block uppercase tracking-widest">时长 {duration.toFixed(1)}s</span>
+                    <span className="mb-2 block uppercase tracking-widest">
+                      时长 {duration.toFixed(1)}s
+                    </span>
                     <input
                       type="range"
                       min={0.3}
@@ -566,16 +642,30 @@ export default function AnimationStudio() {
                       className="hidden"
                       onChange={(e) => onFile(e.target.files?.[0])}
                     />
-                    <Button variant="secondary" size="sm" icon="image" onClick={() => fileRef.current?.click()}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="image"
+                      onClick={() => fileRef.current?.click()}
+                    >
                       上传源图
                     </Button>
-                    <Button variant="primary" size="sm" icon="spark" onClick={() => generate()} disabled={busy}>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="spark"
+                      onClick={() => generate()}
+                      disabled={busy}
+                    >
                       {busy ? (useVideo ? "AI 生成视频中…（1~3 分钟）" : "生成中…") : "生成动画"}
                     </Button>
                   </div>
                 </div>
                 {upload && (
-                  <button className="text-[11px] text-ink-3 underline" onClick={() => setUpload(null)}>
+                  <button
+                    className="text-[11px] text-ink-3 underline"
+                    onClick={() => setUpload(null)}
+                  >
                     清除上传，改用当前资产
                   </button>
                 )}
@@ -586,7 +676,9 @@ export default function AnimationStudio() {
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-6">
                   <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">基础动作</div>
+                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                      基础动作
+                    </div>
                     <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                       {ACTIONS.map((item) => (
                         <button
@@ -594,7 +686,9 @@ export default function AnimationStudio() {
                           onClick={() => setEditorAction(item)}
                           className={cx(
                             "px-3 py-1.5 text-[12px] transition-colors",
-                            editorAction === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                            editorAction === item
+                              ? "bg-primary text-white"
+                              : "text-ink-2 hover:bg-surface-2",
                           )}
                         >
                           {ACTION_LABELS[item]}
@@ -604,7 +698,9 @@ export default function AnimationStudio() {
                   </div>
                   {isLocomotion && (
                     <div>
-                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">视角</div>
+                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                        视角
+                      </div>
                       <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                         {(["side", "front"] as const).map((item) => (
                           <button
@@ -612,7 +708,9 @@ export default function AnimationStudio() {
                             onClick={() => setEditorView(item)}
                             className={cx(
                               "px-3 py-1.5 text-[12px] transition-colors",
-                              editorView === item ? "bg-primary text-white" : "text-ink-2 hover:bg-surface-2",
+                              editorView === item
+                                ? "bg-primary text-white"
+                                : "text-ink-2 hover:bg-surface-2",
                             )}
                           >
                             {item === "side" ? "侧视横版" : "正面"}
@@ -622,7 +720,12 @@ export default function AnimationStudio() {
                     </div>
                   )}
                   <div className="ml-auto flex items-center gap-2">
-                    <Button variant="secondary" size="sm" icon="play" onClick={() => setPlaying((p) => !p)}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="play"
+                      onClick={() => setPlaying((p) => !p)}
+                    >
                       {playing ? "暂停" : "播放循环"}
                     </Button>
                     <Button
@@ -630,7 +733,13 @@ export default function AnimationStudio() {
                       size="sm"
                       icon="spark"
                       loading={busy}
-                      onClick={() => generate({ action: editorAction, view: editorView, pose_config: poseConfig })}
+                      onClick={() =>
+                        generate({
+                          action: editorAction,
+                          view: editorView,
+                          pose_config: poseConfig,
+                        })
+                      }
                     >
                       用此动作生成
                     </Button>
@@ -643,10 +752,20 @@ export default function AnimationStudio() {
                       自然语言自定义动作 · 用一句话描述你想要的动作
                     </span>
                     <div className="flex items-center gap-1.5">
-                      <Button variant="ghost" size="sm" onClick={nlUndo} disabled={nlPast.current.length === 0}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={nlUndo}
+                        disabled={nlPast.current.length === 0}
+                      >
                         撤销
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={nlRedo} disabled={nlFuture.current.length === 0}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={nlRedo}
+                        disabled={nlFuture.current.length === 0}
+                      >
                         重做
                       </Button>
                     </div>
@@ -692,7 +811,9 @@ export default function AnimationStudio() {
                     <label key={param.key} className="text-[11px] text-ink-4">
                       <span className="mb-1.5 flex justify-between uppercase tracking-widest">
                         <span>{param.label}</span>
-                        <span className="font-mono text-ink-3">{String(poseConfig[param.key] ?? 0)}</span>
+                        <span className="font-mono text-ink-3">
+                          {String(poseConfig[param.key] ?? 0)}
+                        </span>
                       </span>
                       <input
                         type="range"
@@ -701,7 +822,10 @@ export default function AnimationStudio() {
                         step={param.step}
                         value={Number(poseConfig[param.key] ?? 0)}
                         onChange={(e) =>
-                          setPoseConfig((prev) => ({ ...prev, [param.key]: Number(e.target.value) }))
+                          setPoseConfig((prev) => ({
+                            ...prev,
+                            [param.key]: Number(e.target.value),
+                          }))
                         }
                         className="w-full"
                       />
@@ -712,7 +836,9 @@ export default function AnimationStudio() {
                 <div>
                   <div className="mb-2 flex items-center justify-between text-[11px] uppercase tracking-widest text-ink-4">
                     <span>时间轴 · 12 相位</span>
-                    <span className="font-mono normal-case text-ink-3">phase {phase.toFixed(2)}</span>
+                    <span className="font-mono normal-case text-ink-3">
+                      phase {phase.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex gap-1">
                     {Array.from({ length: 12 }, (_, index) => index / 12).map((value, index) => (
@@ -758,13 +884,21 @@ export default function AnimationStudio() {
                       className="h-8 w-44 rounded-md border border-line bg-surface-1 px-2.5 text-[12px] text-ink outline-none placeholder:text-ink-4 focus:border-primary"
                     />
                   </label>
-                  <Button variant="secondary" size="sm" icon="check" loading={editorBusy} onClick={savePreset}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="check"
+                    loading={editorBusy}
+                    onClick={savePreset}
+                  >
                     保存
                   </Button>
                   {presets.length > 0 && (
                     <>
                       <label className="text-[11px] text-ink-4">
-                        <span className="mb-1.5 block uppercase tracking-widest">已保存动作 ({presets.length})</span>
+                        <span className="mb-1.5 block uppercase tracking-widest">
+                          已保存动作 ({presets.length})
+                        </span>
                         <select
                           className="h-8 w-52 rounded-md border border-line bg-surface-1 px-2 text-[12px] text-ink"
                           onChange={(e) => {
@@ -809,7 +943,13 @@ export default function AnimationStudio() {
                 <div className="flex flex-wrap items-end gap-6">
                   <label className="text-[11px] text-ink-4">
                     <span className="mb-2 block uppercase tracking-widest">帧率 {fps} fps</span>
-                    <input type="range" min={2} max={30} value={fps} onChange={(e) => setFps(Number(e.target.value))} />
+                    <input
+                      type="range"
+                      min={2}
+                      max={30}
+                      value={fps}
+                      onChange={(e) => setFps(Number(e.target.value))}
+                    />
                   </label>
                   <label className="text-[11px] text-ink-4">
                     <span className="mb-2 block uppercase tracking-widest">分辨率</span>
@@ -837,7 +977,12 @@ export default function AnimationStudio() {
                         e.target.value = "";
                       }}
                     />
-                    <Button variant="secondary" size="sm" icon="image" onClick={() => seqFileRef.current?.click()}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="image"
+                      onClick={() => seqFileRef.current?.click()}
+                    >
                       导入序列帧
                     </Button>
                     <Button
@@ -854,8 +999,14 @@ export default function AnimationStudio() {
                 {seqFrames.length > 0 && (
                   <div>
                     <div className="mb-2 flex items-center justify-between text-[11px] text-ink-4">
-                      <span>已导入 {seqFrames.length} 帧 · 按文件名顺序播放（时长约 {(seqFrames.length / fps).toFixed(2)}s）</span>
-                      <button className="underline hover:text-ink-2" onClick={() => setSeqFrames([])}>
+                      <span>
+                        已导入 {seqFrames.length} 帧 · 按文件名顺序播放（时长约{" "}
+                        {(seqFrames.length / fps).toFixed(2)}s）
+                      </span>
+                      <button
+                        className="underline hover:text-ink-2"
+                        onClick={() => setSeqFrames([])}
+                      >
                         清空全部
                       </button>
                     </div>
@@ -866,9 +1017,15 @@ export default function AnimationStudio() {
                           className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-line-subtle bg-[#f1efe9]"
                           title={`${frame.name} · 第 ${index + 1} 帧`}
                         >
-                          <img src={frame.dataUrl} alt={frame.name} className="h-full w-full object-contain" />
+                          <img
+                            src={frame.dataUrl}
+                            alt={frame.name}
+                            className="h-full w-full object-contain"
+                          />
                           <button
-                            onClick={() => setSeqFrames((prev) => prev.filter((_, i) => i !== index))}
+                            onClick={() =>
+                              setSeqFrames((prev) => prev.filter((_, i) => i !== index))
+                            }
                             className="absolute right-0 top-0 hidden h-4 w-4 items-center justify-center rounded-bl-md bg-ink/80 text-[9px] text-canvas group-hover:flex"
                             aria-label={`移除 ${frame.name}`}
                           >
@@ -885,7 +1042,11 @@ export default function AnimationStudio() {
               </div>
             )}
 
-            {error && <p className="mt-3 border-l-2 border-danger pl-3 text-[12.5px] text-danger">{error}</p>}
+            {error && (
+              <p className="mt-3 border-l-2 border-danger pl-3 text-[12.5px] text-danger">
+                {error}
+              </p>
+            )}
           </Card>
 
           {result && (
@@ -894,7 +1055,11 @@ export default function AnimationStudio() {
               icon="film"
               iconClassName="text-falign"
               right={
-                <a className="text-[12px] text-ink-3 underline decoration-line" href={result.urls.sheet} download>
+                <a
+                  className="text-[12px] text-ink-3 underline decoration-line"
+                  href={result.urls.sheet}
+                  download
+                >
                   下载雪碧图
                 </a>
               }
@@ -937,7 +1102,11 @@ export default function AnimationStudio() {
           )}
 
           {rootTrack.length > 0 && (
-            <Card title="根运动轨迹 Root Motion（漂移 → 纠偏）" icon="activity" iconClassName="text-falign">
+            <Card
+              title="根运动轨迹 Root Motion（漂移 → 纠偏）"
+              icon="activity"
+              iconClassName="text-falign"
+            >
               <svg viewBox="0 0 640 90" className="h-[90px] w-full">
                 <line x1="0" y1="45" x2="640" y2="45" stroke="#b9b3a5" strokeDasharray="5 5" />
                 <path d={trackPath} fill="none" stroke="#a94f3d" strokeWidth="2" />
@@ -1007,7 +1176,9 @@ export default function AnimationStudio() {
                   value={result.consistency.overall}
                   threshold={result.consistency.floor}
                 />
-                <div className="text-[11px] text-ink-4">对比 {result.consistency.frames_checked} 帧</div>
+                <div className="text-[11px] text-ink-4">
+                  对比 {result.consistency.frames_checked} 帧
+                </div>
               </div>
             ) : (
               <div className="text-[12.5px] text-ink-3">
@@ -1050,7 +1221,11 @@ export default function AnimationStudio() {
               <div className="space-y-3.5">
                 <ScoreBar label="Anchor 锚点稳定" value={quality.anchor_score ?? 0} tone="falign" />
                 <ScoreBar label="Motion 根运动" value={quality.motion_score ?? 0} tone="gimport" />
-                <ScoreBar label="Temporal 时序平滑" value={quality.temporal_score ?? 0} tone="falign" />
+                <ScoreBar
+                  label="Temporal 时序平滑"
+                  value={quality.temporal_score ?? 0}
+                  tone="falign"
+                />
               </div>
             </Card>
           )}
@@ -1085,7 +1260,10 @@ export default function AnimationStudio() {
             <img
               src={result.urls.gif}
               alt="animation preview"
-              className={cx("max-h-[80vh] max-w-[88vw] object-contain", (previewLoading || previewError) && "hidden")}
+              className={cx(
+                "max-h-[80vh] max-w-[88vw] object-contain",
+                (previewLoading || previewError) && "hidden",
+              )}
               onLoad={() => setPreviewLoading(false)}
               onError={() => {
                 setPreviewLoading(false);

@@ -57,8 +57,11 @@ def test_modify_existing_asset_starts_from_asset():
 
 
 def _run():
-    tests = [(name, fn) for name, fn in sorted(globals().items())
-             if name.startswith("test_") and callable(fn)]
+    tests = [
+        (name, fn)
+        for name, fn in sorted(globals().items())
+        if name.startswith("test_") and callable(fn)
+    ]
     passed = 0
     for name, fn in tests:
         try:

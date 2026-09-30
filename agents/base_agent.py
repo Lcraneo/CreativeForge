@@ -17,9 +17,7 @@ class BaseAgent:
         handler = self.actions.get(task.get("action"))
         if handler is None:
             raise ValueError(
-                "agent '{}' cannot handle action '{}'".format(
-                    self.name, task.get("action")
-                )
+                "agent '{}' cannot handle action '{}'".format(self.name, task.get("action"))
             )
         self.state.transition("RUNNING")
         try:

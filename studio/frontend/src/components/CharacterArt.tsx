@@ -54,7 +54,13 @@ export function CharacterArt({
   const ponytail = /ponytail|twin/i.test(hairStyle);
   const bulky = /muscular|tall|plump/i.test(spec?.build ?? "");
 
-  const cells = buildCells(colors, view, { bald, longHair, ponytail, bulky, simple: detail === "simple" });
+  const cells = buildCells(colors, view, {
+    bald,
+    longHair,
+    ponytail,
+    bulky,
+    simple: detail === "simple",
+  });
 
   return (
     <svg
@@ -95,19 +101,30 @@ function buildCells(
         else push(x, y, c.skin);
       }
     }
-    if (!bald && !longHair) push(4, 3, c.hair), push(11, 3, c.hair);
+    if (!bald && !longHair) {
+      push(4, 3, c.hair);
+      push(11, 3, c.hair);
+    }
     // eyes
     push(6, 4, c.eyes);
     push(9, 4, c.eyes);
     if (!simple) {
-      push(5, 5, c.accent), push(10, 5, c.accent); // cheeks
-      push(7, 6, c.line), push(8, 6, c.line); // mouth
+      push(5, 5, c.accent); // cheeks
+      push(10, 5, c.accent);
+      push(7, 6, c.line); // mouth
+      push(8, 6, c.line);
     }
     // long hair falls past shoulders
-    if (longHair) for (let y = 7; y <= 11; y += 1) push(3, y, c.hair), push(12, y, c.hair);
+    if (longHair) {
+      for (let y = 7; y <= 11; y += 1) {
+        push(3, y, c.hair);
+        push(12, y, c.hair);
+      }
+    }
     if (ponytail) for (let y = 2; y <= 9; y += 1) push(13, y, c.hair);
     // neck + shoulders
-    push(7, 7, c.skin), push(8, 7, c.skin);
+    push(7, 7, c.skin);
+    push(8, 7, c.skin);
     for (let x = 2; x <= 13; x += 1) push(x, 8, c.outfit);
     for (let y = 9; y <= 15; y += 1) {
       for (let x = 2; x <= 13; x += 1) {
@@ -141,7 +158,10 @@ function buildCells(
     if (view === "front") {
       push(headX + 2, 4, c.eyes);
       push(headX + headW - 3, 4, c.eyes);
-      if (!simple) push(headX + 4, 6, c.line), push(headX + 5, 6, c.line);
+      if (!simple) {
+        push(headX + 4, 6, c.line);
+        push(headX + 5, 6, c.line);
+      }
     } else {
       // side profile: one eye near the front edge, nose bump
       push(headX + headW - 2, 4, c.eyes);

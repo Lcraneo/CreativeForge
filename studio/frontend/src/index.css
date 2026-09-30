@@ -67,9 +67,16 @@
   --shadow-glow-primary: 0 0 0 1px rgba(26, 24, 20, 0.16),
     0 0 24px -8px rgba(26, 24, 20, 0.2);
 
-  /* motion */
+  /* motion · 缓动 + 时长阶梯（组件禁止裸写 ms/秒，一律走令牌；
+     framer-motion 侧用 lib/motion.ts 的 MOTION 常量，与此处同源） */
   --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-instant: 90ms;
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 260ms;
+  --motion-deliberate: 280ms;
+  --motion-reveal: 600ms;
   --animate-pulse-run: pulse-run 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-flow: flow 1.2s linear infinite;
@@ -101,6 +108,18 @@
 @keyframes flow {
   to {
     stroke-dashoffset: -20;
+  }
+}
+
+/* reduced-motion：系统声明降级时动画与过渡一律瞬时完成（windup 同款纪律） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

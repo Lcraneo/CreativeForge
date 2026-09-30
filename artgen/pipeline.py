@@ -157,8 +157,12 @@ def create_animation(
         from artgen.riganim import animate_rigged
 
         frames_rgba, source_reference, rig, falign = animate_rigged(
-            source_bytes, action, frame_count, size,
-            config=pose_config, segment_mask=segment_mask,
+            source_bytes,
+            action,
+            frame_count,
+            size,
+            config=pose_config,
+            segment_mask=segment_mask,
         )
     elif source_bytes:
         from artgen.sourceanim import animate_source

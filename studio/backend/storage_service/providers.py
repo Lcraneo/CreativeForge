@@ -16,6 +16,7 @@ from .interface import (
     StorageAuthError,
     StorageConfig,
     StorageConfigError,
+    StorageError,
     StorageNotFoundError,
     StorageTimeoutError,
     StoredObject,
@@ -36,7 +37,14 @@ PROVIDER_PRESETS: dict[str, dict] = {
         "label": "阿里云 OSS",
         "endpoint_template": "https://oss-{region}.aliyuncs.com",
         "addressing": "virtual",
-        "regions": ["cn-hangzhou", "cn-beijing", "cn-shanghai", "cn-guangzhou", "cn-shenzhen", "cn-hongkong"],
+        "regions": [
+            "cn-hangzhou",
+            "cn-beijing",
+            "cn-shanghai",
+            "cn-guangzhou",
+            "cn-shenzhen",
+            "cn-hongkong",
+        ],
         "credential_hint": "AccessKeyId / AccessKeySecret（RAM 控制台创建）",
     },
     "cos": {
@@ -44,7 +52,14 @@ PROVIDER_PRESETS: dict[str, dict] = {
         "label": "腾讯云 COS",
         "endpoint_template": "https://cos.{region}.myqcloud.com",
         "addressing": "virtual",
-        "regions": ["ap-guangzhou", "ap-shanghai", "ap-beijing", "ap-nanjing", "ap-chengdu", "ap-hongkong"],
+        "regions": [
+            "ap-guangzhou",
+            "ap-shanghai",
+            "ap-beijing",
+            "ap-nanjing",
+            "ap-chengdu",
+            "ap-hongkong",
+        ],
         "credential_hint": "SecretId / SecretKey（访问管理 CAM 创建）",
     },
     "kodo": {
@@ -91,7 +106,9 @@ def resolve_endpoint(config: StorageConfig) -> str:
         return config.endpoint.rstrip("/")
     preset = PROVIDER_PRESETS.get(config.provider)
     if not preset:
-        raise StorageConfigError(f"未知对象存储厂商 {config.provider!r}；支持 {sorted(PROVIDER_PRESETS)}")
+        raise StorageConfigError(
+            f"未知对象存储厂商 {config.provider!r}；支持 {sorted(PROVIDER_PRESETS)}"
+        )
     if not config.region:
         raise StorageConfigError(f"{preset['label']} 需要填写地域 region")
     return preset["endpoint_template"].format(region=config.region)
@@ -115,8 +132,8 @@ class S3CompatProvider:
         if self._client is not None:
             return self._client
         try:
-            from botocore.config import Config
             import boto3
+            from botocore.config import Config
         except ImportError as exc:  # pragma: no cover - 环境问题
             raise StorageConfigError(
                 "缺少 boto3 依赖：pip install boto3（S3 兼容统一驱动）"
@@ -144,19 +161,26 @@ class S3CompatProvider:
 
     def _wrap(self, exc: Exception, action: str) -> Exception:
         """把 botocore 异常翻译进分级体系（文本过 redact，杜绝密钥外泄）。"""
-        code = getattr(getattr(exc, "response", None), "get", lambda *_: None)("Error", {}).get("Code", "") if hasattr(exc, "response") else ""
+        code = (
+            getattr(getattr(exc, "response", None), "get", lambda *_: None)("Error", {}).get(
+                "Code", ""
+            )
+            if hasattr(exc, "response")
+            else ""
+        )
         name = type(exc).__name__
         message = redact(f"{action}: {exc}")
-        if "AccessDenied" in str(code) or "SignatureDoesNotMatch" in str(code) or "InvalidAccessKeyId" in str(code) or "Unauthorized" in str(exc):
+        if (
+            "AccessDenied" in str(code)
+            or "SignatureDoesNotMatch" in str(code)
+            or "InvalidAccessKeyId" in str(code)
+            or "Unauthorized" in str(exc)
+        ):
             return StorageAuthError(message)
         if "NoSuchKey" in str(code) or "NoSuchBucket" in str(code) or "404" in str(code):
             return StorageNotFoundError(message)
         if "Timeout" in name or "timeout" in str(exc).lower():
             return StorageTimeoutError(message)
-        from botocore.exceptions import BotoCoreError, ClientError  # noqa: PLC0415
-
-        if isinstance(exc, (BotoCoreError, ClientError)):
-            return StorageError(message)
         return StorageError(message)
 
     @staticmethod
@@ -170,7 +194,9 @@ class S3CompatProvider:
 
     # ── StorageProvider 端口 ────────────────────────────────────────────────
 
-    def upload(self, data: bytes, key: str, *, content_type: str = "application/octet-stream") -> StoredObject:
+    def upload(
+        self, data: bytes, key: str, *, content_type: str = "application/octet-stream"
+    ) -> StoredObject:
         client = self._ensure_client()
         try:
             client.put_object(
@@ -224,7 +250,7 @@ class S3CompatProvider:
         started = time.time()
         try:
             client = self._ensure_client()
-            response = client.list_objects_v2(Bucket=self._config.bucket, MaxKeys=1)
+            client.list_objects_v2(Bucket=self._config.bucket, MaxKeys=1)
             latency = int((time.time() - started) * 1000)
             return {
                 "ok": True,
@@ -233,15 +259,22 @@ class S3CompatProvider:
             }
         except Exception as exc:  # noqa: BLE001
             wrapped = self._wrap(exc, "test")
-            return {"ok": False, "latency_ms": int((time.time() - started) * 1000), "detail": str(wrapped)}
+            return {
+                "ok": False,
+                "latency_ms": int((time.time() - started) * 1000),
+                "detail": str(wrapped),
+            }
 
     # ── 分片扩展端口（transfer.MultipartCapable） ──────────────────────────
 
-    def create_multipart_upload(self, key: str, *, content_type: str = "application/octet-stream") -> str:
+    def create_multipart_upload(
+        self, key: str, *, content_type: str = "application/octet-stream"
+    ) -> str:
         client = self._ensure_client()
         try:
             response = client.create_multipart_upload(
-                Bucket=self._config.bucket, Key=key, ContentType=content_type)
+                Bucket=self._config.bucket, Key=key, ContentType=content_type
+            )
             return str(response["UploadId"])
         except Exception as exc:  # noqa: BLE001
             raise self._wrap(exc, f"create_multipart_upload {key}") from exc
@@ -250,8 +283,12 @@ class S3CompatProvider:
         client = self._ensure_client()
         try:
             response = client.upload_part(
-                Bucket=self._config.bucket, Key=key, UploadId=upload_id,
-                PartNumber=part_number, Body=data)
+                Bucket=self._config.bucket,
+                Key=key,
+                UploadId=upload_id,
+                PartNumber=part_number,
+                Body=data,
+            )
             return str(response["ETag"]).strip('"')
         except Exception as exc:  # noqa: BLE001
             raise self._wrap(exc, f"upload_part {key}#{part_number}") from exc
@@ -276,24 +313,31 @@ class S3CompatProvider:
         except Exception as exc:  # noqa: BLE001
             raise self._wrap(exc, f"list_parts {key}") from exc
 
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: list[tuple[int, str]]) -> dict:
+    def complete_multipart_upload(
+        self, key: str, upload_id: str, parts: list[tuple[int, str]]
+    ) -> dict:
         client = self._ensure_client()
         try:
             response = client.complete_multipart_upload(
-                Bucket=self._config.bucket, Key=key, UploadId=upload_id,
-                MultipartUpload={"Parts": [
-                    {"PartNumber": n, "ETag": etag} for n, etag in sorted(parts)
-                ]})
-            return {"key": key, "etag": str(response.get("ETag", "")).strip('"'),
-                    "location": str(response.get("Location", ""))}
+                Bucket=self._config.bucket,
+                Key=key,
+                UploadId=upload_id,
+                MultipartUpload={
+                    "Parts": [{"PartNumber": n, "ETag": etag} for n, etag in sorted(parts)]
+                },
+            )
+            return {
+                "key": key,
+                "etag": str(response.get("ETag", "")).strip('"'),
+                "location": str(response.get("Location", "")),
+            }
         except Exception as exc:  # noqa: BLE001
             raise self._wrap(exc, f"complete_multipart_upload {key}") from exc
 
     def abort_multipart_upload(self, key: str, upload_id: str) -> None:
         client = self._ensure_client()
         try:
-            client.abort_multipart_upload(
-                Bucket=self._config.bucket, Key=key, UploadId=upload_id)
+            client.abort_multipart_upload(Bucket=self._config.bucket, Key=key, UploadId=upload_id)
         except Exception as exc:  # noqa: BLE001
             raise self._wrap(exc, f"abort_multipart_upload {key}") from exc
 
@@ -301,7 +345,5 @@ class S3CompatProvider:
 def create_provider(config: StorageConfig, *, timeout: int = DEFAULT_TIMEOUT) -> S3CompatProvider:
     """按配置创建 provider。厂商合法性在这里前置校验（构造即报错）。"""
     if config.provider not in PROVIDER_PRESETS:
-        raise StorageConfigError(
-            f"未知厂商 {config.provider!r}；支持 {sorted(PROVIDER_PRESETS)}"
-        )
+        raise StorageConfigError(f"未知厂商 {config.provider!r}；支持 {sorted(PROVIDER_PRESETS)}")
     return S3CompatProvider(config, timeout=timeout)

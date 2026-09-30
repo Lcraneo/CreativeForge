@@ -4,6 +4,6 @@ def map_image(image):
         "visual": {
             "width": image.get("width"),
             "height": image.get("height"),
-            "has_alpha": image.get("alpha", False)
+            "has_alpha": image.get("alpha", False),
         }
     }

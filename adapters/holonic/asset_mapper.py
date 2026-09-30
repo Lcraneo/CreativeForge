@@ -4,6 +4,6 @@ def map_asset(asset):
         "identity": {
             "asset_id": asset.get("id"),
             "name": asset.get("name"),
-            "type": asset.get("type")
+            "type": asset.get("type"),
         }
     }

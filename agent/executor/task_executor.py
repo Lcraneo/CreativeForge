@@ -10,11 +10,7 @@ class TaskExecutor:
     def execute(self, task, asset):
         capability = self.registry.find(task.get("capability"))
         if capability is None:
-            raise LookupError(
-                "no capability registered for '{}'".format(task.get("capability"))
-            )
+            raise LookupError("no capability registered for '{}'".format(task.get("capability")))
         if capability.handler is None:
-            raise LookupError(
-                "capability '{}' has no handler".format(capability.name)
-            )
+            raise LookupError("capability '{}' has no handler".format(capability.name))
         return capability.handler(asset, task)

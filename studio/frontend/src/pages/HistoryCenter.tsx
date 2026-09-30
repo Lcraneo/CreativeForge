@@ -98,9 +98,7 @@ export default function HistoryCenter() {
     if (ids.length === 0 || deleting) return;
     setDeleting(true);
     try {
-      const results = await Promise.all(
-        ids.map((id) => api.deleteHistory(id).catch(() => null)),
-      );
+      const results = await Promise.all(ids.map((id) => api.deleteHistory(id).catch(() => null)));
       const removed = results.reduce((sum, result) => sum + (result?.removed ?? 0), 0);
       if (selectedId && ids.includes(selectedId)) setSelectedId(null);
       setSelected(new Set());
@@ -108,7 +106,8 @@ export default function HistoryCenter() {
       toast({
         tone: "success",
         title: `已删除 ${removed} 条档案`,
-        description: removed < ids.length ? `${ids.length - removed} 条不存在或早已删除` : undefined,
+        description:
+          removed < ids.length ? `${ids.length - removed} 条不存在或早已删除` : undefined,
       });
     } catch (cause) {
       toast({ tone: "danger", title: "删除失败", description: String(cause) });
@@ -278,7 +277,15 @@ export default function HistoryCenter() {
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={statusTone(record.status)}>
-                          <StatusDot tone={record.report_status === "PASS" ? "success" : record.status === "failed" ? "failed" : "idle"} />
+                          <StatusDot
+                            tone={
+                              record.report_status === "PASS"
+                                ? "success"
+                                : record.status === "failed"
+                                  ? "failed"
+                                  : "idle"
+                            }
+                          />
                           {record.report_status || record.status}
                         </Badge>
                       </td>
@@ -287,7 +294,9 @@ export default function HistoryCenter() {
                         {record.qa_rounds} 轮
                       </td>
                       <td className="px-4 py-3 text-right font-mono text-[11.5px] text-ink-3">
-                        {record.elapsed_seconds != null ? `${record.elapsed_seconds.toFixed(1)}s` : "—"}
+                        {record.elapsed_seconds != null
+                          ? `${record.elapsed_seconds.toFixed(1)}s`
+                          : "—"}
                       </td>
                     </tr>
                   ))}
@@ -420,7 +429,11 @@ export default function HistoryCenter() {
                     icon="refresh"
                     onClick={() => {
                       navigate("/", { state: { goal: detail.goal } });
-                      toast({ tone: "info", title: "已带回目标描述", description: "可在工作台微调后重新生成" });
+                      toast({
+                        tone: "info",
+                        title: "已带回目标描述",
+                        description: "可在工作台微调后重新生成",
+                      });
                     }}
                   >
                     重跑此目标

@@ -1,10 +1,10 @@
-from agents.base_agent import BaseAgent
 from agent.monitor.quality_gate import QualityGate
+from agents.base_agent import BaseAgent
 
 SECTION_CHECKS = {
     "pixel": "palette / outline / style",
     "animation": "drift / jitter / phase",
-    "engine": "missing asset / runtime error"
+    "engine": "missing asset / runtime error",
 }
 
 
@@ -17,9 +17,7 @@ class QAAgent(BaseAgent):
 
     def __init__(self):
         super().__init__()
-        self.actions = {
-            "quality_check": self.quality_check
-        }
+        self.actions = {"quality_check": self.quality_check}
         self.quality_gate = QualityGate()
 
     def quality_check(self, task, asset):

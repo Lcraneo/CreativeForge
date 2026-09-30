@@ -8,6 +8,7 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 import { Icon, type IconName } from "./icons";
+import { MOTION, EASE_STANDARD } from "../lib/motion";
 
 export function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -25,11 +26,9 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
     "bg-primary text-canvas hover:bg-primary-hover active:bg-primary-active shadow-[0_6px_16px_-8px_rgba(26,24,20,.55)]",
   ember:
     "bg-gradient-to-br from-ember to-[#c46a3a] text-[#fdfcf9] shadow-[0_6px_16px_-8px_rgba(169,129,47,.6)] hover:brightness-110",
-  secondary:
-    "bg-surface-2 border border-line text-ink hover:bg-surface-3 hover:border-line-strong",
+  secondary: "bg-surface-2 border border-line text-ink hover:bg-surface-3 hover:border-line-strong",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
-  danger:
-    "bg-danger/15 border border-danger/40 text-danger hover:bg-danger/25",
+  danger: "bg-danger/15 border border-danger/40 text-danger hover:bg-danger/25",
 };
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
@@ -59,7 +58,7 @@ export function Button({
       type="button"
       disabled={disabled || loading}
       className={cx(
-        "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-all duration-150 ease-standard active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+        "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-all duration-(--motion-fast) ease-standard active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
         BUTTON_VARIANTS[variant],
         BUTTON_SIZES[size],
         className,
@@ -84,7 +83,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        "grid h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-2 transition-colors duration-150 ease-standard hover:border-line hover:text-ink",
+        "grid h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-2 transition-colors duration-(--motion-fast) ease-standard hover:border-line hover:text-ink",
         className,
       )}
       {...rest}
@@ -135,15 +134,11 @@ export function Card({
       className={cx(
         "cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1]",
         interactive &&
-          "transition-all duration-150 ease-standard hover:-translate-y-px hover:border-line",
+          "transition-all duration-(--motion-fast) ease-standard hover:-translate-y-px hover:border-line",
         className,
       )}
     >
-      {domain && (
-        <span
-          className={cx("absolute inset-y-0 left-0 w-[3px]", DOMAIN_BARS[domain])}
-        />
-      )}
+      {domain && <span className={cx("absolute inset-y-0 left-0 w-[3px]", DOMAIN_BARS[domain])} />}
       {(title || right) && (
         <header className="flex items-center justify-between gap-3 border-b border-ink/[.08] px-[18px] py-[13px]">
           <div className="flex min-w-0 items-center gap-2.5">
@@ -257,7 +252,9 @@ export function StatusDot({
   className?: string;
 }) {
   const key = tone === "recovered" ? "success" : tone;
-  return <span className={cx("inline-block h-2 w-2 shrink-0 rounded-full", DOT_TONES[key], className)} />;
+  return (
+    <span className={cx("inline-block h-2 w-2 shrink-0 rounded-full", DOT_TONES[key], className)} />
+  );
 }
 
 export function Chip({
@@ -266,12 +263,16 @@ export function Chip({
   children,
   className,
   ...rest
-}: { active?: boolean; icon?: IconName; children: ReactNode } & ButtonHTMLAttributes<HTMLButtonElement>) {
+}: {
+  active?: boolean;
+  icon?: IconName;
+  children: ReactNode;
+} & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
       type="button"
       className={cx(
-        "inline-flex h-8 select-none items-center gap-2 rounded-full border px-3 text-[12.5px] transition-colors duration-150 ease-standard",
+        "inline-flex h-8 select-none items-center gap-2 rounded-full border px-3 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
         active
           ? "border-primary/45 bg-primary-tint text-primary"
           : "border-line-subtle bg-surface-1 text-ink-2 hover:border-line hover:text-ink",
@@ -297,7 +298,7 @@ export function Input({
   return (
     <label
       className={cx(
-        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-all duration-150 ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-all duration-(--motion-fast) ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
     >
@@ -310,14 +311,11 @@ export function Input({
   );
 }
 
-export function Textarea({
-  className,
-  ...rest
-}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
       className={cx(
-        "w-full resize-none rounded-[10px] border border-line bg-[#faf9f5] px-4 py-3.5 text-sm leading-6 text-ink outline-none transition-all duration-150 ease-standard placeholder:text-ink-4 focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "w-full resize-none rounded-[10px] border border-line bg-[#faf9f5] px-4 py-3.5 text-sm leading-6 text-ink outline-none transition-all duration-(--motion-fast) ease-standard placeholder:text-ink-4 focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
       {...rest}
@@ -335,7 +333,7 @@ export function Select({
   return (
     <select
       className={cx(
-        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23918c82%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-all duration-150 ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23918c82%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-all duration-(--motion-fast) ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
       {...rest}
@@ -366,13 +364,13 @@ export function Switch({
       aria-label={label}
       onClick={() => onChange(!checked)}
       className={cx(
-        "relative h-5 w-9 shrink-0 rounded-full border transition-colors duration-150 ease-standard",
+        "relative h-5 w-9 shrink-0 rounded-full border transition-colors duration-(--motion-fast) ease-standard",
         checked ? "border-primary bg-primary/30" : "border-line bg-surface-3",
       )}
     >
       <span
         className={cx(
-          "absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all duration-150 ease-standard",
+          "absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all duration-(--motion-fast) ease-standard",
           checked ? "left-[18px] bg-primary" : "left-0.5 bg-ink-3",
         )}
       />
@@ -410,7 +408,7 @@ export function Segmented<T extends string>({
           aria-selected={value === option.id}
           onClick={() => onChange(option.id)}
           className={cx(
-            "flex h-7 select-none items-center gap-1.5 rounded-[7px] px-3.5 text-[12.5px] transition-colors duration-150 ease-standard",
+            "flex h-7 select-none items-center gap-1.5 rounded-[7px] px-3.5 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
             value === option.id
               ? "bg-surface-3 font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,.65)]"
               : "text-ink-2 hover:text-ink",
@@ -442,7 +440,7 @@ export function Tabs({
           key={item.id}
           onClick={() => onChange(item.id)}
           className={cx(
-            "relative pb-2.5 pt-2 text-[13px] transition-colors duration-150 ease-standard",
+            "relative pb-2.5 pt-2 text-[13px] transition-colors duration-(--motion-fast) ease-standard",
             value === item.id ? "font-semibold text-ink" : "text-ink-3 hover:text-ink-2",
           )}
         >
@@ -490,11 +488,7 @@ export function ScoreBar({
 }) {
   const percent = Math.max(0, Math.min(100, value * 100));
   const fill =
-    tone === "auto"
-      ? threshold === undefined || value >= threshold
-        ? "success"
-        : "danger"
-      : tone;
+    tone === "auto" ? (threshold === undefined || value >= threshold ? "success" : "danger") : tone;
   return (
     <div className={className}>
       <div className="mb-[6px] flex items-baseline justify-between gap-3 text-xs">
@@ -506,7 +500,7 @@ export function ScoreBar({
           className={cx("h-1.5 rounded-full", SCORE_FILLS[fill])}
           initial={{ width: 0 }}
           animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+          transition={{ duration: MOTION.reveal, ease: EASE_STANDARD }}
         />
         {threshold !== undefined && (
           <span
@@ -563,7 +557,7 @@ export function ScoreRing({
         strokeDasharray={circumference}
         initial={{ strokeDashoffset: circumference }}
         animate={{ strokeDashoffset: circumference * (1 - Math.min(1, Math.max(0, value))) }}
-        transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+        transition={{ duration: MOTION.reveal, ease: EASE_STANDARD }}
         transform="rotate(-90 50 50)"
       />
       <text
@@ -655,7 +649,13 @@ export function Stepper({
   className?: string;
 }) {
   const iconOf = (state: string) =>
-    state === "done" ? "check" : state === "failed" ? "x" : state === "running" ? "refresh" : "clock";
+    state === "done"
+      ? "check"
+      : state === "failed"
+        ? "x"
+        : state === "running"
+          ? "refresh"
+          : "clock";
   const colorOf = (state: string) =>
     state === "done"
       ? "border-success bg-success/10 text-success"

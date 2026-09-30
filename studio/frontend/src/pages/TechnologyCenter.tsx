@@ -154,13 +154,17 @@ export default function TechnologyCenter() {
           ]}
         />
         <p className="mt-4 text-[12.5px] leading-5 text-ink-3">
-          Supervisor 解析自然语言目标 → 生成任务图 → 调度 Art / Animation / Engine 智能体 →
-          QA 验证与修复轮 → 产出一键导出包。全流程带检查点与失败恢复。
+          Supervisor 解析自然语言目标 → 生成任务图 → 调度 Art / Animation / Engine 智能体 → QA
+          验证与修复轮 → 产出一键导出包。全流程带检查点与失败恢复。
         </p>
       </Card>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <Card title="统一资产协议" icon="cube" right={<Badge tone="primary">CreativeAsset v1.0</Badge>}>
+        <Card
+          title="统一资产协议"
+          icon="cube"
+          right={<Badge tone="primary">CreativeAsset v1.0</Badge>}
+        >
           <KV label="Identity" value="id / name / type / role / source" />
           <KV label="Pixel" value="grid / palette / contour" />
           <KV label="Animation" value="frames / phase / motion" />

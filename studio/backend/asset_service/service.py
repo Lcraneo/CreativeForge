@@ -24,7 +24,7 @@ class TaskStore:
                 "plan": None,
                 "events": [],
                 "asset_id": None,
-                "error": None
+                "error": None,
             }
             return task_id
 
@@ -62,9 +62,7 @@ class TaskStore:
 
     def list(self, limit=20):
         with self._lock:
-            tasks = sorted(self._tasks.values(),
-                           key=lambda item: item["created_at"],
-                           reverse=True)
+            tasks = sorted(self._tasks.values(), key=lambda item: item["created_at"], reverse=True)
             return [self._summary(task) for task in tasks[:limit]]
 
     @staticmethod
@@ -75,7 +73,7 @@ class TaskStore:
             "status": task["status"],
             "created_at": task["created_at"],
             "asset_id": task["asset_id"],
-            "event_count": len(task["events"])
+            "event_count": len(task["events"]),
         }
 
 
@@ -112,7 +110,10 @@ class AssetStore:
     def list(self):
         with self._lock:
             return [
-                {"id": asset_id, "name": self._assets[asset_id].get("name"),
-                 "type": self._assets[asset_id].get("type")}
+                {
+                    "id": asset_id,
+                    "name": self._assets[asset_id].get("name"),
+                    "type": self._assets[asset_id].get("type"),
+                }
                 for asset_id in reversed(self._order)
             ]

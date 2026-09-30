@@ -10,9 +10,7 @@ import os
 import threading
 import time
 
-DEFAULT_ROLLBACKS_PATH = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)), "rollbacks.json"
-)
+DEFAULT_ROLLBACKS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "rollbacks.json")
 
 
 class VersionService:
@@ -145,17 +143,21 @@ class VersionService:
                 fields.append({"field": label, "a": va.get(key), "b": vb.get(key)})
         pa, pb = set(va.get("palette") or []), set(vb.get("palette") or [])
         if pa != pb:
-            fields.append({
-                "field": "调色板变化",
-                "a": "、".join(sorted(pa - pb)) or "—",
-                "b": "、".join(sorted(pb - pa)) or "—",
-            })
+            fields.append(
+                {
+                    "field": "调色板变化",
+                    "a": "、".join(sorted(pa - pb)) or "—",
+                    "b": "、".join(sorted(pb - pa)) or "—",
+                }
+            )
         for key, label in (("pixel", "像素分"), ("animation", "动画分"), ("engine", "引擎分")):
             sa, sb = va["scores"].get(key), vb["scores"].get(key)
             if sa is not None and sb is not None and round(sa, 3) != round(sb, 3):
-                fields.append({
-                    "field": label,
-                    "a": "{:.0%}".format(sa),
-                    "b": "{:.0%}".format(sb),
-                })
+                fields.append(
+                    {
+                        "field": label,
+                        "a": "{:.0%}".format(sa),
+                        "b": "{:.0%}".format(sb),
+                    }
+                )
         return {"a": va, "b": vb, "fields": fields}
