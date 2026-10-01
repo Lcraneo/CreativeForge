@@ -585,6 +585,29 @@ export interface BatchExportResult {
   }>;
 }
 
+/** 角色资产包一键导出（原画 + 三视图 + 全动作 GIF + 引擎包） */
+export interface CharacterPackageResult {
+  package: string;
+  asset_id: string;
+  engine: string;
+  artwork_count: number;
+  engine_files: number;
+  engine_error?: string | null;
+  missing: string[];
+  size_bytes: number;
+  download_url: string;
+  files: string[];
+  animations: Array<{
+    action: string;
+    engine: string;
+    frames: number;
+    fps?: number;
+    gif: string;
+    animation_id?: string;
+    generated_at?: number;
+  }>;
+}
+
 export interface ReviewInfo {
   approved: boolean;
   note?: string | null;

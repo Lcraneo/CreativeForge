@@ -383,6 +383,32 @@ def build_router(runtime):
         service = ExportService(EXPORTS_DIR)
         return service.export(asset, request.engine)
 
+    @router.post("/export/character-package")
+    def export_character_package_route(request: dict):
+        """角色资产包一键导出：一个角色 = 原画 + 三视图 + 全动作 GIF +
+        引擎工程包（GImport），单个 zip 交付。"""
+
+        from studio.backend.animation_service.service import AnimationService
+        from studio.backend.export_service.character_package import (
+            export_character_package,
+        )
+
+        asset = _resolve_asset(runtime, (request or {}).get("asset_id") or "")
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        engine = request.get("engine") or "cocos"
+        if engine not in ("unity", "cocos", "godot"):
+            raise HTTPException(status_code=422, detail="unknown engine")
+        animations = AnimationService(ANIMATION_DIR).animations_for_asset(asset.get("id"))
+        try:
+            result = export_character_package(
+                dict(asset), animations, EXPORTS_DIR, engine=engine
+            )
+        except Exception as error:  # noqa: BLE001 - 组装失败要给出可读原因
+            raise HTTPException(status_code=502, detail=str(error)[:200])
+        result.pop("path", None)
+        return result
+
     @router.get("/exports/{package_name}")
     def download_package(package_name: str):
         path = os.path.join(EXPORTS_DIR, package_name)

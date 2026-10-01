@@ -14,6 +14,7 @@ import type {
   ActionBatchSnapshot,
   BatchExportResult,
   BatchStatus,
+  CharacterPackageResult,
   PixelEditResult,
   RollbackRecord,
   TaskEvent,
@@ -301,6 +302,11 @@ export const api = {
     request<BatchExportResult>("/api/export/batch", {
       method: "POST",
       body: JSON.stringify({ asset_ids: assetIds, engine }),
+    }),
+  exportCharacterPackage: (assetId: string, engine: string) =>
+    request<CharacterPackageResult>("/api/export/character-package", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
   /* ── P2 像素编辑 ── */

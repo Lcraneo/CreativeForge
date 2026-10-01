@@ -30,6 +30,30 @@ export default function ExportCenter() {
   const navigate = useNavigate();
   const { exports, busy, error, add, setBusy, setError } = useExportStore();
   const [engine, setEngine] = useState<EngineId>("unity");
+  const [packing, setPacking] = useState(false);
+  const [characterPackage, setCharacterPackage] = useState<
+    import("../types").CharacterPackageResult | null
+  >(null);
+
+  async function runCharacterPackage() {
+    if (!asset || packing) return;
+    setPacking(true);
+    setError(null);
+    try {
+      const result = await api.exportCharacterPackage(asset.id, engine);
+      setCharacterPackage(result);
+      toast({
+        tone: "success",
+        title: `资产包已生成 ${result.package}`,
+        description: `三视图 ${result.artwork_count} 张 · 动作 ${result.animations.length} 个 · 引擎文件 ${result.engine_files} 个`,
+      });
+    } catch (cause) {
+      setError(String(cause));
+      toast({ tone: "danger", title: "资产包导出失败", description: String(cause).slice(0, 180) });
+    } finally {
+      setPacking(false);
+    }
+  }
 
   async function runExport() {
     if (!asset || busy) return;
@@ -114,6 +138,16 @@ export default function ExportCenter() {
               >
                 {busy ? "导出中…" : `导出 ${ENGINES.find((e) => e.id === engine)?.label} 工程包`}
               </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                icon="package"
+                loading={packing}
+                onClick={runCharacterPackage}
+                title="一个角色一个 zip：原画 + 三视图 + 全动作 GIF + 引擎包"
+              >
+                {packing ? "打包中…" : "一键资产包（含动画）"}
+              </Button>
               {latest && (
                 <a
                   href={latest.download_url}
@@ -129,6 +163,37 @@ export default function ExportCenter() {
                   : "选择引擎后点击导出，产出真实 zip 工程包"}
               </span>
             </div>
+            {characterPackage && (
+              <div className="mt-4 rounded-lg border border-line-subtle bg-surface-1 p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge tone="primary">{characterPackage.engine}</Badge>
+                  <span className="text-[12.5px] font-semibold text-ink">
+                    {characterPackage.package}
+                  </span>
+                  <span className="text-[11.5px] text-ink-3">
+                    {(characterPackage.size_bytes / 1024).toFixed(1)} KB ·{" "}
+                    {characterPackage.files.length} files
+                  </span>
+                  <a
+                    href={characterPackage.download_url}
+                    className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-medium text-primary underline-offset-2 hover:underline"
+                  >
+                    <Icon name="download" className="h-3.5 w-3.5" />
+                    下载资产包
+                  </a>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {characterPackage.animations.map((item) => (
+                    <Badge key={item.gif} tone="neutral">
+                      {item.action} · {item.engine} · {item.frames}f
+                    </Badge>
+                  ))}
+                  {characterPackage.missing.length > 0 && (
+                    <Badge tone="warning">缺 {characterPackage.missing.length} 项（见包内 manifest）</Badge>
+                  )}
+                </div>
+              </div>
+            )}
             {error && <p className="mt-3 text-xs text-danger">{error}</p>}
           </Card>
 

@@ -366,6 +366,29 @@ class AnimationService:
 
     # -- public API -----------------------------------------------------
 
+    def animations_for_asset(self, asset_id: str | None) -> list[dict]:
+        """该资产关联的全部动画 meta（骨骼/序列帧/视频驱动），新→旧排序。
+
+        资产包导出与队列中心都按「资产 + meta」收集产物。"""
+
+        import glob as _glob
+
+        metas: list[dict] = []
+        if not asset_id:
+            return metas
+        for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
+            try:
+                with open(meta_path, "r", encoding="utf-8") as handle:
+                    meta = json.load(handle)
+            except (ValueError, OSError):
+                continue
+            if meta.get("asset_id") != asset_id:
+                continue
+            meta["_meta_file"] = os.path.basename(meta_path)
+            metas.append(meta)
+        metas.sort(key=lambda m: m.get("created_at", 0), reverse=True)
+        return metas
+
     def create(
         self,
         asset: dict[str, Any] | None = None,
@@ -453,6 +476,13 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, source_kind)
         meta["skeletal"] = source_kind == "skeletal"
+        # 记录归属资产（资产包导出/队列中心按 asset_id 收集动画）。
+        # _persist 内部已写盘，追加字段后必须重写一次，否则磁盘上没有。
+        if asset is not None and asset.get("id"):
+            meta["asset_id"] = asset.get("id")
+            self._write(
+                f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8")
+            )
         if result.get("rig"):
             from artgen.rig import rig_summary
 

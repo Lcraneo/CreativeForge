@@ -391,6 +391,69 @@ def main() -> int:
         all(t.get("clause") and t.get("negative") for t in STYLE_TEMPLATES.values()),
     )
 
+    # ── 角色资产包一键导出（离线组装）────────────────────────────────────
+    import shutil as _shutil
+    import tempfile as _tempfile3
+    import zipfile as _zipfile
+
+    from studio.backend.export_service import character_package as _cpkg
+
+    _pkg_dir = os.path.join(_tempfile3.gettempdir(), "cf_pkg_out_test")
+    _pkg_anim_dir = os.path.join(_tempfile3.gettempdir(), "cf_pkg_anim_test")
+    os.makedirs(_pkg_dir, exist_ok=True)
+    os.makedirs(_pkg_anim_dir, exist_ok=True)
+    try:
+        from PIL import Image as _PkgImg
+
+        _gif_fd, _gif_tmp = _tempfile3.mkstemp(suffix=".gif")
+        os.close(_gif_fd)  # Windows：不关句柄 rename/remove 会报占用
+        _PkgImg.new("RGBA", (4, 4), (10, 20, 30, 255)).save(_gif_tmp, "GIF")
+        with open(_gif_tmp, "rb") as _handle:
+            _gif_bytes = _handle.read()
+        os.remove(_gif_tmp)
+        with open(os.path.join(_pkg_anim_dir, "anim1.gif"), "wb") as _handle:
+            _handle.write(_gif_bytes)
+
+        _pkg_meta = {
+            "id": "anim1",
+            "asset_id": "astPkg",
+            "requested_action": "walk",
+            "source": "video",
+            "urls": {"gif": "/api/animation/anim1.gif", "sheet": "/api/animation/anim1_sheet.png"},
+            "frames": 12,
+            "fps": 12,
+            "created_at": 1.0,
+        }
+        _orig_pkg_anim = _cpkg._ANIMATION_DIR
+        _cpkg._ANIMATION_DIR = _pkg_anim_dir
+        try:
+            _pkg_asset = {"id": "astPkg", "name": "测试角色", "type": "character"}
+            _pkg_result = _cpkg.export_character_package(
+                _pkg_asset, [_pkg_meta], _pkg_dir, engine="cocos"
+            )
+            check("character package: zip written", os.path.isfile(_pkg_result["path"]))
+            with _zipfile.ZipFile(_pkg_result["path"]) as _zf:
+                _names = _zf.namelist()
+            check(
+                "character package: manifest + readme inside",
+                "manifest.json" in _names and "README.md" in _names,
+            )
+            check(
+                "character package: animation gif packed",
+                "animations/walk__ai-video.gif" in _names,
+                str(_names),
+            )
+            check(
+                "character package: missing views noted in manifest",
+                "view_front" in _pkg_result["missing"],
+                str(_pkg_result["missing"]),
+            )
+        finally:
+            _cpkg._ANIMATION_DIR = _orig_pkg_anim
+    finally:
+        _shutil.rmtree(_pkg_dir, ignore_errors=True)
+        _shutil.rmtree(_pkg_anim_dir, ignore_errors=True)
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")
