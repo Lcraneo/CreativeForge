@@ -10,20 +10,97 @@ animations; no fixed template character is ever produced.
 
 import io
 
+import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from artgen.anim import ACTIONS, _pose
 from artgen.rig import build_rig
-from artgen.sourceanim import _fit, _subject_mask
+from artgen.sourceanim import BG_DIFF_THRESHOLD, _fit, _subject_mask
 from artgen.style import similarity_rgba
 
 CANVAS_BG = (0, 0, 0, 0)
 
 
-def _region_layer(subject, rect, size, feather=5.0):
+def _absorb_enclosed_background(mask, rgb, bg_color=None):
+    """把主体内与背景色同色的**封闭区**回收为背景（分体修复 R1）。
+
+    洪泛抠图（_flood_subject）从画布边缘出发，只能吃掉与边缘**连通**的
+    背景；被肢体围住的背景洞——两腿之间、脚与阴影围出的区域——不可达，
+    会被误判成主体。分区旋转动画里，这些洞像素落进腿/躯干区域层跟着
+    旋转平移，就是试玩舞台"蓝色色块飘移/身体分体"的根因。
+
+    ``bg_color``：背景参考色（默认取画布边缘中值色；AI 分割路径的契约
+    是纯白底，调用方显式传 (255,255,255)）。
+
+    判据（三条件同时满足才回收，避免误伤与背景撞色的服装）：
+      1. 当前被标记为主体；
+      2. 颜色与背景参考色的逐通道差 ≤ BG_DIFF_THRESHOLD（与洪泛同口径）；
+      3. 所属连通域**不接触**画布边缘（接触边缘的保留不动，保守处理
+         渐变背景漏吃的情况）。
+
+    任何失败返回原 mask（该修复永不阻塞动画生成）。"""
+
+    try:
+        subject = np.asarray(mask, dtype=np.uint8) > 128
+        if not subject.any():
+            return mask
+        rgb_arr = np.asarray(rgb.convert("RGB"), dtype=np.int16)
+        if rgb_arr.shape[:2] != subject.shape:
+            return mask
+        if bg_color is None:
+            from artgen.sourceanim import _border_bg
+
+            bg_color = _border_bg(rgb)
+        bg = np.array(bg_color, dtype=np.int16)
+        color_ok = np.abs(rgb_arr - bg[None, None, :]).max(axis=2) <= BG_DIFF_THRESHOLD
+        candidates = subject & color_ok
+        if not candidates.any():
+            return mask
+
+        border_touch = np.zeros_like(candidates)
+        border_touch[0, :] = border_touch[-1, :] = True
+        border_touch[:, 0] = border_touch[:, -1] = True
+
+        absorbed = np.zeros_like(candidates)
+        remaining = candidates & ~border_touch
+        # 向量 BFS：从任意未访问种子做二值传播标注连通域
+        while remaining.any():
+            ys, _xs = np.nonzero(remaining)
+            frontier = np.zeros_like(candidates)
+            frontier[int(ys[0]), int(_xs[0])] = True
+            comp = np.zeros_like(candidates)
+            while frontier.any():
+                comp |= frontier
+                grew = np.zeros_like(candidates)
+                grew[1:, :] |= frontier[:-1, :]
+                grew[:-1, :] |= frontier[1:, :]
+                grew[:, 1:] |= frontier[:, :-1]
+                grew[:, :-1] |= frontier[:, 1:]
+                frontier = grew & candidates & ~comp
+            absorbed |= comp
+            remaining = candidates & ~absorbed
+
+        if not absorbed.any():
+            return mask
+
+        cleaned = np.asarray(mask).copy()
+        cleaned[absorbed] = 0
+        result = Image.fromarray(cleaned, mode="L")
+        # 回收边界补羽化，与主体切边同质感
+        return result.filter(ImageFilter.GaussianBlur(1.0))
+    except Exception:  # noqa: BLE001 - 修复永不阻塞动画生成
+        return mask
+
+
+def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
     """Full-canvas transparent layer containing only ``rect`` of ``subject``,
     with a **feathered** mask: adjacent regions blend into each other instead
-    of cutting hard seams (P1 生成质量：消除分区旋转的接缝)."""
+    of cutting hard seams (P1 生成质量：消除分区旋转的接缝).
+
+    ``exclude_above``：头部保护区 y 值（分体修复 R2）——该 y 之上的像素
+    全部置透明。手臂/前臂区域是横跨半身的矩形，Q 版角色（头占比大）的
+    脸会落进手臂矩形，摆臂时把脸"片"走（试玩区实测的脸部横向切片）。
+    """
 
     layer = Image.new("RGBA", (size, size), CANVAS_BG)
     box = (
@@ -40,6 +117,11 @@ def _region_layer(subject, rect, size, feather=5.0):
     ImageDraw.Draw(rect_mask).rectangle(box, fill=255)
     if feather > 0:
         rect_mask = rect_mask.filter(ImageFilter.GaussianBlur(feather))
+    if exclude_above is not None and exclude_above > 0:
+        # 保护区在羽化**之后**硬归零：羽化的上侧扩散会把贴近下巴的脸部
+        # 像素以 0.2~0.5 的 alpha 漏进手臂层（实测漏出 ~7px 的刚性偏差），
+        # 归零只保留羽化在下侧的接缝过渡
+        ImageDraw.Draw(rect_mask).rectangle((0, 0, size, int(exclude_above)), fill=0)
     layer.putalpha(ImageChops.multiply(layer.getchannel("A"), rect_mask))
     return layer
 
@@ -117,6 +199,11 @@ def animate_rigged(
     mask, transparent, bg = _subject_mask(canvas)
     if segment_mask is not None and not transparent:
         mask = segment_mask.resize((size, size))
+    if not transparent:
+        # 分体修复 R1：洪泛/AI 分割都可能把"被肢体围住的封闭背景洞"
+        # 误判成主体（两腿之间露出的原背景色）。洞像素在画布上显示的
+        # 就是原背景色，两条路径都用洪泛的边缘中值色作参考。
+        mask = _absorb_enclosed_background(mask, canvas, bg_color=bg)
 
     rig = rig or build_rig(image_bytes, size, segment_mask=segment_mask)
     x0, y0, x1, y1 = rig["bbox"]
@@ -127,6 +214,12 @@ def animate_rigged(
     hip_y = points["hip_l"][1]
     shoulder_y = points["shoulder_l"][1]
     hand_y = points["hand_l"][1]
+    # 头部保护区（分体修复 R2）：Q 版角色（头占比大）的肩带落在脸上，
+    # 手臂/前臂区域矩形横穿面部，摆臂会把脸"片"走（试玩区实测的脸部
+    # 横向切片）。颈线检测比例给出真实下巴位置；normal 角色钳到 0.30
+    # 后低于肩带（42%），行为与修复前一致。
+    head_h = max(0.30, min(0.75, float(rig.get("head_height") or 0.30)))
+    chin_y = y0 + head_h * (y1 - y0) + 2.0
 
     # subject layer (its alpha is the subject) + background with the subject removed
     if transparent:
@@ -150,13 +243,21 @@ def animate_rigged(
         ),
         "arm_l": (
             _region_layer(
-                subject, (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12), size, feather=4.0
+                subject,
+                (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12),
+                size,
+                feather=4.0,
+                exclude_above=chin_y,
             ),
             points["shoulder_l"],
         ),
         "arm_r": (
             _region_layer(
-                subject, (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12), size, feather=4.0
+                subject,
+                (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12),
+                size,
+                feather=4.0,
+                exclude_above=chin_y,
             ),
             points["shoulder_r"],
         ),
@@ -188,13 +289,21 @@ def animate_rigged(
         ),
         "forearm_l": (
             _region_layer(
-                subject, (x0, points["elbow_l"][1] - 6, cx + torso_half * 0.1, hand_y + 14), size, feather=3.0
+                subject,
+                (x0, points["elbow_l"][1] - 6, cx + torso_half * 0.1, hand_y + 14),
+                size,
+                feather=3.0,
+                exclude_above=chin_y,
             ),
             points["elbow_l"],
         ),
         "forearm_r": (
             _region_layer(
-                subject, (cx - torso_half * 0.1, points["elbow_r"][1] - 6, x1, hand_y + 14), size, feather=3.0
+                subject,
+                (cx - torso_half * 0.1, points["elbow_r"][1] - 6, x1, hand_y + 14),
+                size,
+                feather=3.0,
+                exclude_above=chin_y,
             ),
             points["elbow_r"],
         ),

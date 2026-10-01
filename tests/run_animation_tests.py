@@ -721,6 +721,165 @@ def main() -> int:
             len(_frames4) == 4 and _frames4[0][2] != _frames4[3][2],
         )
 
+    # ── 分体修复回归：封闭背景洞回收 + 手臂区域头部保护区 ────────────────
+    import io as _io
+
+    from artgen.riganim import _absorb_enclosed_background, animate_rigged
+    from PIL import Image as _TImg, ImageDraw as _TDraw
+
+    def _make_pocket_png():
+        """白底 + 躯干/双腿灰块，两腿之间封出一条**封闭白底竖洞**（洪泛
+        不可达 → 会被误判主体），底部脚块封口。"""
+        img = _TImg.new("RGB", (96, 96), (250, 250, 250))
+        draw = _TDraw.Draw(img)
+        draw.rectangle((30, 20, 66, 52), fill=(120, 120, 128))  # 躯干
+        draw.rectangle((30, 52, 44, 90), fill=(120, 120, 128))  # 左腿
+        draw.rectangle((52, 52, 66, 90), fill=(120, 120, 128))  # 右腿
+        draw.rectangle((28, 90, 68, 95), fill=(90, 90, 96))  # 脚块封底
+        buffer = _io.BytesIO()
+        img.save(buffer, "PNG")
+        return buffer.getvalue()
+
+    _pocket_frames, _, _, _ = animate_rigged(
+        _make_pocket_png(), "walk", 6, 96, segment_mask=None, keep_background=False
+    )
+    # 不变量：洞必须作为**主体**消失。腿摆动扫过空隙是物理正确的，但被
+    # 误判成主体的"背景色块"会以不透明近白色出现在画面里——逐帧检查
+    # 不存在背景色 (≈250,250,250) 且不透明的像素（腿/躯干是灰色系，
+    # 双三次旋转不会造出 ≥240 的近白）。
+    _leak = 0
+    for _w, _h, _rgba in _pocket_frames:
+        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+        for _y in range(_h):
+            for _x in range(_w):
+                _r, _g, _b, _a = _img.getpixel((_x, _y))
+                if _a > 128 and _r >= 240 and _g >= 240 and _b >= 240:
+                    _leak += 1
+    check(
+        "dismember fix R1: enclosed background pocket never renders as subject",
+        _leak == 0,
+        f"{_leak} background-colored opaque pixels leaked",
+    )
+
+    def _make_chibi_face_png():
+        """Q 版测试图：大头（绿）+ 脸中部品红嘴带 + 两侧手臂矩形（灰）。
+        手臂矩形横穿嘴带所在高度——无头部保护时摆臂会把嘴带"片"走。"""
+        img = _TImg.new("RGB", (128, 128), (250, 250, 250))
+        draw = _TDraw.Draw(img)
+        draw.ellipse((14, 4, 114, 84), fill=(30, 160, 90))  # 大头
+        draw.rectangle((40, 58, 88, 76), fill=(230, 40, 160))  # 嘴带（脸中下部）
+        draw.rectangle((44, 76, 84, 100), fill=(90, 130, 170))  # 躯干（独特色，刚体参照）
+        draw.rectangle((44, 100, 56, 124), fill=(100, 100, 108))  # 左腿
+        draw.rectangle((72, 100, 84, 124), fill=(100, 100, 108))  # 右腿
+        draw.rectangle((16, 60, 60, 120), fill=(140, 140, 148))  # 左臂（横穿嘴带高度）
+        draw.rectangle((68, 60, 112, 120), fill=(140, 140, 148))  # 右臂
+        buffer = _io.BytesIO()
+        img.save(buffer, "PNG")
+        return buffer.getvalue()
+
+    def _fake_chibi_rig():
+        head_h = 0.60
+        return {
+            "bbox": [14, 4, 114, 124],
+            "size": [128, 128],
+            "source_size": [128, 128],
+            "transparent": False,
+            "confidence": 0.9,
+            "proportion": "chibi",
+            "head_ratio": 0.95,
+            "head_height": head_h,
+            "source_hash": "chibi-face-test",
+            "points": {
+                "root": [64, 124],
+                "head": [64, 20],
+                "neck": [64, 80],
+                "shoulder_l": [40, 68],
+                "elbow_l": [38, 94],
+                "hand_l": [38, 118],
+                "shoulder_r": [88, 68],
+                "elbow_r": [90, 94],
+                "hand_r": [90, 118],
+                "hip_l": [50, 100],
+                "knee_l": [50, 112],
+                "foot_l": [50, 124],
+                "hip_r": [78, 100],
+                "knee_r": [78, 112],
+                "foot_r": [78, 124],
+            },
+        }
+
+    _face_frames, _, _, _ = animate_rigged(
+        _make_chibi_face_png(),
+        "walk",
+        8,
+        128,
+        rig=_fake_chibi_rig(),
+        segment_mask=None,
+        keep_background=False,
+    )
+
+    def _magenta_stats(frame):
+        _w, _h, _rgba = frame
+        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+        _xs, _ys, _n = [], [], 0
+        for _y in range(_h):
+            for _x in range(_w):
+                _r, _g, _b, _a = _img.getpixel((_x, _y))
+                if _a > 128 and _r > 180 and _g < 120 and _b > 110:
+                    _xs.append(_x)
+                    _ys.append(_y)
+                    _n += 1
+        if not _xs:
+            return None
+        return {
+            "cx": sum(_xs) / _n,
+            "cy": sum(_ys) / _n,
+            "width": max(_xs) - min(_xs),
+            "count": _n,
+        }
+
+    def _torso_cx(frame):
+        _w, _h, _rgba = frame
+        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+        _acc, _n = 0, 0
+        for _y in range(_h):
+            for _x in range(_w):
+                _r, _g, _b, _a = _img.getpixel((_x, _y))
+                if _a > 128 and abs(_r - 30) < 40 and abs(_g - 160) < 40 and abs(_b - 90) < 40:
+                    _acc += _x
+                    _n += 1
+        return (_acc / _n) if _n else None
+
+    _stats = [s for s in (_magenta_stats(f) for f in _face_frames) if s is not None]
+    _torso_cxs = [_torso_cx(f) for f in _face_frames]
+    # 不变量一（不撕裂）：嘴带宽度恒定——被左右手臂反向"片"走时宽度会被
+    # 拉伸摆动；随躯干刚体运动时宽度不变。
+    _widths = [s["width"] for s in _stats]
+    _width_drift = (max(_widths) - min(_widths)) / max(1, _widths[0])
+    # 不变量二（刚体跟随）：嘴带与头部绿圆同属 upper 区域，应同步平移，
+    # 两者的 X 质心差恒定；若嘴带被手臂层带走则会相对头部振荡。
+    # （头部绿圆是纯 upper 参照——躯干/腿/臂的矩形互相重叠，污染参照。）
+    _rel = [
+        s["cx"] - tc
+        for s, tc in zip(_stats, _torso_cxs)
+        if tc is not None
+    ]
+    _rel_dev = max((abs(v - _rel[0]) for v in _rel), default=0.0)
+    check(
+        "dismember fix R2: chibi face band not sheared (width drift < 15%)",
+        len(_stats) >= 6 and _width_drift < 0.15,
+        f"widths={_widths}",
+    )
+    check(
+        "dismember fix R2: chibi face band tracks torso rigidly (dev < 3px)",
+        len(_rel) >= 6 and _rel_dev < 3.0,
+        f"rel_dev={_rel_dev:.2f}px",
+    )
+    check(
+        "dismember fix R2: interior colored band survives pocket absorption",
+        len(_stats) >= 6,
+    )
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

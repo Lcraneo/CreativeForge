@@ -1323,7 +1323,8 @@ def build_router(runtime):
         cache_dir = os.path.join(ANIMATION_DIR, "play_cache")
         os.makedirs(cache_dir, exist_ok=True)
 
-        PLAYTEST_CACHE_VERSION = 3  # 渲染语义变化（透明底/trim/帧数/尺寸）时 +1，作废旧缓存
+        # v4：分体修复（封闭背景洞回收 + 手臂区域头部保护区）改变渲染语义
+        PLAYTEST_CACHE_VERSION = 4
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(

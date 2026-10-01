@@ -1083,6 +1083,12 @@ def ai_segment_subject(
             return None
 
         mask = _flood_subject(fitted)
+        # 分体修复 R1：白底分割同样有"封闭背景洞"问题（两腿之间的白底
+        # 被腿围住、洪泛不可达 → 误判主体），编辑后的图就在手边，按白底
+        # 色回收；回收失败静默回退原 mask
+        from artgen.riganim import _absorb_enclosed_background
+
+        mask = _absorb_enclosed_background(mask, fitted, bg_color=border)
         hist = mask.histogram()
         total = mask.width * mask.height
         coverage = sum(hist[128:]) / total
