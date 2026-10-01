@@ -136,6 +136,8 @@ export default function SettingsCenter() {
 
   const [form, setForm] = useState<FormState | null>(null);
   const [apiKey, setApiKey] = useState("");
+  const [poolKey, setPoolKey] = useState("");
+  const [poolSaving, setPoolSaving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
@@ -215,6 +217,62 @@ export default function SettingsCenter() {
       toast({ tone: "success", title: "已清除后端保存的 API Key" });
     } catch (cause) {
       toast({ tone: "danger", title: "删除失败", description: String(cause) });
+    }
+  }
+
+  async function addPoolKey() {
+    const key = poolKey.trim();
+    if (!key || poolSaving) return;
+    if (/\s/.test(key)) {
+      toast({ tone: "danger", title: "Key 不能包含空格" });
+      return;
+    }
+    setPoolSaving(true);
+    try {
+      const next = await api.saveModelSettings({ api_key_pool_add: [key] });
+      queryClient.setQueryData(["model-settings"], next);
+      setPoolKey("");
+      toast({
+        tone: "success",
+        title: "备用 Key 已加入池",
+        description: `额度类错误将自动切换，当前共 ${next.api_key_pool_size ?? 0} 把`,
+      });
+    } catch (cause) {
+      toast({ tone: "danger", title: "操作失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setPoolSaving(false);
+    }
+  }
+
+  async function removePoolKey(index: number) {
+    if (poolSaving) return;
+    setPoolSaving(true);
+    try {
+      const next = await api.saveModelSettings({ api_key_pool_remove: [index] });
+      queryClient.setQueryData(["model-settings"], next);
+      toast({
+        tone: "success",
+        title: "已移除备用 Key",
+        description: `当前共 ${next.api_key_pool_size ?? 0} 把`,
+      });
+    } catch (cause) {
+      toast({ tone: "danger", title: "操作失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setPoolSaving(false);
+    }
+  }
+
+  async function clearPool() {
+    if (poolSaving) return;
+    setPoolSaving(true);
+    try {
+      const next = await api.saveModelSettings({ api_key_pool: [] });
+      queryClient.setQueryData(["model-settings"], next);
+      toast({ tone: "success", title: "已清空备用 Key 池" });
+    } catch (cause) {
+      toast({ tone: "danger", title: "操作失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setPoolSaving(false);
     }
   }
 
@@ -329,6 +387,71 @@ export default function SettingsCenter() {
                   icon="key"
                 />
               </label>
+              <div className="block rounded-lg border border-line-subtle bg-surface-1 p-3 md:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[12.5px] font-semibold text-ink">
+                      备用 Key 池（额度耗尽自动切换）
+                    </div>
+                    <p className="mt-0.5 text-[11px] leading-[16px] text-ink-3">
+                      生图 / 对话 / 视频 / 图像编辑四个调用点共用；命中欠费、限流或鉴权失败时自动换下一把重试。
+                    </p>
+                  </div>
+                  <Badge tone={(data.api_key_pool_size ?? 0) > 0 ? "primary" : "neutral"}>
+                    {(data.api_key_pool_size ?? 0)} 把
+                  </Badge>
+                </div>
+                {(data.api_key_pool ?? []).length > 0 && (
+                  <ul className="mt-2.5 space-y-1.5">
+                    {(data.api_key_pool ?? []).map((hint, index) => (
+                      <li
+                        key={`${hint}-${index}`}
+                        className="flex items-center gap-2 rounded-md border border-line-subtle bg-surface-2 px-2.5 py-1.5"
+                      >
+                        <Icon name="key" className="h-3.5 w-3.5 shrink-0 text-ink-4" />
+                        <code className="min-w-0 flex-1 truncate font-mono text-[11px] text-ink-3">
+                          #{index + 1} · {hint}
+                        </code>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon="trash"
+                          onClick={() => void removePoolKey(index)}
+                        >
+                          移除
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <div className="mt-2.5 flex gap-2">
+                  <Input
+                    type="password"
+                    autoComplete="off"
+                    value={poolKey}
+                    onChange={(event) => setPoolKey(event.target.value)}
+                    placeholder="粘贴备用 API Key（sk-…）"
+                    icon="key"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="zap"
+                    loading={poolSaving}
+                    onClick={() => void addPoolKey()}
+                  >
+                    加入池
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="trash"
+                    onClick={() => void clearPool()}
+                  >
+                    清空
+                  </Button>
+                </div>
+              </div>
               <label className="block">
                 <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-4">
                   生成尺寸 size

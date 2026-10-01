@@ -298,6 +298,11 @@ class ModelSettingsStore:
                 if isinstance(changes, dict) and isinstance(changes.get("api_key_pool_add"), list)
                 else None
             )
+            remove_indexes = (
+                changes.pop("api_key_pool_remove")
+                if isinstance(changes, dict) and isinstance(changes.get("api_key_pool_remove"), list)
+                else None
+            )
             for key, value in (changes or {}).items():
                 if key in self._DEFAULTS:
                     self._data[key] = value
@@ -309,6 +314,18 @@ class ModelSettingsStore:
                     if key and key != primary and key not in pool:
                         pool.append(key)
                 self._data["api_key_pool"] = pool
+            if remove_indexes:
+                # 按池内序号移除（UI 只拿到脱敏回显，无法按明文匹配）
+                pool = [k for k in (self._data.get("api_key_pool") or []) if k]
+                drop = set()
+                for index in remove_indexes:
+                    try:
+                        drop.add(int(index))
+                    except (TypeError, ValueError):
+                        continue
+                self._data["api_key_pool"] = [
+                    k for i, k in enumerate(pool) if i not in drop
+                ]
             self._save()
         return self.public()
 

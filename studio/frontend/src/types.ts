@@ -242,6 +242,9 @@ export interface ModelSettings {
   style?: string;
   has_key?: boolean;
   key_hint?: string;
+  /** 备用 Key 池（额度耗尽/鉴权失败自动切换）；此处为脱敏回显 */
+  api_key_pool?: string[];
+  api_key_pool_size?: number;
 }
 
 export interface ProviderPreset {

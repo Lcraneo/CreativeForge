@@ -435,7 +435,13 @@ export const api = {
       "/api/settings/model/presets",
     ),
 
-  saveModelSettings: (payload: Partial<ModelSettings> & { api_key?: string | null }) =>
+  saveModelSettings: (
+    payload: Partial<ModelSettings> & {
+      api_key?: string | null;
+      api_key_pool_add?: string[];
+      api_key_pool_remove?: number[];
+    },
+  ) =>
     request<ModelSettings>("/api/settings/model", {
       method: "PUT",
       body: JSON.stringify(payload),

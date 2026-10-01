@@ -178,6 +178,7 @@ class ModelSettingsRequest(BaseModel):
     timeout: int | None = None
     api_key_pool_add: list[str] | None = None  # 备用 Key 追加（每项一把）
     api_key_pool: list[str] | None = None  # 整池覆盖（清空传 []）
+    api_key_pool_remove: list[int] | None = None  # 按池内序号移除（UI 拿到的是脱敏回显）
 
 
 def _localize_asset(asset):
