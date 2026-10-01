@@ -147,6 +147,14 @@ def animate_rigged(
             _region_layer(subject, (cx - w * 0.12, hip_y - 26, x1, y1), size, feather=5.0),
             points["hip_r"],
         ),
+        # 裆部立柱（修复"身材切割"）：左右腿反向旋转时中缝会撕裂、露出底下
+        # 的背景填充色。这一层取自原画自身的裆部像素，**不参与旋转**、只跟随
+        # 起伏平移，画在两腿之上——腿摆动时中缝始终被角色自己的裤子像素填满，
+        # 不再露出竖直亮缝。
+        "crotch": (
+            _region_layer(subject, (cx - w * 0.17, hip_y - 12, cx + w * 0.17, y1), size, feather=4.0),
+            points["root"],
+        ),
     }
 
     frames = []
@@ -159,9 +167,11 @@ def animate_rigged(
         leg = pose["leg"]
 
         frame = base_bg.copy()
-        # legs behind, then the whole upper body (covers the hip seam), then arms
+        # legs behind, then the crotch pillar (fills the centre seam, no
+        # rotation), then the whole upper body (covers the hip seam), then arms
         _place(frame, regions["leg_l"][0], regions["leg_l"][1], -leg * 14, (sway * 0.3, dy))
         _place(frame, regions["leg_r"][0], regions["leg_r"][1], leg * 14, (sway * 0.3, dy))
+        _place(frame, regions["crotch"][0], regions["crotch"][1], 0.0, (0.0, dy))
         _place(frame, regions["upper"][0], regions["upper"][1], -lean, (sway, dy))
         _place(frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy))
         _place(frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy))
