@@ -1,0 +1,53 @@
+{
+  "baseline": {
+    "config": {
+      "min_count": 20,
+      "duration": 1.0,
+      "fps": 12,
+      "size": 384
+    },
+    "metrics": {
+      "frames": 20,
+      "fps": 12,
+      "loop_seconds": 1.667,
+      "sharpness": 13.656,
+      "temporal_consistency": 0.9927,
+      "color_fidelity": 0.9719,
+      "dynamic_range_spread": 233.0,
+      "clip_high": 0.00609,
+      "clip_low": 0.0,
+      "motion_mean": 0.936,
+      "motion_cv": 0.5247,
+      "pipeline_seconds": 0.257,
+      "gif_bytes": 852533
+    },
+    "recorded_at": "2026-10-01 17:59:21"
+  },
+  "goal_loop_ratio": 1.5,
+  "tolerances": {
+    "sharpness": [
+      "ratio_min",
+      0.97
+    ],
+    "temporal_consistency": [
+      "abs_min",
+      0.02
+    ],
+    "color_fidelity": [
+      "abs_min",
+      0.01
+    ],
+    "dynamic_range_spread": [
+      "abs_min",
+      3.0
+    ],
+    "motion_mean": [
+      "ratio_min",
+      0.9
+    ],
+    "motion_cv": [
+      "ratio_max",
+      1.05
+    ]
+  }
+}

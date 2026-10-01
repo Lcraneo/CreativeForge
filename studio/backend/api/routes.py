@@ -1536,6 +1536,18 @@ def build_router(runtime):
                 return None
             if not os.path.isfile(out_path):
                 images = [PILImage.open(f).convert("RGBA") for f in samples]
+                # 条带帧宽封顶 288（模块衔接·内存契约）：30 帧 × 384px 的
+                # 解码内存会把五条条带推到 ~90MB；舞台展示高度 ~216px，
+                # 288px 视觉无损，内存回到 20 帧时代水平
+                if images and images[0].width > 288:
+                    target_w = 288
+                    images = [
+                        img.resize(
+                            (target_w, max(1, int(img.height * target_w / img.width))),
+                            PILImage.LANCZOS,
+                        )
+                        for img in images
+                    ]
                 frame_w = max(img.width for img in images)
                 frame_h = max(img.height for img in images)
                 sheet = PILImage.new("RGBA", (frame_w * len(images), frame_h), (0, 0, 0, 0))

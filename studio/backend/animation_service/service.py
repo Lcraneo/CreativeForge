@@ -203,6 +203,14 @@ _SEGMENT_CACHE_TTL = 600.0
 _ACTION_BATCHES: dict[str, dict] = {}
 _ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会误删运行中批次
 
+# ── 视频采样配置指纹（benchmark/video_quality.py 依赖；改动需重录基线）──
+# R1 基线：min_count=20 / duration=1.0（20 帧 @12fps ≈ 1.67s 循环）。
+# R2 优化：i2v 源视频 5s/24fps≈120 帧里只取 20 帧，时间采样率仅 17%；
+# 提升到 30 帧（2.5s 循环，+50%）——每帧间源素材跨度从 0.21s 降到
+# 0.14s，动作周期更完整、播放更顺滑；质量七项指标由基准 --check 把关。
+VIDEO_SAMPLE_MIN_COUNT = 30
+VIDEO_SAMPLE_DURATION = 1.25
+
 
 def _prune_action_batches() -> None:
     """清理超过 TTL 的历史批次（内存态只增不删会缓慢泄漏）。"""
@@ -256,6 +264,63 @@ def generate_video_with_policy(settings, prompt, source_bytes, timeout_seconds=4
                 continue
             break
     raise VideoGenerationError(describe_error(last_exc), classify_error(last_exc)) from last_exc
+
+
+def _select_by_motion(candidates, consecutive, count):
+    """动作感知选帧：按「累计运动量」等分取帧（R3）。
+
+    均匀时间采样在非匀速运动（i2v 常态：起手蓄力慢、发力快）下会把帧
+    预算浪费在慢段、又跳过快段的中间帧——帧间运动能量忽大忽小（CV 高），
+    观感卡顿。改为在候选帧的累计运动曲线上等分取点：运动快的段自动多
+    取帧、静止段自动跳过，帧间能量均匀 = 视觉匀速。
+    候选数 ≤ count 时退化为顺序截取（行为同旧版）。"""
+
+    if len(candidates) <= count:
+        return list(candidates)
+    import bisect
+
+    cum = [0.0]
+    for a, b in zip(candidates, candidates[1:]):
+        hi = min(b, len(consecutive))
+        cum.append(cum[-1] + (sum(consecutive[a:hi]) if hi > a else 0.0))
+    total_motion = cum[-1]
+    if total_motion <= 1e-6:
+        return candidates[:count]
+
+    positions = []
+    last = -1
+    for k in range(count):
+        desired = total_motion * k / (count - 1)
+        pos = bisect.bisect_left(cum, desired)
+        pos = max(pos, last + 1)
+        # 右侧留足剩余名额，保证严格递增且恰好 count 个
+        pos = min(pos, len(candidates) - 1 - (count - 1 - k))
+        positions.append(pos)
+        last = pos
+    return [candidates[p] for p in positions]
+
+
+def _reap_file(path, timeout=30.0):
+    """后台收割临时文件（Windows 专属竞态的兜底）。
+
+    reader.close() 返回时 ffmpeg 子进程可能尚未完全退出，读句柄仍在，
+    立刻 os.remove 会 PermissionError（浸泡实测命中约 1/30）。主线程
+    只做一次快删，失败交给本守护线程退避重试——磁盘清理最终一致，
+    绝不阻塞生成主流程。"""
+
+    deadline = time.time() + timeout
+    delay = 0.1
+    while time.time() < deadline:
+        try:
+            os.remove(path)
+            return
+        except FileNotFoundError:
+            return
+        except PermissionError:
+            time.sleep(delay)
+            delay = min(0.5, delay * 1.5)
+        except OSError:
+            return
 
 
 class AnimationService:
@@ -352,7 +417,14 @@ class AnimationService:
                 video_bytes, video_model = generate_video_with_policy(
                     settings, prompt, source_bytes, timeout_seconds=420.0
                 )
-                frames_rgba = self._slice_video(video_bytes, source_bytes, 12, 1.0, 384, min_count=20)
+                frames_rgba = self._slice_video(
+                    video_bytes,
+                    source_bytes,
+                    12,
+                    VIDEO_SAMPLE_DURATION,
+                    384,
+                    min_count=VIDEO_SAMPLE_MIN_COUNT,
+                )
                 from artgen import compose_animation
 
                 result = compose_animation(frames_rgba=frames_rgba, fps=12, size=384)
@@ -623,7 +695,12 @@ class AnimationService:
             settings, prompt, work_bytes, timeout_seconds=420.0
         )
         frames_rgba = self._slice_video(
-            video_bytes, source_bytes, fps, duration, size, min_count=20
+            video_bytes,
+            source_bytes,
+            fps,
+            max(float(duration or 1.0), VIDEO_SAMPLE_DURATION),
+            size,
+            min_count=VIDEO_SAMPLE_MIN_COUNT,
         )
 
         # 弱背景稳定（仅 idle）：i2v 背景会随生成轻微漂移。用 AI 分割 mask
@@ -747,18 +824,32 @@ class AnimationService:
         """mp4 bytes -> evenly sampled, stabilized (w,h,RGBA) frames.
 
         流式解码：逐帧读取、即时缩略、只保留采样目标帧——避免旧实现把
-        全部帧解码进内存（161 帧 960×960 ≈ 425MB）的内存峰值。"""
+        全部帧解码进内存（161 帧 960×960 ≈ 425MB）的内存峰值。
+
+        选帧策略（R3）：元数据可用时先保留 ~3× 预算的候选帧（封顶 64），
+        再按累计运动量等分精选（_select_by_motion）；元数据缺失时退回
+        均匀重采样。"""
 
         import imageio.v2 as imageio
         from PIL import Image
 
         from artgen.sourceanim import _fit
 
+        if not video_bytes or len(video_bytes) < 1024:
+            # 模块衔接边界校验：上游（生成/缓存/下载）给到空/截断数据时
+            # 立即给可读错误，而不是等 imageio 抛解析异常
+            raise RuntimeError("视频数据为空或已损坏（<1KB），无法抽帧")
+
         tmp = os.path.join(self.directory, "tmp_{}.mp4".format(uuid.uuid4().hex[:8]))
         with open(tmp, "wb") as handle:
             handle.write(video_bytes)
         try:
-            reader = imageio.get_reader(tmp)
+            try:
+                reader = imageio.get_reader(tmp)
+            except Exception as error:  # noqa: BLE001 - 上游给到垃圾/截断数据
+                raise RuntimeError(
+                    "视频数据无法解码：{}".format(str(error)[:120])
+                ) from error
             try:
                 total = int(reader.count_frames())
             except Exception:  # noqa: BLE001 - metadata unavailable
@@ -774,7 +865,11 @@ class AnimationService:
                 hi = total - max(1, int(total * 0.04))
                 if hi - lo < 4:
                     lo, hi = 0, total - 1
-                wanted = {round(lo + (hi - lo) * i / max(1, count - 1)) for i in range(count)}
+                candidate_n = min(3 * count, 64, hi - lo + 1)
+                wanted = {
+                    round(lo + (hi - lo) * i / max(1, candidate_n - 1))
+                    for i in range(candidate_n)
+                }
             else:
                 wanted = None  # 元数据缺失：逐帧保留后本地重采样
 
@@ -791,18 +886,29 @@ class AnimationService:
             consecutive: list[float] = []
             gray_prev = None
             index = 0
-            for frame in reader:
-                diff, gray_prev = small(gray_prev, frame)
-                if index > 0:
-                    consecutive.append(diff)
-                if wanted is None or index in wanted:
-                    canvas = _fit(Image.fromarray(frame), max(64, min(1024, int(size))))
-                    kept[index] = canvas
-                index += 1
-            reader.close()
+            try:
+                for frame in reader:
+                    diff, gray_prev = small(gray_prev, frame)
+                    if index > 0:
+                        consecutive.append(diff)
+                    if wanted is None or index in wanted:
+                        canvas = _fit(Image.fromarray(frame), max(64, min(1024, int(size))))
+                        kept[index] = canvas
+                    index += 1
+            finally:
+                # 任何路径（含中途异常）都必须关掉 reader：ffmpeg 子进程
+                # 不退出，tmp 文件句柄就永远不释放
+                reader.close()
         finally:
             try:
                 os.remove(tmp)
+            except PermissionError:
+                # Windows 竞态：ffmpeg 子进程尚未完全退出 → 交给后台收割线程
+                import threading
+
+                threading.Thread(
+                    target=_reap_file, args=(tmp,), daemon=True, name="cf-tmp-reaper"
+                ).start()
             except OSError:
                 pass
 
@@ -817,7 +923,7 @@ class AnimationService:
                 break
 
         if wanted is not None:
-            indices = sorted(kept.keys())[:count]
+            indices = _select_by_motion(sorted(kept.keys()), consecutive, count)
         else:
             lo = min(start + max(1, int(total * 0.02)), max(0, total - 4))
             hi = total - max(1, int(total * 0.04))
