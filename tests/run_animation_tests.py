@@ -454,6 +454,60 @@ def main() -> int:
         _shutil.rmtree(_pkg_dir, ignore_errors=True)
         _shutil.rmtree(_pkg_anim_dir, ignore_errors=True)
 
+    # ── 额度仪表：本地估算台账 ───────────────────────────────────────────
+    import tempfile as _tempfile4
+    import time as _time
+
+    from studio.backend.model_service import usage as _usage
+
+    _orig_ledger_path = _usage._LEDGER_PATH
+    _usage._LEDGER_PATH = os.path.join(_tempfile4.gettempdir(), "cf_usage_ledger_test.json")
+    _usage._ledger = None  # 强制重载
+    try:
+        _now = _time.time()
+        _usage.clear_usage()
+        _usage.record_usage("image", "wanx2.1-t2i-turbo")
+        _usage.record_usage("video", "wan2.2-i2v-plus")
+        _usage.record_usage("chat", "qwen3-omni-flash")
+        # 把最便宜的 chat 记录改成 40 天前：应落出 30 天统计窗口
+        with open(_usage._LEDGER_PATH, "r", encoding="utf-8") as _handle:
+            import json as _json2
+
+            _rows = _json2.load(_handle)
+        _rows[2]["at"] = _now - 40 * 86400
+        with open(_usage._LEDGER_PATH, "w", encoding="utf-8") as _handle:
+            _json2.dump(_rows, _handle)
+        _usage._ledger = None  # 重载，模拟重启
+        _summary = _usage.usage_summary()
+        check(
+            "usage: window keeps 2 of 3 calls (aged one excluded)",
+            sum(b["calls"] for b in _summary["by_kind"]) == 2,
+            str(_summary["by_kind"]),
+        )
+        check(
+            "usage: today = image + video",
+            abs(_summary["totals"]["today"] - (0.14 + 3.50)) < 0.01,
+            str(_summary["totals"]),
+        )
+        check(
+            "usage: video is costliest kind",
+            _summary["by_kind"][0]["kind"] == "video" and _summary["by_kind"][0]["cost"] >= 3.5,
+            str(_summary["by_kind"]),
+        )
+        check(
+            "usage: ledger capped trim works",
+            _usage.record_usage("chat", "m") or len(_usage._load()) == 4,
+        )
+        _usage.clear_usage()
+        check("usage: clear empties ledger", _usage.usage_summary()["totals"]["today"] == 0.0)
+    finally:
+        _usage._LEDGER_PATH = _orig_ledger_path
+        _usage._ledger = None
+        try:
+            os.remove(os.path.join(_tempfile4.gettempdir(), "cf_usage_ledger_test.json"))
+        except OSError:
+            pass
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

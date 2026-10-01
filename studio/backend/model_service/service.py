@@ -599,6 +599,9 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
                 url = poll_video_task(attempt_key, task_id, timeout_seconds)
                 video = httpx.get(url, timeout=120)
                 video.raise_for_status()
+                from studio.backend.model_service.usage import record_usage
+
+                record_usage("video", model)
                 try:
                     os.makedirs(_VIDEO_CACHE_DIR, exist_ok=True)
                     with open(cached_path, "wb") as handle:
@@ -673,6 +676,9 @@ class ChatProvider:
                 )
                 response.raise_for_status()
                 content = response.json()["choices"][0]["message"]["content"]
+                from studio.backend.model_service.usage import record_usage
+
+                record_usage("chat", model)
                 return {"model": model, "content": content.strip()}
             except httpx.HTTPStatusError as exc:
                 # 额度/鉴权/网络类错误换下一把 Key 重试；其余（参数、模型名
@@ -804,6 +810,9 @@ class ImageProvider:
             result = self._generate_dashscope(prompt)
         else:
             result = self._generate_openai_compat(prompt)
+        from studio.backend.model_service.usage import record_usage
+
+        record_usage("image", result.get("model") or self.settings.get("model"))
         if result.get("file"):
             path = os.path.join(GENERATED_DIR, os.path.basename(result["file"]))
             if os.path.isfile(path):
@@ -919,9 +928,13 @@ class ImageEditProvider:
         for key in _keys_for(self.settings):
             scoped = {**self.settings, "api_key": key}
             try:
-                return ImageEditProvider(scoped)._edit_chain(
+                result = ImageEditProvider(scoped)._edit_chain(
                     base_image_url, instruction, poll_timeout
                 )
+                from studio.backend.model_service.usage import record_usage
+
+                record_usage("edit", result.get("model") or scoped.get("edit_model") or "?")
+                return result
             except Exception as exc:  # noqa: BLE001
                 # 额度/鉴权/网络类错误换下一把 Key；确定性失败直接上抛
                 if classify_error(exc) in ("quota", "auth", "network"):

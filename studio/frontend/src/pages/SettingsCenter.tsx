@@ -73,6 +73,104 @@ function applyPreset(form: FormState, preset: ProviderPreset): FormState {
   };
 }
 
+/** 额度仪表：本地估算用量（DashScope 无余额查询 API，只能本地估算） */
+const KIND_LABEL: Record<string, string> = {
+  image: "生图",
+  edit: "图像编辑",
+  video: "视频",
+  chat: "对话",
+};
+
+function UsageMeter() {
+  const queryClient = useQueryClient();
+  const usage = useQuery({
+    queryKey: ["model-usage"],
+    queryFn: api.modelUsage,
+    staleTime: 15000,
+  });
+  const [clearing, setClearing] = useState(false);
+
+  async function clear() {
+    if (clearing) return;
+    setClearing(true);
+    try {
+      await api.clearModelUsage();
+      queryClient.invalidateQueries({ queryKey: ["model-usage"] });
+      toast({ tone: "success", title: "已清空本地用量台账" });
+    } catch (cause) {
+      toast({ tone: "danger", title: "清空失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setClearing(false);
+    }
+  }
+
+  const data = usage.data;
+  const maxCost = Math.max(0.01, ...(data?.by_kind ?? []).map((row) => row.cost));
+
+  return (
+    <Card
+      title="额度仪表（本地估算）"
+      icon="gauge"
+      right={
+        <Button variant="ghost" size="sm" icon="trash" loading={clearing} onClick={() => void clear()}>
+          清空
+        </Button>
+      }
+    >
+      {!data ? (
+        <p className="text-xs text-ink-3">读取用量台账…</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2.5">
+            {(
+              [
+                ["今日", data.totals.today],
+                ["近 7 天", data.totals.week],
+                ["近 30 天", data.totals.month],
+              ] as const
+            ).map(([label, value]) => (
+              <div
+                key={label}
+                className="rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5"
+              >
+                <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+                  {label}
+                </div>
+                <div className="mt-1 font-mono text-[15px] font-semibold text-ink">
+                  ¥{value.toFixed(2)}
+                </div>
+              </div>
+            ))}
+          </div>
+          <ul className="mt-3 space-y-2">
+            {(data.by_kind ?? []).map((row) => (
+              <li key={row.kind}>
+                <div className="flex items-center justify-between text-[11.5px] text-ink-2">
+                  <span>
+                    {KIND_LABEL[row.kind] ?? row.kind}
+                    <span className="ml-1.5 font-mono text-[10.5px] text-ink-4">{row.calls} 次</span>
+                  </span>
+                  <span className="font-mono text-ink-3">¥{row.cost.toFixed(2)}</span>
+                </div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/[.08]">
+                  <div
+                    className="h-full rounded-full bg-primary/70"
+                    style={{ width: `${Math.max(3, (row.cost / maxCost) * 100)}%` }}
+                  />
+                </div>
+              </li>
+            ))}
+            {(data.by_kind ?? []).length === 0 && (
+              <li className="text-[11.5px] text-ink-3">还没有调用记录——生成一次原画或动画后这里会出现估算。</li>
+            )}
+          </ul>
+          <p className="mt-3 text-[10.5px] leading-[16px] text-ink-4">{data.note}</p>
+        </>
+      )}
+    </Card>
+  );
+}
+
 /** 能力卡片：一个"用途"对应一个模型字段，凭证共用。 */
 function Capability(props: {
   icon: IconName;
@@ -651,6 +749,7 @@ export default function SettingsCenter() {
         </div>
 
         <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">
+          <UsageMeter />
           <Card
             title="能力 → 模型 对照"
             icon="check"

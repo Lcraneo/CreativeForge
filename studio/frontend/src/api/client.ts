@@ -7,6 +7,7 @@ import type {
   HistorySummary,
   ModelSettings,
   ModelTestResult,
+  ModelUsage,
   MultipartSession,
   StorageConfigList,
   StorageConfigPublic,
@@ -461,6 +462,10 @@ export const api = {
   testModelSettings: () => request<ModelTestResult>("/api/settings/model/test", { method: "POST" }),
 
   clearModelKey: () => request<ModelSettings>("/api/settings/model/key", { method: "DELETE" }),
+
+  modelUsage: () => request<ModelUsage>("/api/settings/model/usage"),
+
+  clearModelUsage: () => request<{ status: string }>("/api/settings/model/usage", { method: "DELETE" }),
 
   // ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ─────────────────────
   // 凭证本地加密存储、界面脱敏；新增/编辑时提交明文，后端落盘加密。

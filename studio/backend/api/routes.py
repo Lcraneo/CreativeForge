@@ -521,6 +521,21 @@ def build_router(runtime):
     def clear_model_key():
         return runtime.model_settings.clear_key()
 
+    @router.get("/settings/model/usage")
+    def model_usage():
+        """额度仪表：本地估算的用量台账（非账单）。"""
+
+        from studio.backend.model_service import usage as usage_store
+
+        return usage_store.usage_summary()
+
+    @router.delete("/settings/model/usage")
+    def model_usage_clear():
+        from studio.backend.model_service import usage as usage_store
+
+        usage_store.clear_usage()
+        return {"status": "cleared"}
+
     @router.post("/prompt/enhance")
     def enhance_prompt(request: EnhanceRequest):
         """手动提示词增强（对话框按钮触发，替代原先的自动增强）。"""
@@ -842,6 +857,9 @@ def build_router(runtime):
             timeout=float(settings.get("timeout", 60)),
         )
         response.raise_for_status()
+        from studio.backend.model_service.usage import record_usage
+
+        record_usage("chat", model)
         return response.json()["choices"][0]["message"]["content"].strip()
 
     @router.post("/animation/custom-actions/enhance")

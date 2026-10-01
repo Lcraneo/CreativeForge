@@ -281,6 +281,18 @@ export interface ModelTestResult {
   detail?: string;
 }
 
+/** 额度仪表：本地估算用量（非账单） */
+export interface ModelUsage {
+  totals: { today: number; week: number; month: number };
+  currency: string;
+  by_kind: Array<{ kind: string; calls: number; cost: number }>;
+  by_model: Array<{ kind: string; model: string; calls: number; cost: number }>;
+  days: Array<{ date: string; calls: number; cost: number }>;
+  recent: Array<{ at: number; kind: string; model: string; meta?: Record<string, unknown> }>;
+  prices: Record<string, number>;
+  note: string;
+}
+
 export interface GenerationOverrides {
   style?: string;
   gender?: string;
