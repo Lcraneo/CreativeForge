@@ -28,7 +28,7 @@ const RUN_SPEED_PX_S = 336;
 const OVERRIDE_TAIL_MS = 150; // attack/jump 播完帧序列后额外停留的余量
 
 const ACTION_HINT: Record<string, string> = {
-  idle: "待机呼吸 · 点击卡片播放",
+  idle: "待机 · 无操作时自动播放",
   walk: "行走 · ← / →",
   run: "奔跑 · ← / → + Shift",
   attack: "攻击 · 空格",
@@ -301,12 +301,6 @@ export default function PlaytestStage() {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
-      // idle 自动播放已按需求关闭：未被钉住时 idle 保持静止帧，
-      // 点动作画廊的 idle 卡（pin）才播放呼吸循环
-      if (nextAction === "idle" && pinnedRef.current !== "idle") {
-        rafRef.current = requestAnimationFrame(loop);
-        return;
-      }
       const frames = framesFor(nextAction);
       const frameMs = frameMsRef.current;
       let idx = frameIdxRef.current % frames;
@@ -574,6 +568,8 @@ export default function PlaytestStage() {
                 <button
                   key={record.id}
                   onClick={() => {
+                    setStripImages({});
+                    setFrameIndex(0);
                     setSelected({
                       id: record.asset_id!,
                       name: record.name || record.goal,
