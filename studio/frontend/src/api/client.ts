@@ -175,17 +175,23 @@ export interface PlanResult {
 let lastToastKey = "";
 let lastToastAt = 0;
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+interface RequestInitInternal extends RequestInit {
+  /** 静默模式：预期可能 404 的探活请求不弹全局错误 toast，由调用方自行处理 */
+  silent?: boolean;
+}
+
+async function request<T>(path: string, init?: RequestInitInternal): Promise<T> {
+  const { silent, ...rest } = init ?? {};
   const response = await fetch(path, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...authHeaders(), ...init?.headers },
+    ...rest,
+    headers: { "Content-Type": "application/json", ...authHeaders(), ...rest?.headers },
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => response.statusText);
     const error = new Error(`${response.status}: ${detail}`);
     // 统一错误提示：同一消息 2.5s 内只弹一次；页面层自己的 catch 依旧生效
     const now = Date.now();
-    if (error.message !== lastToastKey || now - lastToastAt > 2500) {
+    if (!silent && (error.message !== lastToastKey || now - lastToastAt > 2500)) {
       lastToastKey = error.message;
       lastToastAt = now;
       toast({
@@ -326,7 +332,9 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId }),
     }),
 
-  latestAsset: () => request<CreativeAsset>("/api/assets/latest"),
+  latestAsset: () =>
+    // 探活请求：404（后端重启后尚无资产）由 assetStore 的历史回退处理，不弹全局错误
+    request<CreativeAsset>("/api/assets/latest", { silent: true }),
 
   createAnimation: (payload: AnimationRequestPayload) =>
     request<AnimationResult>("/api/animation", {

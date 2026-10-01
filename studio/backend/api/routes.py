@@ -300,7 +300,9 @@ def build_router(runtime):
 
     @router.get("/assets/latest")
     def latest_asset():
-        asset = runtime.assets.latest()
+        # 内存为空（后端重启后）时回退到落盘历史——否则打开动画工作台
+        # 必弹 "no asset yet" 请求失败，而资产明明都在历史里
+        asset = _resolve_asset(runtime, None)
         if asset is None:
             raise HTTPException(status_code=404, detail="no asset yet")
         return _localize_asset(asset)
