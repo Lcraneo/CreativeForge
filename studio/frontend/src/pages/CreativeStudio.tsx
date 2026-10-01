@@ -7,7 +7,7 @@ import { Badge, Button, Card, StatusDot, Textarea, cx } from "../components/ui";
 import { Icon, type IconName } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import { ModelApiPanel } from "../components/ModelApiPanel";
-import type { TaskEvent } from "../types";
+import type { StyleTemplate, TaskEvent } from "../types";
 
 const EXAMPLES = [
   "创建一个像素RPG火焰法师Boss，带攻击动画，导入Cocos",
@@ -75,6 +75,33 @@ export default function CreativeStudio() {
   const chatReady = Boolean(
     modelSettings.data?.enabled && modelSettings.data?.chat_model && modelSettings.data?.use_chat,
   );
+
+  // 风格模板库：确定性风格条款，幂等拼到提示词尾部（与「增强提示词」互补）
+  const styleTemplates = useQuery({
+    queryKey: ["style-templates"],
+    queryFn: api.listStyleTemplates,
+    staleTime: Infinity,
+  });
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const lastClauseRef = useRef<string>("");
+
+  function applyStyleTemplate(template: StyleTemplate | null) {
+    setGoal((current) => {
+      let base = current;
+      const prev = lastClauseRef.current;
+      if (prev && base.includes(prev)) {
+        base = base.replace(prev, "").replace(/\n{2,}/g, "\n").trimEnd();
+      }
+      if (!template) {
+        lastClauseRef.current = "";
+        return base;
+      }
+      const clause = base ? `\n【风格】${template.clause}` : template.clause;
+      lastClauseRef.current = clause;
+      return base + clause;
+    });
+    setActiveTemplate(template ? template.id : null);
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -409,6 +436,32 @@ export default function CreativeStudio() {
           <Button variant="ember" size="lg" icon="zap" loading={running} onClick={run}>
             {running ? "创作中…" : "执行创作"}
           </Button>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-[11px] font-semibold text-ink-4">风格模板</span>
+          {(styleTemplates.data?.templates ?? []).map((template) => (
+            <button
+              key={template.id}
+              title={`${template.clause}${template.negative ? `\n负面词建议：${template.negative}` : ""}`}
+              onClick={() => applyStyleTemplate(activeTemplate === template.id ? null : template)}
+              className={cx(
+                "rounded-full border px-2.5 py-1 text-[11px] transition-colors",
+                activeTemplate === template.id
+                  ? "border-primary/60 bg-primary-tint/50 text-primary"
+                  : "border-line-subtle bg-canvas/50 text-ink-3 hover:border-primary/45 hover:text-primary",
+              )}
+            >
+              {template.label}
+            </button>
+          ))}
+          {activeTemplate && (
+            <button
+              onClick={() => applyStyleTemplate(null)}
+              className="text-[10.5px] text-ink-4 underline underline-offset-2 hover:text-ink-2"
+            >
+              移除风格
+            </button>
+          )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           {EXAMPLES.map((example) => (

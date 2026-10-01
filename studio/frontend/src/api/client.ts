@@ -435,6 +435,11 @@ export const api = {
       "/api/settings/model/presets",
     ),
 
+  listStyleTemplates: () =>
+    request<{ templates: import("../types").StyleTemplate[] }>(
+      "/api/design/style-templates",
+    ),
+
   saveModelSettings: (
     payload: Partial<ModelSettings> & {
       api_key?: string | null;

@@ -530,6 +530,17 @@ def build_router(runtime):
             raise HTTPException(status_code=404, detail="unknown image")
         return FileResponse(path)
 
+    @router.get("/design/style-templates")
+    def list_style_templates():
+        """风格提示词模板库：确定性风格条款（前端幂等拼接到提示词尾部，
+        与对话增强互补的质量下限保障）。返回有序列表。"""
+
+        from studio.backend.model_service.style_templates import STYLE_TEMPLATES
+
+        return {
+            "templates": [dict(id=key, **tpl) for key, tpl in STYLE_TEMPLATES.items()]
+        }
+
     @router.post("/design/views")
     def generate_design_views(request: dict):
         """基于资产的 AI 原画生成侧视/背视图（qwen-image-edit，含相似度自检）。"""

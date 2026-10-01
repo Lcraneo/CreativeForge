@@ -374,6 +374,23 @@ def main() -> int:
         except OSError:
             pass
 
+    # ── 风格提示词模板库 ─────────────────────────────────────────────────
+    from studio.backend.model_service.style_templates import STYLE_TEMPLATES
+
+    check("style templates: at least 8", len(STYLE_TEMPLATES) >= 8, str(len(STYLE_TEMPLATES)))
+    check(
+        "style templates: clauses carry no marker chars",
+        all("【" not in t["clause"] and "】" not in t["clause"] for t in STYLE_TEMPLATES.values()),
+    )
+    check(
+        "style templates: labels unique",
+        len({t["label"] for t in STYLE_TEMPLATES.values()}) == len(STYLE_TEMPLATES),
+    )
+    check(
+        "style templates: every entry has clause+negative",
+        all(t.get("clause") and t.get("negative") for t in STYLE_TEMPLATES.values()),
+    )
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")
