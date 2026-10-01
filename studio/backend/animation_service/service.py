@@ -85,10 +85,122 @@ MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/�
 MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
 
+def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0):
+    """视频驱动生成的稳定入口（自动走 mp4 缓存）。"""
+
+    from studio.backend.model_service.service import generate_video
+
+    return generate_video(settings, prompt, source_bytes, timeout_seconds=timeout_seconds)
+
+
 class AnimationService:
     def __init__(self, directory: str):
         self.directory = directory
         os.makedirs(self.directory, exist_ok=True)
+        self.action_batches: dict[str, dict] = {}
+
+    # -- 一键补齐全套动作（串行队列，跳过已生成） --------------------------
+
+    def existing_ai_actions(self, asset_id: str | None) -> set:
+        """该资产已生成过 AI 动画的动作集合（扫描动画 meta）。"""
+
+        import glob as _glob
+
+        done = set()
+        if not asset_id:
+            return done
+        for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
+            try:
+                with open(meta_path, "r", encoding="utf-8") as handle:
+                    meta = json.load(handle)
+            except (ValueError, OSError):
+                continue
+            if meta.get("asset_id") != asset_id:
+                continue
+            if len(meta.get("frame_urls") or []) >= 2:
+                action = meta.get("requested_action") or meta.get("action")
+                if action:
+                    done.add(action)
+        return done
+
+    def start_action_batch(
+        self,
+        asset_id: str,
+        source_bytes: bytes,
+        settings: dict[str, Any],
+        actions: list[str] | None = None,
+    ) -> str:
+        """为资产串行补齐缺失动作的 AI 动画（视频驱动）。已生成的动作自动
+        跳过；批次状态存内存供前端轮询。"""
+
+        import threading
+        import uuid as _uuid
+
+        wanted = [a for a in (actions or ["idle", "walk", "run", "attack", "jump"]) if a in ACTIONS]
+        done = self.existing_ai_actions(asset_id)
+        pending = [a for a in wanted if a not in done]
+
+        batch_id = _uuid.uuid4().hex[:8]
+        self.action_batches[batch_id] = {
+            "id": batch_id,
+            "asset_id": asset_id,
+            "status": "running" if pending else "done",
+            "total": len(pending),
+            "created_at": time.time(),
+            "tasks": [
+                {"action": a, "status": "skipped", "note": "已有 AI 动画"}
+                for a in wanted
+                if a not in pending
+            ] + [
+                {"action": a, "status": "pending"}
+                for a in pending
+            ],
+        }
+        if pending:
+            thread = threading.Thread(
+                target=self._run_action_batch,
+                args=(batch_id, asset_id, source_bytes, settings, pending),
+                name="cf-action-batch-{}".format(batch_id),
+                daemon=True,
+            )
+            thread.start()
+        return batch_id
+
+    def _run_action_batch(self, batch_id, asset_id, source_bytes, settings, pending):
+        import random as _random
+
+        batch = self.action_batches.get(batch_id) or {}
+        for action in pending:
+            entry = next((t for t in batch.get("tasks", []) if t.get("action") == action), None)
+            if entry:
+                entry["status"] = "generating"
+            try:
+                prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
+                video_bytes, video_model = _generate_video_cached(
+                    settings, prompt, source_bytes, timeout_seconds=420.0
+                )
+                frames_rgba = self._slice_video(video_bytes, source_bytes, 12, 1.0, 384, min_count=20)
+                from artgen import compose_animation
+
+                result = compose_animation(frames_rgba=frames_rgba, fps=12, size=384)
+                animation_id = _uuid.uuid4().hex[:12]
+                meta = self._persist(result, animation_id, "video")
+                meta["video_model"] = video_model
+                meta["asset_id"] = asset_id
+                meta["requested_action"] = action
+                self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+                if entry:
+                    entry["status"] = "done"
+                    entry["animation_id"] = animation_id
+            except Exception as error:  # noqa: BLE001 - 单动作失败不拖垮批次
+                if entry:
+                    entry["status"] = "failed"
+                    entry["error"] = str(error)[:160]
+        batch["status"] = "done"
+
+    def action_batch_snapshot(self, batch_id: str) -> dict | None:
+        batch = self.action_batches.get(batch_id)
+        return dict(batch) if batch else None
 
     # -- public API -----------------------------------------------------
 

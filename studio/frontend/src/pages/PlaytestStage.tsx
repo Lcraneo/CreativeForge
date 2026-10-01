@@ -8,7 +8,7 @@ import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
 import { toast } from "../stores/toastStore";
-import type { PlaytestStrip } from "../types";
+import type { ActionBatchTask, PlaytestStrip } from "../types";
 
 // 补丁 C②：canvas 背板按 DPR 渲染（封顶 2），必须在 Stage 挂载前设置
 Konva.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -92,18 +92,56 @@ export default function PlaytestStage() {
     if (!selected?.id || generatingAction) return;
     setGeneratingAction(name);
     try {
-      await api.createAnimation({
-        asset_id: selected.id,
-        action: name,
-        fps: 12,
-        duration: 1.0,
-        size: 384,
-        use_video: true,
-      });
-      toast({ tone: "success", title: `「${name}」AI 动画已生成`, description: "试玩舞台已切换为真实动画帧" });
-      await previews.refetch();
+      const result = await api.startActionBatch(selected.id, [name]);
+      setBatchId(result.batch_id);
+      toast({ tone: "info", title: `「${name}」AI 动画生成中`, description: "约 90 秒，完成后自动刷新预览" });
     } catch (cause) {
       toast({ tone: "danger", title: "AI 动画生成失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setGeneratingAction(null);
+    }
+  }
+
+  // 一键补齐全套动作：批次轮询（每动作状态实时更新，全部完成刷新预览）
+  const [batchId, setBatchId] = useState<string | null>(null);
+  const batch = useQuery({
+    queryKey: ["action-batch", batchId],
+    queryFn: () => api.actionBatchStatus(batchId!),
+    enabled: Boolean(batchId),
+    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
+  });
+  const batchData = batch.data;
+  const batchDoneCount = (batchData?.tasks ?? []).filter(
+    (task) => task.status === "done" || task.status === "skipped",
+  ).length;
+  const batchRunning = batchData?.status === "running";
+
+  useEffect(() => {
+    if (batchData?.status === "done" && batchId) {
+      void previews.refetch();
+    }
+  }, [batchData?.status, batchId, previews]);
+
+  async function generateAllActions() {
+    if (!selected?.id || generatingAction || batchRunning) return;
+    const missing = (previews.data?.actions ?? []).filter(
+      (name) => previews.data?.strips?.[name]?.engine !== "ai-video",
+    );
+    if (missing.length === 0) {
+      toast({ tone: "info", title: "全部动作都已是 AI 动画帧" });
+      return;
+    }
+    setGeneratingAction("batch");
+    try {
+      const result = await api.startActionBatch(selected.id);
+      setBatchId(result.batch_id);
+      toast({
+        tone: "info",
+        title: `开始补齐 ${result.snapshot.total} 个动作`,
+        description: "串行生成中（每个约 90 秒），完成后自动刷新预览",
+      });
+    } catch (cause) {
+      toast({ tone: "danger", title: "批量启动失败", description: String(cause).slice(0, 160) });
     } finally {
       setGeneratingAction(null);
     }
@@ -348,6 +386,9 @@ export default function PlaytestStage() {
   const feetY = GROUND_Y;
 
   const chibi = previews.data?.character?.proportion === "chibi";
+  const missingCount = (previews.data?.actions ?? []).filter(
+    (name) => previews.data?.strips?.[name]?.engine !== "ai-video",
+  ).length;
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -486,6 +527,38 @@ export default function PlaytestStage() {
             <p className="p-3 text-xs text-ink-3">渲染动作预览…</p>
           ) : (
             <div className="flex flex-col gap-2.5">
+              {missingCount > 0 && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon="spark"
+                  loading={batchRunning}
+                  onClick={generateAllActions}
+                  className="mb-1"
+                >
+                  {batchRunning
+                    ? `补齐全套动作中…（${batchDoneCount}/${batchData?.total ?? 0}）`
+                    : `一键生成全部动作（缺 ${missingCount} 个）`}
+                </Button>
+              )}
+              {batchData?.tasks
+                ?.filter((task: ActionBatchTask) => task.status === "generating" || task.status === "failed")
+                .map((task: ActionBatchTask) => (
+                  <div
+                    key={task.action}
+                    className={cx(
+                      "rounded-md border px-2.5 py-1.5 text-[11px]",
+                      task.status === "failed"
+                        ? "border-danger/40 bg-danger/5 text-danger"
+                        : "border-primary/40 bg-primary-tint/40 text-ink-2",
+                    )}
+                  >
+                    {task.action} ·{" "}
+                    {task.status === "generating"
+                      ? "AI 生成中…"
+                      : task.error || "生成失败"}
+                  </div>
+                ))}
               {(previews.data?.actions ?? []).map((name) => (
                 <button
                   key={name}

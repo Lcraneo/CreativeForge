@@ -11,6 +11,7 @@ import type {
   StorageConfigList,
   StorageConfigPublic,
   StorageTestResult,
+  ActionBatchSnapshot,
   BatchExportResult,
   BatchStatus,
   PixelEditResult,
@@ -258,6 +259,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ target }),
     }),
+  startActionBatch: (assetId: string, actions?: string[]) =>
+    request<{ batch_id: string; snapshot: ActionBatchSnapshot }>("/api/animation/batch-actions", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId, actions }),
+    }),
+  actionBatchStatus: (batchId: string) =>
+    request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`),
   rigCheck: (assetId?: string | null) =>
     request<{
       proportion: string;

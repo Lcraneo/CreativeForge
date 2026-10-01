@@ -584,6 +584,22 @@ export interface RestyleInfo {
   model?: string;
 }
 
+export interface ActionBatchTask {
+  action: string;
+  status: "pending" | "generating" | "done" | "failed" | "skipped";
+  note?: string;
+  error?: string;
+  animation_id?: string;
+}
+
+export interface ActionBatchSnapshot {
+  id: string;
+  asset_id: string;
+  status: "running" | "done";
+  total: number;
+  tasks: ActionBatchTask[];
+}
+
 export interface InterpretedAction {
   label: string;
   base_action: string;

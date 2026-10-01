@@ -81,6 +81,73 @@ def _dashscope_env_override():
     }
 
 
+# ── 提示词缓存（省额度）：相同 prompt+模型+参数 直接复用已生成的本地产物 ──
+_IMAGE_CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "generated", "image_cache.json"
+)
+_VIDEO_CACHE_DIR = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "generated", "video_cache"
+)
+_image_cache: dict = {}
+
+
+def _load_image_cache() -> None:
+    global _image_cache
+    try:
+        with open(_IMAGE_CACHE_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        _image_cache = data if isinstance(data, dict) else {}
+    except (ValueError, OSError):
+        _image_cache = {}
+
+
+def _save_image_cache() -> None:
+    try:
+        os.makedirs(os.path.dirname(_IMAGE_CACHE_PATH), exist_ok=True)
+        with open(_IMAGE_CACHE_PATH, "w", encoding="utf-8") as handle:
+            json.dump(_image_cache, handle, ensure_ascii=False)
+    except OSError:
+        pass
+
+
+_load_image_cache()
+
+
+def _cache_key(*parts) -> str:
+    import hashlib as _hashlib
+
+    return _hashlib.sha1("|".join(str(p) for p in parts).encode("utf-8")).hexdigest()[:20]
+
+
+def _keys_for(settings) -> list[str]:
+    """主 Key + 备用 Key 池（去重保序）。"""
+
+    keys = [settings.get("api_key")]
+    keys += [k for k in (settings.get("api_key_pool") or []) if k]
+    out, seen = [], set()
+    for key in keys:
+        if key and key not in seen:
+            seen.add(key)
+            out.append(key)
+    return out
+
+
+def _is_quota_error(exc) -> bool:
+    """额度类错误判定：命中则自动切换 Key 池中的下一把重试。"""
+
+    text = str(exc).lower()
+    response = getattr(exc, "response", None)
+    body = ""
+    try:
+        body = (response.text or "").lower()
+    except Exception:  # noqa: BLE001
+        pass
+    status = getattr(response, "status_code", 0)
+    markers = ("arrearage", "allocationquota", "quotaexceeded", "exceeded quota",
+               "throttl", "ratelimit", "rate limit", "欠费", "额度")
+    return any(m in text or m in body for m in markers) or status == 429
+
+
 PROVIDER_PRESETS = {
     "openai": {
         "label": "OpenAI",
@@ -172,6 +239,7 @@ class ModelSettingsStore:
         "video_prompt_extend": False,
         "timeout": 60,
         "style": "pixel",
+        "api_key_pool": [],  # 备用 Key 池：额度类错误自动切换下一把
     }
 
     def __init__(self, path=None):
@@ -205,6 +273,11 @@ class ModelSettingsStore:
         """脱敏视图（不回显 api_key）；.env 兜底启用时也反映启用状态。"""
         with self._lock:
             data = dict(self._data)
+            pool = data.get("api_key_pool") or []
+            data["api_key_pool"] = [
+                (k[:8] + "…" + k[-4:]) if len(k) > 14 else "…" for k in pool
+            ]
+            data["api_key_pool_size"] = len(pool)
         if not data.get("api_key"):
             override = _dashscope_env_override()
             if override:
@@ -220,9 +293,22 @@ class ModelSettingsStore:
 
     def update(self, changes):
         with self._lock:
+            append_keys = (
+                changes.pop("api_key_pool_add")
+                if isinstance(changes, dict) and isinstance(changes.get("api_key_pool_add"), list)
+                else None
+            )
             for key, value in (changes or {}).items():
                 if key in self._DEFAULTS:
                     self._data[key] = value
+            if append_keys:
+                pool = [k for k in (self._data.get("api_key_pool") or []) if k]
+                primary = self._data.get("api_key")
+                for key in append_keys:
+                    key = str(key).strip()
+                    if key and key != primary and key not in pool:
+                        pool.append(key)
+                self._data["api_key_pool"] = pool
             self._save()
         return self.public()
 
@@ -278,6 +364,16 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     api_key = settings.get("api_key")
     if not api_key:
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
+
+    # 视频缓存：相同 提示词+模型+源图 直接复用已生成的 mp4（视频是额度大头）
+    import hashlib as _hashlib
+
+    video_key = _cache_key(prompt, settings.get("video_model") or settings.get("model"),
+                           _hashlib.sha1(image_bytes).hexdigest())
+    cached_path = os.path.join(_VIDEO_CACHE_DIR, video_key + ".mp4")
+    if os.path.isfile(cached_path):
+        with open(cached_path, "rb") as handle:
+            return handle.read(), (settings.get("video_model") or "cached")
     # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
     # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
     # 画质优先：配置的模型 → plus → flash → turbo 回退
@@ -300,34 +396,46 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     if settings.get("negative_prompt"):
         parameters["negative_prompt"] = settings["negative_prompt"]
     last_error = None
-    for model in models:
-        create = httpx.post(
-            DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
-            headers={
-                "Authorization": "Bearer " + api_key,
-                "Content-Type": "application/json",
-                "X-DashScope-Async": "enable",
-            },
-            json={
-                "model": model,
-                "input": {"prompt": prompt, "img_url": "data:image/png;base64," + encoded},
-                "parameters": parameters,
-            },
-            timeout=60,
-        )
-        if create.status_code >= 400:
-            last_error = RuntimeError(
-                "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
+    for attempt_key in _keys_for(settings):
+        # Key 池：额度类错误自动切换下一把（模型候选链对每把 Key 完整重试）
+        for model in models:
+            create = httpx.post(
+                DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
+                headers={
+                    "Authorization": "Bearer " + attempt_key,
+                    "Content-Type": "application/json",
+                    "X-DashScope-Async": "enable",
+                },
+                json={
+                    "model": model,
+                    "input": {"prompt": prompt, "img_url": "data:image/png;base64," + encoded},
+                    "parameters": parameters,
+                },
+                timeout=60,
             )
-            continue
-        task_id = (create.json().get("output") or {}).get("task_id")
-        if not task_id:
-            last_error = RuntimeError("dashscope: no task_id in response")
-            continue
-        url = poll_video_task(api_key, task_id, timeout_seconds)
-        video = httpx.get(url, timeout=120)
-        video.raise_for_status()
-        return video.content, model
+            if create.status_code >= 400:
+                err = RuntimeError(
+                    "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
+                )
+                if _is_quota_error(err):
+                    last_error = err
+                    break
+                last_error = err
+                continue
+            task_id = (create.json().get("output") or {}).get("task_id")
+            if not task_id:
+                last_error = RuntimeError("dashscope: no task_id in response")
+                continue
+            url = poll_video_task(attempt_key, task_id, timeout_seconds)
+            video = httpx.get(url, timeout=120)
+            video.raise_for_status()
+            try:
+                os.makedirs(_VIDEO_CACHE_DIR, exist_ok=True)
+                with open(cached_path, "wb") as handle:
+                    handle.write(video.content)
+            except OSError:
+                pass
+            return video.content, model
     raise last_error or RuntimeError("video generation failed")
 
 
@@ -379,28 +487,37 @@ class ChatProvider:
             "Keep it short (<=120 words / ~120 汉字). "
             "Output only the prompt text — no markdown, no explanation."
         )
-        response = httpx.post(
-            base_url + "/chat/completions",
-            headers={
-                "Authorization": "Bearer " + api_key,
-                "Content-Type": "application/json",
-            },
-            json={
-                "model": model,
-                "messages": [
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": str(goal)},
-                ],
-                "temperature": 0.6,
-            },
-            timeout=float(self.settings.get("timeout", 60)),
-        )
-        try:
-            response.raise_for_status()
-        except httpx.HTTPStatusError as exc:
-            raise _http_error(exc)
-        content = response.json()["choices"][0]["message"]["content"]
-        return {"model": model, "prompt": content.strip()}
+        last_error = None
+        for key in _keys_for(self.settings):
+            try:
+                response = httpx.post(
+                    base_url + "/chat/completions",
+                    headers={
+                        "Authorization": "Bearer " + key,
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": system},
+                            {"role": "user", "content": str(goal)},
+                        ],
+                        "temperature": 0.6,
+                    },
+                    timeout=float(self.settings.get("timeout", 60)),
+                )
+                response.raise_for_status()
+                content = response.json()["choices"][0]["message"]["content"]
+                return {"model": model, "prompt": content.strip()}
+            except httpx.HTTPStatusError as exc:
+                if _is_quota_error(exc):
+                    last_error = exc
+                    continue
+                raise _http_error(exc)
+            except Exception as exc:  # noqa: BLE001
+                last_error = exc
+                continue
+        raise last_error or RuntimeError("chat enhancement failed")
 
 
 DASHSCOPE_HOST = "https://dashscope.aliyuncs.com"
@@ -485,9 +602,34 @@ class ImageProvider:
             or not self.settings.get("model")
         ):
             raise RuntimeError("image provider not configured")
-        if self._is_dashscope():
-            return self._generate_dashscope(prompt)
 
+        # 提示词缓存：相同 prompt+模型+尺寸 直接复用本地产物（省额度）
+        cache_key = _cache_key(
+            prompt, self.settings.get("model"), self.settings.get("size"),
+            self.settings.get("negative_prompt", ""), self.settings.get("seed", ""),
+        )
+        cached = _image_cache.get(cache_key)
+        if cached and os.path.isfile(cached.get("path", "")):
+            name = os.path.basename(cached["path"])
+            return {
+                "file": name,
+                "url": "/api/generated/" + name,
+                "model": cached.get("model") or self.settings.get("model"),
+                "cached": True,
+            }
+
+        if self._is_dashscope():
+            result = self._generate_dashscope(prompt)
+        else:
+            result = self._generate_openai_compat(prompt)
+        if result.get("file"):
+            path = os.path.join(GENERATED_DIR, os.path.basename(result["file"]))
+            if os.path.isfile(path):
+                _image_cache[cache_key] = {"path": path, "model": result.get("model")}
+                _save_image_cache()
+        return result
+
+    def _generate_openai_compat(self, prompt):
         base_url = (self.settings.get("base_url") or "").rstrip("/")
         model = self.settings.get("model")
         os.makedirs(GENERATED_DIR, exist_ok=True)
@@ -591,6 +733,21 @@ class ImageEditProvider:
         self.settings = settings or {}
 
     def edit(self, base_image_url, instruction, poll_timeout=180.0):
+        last_error = None
+        for key in _keys_for(self.settings):
+            scoped = {**self.settings, "api_key": key}
+            try:
+                return ImageEditProvider(scoped)._edit_chain(
+                    base_image_url, instruction, poll_timeout
+                )
+            except Exception as exc:  # noqa: BLE001
+                if _is_quota_error(exc):
+                    last_error = exc
+                    continue
+                raise
+        raise last_error or RuntimeError("image edit failed")
+
+    def _edit_chain(self, base_image_url, instruction, poll_timeout):
         try:
             return self._edit_qwen(base_image_url, instruction)
         except Exception:  # noqa: BLE001 - fall back to the wanx flow

@@ -176,6 +176,7 @@ class ModelSettingsRequest(BaseModel):
     video_size: str | None = None
     video_prompt_extend: bool | None = None
     timeout: int | None = None
+    api_key_pool_add: list[str] | None = None  # 备用 Key 追加（每项一把）
 
 
 def _localize_asset(asset):
@@ -701,6 +702,39 @@ def build_router(runtime):
         else:
             w, h, rgba = render_frame_rgba(params, action, phase, request.size, request.pose_config)
         return Response(content=encode_rgba(w, h, rgba), media_type="image/png")
+
+    @router.post("/animation/batch-actions")
+    def start_action_batch(request: dict):
+        """一键补齐全套动作：为资产串行生成缺失动作的 AI 动画（视频驱动），
+        已生成的自动跳过。返回 batch_id 供轮询。"""
+
+        from studio.backend.animation_service.service import AnimationService
+
+        asset = _resolve_asset(runtime, request.get("asset_id") or "")
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(status_code=409, detail="AI 动画生成需要先启用自定义模型")
+        source = AnimationService(ANIMATION_DIR)._asset_render(asset)
+        if not source:
+            raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
+
+        service = AnimationService(ANIMATION_DIR)
+        batch_id = service.start_action_batch(
+            asset.get("id"), source, settings,
+            actions=request.get("actions"),
+        )
+        return {"batch_id": batch_id, "snapshot": service.action_batch_snapshot(batch_id)}
+
+    @router.get("/animation/batch-actions/{batch_id}")
+    def action_batch_status(batch_id: str):
+        from studio.backend.animation_service.service import AnimationService
+
+        snapshot = AnimationService(ANIMATION_DIR).action_batch_snapshot(batch_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="unknown batch")
+        return snapshot
 
     @router.get("/animation/rig-check")
     def animation_rig_check(asset_id: str | None = None):
