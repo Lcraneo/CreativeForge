@@ -7,6 +7,7 @@ import { Badge, Button, Card, EmptyState, PageHeader, cx } from "../components/u
 import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
+import { toast } from "../stores/toastStore";
 import type { PlaytestStrip } from "../types";
 
 // 补丁 C②：canvas 背板按 DPR 渲染（封顶 2），必须在 Stage 挂载前设置
@@ -84,6 +85,30 @@ export default function PlaytestStage() {
     queryFn: () => api.playtestPreviews(selectedAssetId!),
     enabled: Boolean(selectedAssetId),
   });
+  // AI 动画补生成：未生成 AI 版的动作卡显示按钮，点击调视频驱动
+  // （约 60~90 秒，后端同步返回），完成后重拉预览
+  const [generatingAction, setGeneratingAction] = useState<string | null>(null);
+  async function generateAiAnimation(name: string) {
+    if (!selected?.id || generatingAction) return;
+    setGeneratingAction(name);
+    try {
+      await api.createAnimation({
+        asset_id: selected.id,
+        action: name,
+        fps: 12,
+        duration: 1.0,
+        size: 384,
+        use_video: true,
+      });
+      toast({ tone: "success", title: `「${name}」AI 动画已生成`, description: "试玩舞台已切换为真实动画帧" });
+      await previews.refetch();
+    } catch (cause) {
+      toast({ tone: "danger", title: "AI 动画生成失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setGeneratingAction(null);
+    }
+  }
+
   // 条带地址表：新结构读 strips，旧响应把 previews 图当条带用
   const stripUrls: Record<string, string> = useMemo(() => {
     const data = previews.data;
@@ -482,10 +507,37 @@ export default function PlaytestStage() {
                   )}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[12.5px] font-medium text-ink">{name}</span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-[12.5px] font-medium text-ink">{name}</span>
+                      {previews.data?.strips?.[name]?.engine === "ai-video" && (
+                        <Badge tone="primary">AI</Badge>
+                      )}
+                    </span>
                     <span className="block truncate text-[10.5px] text-ink-3">
                       {ACTION_HINT[name]}
                     </span>
+                    {previews.data?.strips?.[name]?.engine !== "ai-video" && (
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void generateAiAnimation(name);
+                        }}
+                        disabled={generatingAction !== null}
+                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                      >
+                        {generatingAction === name ? (
+                          <>
+                            <Icon name="clock" className="h-3 w-3 animate-pulse" />
+                            AI 生成中…（约 90 秒）
+                          </>
+                        ) : (
+                          <>
+                            <Icon name="spark" className="h-3 w-3" />
+                            生成 AI 动画
+                          </>
+                        )}
+                      </button>
+                    )}
                   </span>
                   {previews.data?.previews?.[name] && (
                     <img

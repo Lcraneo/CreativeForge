@@ -1381,9 +1381,80 @@ def build_router(runtime):
                     "PNG",
                 )
 
+        # ── AI 动画帧优先（用户授权 API 路线）：该资产+动作已生成过 AI
+        # 视频驱动动画时，用其真实帧拼条带（20 帧真实运动）；未生成的动作
+        # 回退 rigged/procedural 渲染，前端对缺失动作显示「生成 AI 动画」入口。
+        ai_strips: dict[str, dict] = {}
+        if asset_id:
+            import glob as _glob
+
+            for meta_path in _glob.glob(os.path.join(ANIMATION_DIR, "*.json")):
+                try:
+                    with open(meta_path, "r", encoding="utf-8") as handle:
+                        meta = json.load(handle)
+                except (ValueError, OSError):
+                    continue
+                if meta.get("asset_id") != asset_id:
+                    continue
+                action_name = meta.get("requested_action")
+                frame_urls = meta.get("frame_urls") or []
+                if action_name not in actions or len(frame_urls) < 4:
+                    continue
+                stamp = meta.get("created_at", 0)
+                prev = ai_strips.get(action_name)
+                if prev is None or stamp > prev.get("created_at", 0):
+                    ai_strips[action_name] = meta
+
+        def _pack_ai_strip(meta):
+            """把 AI 动画的本地逐帧拼成条带 PNG（与 strips 结构统一，
+            前端播放器零改动），缓存于 play_cache。"""
+
+            frame_files = []
+            for url in meta.get("frame_urls") or []:
+                name = os.path.basename(url)
+                path = os.path.join(ANIMATION_DIR, name)
+                frame_files.append(path if os.path.isfile(path) else None)
+
+            import hashlib as _hashlib
+
+            digest = _hashlib.sha1(
+                ("ai|{}|{}".format(meta.get("id"), len(frame_files))).encode()
+            ).hexdigest()[:10]
+            out_name = "play_ai_{}_{}.png".format(meta.get("requested_action"), digest)
+            out_path = os.path.join(cache_dir, out_name)
+            samples = [f for f in frame_files if f]
+            samples = [f for f in frame_files if f]
+            if len(samples) < 4:
+                return None
+            if not os.path.isfile(out_path):
+                images = [PILImage.open(f).convert("RGBA") for f in samples]
+                frame_w = max(img.width for img in images)
+                frame_h = max(img.height for img in images)
+                sheet = PILImage.new("RGBA", (frame_w * len(images), frame_h), (0, 0, 0, 0))
+                for i, img in enumerate(images):
+                    sheet.paste(img, (i * frame_w + (frame_w - img.width) // 2, frame_h - img.height))
+                sheet.save(out_path, "PNG")
+            with PILImage.open(out_path) as handle:
+                frame_w, frame_h = handle.size
+            return {
+                "url": "/api/animation/play_cache/" + out_name,
+                "frames": len(samples),
+                "width": frame_w,
+                "height": frame_h,
+                "fps": meta.get("fps", 12),
+                "engine": "ai-video",
+            }
+
         previews: dict[str, str] = {}
         strips: dict[str, dict] = {}
         for action in actions:
+            ai_meta = ai_strips.get(action)
+            if ai_meta is not None:
+                packed = _pack_ai_strip(ai_meta)
+                if packed:
+                    previews[action] = packed["url"]
+                    strips[action] = packed
+                    continue
             strip_path = os.path.join(
                 cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
             )

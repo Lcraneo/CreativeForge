@@ -313,10 +313,12 @@ class AnimationService:
         meta = self._persist(result, animation_id, "video")
         meta["video_model"] = video_model
         # 记录归属资产与真实动作（compose 会把 action 覆盖为 "sequence"），
-        # 试玩舞台按「资产 + 动作」匹配 AI 动画帧
+        # 试玩舞台按「资产 + 动作」匹配 AI 动画帧。
+        # 注意：_persist 内部已写盘，此处追加字段后必须重写一次，否则丢失。
         if asset_id:
             meta["asset_id"] = asset_id
         meta["requested_action"] = action
+        self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         if crop_info:
             meta["source_cropped"] = crop_info
         if subject_locked:
