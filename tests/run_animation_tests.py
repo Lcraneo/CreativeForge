@@ -594,7 +594,9 @@ def main() -> int:
 
     _queue_anim._ACTION_BATCHES.clear()
     _queue_anim._ACTION_BATCHES["a1"] = {
-        "id": "a1", "asset_id": "astQ", "status": "running", "total": 3, "created_at": 3.0,
+        "id": "a1", "asset_id": "astQ", "status": "running", "total": 3,
+        # 用当前时间：批次有 1h TTL，伪造的旧时间戳会被 _prune_action_batches 正常清理
+        "created_at": _time.time(),
         "tasks": [{"action": "walk", "status": "generating"}, {"action": "run", "status": "done"}],
     }
     try:

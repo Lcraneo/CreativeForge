@@ -57,6 +57,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
   const [collapsed, setCollapsed] = useState(defaultCollapsed);
   const [form, setForm] = useState<PanelForm | null>(null);
   const [apiKey, setApiKey] = useState("");
+  const [dirty, setDirty] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -65,7 +66,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
   useEffect(() => {
     if (!data) return;
     setForm((current) => {
-      if (current) return current; // 编辑中不覆盖
+      if (current && dirty) return current; // 仅用户编辑中才不覆盖
       return {
         enabled: data.enabled,
         provider: data.provider,
@@ -77,7 +78,13 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
         timeout: data.timeout,
       };
     });
-  }, [data]);
+  }, [data, dirty]);
+
+  /** 统一的表单编辑入口：标记 dirty（编辑中不被远端覆盖）后打补丁 */
+  function patchForm(patch: Partial<PanelForm>) {
+    setDirty(true);
+    setForm((current) => (current ? { ...current, ...patch } : current));
+  }
 
   const presetEntries = useMemo(
     () => Object.entries(presets.data?.presets ?? {}),
@@ -88,7 +95,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
     ...presetEntries.map(([id, preset]) => ({ value: id, label: preset.label || id })),
   ];
 
-  async function save() {
+  async function save(silent = false) {
     if (!form || saving) return;
     const payload: Record<string, unknown> = {
       enabled: form.enabled,
@@ -133,11 +140,14 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
       queryClient.setQueryData(["model-settings"], next);
       queryClient.invalidateQueries({ queryKey: ["model-settings"] });
       setApiKey("");
-      toast({
-        tone: "success",
-        title: "API 配置已保存",
-        description: "已同步至模型广场与本工作台，立即生效",
-      });
+      setDirty(false);
+      if (!silent) {
+        toast({
+          tone: "success",
+          title: "API 配置已保存",
+          description: "已同步至模型广场与本工作台，立即生效",
+        });
+      }
     } catch (cause) {
       toast({ tone: "danger", title: "保存失败", description: String(cause).slice(0, 200) });
     } finally {
@@ -149,7 +159,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
     if (testing) return;
     setTesting(true);
     try {
-      await save();
+      await save(true);
       const result = await api.testModelSettings();
       toast({
         tone: result.ok ? "success" : "danger",
@@ -206,7 +216,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
             </div>
             <Switch
               checked={on}
-              onChange={(enabled) => setForm((current) => current && { ...current, enabled })}
+              onChange={(enabled) => patchForm({ enabled })}
               label="启用自定义模型"
             />
           </div>
@@ -223,16 +233,11 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
                   const preset = presetEntries.find(([id]) => id === event.target.value)?.[1] as
                     | (ProviderPreset & { id: string })
                     | undefined;
-                  setForm((current) =>
-                    current
-                      ? {
-                          ...current,
-                          provider: event.target.value,
-                          base_url: preset?.base_url ?? current.base_url,
-                          ...(scope === "image" && preset?.model ? { model: preset.model } : {}),
-                        }
-                      : current,
-                  );
+                  patchForm({
+                    provider: event.target.value,
+                    base_url: preset?.base_url ?? (form?.base_url ?? ""),
+                    ...(scope === "image" && preset?.model ? { model: preset.model } : {}),
+                  });
                 }}
               />
             </label>
@@ -242,9 +247,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
               </span>
               <Input
                 value={form?.base_url ?? ""}
-                onChange={(event) =>
-                  setForm((current) => current && { ...current, base_url: event.target.value })
-                }
+                onChange={(event) => patchForm({ base_url: event.target.value })}
                 placeholder="https://dashscope.aliyuncs.com/compatible-mode/v1"
                 className={errors.base_url ? "border-danger" : ""}
               />
@@ -257,7 +260,10 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
               <Input
                 type="password"
                 value={apiKey}
-                onChange={(event) => setApiKey(event.target.value)}
+                onChange={(event) => {
+                  setDirty(true);
+                  setApiKey(event.target.value);
+                }}
                 placeholder={data?.enabled ? "已保存（不回显）· 输入新值覆盖" : "sk-..."}
                 className={errors.api_key ? "border-danger" : ""}
               />
@@ -270,11 +276,10 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
               <Input
                 value={scope === "image" ? form?.model ?? "" : form?.video_model ?? ""}
                 onChange={(event) =>
-                  setForm((current) =>
-                    current &&
-                    (scope === "image"
-                      ? { ...current, model: event.target.value }
-                      : { ...current, video_model: event.target.value }),
+                  patchForm(
+                    scope === "image"
+                      ? { model: event.target.value }
+                      : { video_model: event.target.value },
                   )
                 }
                 placeholder={scope === "image" ? "wanx2.1-t2i-turbo" : "wan2.2-i2v-flash"}
@@ -293,11 +298,10 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
               <Input
                 value={scope === "image" ? form?.size ?? "" : form?.video_size ?? ""}
                 onChange={(event) =>
-                  setForm((current) =>
-                    current &&
-                    (scope === "image"
-                      ? { ...current, size: event.target.value }
-                      : { ...current, video_size: event.target.value }),
+                  patchForm(
+                    scope === "image"
+                      ? { size: event.target.value }
+                      : { video_size: event.target.value },
                   )
                 }
                 placeholder={scope === "image" ? "1024x1024" : "1280*720"}
@@ -316,9 +320,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
               <Input
                 type="number"
                 value={form?.timeout ?? 60}
-                onChange={(event) =>
-                  setForm((current) => current && { ...current, timeout: Number(event.target.value) })
-                }
+                onChange={(event) => patchForm({ timeout: Number(event.target.value) })}
                 className={errors.timeout ? "border-danger" : ""}
               />
               {errors.timeout && <span className="mt-1 block text-[11px] text-danger">{errors.timeout}</span>}
@@ -326,7 +328,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <Button variant="primary" size="sm" icon="check" loading={saving} onClick={save}>
+            <Button variant="primary" size="sm" icon="check" loading={saving} onClick={() => save()}>
               保存（同步模型广场）
             </Button>
             <Button variant="secondary" size="sm" icon="activity" loading={testing} onClick={test}>

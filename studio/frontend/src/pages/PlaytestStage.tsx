@@ -125,11 +125,13 @@ export default function PlaytestStage() {
   ).length;
   const batchRunning = batchData?.status === "running";
 
+  // refetch 引用稳定，避免依赖整个 previews（每次渲染都是新引用 → 无限 refetch）
+  const refetchPreviews = previews.refetch;
   useEffect(() => {
-    if (batchData?.status === "done" && batchId) {
-      void previews.refetch();
+    if ((batchData?.status === "done" || batchData?.status === "failed") && batchId) {
+      void refetchPreviews();
     }
-  }, [batchData?.status, batchId, previews]);
+  }, [batchData?.status, batchId, refetchPreviews]);
 
   async function generateAllActions() {
     if (!selected?.id || generatingAction || batchRunning) return;

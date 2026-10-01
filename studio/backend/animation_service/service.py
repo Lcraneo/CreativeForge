@@ -6,6 +6,7 @@ GIF/sheet encoding) and persists the artefacts for the console to display.
 """
 
 import base64
+import hashlib
 import io
 import json
 import os
@@ -190,10 +191,27 @@ def ai_enhance_motion_prompt(settings, action, base_prompt, context=None):
 MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/人物丢失）
 MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
+# 分割结果缓存：每次调用都是真实计费请求，同一张源图会被重复分割
+# （create_video 裁边 + idle 稳定分支、骨骼预览路由）。mask 对调用方
+# 只读使用（filter 生成新图），共享安全。
+_SEGMENT_CACHE: dict[str, tuple[float, Any]] = {}
+_SEGMENT_CACHE_TTL = 600.0
+
 
 # 批次状态模块级共享：路由处理函数每次请求构造 AnimationService 实例，
 # 批次状态若挂在实例上会跨请求丢失（轮询永远 404）。
 _ACTION_BATCHES: dict[str, dict] = {}
+_ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会误删运行中批次
+
+
+def _prune_action_batches() -> None:
+    """清理超过 TTL 的历史批次（内存态只增不删会缓慢泄漏）。"""
+
+    now = time.time()
+    for batch_id in list(_ACTION_BATCHES):
+        created = (_ACTION_BATCHES.get(batch_id) or {}).get("created_at", 0)
+        if now - created > _ACTION_BATCHES_TTL:
+            _ACTION_BATCHES.pop(batch_id, None)
 
 
 def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0):
@@ -285,6 +303,8 @@ class AnimationService:
         import threading
         import uuid as _uuid
 
+        _prune_action_batches()
+
         wanted = [a for a in (actions or ["idle", "walk", "run", "attack", "jump"]) if a in ACTIONS]
         done = self.existing_ai_actions(asset_id)
         pending = [a for a in wanted if a not in done]
@@ -358,9 +378,13 @@ class AnimationService:
                 if entry:
                     entry["status"] = "failed"
                     entry["error"] = str(error)[:160]
-        batch["status"] = "done"
+        # 收尾分级：全部动作失败标 failed（前端可提示异常），部分失败仍算 done
+        failed = sum(1 for t in batch.get("tasks", []) if t.get("status") == "failed")
+        batch["failed_count"] = failed
+        batch["status"] = "failed" if failed and failed == len(pending) else "done"
 
     def action_batch_snapshot(self, batch_id: str) -> dict | None:
+        _prune_action_batches()
         batch = self.action_batches.get(batch_id)
         return dict(batch) if batch else None
 
@@ -921,6 +945,10 @@ def ai_segment_subject(
     返回 PIL "L" mask（size×size，255=主体，已膨胀羽化对齐误差），任何
     失败返回 None（调用方回退经典洪泛），因此永远不会让任务中断。
     """
+    cache_key = hashlib.sha1(source_bytes).hexdigest()[:16] + ":{}".format(size)
+    cached = _SEGMENT_CACHE.get(cache_key)
+    if cached and time.time() - cached[0] < _SEGMENT_CACHE_TTL:
+        return cached[1]
     if deadline is not None and time.time() >= deadline:
         return None
     try:
@@ -959,6 +987,8 @@ def ai_segment_subject(
             return None
 
         # 编辑模型输出与源图构图存在毫米级偏差：膨胀 + 羽化吸收边缘误差
-        return mask.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(1.2))
+        result = mask.filter(ImageFilter.MaxFilter(7)).filter(ImageFilter.GaussianBlur(1.2))
+        _SEGMENT_CACHE[cache_key] = (time.time(), result)
+        return result
     except Exception:  # noqa: BLE001 - segmentation is best-effort
         return None

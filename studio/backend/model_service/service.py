@@ -10,6 +10,8 @@ The chat / image calls speak the OpenAI-compatible ``/chat/completions`` and
 """
 
 import base64
+import hashlib
+import json
 import os
 import threading
 import time
@@ -114,9 +116,7 @@ _load_image_cache()
 
 
 def _cache_key(*parts) -> str:
-    import hashlib as _hashlib
-
-    return _hashlib.sha1("|".join(str(p) for p in parts).encode("utf-8")).hexdigest()[:20]
+    return hashlib.sha1("|".join(str(p) for p in parts).encode("utf-8")).hexdigest()[:20]
 
 
 def _keys_for(settings) -> list[str]:
@@ -531,6 +531,12 @@ def poll_video_task(api_key, task_id, timeout_seconds):
             headers={"Authorization": "Bearer " + api_key},
             timeout=30,
         )
+        if poll.status_code in (401, 403):
+            raise RuntimeError(
+                "dashscope task poll unauthorized: HTTP {}".format(poll.status_code)
+            )
+        if poll.status_code == 404:
+            raise RuntimeError("dashscope task not found: " + task_id)
         body = poll.json() if poll.status_code < 500 else {}
         output = body.get("output") or {}
         status = output.get("task_status")
@@ -557,10 +563,8 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
 
     # 视频缓存：相同 提示词+模型+源图 直接复用已生成的 mp4（视频是额度大头）
-    import hashlib as _hashlib
-
     video_key = _cache_key(prompt, settings.get("video_model") or settings.get("model"),
-                           _hashlib.sha1(image_bytes).hexdigest())
+                           hashlib.sha1(image_bytes).hexdigest())
     cached_path = os.path.join(_VIDEO_CACHE_DIR, video_key + ".mp4")
     if os.path.isfile(cached_path):
         with open(cached_path, "rb") as handle:
@@ -671,6 +675,12 @@ def poll_dashscope_task(api_key, task_id, timeout_seconds):
             headers={"Authorization": "Bearer " + api_key},
             timeout=30,
         )
+        if poll.status_code in (401, 403):
+            raise RuntimeError(
+                "dashscope task poll unauthorized: HTTP {}".format(poll.status_code)
+            )
+        if poll.status_code == 404:
+            raise RuntimeError("dashscope task not found: " + task_id)
         body = poll.json() if poll.status_code < 500 else {}
         status = (body.get("output") or {}).get("task_status")
         if status == "SUCCEEDED":
@@ -703,6 +713,8 @@ class ChatProvider:
             raise RuntimeError("chat provider not configured")
         last_error = None
         for key in _keys_for(self.settings):
+            # 第一段：请求本身。额度/鉴权/网络类错误才换下一把 Key，
+            # 确定性失败（参数、模型名错误等）原样上抛
             try:
                 response = httpx.post(
                     base_url + "/chat/completions",
@@ -721,24 +733,28 @@ class ChatProvider:
                     timeout=float(self.settings.get("timeout", 60)),
                 )
                 response.raise_for_status()
-                content = response.json()["choices"][0]["message"]["content"]
-                from studio.backend.model_service.usage import record_usage
-
-                record_usage("chat", model)
-                note_key_outcome(key, True)
-                return {"model": model, "content": content.strip()}
             except httpx.HTTPStatusError as exc:
-                # 额度/鉴权/网络类错误换下一把 Key 重试；其余（参数、模型名
-                # 错误等确定性失败）原样上抛
                 note_key_outcome(key, False, classify_error(exc))
                 if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
                 raise _http_error(exc)
-            except Exception as exc:  # noqa: BLE001
+            except httpx.HTTPError as exc:  # 连接/超时等网络类
                 note_key_outcome(key, False, classify_error(exc))
                 last_error = exc
                 continue
+            # 第二段：解析。响应结构异常与 Key 无关，直接上抛不烧 Key 池
+            try:
+                content = response.json()["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, ValueError, TypeError) as exc:
+                raise RuntimeError(
+                    "chat 响应结构异常：{}".format(str(exc)[:120])
+                ) from exc
+            from studio.backend.model_service.usage import record_usage
+
+            record_usage("chat", model)
+            note_key_outcome(key, True)
+            return {"model": model, "content": content.strip()}
         raise last_error or RuntimeError("chat completion failed")
 
     def enhance(self, goal, spec, overrides=None):
