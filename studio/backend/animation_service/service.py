@@ -85,6 +85,11 @@ MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/�
 MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
 
+# 批次状态模块级共享：路由处理函数每次请求构造 AnimationService 实例，
+# 批次状态若挂在实例上会跨请求丢失（轮询永远 404）。
+_ACTION_BATCHES: dict[str, dict] = {}
+
+
 def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0):
     """视频驱动生成的稳定入口（自动走 mp4 缓存）。"""
 
@@ -97,7 +102,7 @@ class AnimationService:
     def __init__(self, directory: str):
         self.directory = directory
         os.makedirs(self.directory, exist_ok=True)
-        self.action_batches: dict[str, dict] = {}
+        self.action_batches = _ACTION_BATCHES
 
     # -- 一键补齐全套动作（串行队列，跳过已生成） --------------------------
 

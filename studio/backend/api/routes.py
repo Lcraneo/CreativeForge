@@ -177,6 +177,7 @@ class ModelSettingsRequest(BaseModel):
     video_prompt_extend: bool | None = None
     timeout: int | None = None
     api_key_pool_add: list[str] | None = None  # 备用 Key 追加（每项一把）
+    api_key_pool: list[str] | None = None  # 整池覆盖（清空传 []）
 
 
 def _localize_asset(asset):
