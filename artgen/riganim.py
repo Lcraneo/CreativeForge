@@ -69,6 +69,27 @@ def _falign(frames):
     }
 
 
+def _motion_scales(rig, size):
+    """动作幅度 ↔ 体型匹配（专业级观感：同一套曲线适配不同比例的角色）。
+
+    * ``limb``   关节角缩放——Q 版（头身比大、肢段短）角度收敛，
+      避免短肢甩出"鞭梢感"；
+    * ``offset`` 位移缩放——bob/sway 等像素量随角色实际身高缩放，
+      小个子角色不再顶着成人大幅度曲线；
+    * ``bob``    垂直起伏总增益——offset 之上再给 Q 版一点弹跳感。"""
+
+    head_ratio = float((rig or {}).get("head_ratio") or 0.6)
+    chibi_f = max(0.0, min(1.0, (head_ratio - 0.55) / 0.35))
+    bbox = (rig or {}).get("bbox") or [0, 0, size, size]
+    height = max(1.0, float(bbox[3] - bbox[1]))
+    offset = max(0.55, min(1.5, height / (0.62 * size)))
+    return {
+        "limb": 1.0 - 0.18 * chibi_f,
+        "offset": offset,
+        "bob": offset * (1.0 + 0.30 * chibi_f),
+    }
+
+
 def animate_rigged(
     image_bytes,
     action="walk",
@@ -180,31 +201,34 @@ def animate_rigged(
     }
 
     frames = []
+    scales = _motion_scales(rig, size)
     for index in range(frame_count):
         pose = _pose(action, index / frame_count, config)
-        dy = pose["bob"] - pose["jump"]
+        dy = (pose["bob"] - pose["jump"]) * scales["bob"]
         lean = pose["lean"]
-        sway = pose.get("sway", 0.0)
-        arm = pose["arm"]
-        leg = pose["leg"]
+        sway = pose.get("sway", 0.0) * scales["offset"]
+        tilt = pose.get("tilt", 0.0)
+        arm = pose["arm"] * scales["limb"]
+        leg = pose["leg"] * scales["limb"]
 
         frame = base_bg.copy()
         # 双骨链合成：大腿 → 小腿（父段角 + 膝弯）→ 裆部立柱（填中缝，无旋转）
         # → 躯干 → 上臂 → 前臂（父段角 + 肘屈）。膝/肘的滞后与屈曲让肢体
-        # 呈两段式运动，消除整段刚体旋转的分段拼接感。
-        thigh_l = pose.get("thigh_l", leg)
-        thigh_r = pose.get("thigh_r", leg)
-        knee_l = pose.get("knee_l", 0.0)
-        knee_r = pose.get("knee_r", 0.0)
-        elbow_l = pose.get("elbow_l", 0.0)
-        elbow_r = pose.get("elbow_r", 0.0)
+        # 呈两段式运动，消除整段刚体旋转的分段拼接感。躯干在 lean 之上
+        # 叠加 tilt（肩线与髋部横移反向的微小倾斜 = 肩盆反向次级动作）。
+        thigh_l = pose.get("thigh_l", leg) * scales["limb"]
+        thigh_r = pose.get("thigh_r", leg) * scales["limb"]
+        knee_l = pose.get("knee_l", 0.0) * scales["limb"]
+        knee_r = pose.get("knee_r", 0.0) * scales["limb"]
+        elbow_l = pose.get("elbow_l", 0.0) * scales["limb"]
+        elbow_r = pose.get("elbow_r", 0.0) * scales["limb"]
 
         _place(frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
         _place(frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy))
         _place(frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
         _place(frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy))
         _place(frame, regions["crotch"][0], regions["crotch"][1], 0.0, (0.0, dy))
-        _place(frame, regions["upper"][0], regions["upper"][1], -lean, (sway, dy))
+        _place(frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy))
         _place(frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy))
         _place(frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy))
         _place(frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy))

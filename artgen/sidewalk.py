@@ -25,10 +25,14 @@ def _foot_path(phase, stride, lift):
     """-> (dx, dy) of one foot relative to the point under the hip.
 
     phase 0: front contact → 0.25: mid-stance → 0.5: toe-off →
-    0.5..1: swing arc back to front contact (smoothstep + sine lift)."""
+    0.5..1: swing arc back to front contact (smoothstep + sine lift).
+
+    支撑期用余弦后移（cos）：触地与离地瞬间脚相对身体的水平速度为零，
+    与摆动期 smoothstep 两端的零速严格衔接——旧的线性后移在两个转换点
+    各有一次速度硬跳，是横版步态"脚底打滑/顿挫"的来源。"""
     if phase < 0.5:
         u = phase / 0.5
-        return stride * (0.5 - u), 0.0
+        return stride * 0.5 * math.cos(math.pi * u), 0.0
     u = (phase - 0.5) / 0.5
     eased = u * u * (3 - 2 * u)
     return -stride * 0.5 + stride * eased, -lift * math.sin(math.pi * u)
@@ -58,14 +62,27 @@ def _side_frame(painter, colors, traits, action, phase, config=None):
 
     ground = 500.0
     hip_x, hip_y = 256.0, 402.0
-    # vertical bob at 2x stride frequency: the body dips at every weight pass
-    bob = -abs(math.sin(2.0 * math.pi * phase)) * p["bob"]
+    # vertical bob at 2x stride frequency: the body dips at every weight pass.
+    # sin² 取代 |sin|——|sin| 的 V 形尖角让每次重心经过支撑脚时垂直速度
+    # 瞬间翻转，成片上是每步一"顿"；sin² 曲线 C1 连续、峰值与过零点不变。
+    bob = -(math.sin(2.0 * math.pi * phase) ** 2) * p["bob"]
     hip = (hip_x, hip_y + bob)
     chest = (hip_x + math.sin(lean_rad) * 84.0, hip_y + bob - math.cos(lean_rad) * 84.0)
-    head_c = (chest[0] + 34.0, chest[1] - 74.0 + math.sin(2.0 * math.pi * phase + 0.9) * 3.0)
+    # 头部稳定（前庭 reflex 的简化）：头只继承 25% 的髋部起伏并叠加独立
+    # 微动 + 每循环两次的呼吸起伏——视线不随步频上下颠簸
+    head_c = (
+        chest[0] + 34.0,
+        chest[1] - 74.0 - bob * 0.25 + math.sin(2.0 * math.pi * phase + 0.9) * 3.0
+        + math.sin(4.0 * math.pi * phase + 1.1) * 1.4,
+    )
 
-    # ground shadow
-    painter.soft_ellipse(ellipse(256.0, ground + 8.0, 140.0, 26.0), c["dark"], alpha=42)
+    # ground shadow（重心压低时略放大贴近，重心抬高时略缩小——接触感）
+    shadow_scale = max(0.85, min(1.15, 1.0 - bob * 0.006))
+    painter.soft_ellipse(
+        ellipse(256.0, ground + 8.0, 140.0 * shadow_scale, 26.0 * shadow_scale),
+        c["dark"],
+        alpha=42,
+    )
 
     def limb(root, target, l1, l2, bend, w1, w2, fill):
         mid = _two_bone(root, target, l1, l2, bend)

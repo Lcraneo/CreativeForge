@@ -625,6 +625,102 @@ def main() -> int:
     finally:
         _queue_anim._ACTION_BATCHES.clear()
 
+    # ── 动作序列质量：曲线连续性 + 生物力学 + 体型自适应 ─────────────────
+    import math as _mq
+
+    from artgen.anim import ACTIONS as _ALL_ACTIONS, _pose
+    from artgen.riganim import _motion_scales
+    from artgen.sidewalk import _foot_path
+
+    # 1) 循环动作接缝 C0+C1：phase 0/1 处值与导数连续（卡顿/跳跃的根除标准）
+    for _name, _key in (("bob", "bob"), ("knee_l", "knee_l"), ("arm", "arm")):
+        def _curve(p, _key=_key):
+            return _pose("walk", p, None)[_key]
+
+        _eps = 1e-5
+        _d0 = (_curve(_eps) - _curve(0.0)) / _eps
+        _d1 = (_curve(1.0) - _curve(1.0 - _eps)) / _eps
+        check(
+            f"walk {_name}: C0 at loop seam",
+            abs(_curve(0.0) - _curve(1.0)) < 1e-6,
+            f"gap={abs(_curve(0.0) - _curve(1.0))}",
+        )
+        check(f"walk {_name}: C1 at loop seam", abs(_d0 - _d1) < 0.02, f"d0={_d0:.4f} d1={_d1:.4f}")
+
+    # 2) 一次性动作分段边界 C0（旧版蓄力/落地处的硬切 = 成片跳帧）
+    for _boundary in (0.3, 0.55, 0.8):
+        _gap = abs(
+            _pose("attack", _boundary - 1e-9)["lean"] - _pose("attack", _boundary + 1e-9)["lean"]
+        )
+        check(f"attack: C0 at {_boundary}", _gap < 0.5, f"lean gap={_gap}")
+    for _boundary in (0.22, 0.72):
+        _gap = abs(
+            _pose("jump", _boundary - 1e-9)["jump"] - _pose("jump", _boundary + 1e-9)["jump"]
+        )
+        check(f"jump: C0 at {_boundary}", _gap < 0.5, f"jump gap={_gap}")
+        for _key in ("squat", "arm", "leg"):
+            _gap = abs(
+                _pose("jump", _boundary - 1e-9)[_key] - _pose("jump", _boundary + 1e-9)[_key]
+            )
+            check(f"jump {_key}: C0 at {_boundary}", _gap < 0.05, f"gap={_gap}")
+
+    # 3) 生物力学：膝只朝屈曲方向弯、支撑期微屈不锁死、屈曲峰落在摆动相
+    # （脚离地）窗口内；肘恒为屈曲
+    _worst_knee = -99.0
+    _stance_ok = True
+    _peak_i, _peak_val = 0, 0.0
+    for _i in range(720):
+        _p = _pose("walk", _i / 720.0, None)
+        _kl = _p["knee_l"]
+        _worst_knee = max(_worst_knee, _kl)
+        if abs(_kl) > abs(_peak_val):
+            _peak_i, _peak_val = _i, _kl
+        if _p["lift"][0] <= 0.0 and abs(_kl) > 12.5:
+            _stance_ok = False
+    check("walk knee: never hyperextends (angle ≤ 0)", _worst_knee <= 1e-9, str(_worst_knee))
+    check("walk knee: stance flexion subtle (≤12°)", _stance_ok)
+    _peak_pose = _pose("walk", _peak_i / 720.0, None)
+    check(
+        "walk knee: peak flexion inside swing window (foot airborne)",
+        _peak_pose["lift"][0] > 0.0 and abs(_peak_val) > 25.0,
+        f"phase={_peak_i / 720.0:.3f} knee={_peak_val:.1f} lift={_peak_pose['lift'][0]}",
+    )
+    _worst_elbow = max(_pose("walk", _i / 720.0, None)["elbow_l"] for _i in range(720))
+    check("walk elbow: flexion only (angle ≤ 0)", _worst_elbow <= 1e-9, str(_worst_elbow))
+
+    # 4) 侧视步态：脚底相对身体水平速度在触地/离地点连续（消除打滑/顿挫）
+    def _fx(ph):
+        return _foot_path(ph % 1.0, 96.0, 34.0)[0]
+
+    _eps = 1e-5
+    _d_contact = (_fx(_eps) - _fx(0.0)) / _eps - (_fx(1.0) - _fx(1.0 - _eps)) / _eps
+    _d_toeoff = (_fx(0.5 + _eps) - _fx(0.5)) / _eps - (_fx(0.5) - _fx(0.5 - _eps)) / _eps
+    check("side gait foot: C1 at contact", abs(_d_contact) < 0.05, f"delta={_d_contact}")
+    check("side gait foot: C1 at toe-off", abs(_d_toeoff) < 0.05, f"delta={_d_toeoff}")
+    check(
+        "side gait foot: C0 at toe-off",
+        abs(_fx(0.5 - _eps) - _fx(0.5 + _eps)) < 1e-4,
+    )
+
+    # 5) 体型自适应：Q 版关节角收敛、弹跳增强；小个子位移收敛
+    _normal = _motion_scales({"head_ratio": 0.6, "bbox": [0, 0, 384, 384]}, 384)
+    _chibi = _motion_scales({"head_ratio": 0.95, "bbox": [0, 0, 384, 384]}, 384)
+    _small = _motion_scales({"head_ratio": 0.6, "bbox": [0, 0, 384, 150]}, 384)
+    check("motion scales: chibi limb angles converge", _chibi["limb"] < _normal["limb"])
+    check("motion scales: chibi vertical bounce amplified", _chibi["bob"] > _normal["bob"])
+    check(
+        "motion scales: small character shrinks pixel offsets (floor 0.55)",
+        _small["offset"] < _normal["offset"] and _small["offset"] >= 0.55,
+    )
+
+    # 6) 全动作渲染冒烟：五类动作新曲线可渲染且帧间有运动
+    for _action in _ALL_ACTIONS:
+        _frames4 = render_action_frames(params, _action, 4, 160)
+        check(
+            f"motion smoke: {_action} renders with visible motion",
+            len(_frames4) == 4 and _frames4[0][2] != _frames4[3][2],
+        )
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

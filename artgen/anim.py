@@ -45,10 +45,44 @@ def _two_bone(root, target, l1, l2, bend):
     return mx - uy * h * bend, my + ux * h * bend
 
 
+def _smoothstep(u):
+    """C1 缓动（两端导数为 0）——所有分段曲线的衔接件。"""
+    u = max(0.0, min(1.0, u))
+    return u * u * (3.0 - 2.0 * u)
+
+
+def _rise(u):
+    """C1 上升沿 0→1（(1-cos)/2）：蓄力/压缩类前半程曲线。"""
+    u = max(0.0, min(1.0, u))
+    return 0.5 * (1.0 - math.cos(math.pi * u))
+
+
+def _bump(u, peak=0.5):
+    """C1 平滑单峰窗 0→峰→0，峰位可调（peak=峰出现的窗口比例）。
+
+    用于"膝屈曲/收势"这类必须回到 0 且两端角速度连续的关节曲线：
+    sin 窗在窗口边缘有非零导数（触地瞬间角速度突跳），
+    cos² 形窗两端导数严格为 0。"""
+    if u <= 0.0 or u >= 1.0:
+        return 0.0
+    p = math.log(0.5) / math.log(max(0.02, min(0.98, peak)))
+    return 0.5 * (1.0 - math.cos(2.0 * math.pi * (u ** p)))
+
+
 def _pose(action, phase, config=None):
     """Pose state for one phase. ``config`` (动作自定义参数) scales/offsets the
     raw curves: bob 起伏、stride 步幅、arm 摆臂、lift 抬脚、lean 前倾、
-    lag 手臂滞后（重叠动作）、cycles 每循环运动周期数。"""
+    lag 手臂滞后（重叠动作）、cycles 每循环运动周期数。
+
+    曲线设计纪律（专业级观感的底线）：
+    * 循环动作（idle/walk/run）在 phase 0/1 接缝处 C0+C1 连续——起伏用
+      sin²（|sin| 的 V 形尖角是每一步"顿一下"的根源）；
+    * 一次性动作（attack/jump）分段曲线在所有段边界 C0 连续、蓄力段
+      C1 连续——段间硬切在成片上就是"跳帧"；
+    * 膝/肘屈曲峰对齐摆动相窗口（脚离地期间），关节角只朝解剖学允许
+      的方向弯（膝/肘恒为屈曲符号，不反关节）；
+    * 次级动作（呼吸/重心横移/肩盆反向倾斜）叠加在主循环之上，
+      幅度小、频率错开，避免与主节拍共振。"""
     cfg = config or {}
     cycles = max(0.25, min(4.0, float(cfg.get("cycles", 1.0))))
     cyclic = action in ("idle", "walk", "run")
@@ -64,6 +98,7 @@ def _pose(action, phase, config=None):
         "lift": (0.0, 0.0),
         "squat": 0.0,
         "sway": 0.0,
+        "tilt": 0.0,  # 肩线反向倾斜（肩盆反向，次级动作）
     }
     if action == "walk":
         # arms trail the legs slightly (overlapping action); hips sway over
@@ -71,9 +106,10 @@ def _pose(action, phase, config=None):
         state.update(
             leg=math.cos(t),
             arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.45)))),
-            bob=-abs(math.sin(t)) * 6.0 * float(cfg.get("bob", 1.0)),
+            bob=-(math.sin(t) ** 2) * 6.0 * float(cfg.get("bob", 1.0)),
             lean=float(cfg.get("lean", 0.0)),
             sway=math.sin(t) * 7.0,
+            tilt=math.sin(t) * 2.2,
             lift=(
                 max(0.0, math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
                 max(0.0, -math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
@@ -83,22 +119,30 @@ def _pose(action, phase, config=None):
         state["leg"] *= stride
         state["arm"] *= float(cfg.get("arm", 1.0))
         # ── 人体运动学关节角（riganim 双骨链消费；矢量路径忽略）──────────
-        # 膝二次屈曲：摆动相中后期收腿屈膝（峰 ~30°），支撑相反相伸直。
-        # 摆动相中点在 cos 极值之后（t≈1.4π），故曲线用 sin(t-0.4π) 取峰。
-        swing_l = max(0.0, math.sin(t - 0.4 * math.pi))
-        state["knee_l"] = -(swing_l ** 1.2) * 30.0 * stride
-        state["knee_r"] = -((max(0.0, math.sin(t - 0.4 * math.pi + math.pi))) ** 1.2) * 30.0 * stride
-        # 肘屈曲：基础 ~14°（持物微屈）+ 前摆加深，与上臂摆动相位耦合
+        # 膝二次屈曲：屈曲峰锁定在**摆动相窗口内**（与抬脚同窗，峰在窗口
+        # 72% 处 = 收腿末期），支撑期保持 4° 微屈（腿永远不绷直锁死）。
+        # cos² 窗保证触地/离地瞬间角速度连续。
+        t_mod = t % (2.0 * math.pi)
+        swing_l = 0.0 < t_mod < math.pi
+        u_l = t_mod / math.pi if swing_l else 0.0
+        u_r = ((t_mod + math.pi) % (2.0 * math.pi)) / math.pi
+        knee_amp = 30.0 * stride
+        state["knee_l"] = -(4.0 + knee_amp * _bump(u_l, peak=0.72)) if swing_l else -4.0
+        state["knee_r"] = -(4.0 + knee_amp * _bump(u_r, peak=0.72)) if u_r < 1.0 else -4.0
+        # 肘屈曲：基础 ~14°（持物微屈）+ 随摆臂连续加深（正弦调制，
+        # 取代半波整流——窗口边缘的速度突跳是肘部"抽动"感的来源）
         arm_lag = max(0.0, float(cfg.get("lag", 0.45)))
-        state["elbow_l"] = -(14.0 + 14.0 * max(0.0, -math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
-        state["elbow_r"] = -(14.0 + 14.0 * max(0.0, math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
+        mod = math.sin(t - arm_lag)
+        state["elbow_l"] = -(14.0 + 14.0 * 0.5 * (1.0 - mod)) * float(cfg.get("arm", 1.0))
+        state["elbow_r"] = -(14.0 + 14.0 * 0.5 * (1.0 + mod)) * float(cfg.get("arm", 1.0))
     elif action == "run":
         state.update(
             leg=math.cos(t) * 1.25,
             arm=-math.cos(t - max(0.0, float(cfg.get("lag", 0.5)))) * 1.25,
-            bob=-abs(math.sin(t)) * 10.0 * float(cfg.get("bob", 1.0)),
+            bob=-(math.sin(t) ** 2) * 10.0 * float(cfg.get("bob", 1.0)),
             lean=7.0 + float(cfg.get("lean", 0.0)),
             sway=math.sin(t) * 5.0,
+            tilt=math.sin(t) * 1.6,
             lift=(
                 max(0.0, math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
                 max(0.0, -math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
@@ -107,53 +151,76 @@ def _pose(action, phase, config=None):
         stride = float(cfg.get("stride", 1.0))
         state["leg"] *= stride
         state["arm"] *= float(cfg.get("arm", 1.0))
-        swing_l = max(0.0, math.sin(t - 0.4 * math.pi))
-        state["knee_l"] = -(swing_l ** 1.1) * 52.0 * stride
-        state["knee_r"] = -((max(0.0, math.sin(t - 0.4 * math.pi + math.pi))) ** 1.1) * 52.0 * stride
+        t_mod = t % (2.0 * math.pi)
+        swing_l = 0.0 < t_mod < math.pi
+        u_l = t_mod / math.pi if swing_l else 0.0
+        u_r = ((t_mod + math.pi) % (2.0 * math.pi)) / math.pi
+        knee_amp = 52.0 * stride
+        state["knee_l"] = -(6.0 + knee_amp * _bump(u_l, peak=0.66)) if swing_l else -6.0
+        state["knee_r"] = -(6.0 + knee_amp * _bump(u_r, peak=0.66)) if u_r < 1.0 else -6.0
         arm_lag = max(0.0, float(cfg.get("lag", 0.5)))
-        state["elbow_l"] = -(30.0 + 18.0 * max(0.0, -math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
-        state["elbow_r"] = -(30.0 + 18.0 * max(0.0, math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
+        mod = math.sin(t - arm_lag)
+        state["elbow_l"] = -(30.0 + 18.0 * 0.5 * (1.0 - mod)) * float(cfg.get("arm", 1.0))
+        state["elbow_r"] = -(30.0 + 18.0 * 0.5 * (1.0 + mod)) * float(cfg.get("arm", 1.0))
     elif action == "attack":
-        # anticipation (wind-up) -> fast strike -> follow-through -> recover
-        # (one-shot action: never time-scaled by cycles)
+        # anticipation (hold the coil) -> accelerate into the strike ->
+        # impact recoil -> settle back to stance.
+        # 分段曲线在全部段边界 C0 连续、蓄力段两端 C1——旧版在 0.3 处
+        # 蓄力回零后瞬跳 -0.55、0.8 处 1.07 跳 0.77，成片上是两次"跳帧"。
         if phase < 0.3:
             u = phase / 0.3
-            k = -0.55 * math.sin(math.pi * u)
+            k = -0.55 * _rise(u)
         elif phase < 0.55:
             u = (phase - 0.3) / 0.25
-            k = -0.55 + 1.62 * (u * u * (3 - 2 * u))
+            k = -0.55 + 1.62 * (u * u)  # ease-in：发力段持续加速到命中
         elif phase < 0.8:
             u = (phase - 0.55) / 0.25
-            k = 1.07 - 0.3 * math.sin(math.pi * u)
+            k = 0.92 + 0.15 * math.cos(math.pi * u)  # 命中反冲，平滑回撤
         else:
             u = (phase - 0.8) / 0.2
-            k = 0.77 - 0.77 * (u * u * (3 - 2 * u))
+            k = 0.77 - 0.77 * _smoothstep(u)
+        # 命中瞬间重心下沉（重量转移），随挥后恢复
+        bob = -3.0 * _bump(min(1.0, phase / 0.62), peak=0.5)
         state.update(
             leg=math.sin(t) * 0.4,
             arm=0.3 - k * 0.25,
             lean=4.0 + k * 10.0 + float(cfg.get("lean", 0.0)),
             weapon=-60.0 + 120.0 * k,
+            bob=bob,
         )
     elif action == "jump":
+        # crouch (hold the coil) -> ballistic flight (抛物线，重力感) ->
+        # landing absorb（落地屈膝缓冲，(1-u)^1.5 平滑回弹到站立）。
+        # 旧版蹲底 0→-18、落地 -18→0 硬切 + squat/arm/leg 三处段间跳变。
         if phase < 0.22:
-            # anticipation: crouch, arms swing back
             u = phase / 0.22
-            state.update(jump=-18.0 * math.sin(math.pi * u), arm=0.5 * u, squat=1.0)
+            state.update(
+                jump=-18.0 * _rise(u),
+                arm=0.45 * _rise(u),  # 预摆：手臂后摆蓄力
+                squat=1.0,
+            )
         elif phase < 0.72:
             u = (phase - 0.22) / 0.5
+            tuck = math.sin(math.pi * u)
+            if u < 0.4:
+                arm = 0.45 - 1.05 * _smoothstep(u / 0.4)  # 手臂前上摆带动起跳
+            else:
+                arm = -0.6 + 0.5 * _smoothstep((u - 0.4) / 0.6)
             state.update(
-                jump=-18.0 + 140.0 * math.sin(math.pi * u),
-                arm=-0.6,
-                leg=0.5,
-                tuck=math.sin(math.pi * u),
+                jump=-18.0 + 158.0 * 4.0 * u * (1.0 - u),  # 抛物线弹道
+                arm=arm,
+                leg=0.5 * tuck,
+                tuck=tuck,
+                squat=1.0 - tuck,  # 离地展体、空中收腿，全程连续
             )
         else:
-            # landing: absorb the impact with a decaying squat
             u = (phase - 0.72) / 0.28
+            settle = (1.0 - u) ** 1.5
             state.update(
-                jump=-14.0 * (1.0 - u) * math.sin(math.pi * min(1.0, u * 1.6)),
-                arm=-0.3 * (1.0 - u),
-                squat=1.0 - u,
+                jump=-18.0 * settle,
+                arm=-0.1 * (1.0 - u) - 0.1 * math.sin(math.pi * u) * (1.0 - u),
+                leg=0.0,
+                squat=settle,  # 落地屈膝缓冲深度
             )
         state["lean"] += float(cfg.get("lean", 0.0))
     else:  # idle: breathing with lazy arm sway trailing the breath
@@ -163,6 +230,7 @@ def _pose(action, phase, config=None):
             * 0.22
             * float(cfg.get("arm", 1.0)),
             lean=float(cfg.get("lean", 0.0)),
+            sway=math.sin(t) * 1.6,  # 站立重心缓慢左右转移（次级动作）
         )
     return state
 
@@ -178,10 +246,13 @@ def _draw_frame(painter, colors, traits, action, phase, config=None):
     sway = pose.get("sway", 0.0)
     cx = 256.0 + lean + sway
 
-    # ground shadow (fades as the character leaves the ground)
-    if jump < 60:
-        scale = 1.0 - jump / 160.0
-        painter.soft_ellipse(ellipse(256, 500, 150 * scale, 34 * scale), c["dark"], alpha=48)
+    # ground shadow (fades continuously as the character leaves the ground —
+    # 旧的 jump<60 硬阈值让阴影在空中段"啪"地消失)
+    scale = max(0.0, 1.0 - jump / 160.0)
+    if scale > 0.02:
+        painter.soft_ellipse(
+            ellipse(256, 500, 150 * scale, 34 * scale), c["dark"], alpha=int(48 * scale)
+        )
 
     # legs: hip -> knee -> ankle (two-bone), feet lift alternately when stepping
     hip_y = 428.0 + dy + pose["squat"] * 8.0

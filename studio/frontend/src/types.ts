@@ -650,8 +650,10 @@ export interface ActionBatchTask {
 export interface ActionBatchSnapshot {
   id: string;
   asset_id: string;
-  status: "running" | "done";
+  /** failed = 全部动作生成失败（部分失败仍为 done，failed_count 记失败数） */
+  status: "running" | "done" | "failed";
   total: number;
+  failed_count?: number;
   tasks: ActionBatchTask[];
   created_at?: number;
 }
