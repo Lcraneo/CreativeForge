@@ -304,6 +304,76 @@ def main() -> int:
     )
     check("soften prompt keeps original text when clean", _soften_prompt("walk in place") != "" and "attack" not in _soften_prompt("walk in place"))
 
+    # ── 动作描述 AI 增强：门控 / 失败回退 / 持久缓存命中 ─────────────────
+    import tempfile as _tempfile2
+
+    from studio.backend.animation_service import service as _anim_service
+
+    check(
+        "motion enhance: switch off returns base",
+        _anim_service.ai_enhance_motion_prompt(
+            {"enabled": True, "api_key": "k", "chat_model": "m", "video_ai_enhance": False},
+            "walk",
+            "base prompt",
+        )
+        == "base prompt",
+    )
+    check(
+        "motion enhance: unconfigured returns base",
+        _anim_service.ai_enhance_motion_prompt({}, "walk", "base prompt") == "base prompt",
+    )
+
+    _orig_cache_path = _anim_service._MOTION_PROMPT_CACHE_PATH
+    _orig_cache_dict = dict(_anim_service._motion_prompt_cache)
+    _orig_chat_provider = None
+    try:
+        import studio.backend.model_service.service as _msvc
+
+        _anim_service._MOTION_PROMPT_CACHE_PATH = os.path.join(
+            _tempfile2.gettempdir(), "cf_motion_cache_test.json"
+        )
+        _anim_service._motion_prompt_cache = {}
+        _orig_chat_provider = _msvc.ChatProvider
+
+        class _FakeChat:
+            def __init__(self, settings):
+                pass
+
+            def chat(self, system, user, temperature=0.6):
+                return {
+                    "model": "fake",
+                    "content": "The character walks with a lively bounce, shoulders swinging "
+                    "in rhythm, heels touching the ground softly, cloth settling after each step.",
+                }
+
+        _enhance_settings = {
+            "enabled": True,
+            "api_key": "k",
+            "chat_model": "m",
+            "video_ai_enhance": True,
+        }
+        _msvc.ChatProvider = _FakeChat
+        enhanced = _anim_service.ai_enhance_motion_prompt(_enhance_settings, "walk", "walk in place")
+        check("motion enhance rewrites via chat", "bounce" in enhanced, enhanced[:80])
+
+        def _boom(settings):
+            raise AssertionError("cache should hit, chat must not be called again")
+
+        _msvc.ChatProvider = _boom
+        again = _anim_service.ai_enhance_motion_prompt(_enhance_settings, "walk", "walk in place")
+        check("motion enhance cache hits on repeat", again == enhanced, again[:80])
+    finally:
+        _anim_service._MOTION_PROMPT_CACHE_PATH = _orig_cache_path
+        _anim_service._motion_prompt_cache = _orig_cache_dict
+        if _orig_chat_provider is not None:
+            _msvc.ChatProvider = _orig_chat_provider
+        try:
+            _probe_path = os.path.join(_tempfile2.gettempdir(), "cf_motion_cache_test.json")
+            if os.path.isfile(_probe_path):
+                os.remove(_probe_path)
+        except OSError:
+            pass
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

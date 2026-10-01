@@ -367,6 +367,7 @@ class ModelSettingsStore:
         "watermark": False,
         "video_size": "1280*720",
         "video_prompt_extend": False,
+        "video_ai_enhance": True,  # 动作描述 AI 增强：对话模型润色 i2v 动作提示词（失败自动回退原模板）
         "timeout": 60,
         "style": "pixel",
         "api_key_pool": [],  # 备用 Key 池：额度类错误自动切换下一把
@@ -637,28 +638,20 @@ def poll_dashscope_task(api_key, task_id, timeout_seconds):
 
 
 class ChatProvider:
-    """OpenAI-compatible chat completion used for prompt enhancement."""
+    """OpenAI-compatible chat completion (prompt enhancement / motion rewrite)."""
 
     def __init__(self, settings):
         self.settings = settings or {}
 
-    def enhance(self, goal, spec, overrides=None):
+    def chat(self, system, user, temperature=0.6):
+        """Single-round chat completion (key-pool aware). Returns
+        ``{"model", "content"}``. 额度/鉴权/网络类错误切下一把 Key，
+        确定性失败原样上抛。"""
+
         base_url = (self.settings.get("base_url") or "").rstrip("/")
         model = self.settings.get("chat_model") or self.settings.get("model")
-        api_key = self.settings.get("api_key")
-        if not base_url or not api_key or not model:
+        if not base_url or not self.settings.get("api_key") or not model:
             raise RuntimeError("chat provider not configured")
-        system = (
-            "You rewrite a game-asset request into ONE concise image-generation prompt. "
-            "IMPORTANT: reply in the SAME language as the user's request "
-            "(if the user writes Chinese, output Chinese; if English, output English). "
-            "Rules: strictly follow the style the user asks for "
-            "(anime / pixel / 3d / realistic ...); if unspecified, use the natural default. "
-            "Do NOT impose a fixed style; do NOT mention artist names, studios or copyrighted IP. "
-            "Keep concrete attributes (gender, age, hair, outfit, accessories, pose, colors). "
-            "Keep it short (<=120 words / ~120 汉字). "
-            "Output only the prompt text — no markdown, no explanation."
-        )
         last_error = None
         for key in _keys_for(self.settings):
             try:
@@ -672,15 +665,15 @@ class ChatProvider:
                         "model": model,
                         "messages": [
                             {"role": "system", "content": system},
-                            {"role": "user", "content": str(goal)},
+                            {"role": "user", "content": str(user)},
                         ],
-                        "temperature": 0.6,
+                        "temperature": temperature,
                     },
                     timeout=float(self.settings.get("timeout", 60)),
                 )
                 response.raise_for_status()
                 content = response.json()["choices"][0]["message"]["content"]
-                return {"model": model, "prompt": content.strip()}
+                return {"model": model, "content": content.strip()}
             except httpx.HTTPStatusError as exc:
                 # 额度/鉴权/网络类错误换下一把 Key 重试；其余（参数、模型名
                 # 错误等确定性失败）原样上抛
@@ -691,7 +684,22 @@ class ChatProvider:
             except Exception as exc:  # noqa: BLE001
                 last_error = exc
                 continue
-        raise last_error or RuntimeError("chat enhancement failed")
+        raise last_error or RuntimeError("chat completion failed")
+
+    def enhance(self, goal, spec, overrides=None):
+        system = (
+            "You rewrite a game-asset request into ONE concise image-generation prompt. "
+            "IMPORTANT: reply in the SAME language as the user's request "
+            "(if the user writes Chinese, output Chinese; if English, output English). "
+            "Rules: strictly follow the style the user asks for "
+            "(anime / pixel / 3d / realistic ...); if unspecified, use the natural default. "
+            "Do NOT impose a fixed style; do NOT mention artist names, studios or copyrighted IP. "
+            "Keep concrete attributes (gender, age, hair, outfit, accessories, pose, colors). "
+            "Keep it short (<=120 words / ~120 汉字). "
+            "Output only the prompt text — no markdown, no explanation."
+        )
+        result = self.chat(system, goal, temperature=0.6)
+        return {"model": result["model"], "prompt": result["content"]}
 
 
 DASHSCOPE_HOST = "https://dashscope.aliyuncs.com"

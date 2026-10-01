@@ -238,6 +238,8 @@ export interface ModelSettings {
   watermark?: boolean;
   video_size?: string;
   video_prompt_extend?: boolean;
+  /** 动作描述 AI 增强：对话模型润色 i2v 提示词（失败自动回退原模板） */
+  video_ai_enhance?: boolean;
   timeout: number;
   style?: string;
   has_key?: boolean;

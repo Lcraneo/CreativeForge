@@ -175,6 +175,7 @@ class ModelSettingsRequest(BaseModel):
     watermark: bool | None = None
     video_size: str | None = None
     video_prompt_extend: bool | None = None
+    video_ai_enhance: bool | None = None  # 动作描述 AI 增强（对话模型润色 i2v 提示词）
     timeout: int | None = None
     api_key_pool_add: list[str] | None = None  # 备用 Key 追加（每项一把）
     api_key_pool: list[str] | None = None  # 整池覆盖（清空传 []）
@@ -243,6 +244,20 @@ def _localize_history_record(record):
         if safe_generated_path(name):
             record["image"] = {**image, "url": "/api/generated/" + name}
     return record
+
+
+def _enhance_context_for(asset) -> str | None:
+    """角色名 + 规格摘要，作为视频动作描述 AI 增强的上下文（无则 None）。"""
+
+    if not isinstance(asset, dict):
+        return None
+    parts = []
+    if asset.get("name"):
+        parts.append(str(asset["name"]))
+    summary = (asset.get("character") or {}).get("summary")
+    if summary:
+        parts.append(str(summary))
+    return ("；".join(parts)[:200]) or None
 
 
 def build_router(runtime):
@@ -598,6 +613,7 @@ def build_router(runtime):
                     duration=request.duration,
                     size=request.size,
                     asset_id=request.asset_id or (asset.get("id") if asset else None),
+                    enhance_context=_enhance_context_for(asset),
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -726,6 +742,7 @@ def build_router(runtime):
         batch_id = service.start_action_batch(
             asset.get("id"), source, settings,
             actions=request.get("actions"),
+            enhance_context=_enhance_context_for(asset),
         )
         return {"batch_id": batch_id, "snapshot": service.action_batch_snapshot(batch_id)}
 

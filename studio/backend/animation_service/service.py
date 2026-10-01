@@ -81,6 +81,112 @@ SEGMENT_PROMPT = (
     "不位移、不缩放。只允许背景像素变成纯白。"
 )
 
+# 动作描述 AI 增强的系统提示：只润色、不改动作身份，输出英文 i2v 提示词。
+MOTION_ENHANCE_SYSTEM = (
+    "You are a game animation director writing prompts for an image-to-video (i2v) model. "
+    "Rewrite the given motion description into ONE richer English paragraph (<=90 words). "
+    "Preserve exactly: the action's identity (a walk stays walking, an attack stays ONE "
+    "committed attack), in-place motion, the character keeping the input image's facing "
+    "direction, a locked camera, and the character's design/outfit/colors unchanged. "
+    "Enrich with plausible secondary motion implied by the character context "
+    "(e.g. armor plates shifting, cloth and hair settling, weapon weight affecting "
+    "posture and rhythm) plus pacing, weight shift and easing details. "
+    "Never introduce new characters, camera moves, scene changes, violence or blood. "
+    "Output only the prompt text — no markdown, no explanation."
+)
+
+# 润色结果持久缓存：同一（模型/动作/上下文/模板）命中同一润色输出。
+# 这不是省钱——是保正确：最终提示词参与视频缓存 key，若每次润色结果都
+# 不同，视频缓存将永远无法命中，重跑同一动作会重复烧视频额度。
+_MOTION_PROMPT_CACHE_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data",
+    "motion_prompt_cache.json",
+)
+_motion_prompt_cache: dict = {}
+
+
+def _load_motion_prompt_cache() -> None:
+    global _motion_prompt_cache
+    try:
+        with open(_MOTION_PROMPT_CACHE_PATH, "r", encoding="utf-8") as handle:
+            data = json.load(handle)
+        _motion_prompt_cache = data if isinstance(data, dict) else {}
+    except (ValueError, OSError):
+        _motion_prompt_cache = {}
+
+
+def _save_motion_prompt_cache() -> None:
+    try:
+        os.makedirs(os.path.dirname(_MOTION_PROMPT_CACHE_PATH), exist_ok=True)
+        with open(_MOTION_PROMPT_CACHE_PATH, "w", encoding="utf-8") as handle:
+            json.dump(_motion_prompt_cache, handle, ensure_ascii=False)
+    except OSError:
+        pass
+
+
+_load_motion_prompt_cache()
+
+
+def ai_enhance_motion_prompt(settings, action, base_prompt, context=None):
+    """对话模型润色动作描述（video_ai_enhance，默认开）。
+
+    未配置 / 开关关闭 / 任何失败：一律原样返回 base_prompt（绝不中断生成）。
+    成功结果持久缓存，保证同一动作重复生成拿到同一润色文本。
+    FRAMING_CLAUSE 等代码级约束由调用方另行追加，不交给模型发挥。"""
+
+    if not isinstance(settings, dict) or not settings.get("video_ai_enhance", True):
+        return base_prompt
+    if not (
+        settings.get("enabled")
+        and settings.get("api_key")
+        and settings.get("use_chat", True)
+        and (settings.get("chat_model") or settings.get("model"))
+    ):
+        return base_prompt
+
+    import hashlib as _hashlib
+
+    cache_key = _hashlib.sha1(
+        "|".join(
+            [
+                settings.get("chat_model") or settings.get("model") or "",
+                str(action),
+                str(context or ""),
+                base_prompt,
+            ]
+        ).encode("utf-8")
+    ).hexdigest()[:20]
+    cached = _motion_prompt_cache.get(cache_key)
+    if isinstance(cached, str) and cached:
+        return cached
+
+    user = "Action type: {}\nBase motion description:\n{}\n{}Rewrite it into one richer English i2v motion prompt now.".format(
+        action,
+        base_prompt,
+        (
+            "Character context (outfit/gear/identity hints only): {}\n".format(
+                str(context)[:160]
+            )
+            if context
+            else ""
+        ),
+    )
+    try:
+        from studio.backend.model_service.service import ChatProvider
+
+        result = ChatProvider(settings).chat(MOTION_ENHANCE_SYSTEM, user, temperature=0.5)
+        enhanced = " ".join((result.get("content") or "").split())
+        # 产出质量门：过短/过长/疑似模型解释文本一律弃用
+        if not (40 <= len(enhanced) <= 900) or enhanced.count("```"):
+            return base_prompt
+    except Exception:  # noqa: BLE001 - 润色是增益项，失败绝不阻塞
+        return base_prompt
+
+    _motion_prompt_cache[cache_key] = enhanced
+    _save_motion_prompt_cache()
+    return enhanced
+
 MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/人物丢失）
 MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
@@ -170,9 +276,11 @@ class AnimationService:
         source_bytes: bytes,
         settings: dict[str, Any],
         actions: list[str] | None = None,
+        enhance_context: str | None = None,
     ) -> str:
         """为资产串行补齐缺失动作的 AI 动画（视频驱动）。已生成的动作自动
-        跳过；批次状态存内存供前端轮询。"""
+        跳过；批次状态存内存供前端轮询。``enhance_context`` 传给动作描述
+        AI 增强（角色名/简介上下文）。"""
 
         import threading
         import uuid as _uuid
@@ -200,14 +308,14 @@ class AnimationService:
         if pending:
             thread = threading.Thread(
                 target=self._run_action_batch,
-                args=(batch_id, asset_id, source_bytes, settings, pending),
+                args=(batch_id, asset_id, source_bytes, settings, pending, enhance_context),
                 name="cf-action-batch-{}".format(batch_id),
                 daemon=True,
             )
             thread.start()
         return batch_id
 
-    def _run_action_batch(self, batch_id, asset_id, source_bytes, settings, pending):
+    def _run_action_batch(self, batch_id, asset_id, source_bytes, settings, pending, enhance_context=None):
         import random as _random
 
         batch = self.action_batches.get(batch_id) or {}
@@ -216,7 +324,11 @@ class AnimationService:
             if entry:
                 entry["status"] = "generating"
             try:
-                prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
+                base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
+                enhanced_prompt = ai_enhance_motion_prompt(
+                    settings, action, base_prompt, context=enhance_context
+                )
+                prompt = enhanced_prompt + " " + FRAMING_CLAUSE
                 video_bytes, video_model = generate_video_with_policy(
                     settings, prompt, source_bytes, timeout_seconds=420.0
                 )
@@ -229,6 +341,9 @@ class AnimationService:
                 meta["video_model"] = video_model
                 meta["asset_id"] = asset_id
                 meta["requested_action"] = action
+                if enhanced_prompt != base_prompt:
+                    meta["prompt_enhanced"] = True
+                    meta["motion_prompt"] = prompt[:400]
                 self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
                 if entry:
                     entry["status"] = "done"
@@ -423,10 +538,14 @@ class AnimationService:
         duration: float = 1.0,
         size: int = 384,
         asset_id: str | None = None,
+        enhance_context: str | None = None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
         → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。失败抛
-        VideoGenerationError（带分类与中文描述），路由原样透传给前端。"""
+        VideoGenerationError（带分类与中文描述），路由原样透传给前端。
+
+        ``enhance_context``：角色名/简介等上下文，供动作描述 AI 增强参考
+        （video_ai_enhance 开启时）。"""
 
         action = action if action in ACTIONS else "walk"
 
@@ -439,7 +558,13 @@ class AnimationService:
         except Exception:  # noqa: BLE001 - crop is best-effort
             work_bytes = source_bytes
 
-        prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
+        # 动作描述 AI 增强（可配置，失败回退原模板）；代码级构图约束
+        # FRAMING_CLAUSE 始终由代码追加，不交给模型发挥
+        base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
+        enhanced_prompt = ai_enhance_motion_prompt(
+            settings, action, base_prompt, context=enhance_context
+        )
+        prompt = enhanced_prompt + " " + FRAMING_CLAUSE
         video_bytes, video_model = generate_video_with_policy(
             settings, prompt, work_bytes, timeout_seconds=420.0
         )
@@ -476,6 +601,9 @@ class AnimationService:
         if asset_id:
             meta["asset_id"] = asset_id
         meta["requested_action"] = action
+        if enhanced_prompt != base_prompt:
+            meta["prompt_enhanced"] = True
+            meta["motion_prompt"] = prompt[:400]
         self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         if crop_info:
             meta["source_cropped"] = crop_info

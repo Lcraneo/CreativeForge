@@ -35,6 +35,7 @@ interface FormState {
   watermark: boolean;
   video_size: string;
   video_prompt_extend: boolean;
+  video_ai_enhance: boolean;
   timeout: number;
 }
 
@@ -57,6 +58,7 @@ function toForm(settings: ModelSettings): FormState {
     watermark: settings.watermark ?? false,
     video_size: settings.video_size ?? "1280*720",
     video_prompt_extend: settings.video_prompt_extend ?? false,
+    video_ai_enhance: settings.video_ai_enhance ?? true,
     timeout: settings.timeout,
   };
 }
@@ -625,6 +627,20 @@ export default function SettingsCenter() {
                         onChange={(video_prompt_extend) =>
                           setForm({ ...form, video_prompt_extend })
                         }
+                      />
+                    </label>
+                    <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle px-3 py-2 md:col-span-2">
+                      <span className="min-w-0">
+                        <span className="block text-[12px] text-ink-2">
+                          动作描述 AI 增强（对话模型润色 i2v 提示词）
+                        </span>
+                        <span className="mt-0.5 block text-[10.5px] text-ink-4">
+                          生成每个动作前用对话模型把动作模板润色成更贴合角色的英文描述（1 次对话调用，失败自动回退原模板；结果持久缓存，重跑同一动作不重复调用）
+                        </span>
+                      </span>
+                      <Switch
+                        checked={form.video_ai_enhance}
+                        onChange={(video_ai_enhance) => setForm({ ...form, video_ai_enhance })}
                       />
                     </label>
                   </div>
