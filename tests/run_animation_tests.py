@@ -192,6 +192,77 @@ def main() -> int:
     )
     check("unknown asset stays None", _resolve_asset(_Runtime(), "nope") is None)
 
+    # ── AI 视频驱动产物回归（防"生成的动画无法播放"类退化）──────────────
+    # 全离线：合成 mp4（前 10 帧静止模拟 i2v 开头，之后方块平移起伏模拟
+    # 角色动作）→ _slice_video 抽帧 → compose_animation → GIF 结构校验。
+    try:
+        import imageio.v2 as _probe  # noqa: F401
+
+        import numpy as _np  # noqa: F401
+
+        HAS_FFMPEG = True
+    except Exception:
+        HAS_FFMPEG = False
+
+    if not HAS_FFMPEG:
+        check("imageio/ffmpeg available for video regression", False, "install imageio + imageio-ffmpeg")
+    else:
+        import io as _io
+        import os as _os
+        import tempfile as _tempfile
+
+        from PIL import Image as _PILImage, ImageSequence as _PILImageSeq
+
+        from studio.backend.animation_service.service import AnimationService
+
+        service = AnimationService(_os.path.join(_tempfile.gettempdir(), "cf_anim_test"))
+
+        def _write_synth_mp4(path, total=96, side=192):
+            import imageio.v2 as _imageio
+
+            writer = _imageio.get_writer(path, fps=24)
+            for i in range(total):
+                frame = _np.full((side, side, 3), 235, dtype=_np.uint8)
+                t = max(0, i - 10) / max(1, total - 10)
+                x = int(40 + t * (side - 110))
+                y = int(side * 0.45 + (18 if (i // 6) % 2 == 0 else -18))
+                frame[y : y + 60, x : x + 60] = (40, 60, 120)
+                writer.append_data(frame)
+            writer.close()
+
+        synth_mp4 = _os.path.join(_tempfile.gettempdir(), "cf_synth_i2v.mp4")
+        _write_synth_mp4(synth_mp4)
+        with open(synth_mp4, "rb") as handle:
+            synth_bytes = handle.read()
+
+        frames = service._slice_video(synth_bytes, b"", fps=12, duration=1.0, size=192, min_count=20)
+        check("slice_video samples >= 20 frames", len(frames) >= 20, f"got {len(frames)}")
+        check("slice_video frames sized to canvas", all(w == 192 and h == 192 for w, h, _ in frames))
+        check(
+            "slice_video keeps visible motion (subject moves between frames)",
+            any(
+                sum(
+                    abs(a - b)
+                    for a, b in zip(
+                        _PILImage.frombytes("RGBA", (w, h), bytes(rgba)).convert("L").resize((24, 24)).tobytes(),
+                        _PILImage.frombytes("RGBA", (w, h), bytes(frames[i + 1][2])).convert("L").resize((24, 24)).tobytes(),
+                    )
+                )
+                > 1000
+                for i, (w, h, rgba) in enumerate(frames[:-1])
+            ),
+        )
+
+        from artgen import compose_animation
+
+        composed = compose_animation(frames_rgba=frames, fps=12, size=192)
+        check("composed gif non-empty", len(composed["gif"]) > 1000, f"{len(composed['gif'])} bytes")
+
+        gif_img = _PILImage.open(_io.BytesIO(composed["gif"]))
+        gif_frames = sum(1 for _ in _PILImageSeq.Iterator(gif_img))
+        check("gif decodable with expected frame count", gif_frames == len(frames), f"{gif_frames} vs {len(frames)}")
+        check("gif size matches canvas", gif_img.size == (192, 192))
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

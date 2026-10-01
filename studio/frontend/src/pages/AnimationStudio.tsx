@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { ModelApiPanel } from "../components/ModelApiPanel";
 import { useAssetLoader } from "../stores/assetStore";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
@@ -177,7 +178,16 @@ export default function AnimationStudio() {
         } else if (asset?.id) {
           payload.asset_id = asset.id;
         }
-        setResult(await api.createAnimation(payload));
+        const animationResult = await api.createAnimation(payload);
+        // 生成成功后清掉编辑器相位帧：展示区 frameUrl 优先级高于 result，
+        // 不清会导致画布停在静态预览帧、动画 GIF 永远不显示（"无法播放"）。
+        // 用户下次拖时间轴/调滑杆时相位帧自动恢复。
+        setFrameUrl((oldUrl) => {
+          if (oldUrl) URL.revokeObjectURL(oldUrl);
+          return null;
+        });
+        setPlaying(false);
+        setResult(animationResult);
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -564,6 +574,16 @@ export default function AnimationStudio() {
                           正面
                         </button>
                       </div>
+                    </div>
+                  )}
+                  {useVideo && (
+                    <div className="w-full">
+                      <ModelApiPanel
+                        scope="video"
+                        title="视频生成 API 配置"
+                        contextNote="AI 视频驱动使用的图生视频 API（当前仅百炼支持）。修改会双向同步至「模型广场」。"
+                        defaultCollapsed
+                      />
                     </div>
                   )}
                   {skeletal && !useVideo && rigCheck.data?.proportion === "chibi" && (
