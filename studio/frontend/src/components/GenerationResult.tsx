@@ -20,13 +20,14 @@ export function GenerationResult({ asset }: Props) {
   const setAsset = useAssetStore((state) => state.set);
   const [reviewing, setReviewing] = useState<"pass" | "redo" | null>(null);
   const image =
-    (asset as { image?: { url?: string; model?: string } }).image?.url ||
+    (asset as { image?: { url?: string; model?: string; cached?: boolean } }).image?.url ||
     asset.source?.ai_image?.url ||
     `/api/assets/${asset.id}/image.png?view=front&size=512`;
   const model =
     (asset as { image?: { model?: string } }).image?.model ||
     asset.source?.ai_image?.model ||
     "artgen-2d";
+  const cached = (asset as { image?: { cached?: boolean } }).image?.cached === true;
   const engine = (asset as { engine?: { target?: string } }).engine?.target;
   const review = asset.review;
 
@@ -64,6 +65,7 @@ export function GenerationResult({ asset }: Props) {
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-[15px] font-semibold text-ink">{asset.name ?? asset.id}</span>
             <Badge tone="primary">{model}</Badge>
+            {cached && <Badge tone="neutral">来自缓存 · 零额度</Badge>}
             {engine && <Badge tone="neutral">{engine}</Badge>}
             {review?.approved === true && <Badge tone="success">人工审核通过</Badge>}
             {review?.approved === false && <Badge tone="warning">待重做</Badge>}

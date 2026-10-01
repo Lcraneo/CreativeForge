@@ -147,6 +147,9 @@ export default function AssetInspector() {
           {aiImage && aiImageMeta?.model && (
             <div className="mt-2 flex items-center gap-2">
               <span className="text-[11px] text-ink-3">AI 原画 · {aiImageMeta.model}</span>
+              {(asset.image as { cached?: boolean } | undefined)?.cached && (
+                <Badge tone="neutral">来自缓存</Badge>
+              )}
               <button
                 onClick={async () => {
                   try {

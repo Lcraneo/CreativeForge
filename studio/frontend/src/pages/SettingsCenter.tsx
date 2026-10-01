@@ -81,6 +81,20 @@ const KIND_LABEL: Record<string, string> = {
   chat: "对话",
 };
 
+/** Key 健康状态（后端 note_key_outcome，本次运行内） */
+const KEY_HEALTH_LABEL: Record<string, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
+  ok: { label: "可用", tone: "success" },
+  quota: { label: "额度耗尽", tone: "warning" },
+  auth: { label: "无效", tone: "danger" },
+  error: { label: "异常", tone: "warning" },
+  unknown: { label: "未验证", tone: "neutral" },
+};
+
+function KeyHealthBadge({ status }: { status: string }) {
+  const health = KEY_HEALTH_LABEL[status] ?? KEY_HEALTH_LABEL.unknown;
+  return <Badge tone={health.tone}>{health.label}</Badge>;
+}
+
 function UsageMeter() {
   const queryClient = useQueryClient();
   const usage = useQuery({
@@ -500,6 +514,12 @@ export default function SettingsCenter() {
                   <Badge tone={(data.api_key_pool_size ?? 0) > 0 ? "primary" : "neutral"}>
                     {(data.api_key_pool_size ?? 0)} 把
                   </Badge>
+                  {data.has_key && (
+                    <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+                      主 Key
+                      <KeyHealthBadge status={data.key_health?.primary ?? "unknown"} />
+                    </span>
+                  )}
                 </div>
                 {(data.api_key_pool ?? []).length > 0 && (
                   <ul className="mt-2.5 space-y-1.5">
@@ -512,6 +532,7 @@ export default function SettingsCenter() {
                         <code className="min-w-0 flex-1 truncate font-mono text-[11px] text-ink-3">
                           #{index + 1} · {hint}
                         </code>
+                        <KeyHealthBadge status={data.key_health?.pool?.[index] ?? "unknown"} />
                         <Button
                           variant="ghost"
                           size="sm"

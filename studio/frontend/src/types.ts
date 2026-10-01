@@ -218,6 +218,8 @@ export interface GeneratedImage {
   size: string;
   prompt?: string;
   elapsed_ms?: number;
+  /** 命中提示词缓存（本次生成零额度消耗） */
+  cached?: boolean;
 }
 
 export interface ModelSettings {
@@ -247,6 +249,8 @@ export interface ModelSettings {
   /** 备用 Key 池（额度耗尽/鉴权失败自动切换）；此处为脱敏回显 */
   api_key_pool?: string[];
   api_key_pool_size?: number;
+  /** Key 健康状态（本次运行内，重启清零）：ok/quota/auth/error/unknown */
+  key_health?: { primary?: string; pool?: string[] };
 }
 
 export interface ProviderPreset {

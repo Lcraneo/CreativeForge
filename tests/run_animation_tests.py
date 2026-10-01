@@ -508,6 +508,71 @@ def main() -> int:
         except OSError:
             pass
 
+    # ── 复核补齐：生图调用 Key 池切换 + Key 健康状态 ─────────────────────
+    _orig_ledger_path2 = _usage._LEDGER_PATH
+    _usage._LEDGER_PATH = os.path.join(_tempfile4.gettempdir(), "cf_usage_ledger_test2.json")
+    _usage._ledger = None
+    _orig_dash = _msvc.ImageProvider._generate_dashscope
+    try:
+        _pool_calls = []
+
+        def _fake_dash(self, prompt):
+            _pool_calls.append(self.settings.get("api_key"))
+            if len(_pool_calls) == 1:
+                raise RuntimeError("HTTP 400: Arrearage")
+            return {"file": None, "url": None, "model": "wanx-test"}
+
+        _msvc.ImageProvider._generate_dashscope = _fake_dash
+        _img_provider = _msvc.ImageProvider(
+            {
+                "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "api_key": "k-primary",
+                "api_key_pool": ["k-backup"],
+                "model": "wanx-test",
+                "size": "1024x1024",
+                "negative_prompt": "",
+                "seed": "",
+            }
+        )
+        _img_provider.generate("unique-prompt-{}".format(_time.time()))
+        check(
+            "image generation switches to backup key on quota error",
+            _pool_calls == ["k-primary", "k-backup"],
+            str(_pool_calls),
+        )
+        check(
+            "key health recorded: primary quota, backup ok",
+            _msvc._KEY_HEALTH.get("k-primary", {}).get("status") == "quota"
+            and _msvc._KEY_HEALTH.get("k-backup", {}).get("status") == "ok",
+        )
+        _health = _msvc.key_health_view({"api_key": "k-primary", "api_key_pool": ["k-backup"]})
+        check(
+            "key health view: primary quota + pool ok",
+            _health["primary"] == "quota" and _health["pool"] == ["ok"],
+            str(_health),
+        )
+
+        _tmp_store_path = os.path.join(_tempfile4.gettempdir(), "cf_ms_test.json")
+        _tmp_store = _msvc.ModelSettingsStore(_tmp_store_path)
+        _pub = _tmp_store.update(
+            {"api_key": "sk-test-primary-key-123", "api_key_pool_add": ["sk-test-backup-key-456"]}
+        )
+        check(
+            "settings public exposes key_health",
+            isinstance(_pub.get("key_health"), dict)
+            and len(_pub["key_health"].get("pool") or []) == 1,
+            str(_pub.get("key_health")),
+        )
+        os.remove(_tmp_store_path)
+    finally:
+        _msvc.ImageProvider._generate_dashscope = _orig_dash
+        _usage._LEDGER_PATH = _orig_ledger_path2
+        _usage._ledger = None
+        try:
+            os.remove(os.path.join(_tempfile4.gettempdir(), "cf_usage_ledger_test2.json"))
+        except OSError:
+            pass
+
     # ── 队列中心：资产批次 + 动作批次聚合 ────────────────────────────────
     import copy as _copy
 

@@ -132,6 +132,48 @@ def _keys_for(settings) -> list[str]:
     return out
 
 
+# Key 健康状态（本次运行内，重启清零）：完整 Key 作内部索引，对外只按
+# 池内序号暴露状态。ok=可用 / quota=额度耗尽 / auth=无效 / 未调用=unknown
+_KEY_HEALTH: dict[str, dict] = {}
+_KEY_HEALTH_TTL = 6 * 3600.0
+
+
+def note_key_outcome(key, ok, kind=None):
+    """记录一把 Key 的最近一次调用结果（统计行为，永不抛错）。"""
+
+    try:
+        if not key:
+            return
+        if ok:
+            _KEY_HEALTH[key] = {"status": "ok", "at": time.time()}
+            return
+        status = kind if kind in ("quota", "auth") else "error"
+        prev = _KEY_HEALTH.get(key)
+        # 暂时的网络/服务端错误不覆盖已有的额度/鉴权结论
+        if status == "error" and prev and prev.get("status") in ("quota", "auth"):
+            return
+        _KEY_HEALTH[key] = {"status": status, "at": time.time()}
+    except Exception:  # noqa: BLE001
+        pass
+
+
+def key_health_view(settings):
+    """按「主 Key + 池序号」输出健康状态（永不回显 Key 本身）。"""
+
+    keys = _keys_for(settings)
+    now = time.time()
+    statuses = []
+    for key in keys:
+        state = _KEY_HEALTH.get(key)
+        if not state or now - state.get("at", 0) > _KEY_HEALTH_TTL:
+            statuses.append("unknown")
+        else:
+            statuses.append(state.get("status", "unknown"))
+    if not statuses:
+        return {"primary": "unknown", "pool": []}
+    return {"primary": statuses[0], "pool": statuses[1:]}
+
+
 def _is_quota_error(exc) -> bool:
     """额度类错误判定：命中则自动切换 Key 池中的下一把重试。"""
 
@@ -417,6 +459,7 @@ class ModelSettingsStore:
         hint = ""
         if key:
             hint = "{}****{}".format(key[:3], key[-4:]) if len(key) > 8 else "****"
+        data["key_health"] = key_health_view(data)
         data.pop("api_key", None)
         data["has_key"] = bool(key)
         data["key_hint"] = hint
@@ -582,6 +625,8 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
                         "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
                     )
                     kind = classify_error(err)
+                    if kind in ("quota", "auth"):
+                        note_key_outcome(attempt_key, False, kind)
                     if kind == "moderation":
                         if not safe_round:
                             moderation_error = moderation_error or err
@@ -602,6 +647,7 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
                 from studio.backend.model_service.usage import record_usage
 
                 record_usage("video", model)
+                note_key_outcome(attempt_key, True)
                 try:
                     os.makedirs(_VIDEO_CACHE_DIR, exist_ok=True)
                     with open(cached_path, "wb") as handle:
@@ -679,15 +725,18 @@ class ChatProvider:
                 from studio.backend.model_service.usage import record_usage
 
                 record_usage("chat", model)
+                note_key_outcome(key, True)
                 return {"model": model, "content": content.strip()}
             except httpx.HTTPStatusError as exc:
                 # 额度/鉴权/网络类错误换下一把 Key 重试；其余（参数、模型名
                 # 错误等确定性失败）原样上抛
+                note_key_outcome(key, False, classify_error(exc))
                 if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
                 raise _http_error(exc)
             except Exception as exc:  # noqa: BLE001
+                note_key_outcome(key, False, classify_error(exc))
                 last_error = exc
                 continue
         raise last_error or RuntimeError("chat completion failed")
@@ -806,19 +855,33 @@ class ImageProvider:
                 "cached": True,
             }
 
-        if self._is_dashscope():
-            result = self._generate_dashscope(prompt)
-        else:
-            result = self._generate_openai_compat(prompt)
         from studio.backend.model_service.usage import record_usage
 
-        record_usage("image", result.get("model") or self.settings.get("model"))
-        if result.get("file"):
-            path = os.path.join(GENERATED_DIR, os.path.basename(result["file"]))
-            if os.path.isfile(path):
-                _image_cache[cache_key] = {"path": path, "model": result.get("model")}
-                _save_image_cache()
-        return result
+        # Key 池：额度/鉴权/网络类错误切下一把 Key（生图是最烧额度的路径，
+        # 必须与视频/对话/图像编辑同一套池语义）
+        last_error = None
+        for key in _keys_for(self.settings):
+            scoped = {**self.settings, "api_key": key}
+            try:
+                if ImageProvider(scoped)._is_dashscope():
+                    result = ImageProvider(scoped)._generate_dashscope(prompt)
+                else:
+                    result = ImageProvider(scoped)._generate_openai_compat(prompt)
+                record_usage("image", result.get("model") or scoped.get("model"))
+                note_key_outcome(key, True)
+                if result.get("file"):
+                    path = os.path.join(GENERATED_DIR, os.path.basename(result["file"]))
+                    if os.path.isfile(path):
+                        _image_cache[cache_key] = {"path": path, "model": result.get("model")}
+                        _save_image_cache()
+                return result
+            except Exception as exc:  # noqa: BLE001
+                note_key_outcome(key, False, classify_error(exc))
+                if classify_error(exc) in ("quota", "auth", "network"):
+                    last_error = exc
+                    continue
+                raise
+        raise last_error or RuntimeError("image generation failed")
 
     def _generate_openai_compat(self, prompt):
         base_url = (self.settings.get("base_url") or "").rstrip("/")
@@ -934,9 +997,11 @@ class ImageEditProvider:
                 from studio.backend.model_service.usage import record_usage
 
                 record_usage("edit", result.get("model") or scoped.get("edit_model") or "?")
+                note_key_outcome(key, True)
                 return result
             except Exception as exc:  # noqa: BLE001
                 # 额度/鉴权/网络类错误换下一把 Key；确定性失败直接上抛
+                note_key_outcome(key, False, classify_error(exc))
                 if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
