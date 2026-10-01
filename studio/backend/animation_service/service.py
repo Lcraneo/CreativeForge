@@ -98,6 +98,42 @@ def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0
     return generate_video(settings, prompt, source_bytes, timeout_seconds=timeout_seconds)
 
 
+class VideoGenerationError(RuntimeError):
+    """带分类的视频生成失败（kind: quota/auth/moderation/network/fatal）。"""
+
+    def __init__(self, message: str, kind: str = "fatal"):
+        super().__init__(message)
+        self.kind = kind
+
+
+def generate_video_with_policy(settings, prompt, source_bytes, timeout_seconds=420.0):
+    """视频驱动生成入口：mp4 缓存 + 网络类失败自动退避重试 + 错误分类。
+
+    成功返回 ``(video_bytes, model)``；最终失败抛 VideoGenerationError，
+    message 为面向用户的中文描述，kind 供批次徽章/前端提示分类展示。
+    审核拦截与 Key 池切换由 generate_video 内部处理（安全改写重试轮）。"""
+
+    from studio.backend.model_service.service import (
+        classify_error,
+        describe_error,
+        generate_video,
+    )
+
+    last_exc = None
+    for attempt in range(2):
+        try:
+            return generate_video(
+                settings, prompt, source_bytes, timeout_seconds=timeout_seconds
+            )
+        except Exception as exc:  # noqa: BLE001 - 分类后决定重试或上抛
+            last_exc = exc
+            if classify_error(exc) == "network" and attempt == 0:
+                time.sleep(3.0)
+                continue
+            break
+    raise VideoGenerationError(describe_error(last_exc), classify_error(last_exc)) from last_exc
+
+
 class AnimationService:
     def __init__(self, directory: str):
         self.directory = directory
@@ -181,7 +217,7 @@ class AnimationService:
                 entry["status"] = "generating"
             try:
                 prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
-                video_bytes, video_model = _generate_video_cached(
+                video_bytes, video_model = generate_video_with_policy(
                     settings, prompt, source_bytes, timeout_seconds=420.0
                 )
                 frames_rgba = self._slice_video(video_bytes, source_bytes, 12, 1.0, 384, min_count=20)
@@ -197,6 +233,12 @@ class AnimationService:
                 if entry:
                     entry["status"] = "done"
                     entry["animation_id"] = animation_id
+            except VideoGenerationError as error:
+                # 分类失败：审核拦截/额度不足/Key 无效…前端按 error_kind 出徽章
+                if entry:
+                    entry["status"] = "failed"
+                    entry["error"] = str(error)[:160]
+                    entry["error_kind"] = error.kind
             except Exception as error:  # noqa: BLE001 - 单动作失败不拖垮批次
                 if entry:
                     entry["status"] = "failed"
@@ -383,9 +425,8 @@ class AnimationService:
         asset_id: str | None = None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
-        → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。"""
-
-        from studio.backend.model_service.service import generate_video
+        → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。失败抛
+        VideoGenerationError（带分类与中文描述），路由原样透传给前端。"""
 
         action = action if action in ACTIONS else "walk"
 
@@ -399,7 +440,7 @@ class AnimationService:
             work_bytes = source_bytes
 
         prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"]) + " " + FRAMING_CLAUSE
-        video_bytes, video_model = generate_video(
+        video_bytes, video_model = generate_video_with_policy(
             settings, prompt, work_bytes, timeout_seconds=420.0
         )
         frames_rgba = self._slice_video(

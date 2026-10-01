@@ -35,6 +35,15 @@ const ACTION_HINT: Record<string, string> = {
   jump: "跳跃 · ↑",
 };
 
+// 后端 classify_error 的失败分类 → 画廊徽章短句（详细原因看 task.error）
+const ERROR_KIND_LABEL: Record<string, string> = {
+  moderation: "内容审核拦截",
+  quota: "额度不足",
+  auth: "Key 鉴权失败",
+  network: "网络超时",
+  fatal: "生成失败",
+};
+
 interface OverrideAction {
   name: "attack" | "jump";
   until: number;
@@ -556,7 +565,7 @@ export default function PlaytestStage() {
                     {task.action} ·{" "}
                     {task.status === "generating"
                       ? "AI 生成中…"
-                      : task.error || "生成失败"}
+                      : ERROR_KIND_LABEL[task.error_kind ?? ""] || task.error || "生成失败"}
                   </div>
                 ))}
               {(previews.data?.actions ?? []).map((name) => (

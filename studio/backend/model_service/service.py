@@ -135,6 +135,51 @@ def _keys_for(settings) -> list[str]:
 def _is_quota_error(exc) -> bool:
     """额度类错误判定：命中则自动切换 Key 池中的下一把重试。"""
 
+    return classify_error(exc) == "quota"
+
+
+# ── 错误分类：quota 额度/限流 / auth 鉴权 / moderation 内容审核 / network 网络 / fatal 其他 ──
+_MODERATION_MARKERS = (
+    "datainspectionfailed",
+    "data inspection",
+    "ipinfringement",
+    "infringement",
+    "sensitive",
+    "moderation",
+    "contentpolicy",
+    "content policy",
+    "inappropriate",
+    "内容审核",
+    "敏感",
+    "风控",
+    "审核未通过",
+)
+_AUTH_MARKERS = (
+    "invalid_api_key",
+    "invalidapikey",
+    "invalid api key",
+    "unauthorized",
+    "authentication",
+    "accessdenied",
+    "access denied",
+    "forbidden",
+    "鉴权",
+)
+_QUOTA_MARKERS = (
+    "arrearage",
+    "arrears",
+    "allocationquota",
+    "quotaexceeded",
+    "exceeded quota",
+    "throttl",
+    "ratelimit",
+    "rate limit",
+    "欠费",
+    "额度",
+)
+
+
+def _error_text(exc) -> str:
     text = str(exc).lower()
     response = getattr(exc, "response", None)
     body = ""
@@ -142,10 +187,95 @@ def _is_quota_error(exc) -> bool:
         body = (response.text or "").lower()
     except Exception:  # noqa: BLE001
         pass
+    return text + " " + body
+
+
+def classify_error(exc) -> str:
+    """把第三方模型调用异常归为五类之一，驱动重试与 Key 切换策略：
+
+    * ``quota``      额度耗尽/限流/欠费（→ 切换 Key 池下一把）
+    * ``auth``       Key 无效/鉴权失败（→ 切换下一把，本 Key 重试无意义）
+    * ``moderation`` 内容审核拦截（→ 换 Key/换模型无意义，走安全改写重试）
+    * ``network``    超时/连接失败/5xx（→ 幂等重试有望恢复）
+    * ``fatal``      其余（模型不存在、参数错误等，原样上抛）
+    """
+
+    if exc is None:
+        return "fatal"
+    response = getattr(exc, "response", None)
     status = getattr(response, "status_code", 0)
-    markers = ("arrearage", "allocationquota", "quotaexceeded", "exceeded quota",
-               "throttl", "ratelimit", "rate limit", "欠费", "额度")
-    return any(m in text or m in body for m in markers) or status == 429
+    if isinstance(exc, httpx.TimeoutException) or isinstance(exc, httpx.TransportError):
+        return "network"
+    text = _error_text(exc)
+    if status == 429 or any(m in text for m in _QUOTA_MARKERS):
+        return "quota"
+    if status == 401 or any(m in text for m in _AUTH_MARKERS):
+        return "auth"
+    if any(m in text for m in _MODERATION_MARKERS):
+        return "moderation"
+    if status >= 500:
+        return "network"
+    if status in (400, 403, 404, 422):
+        # 403 若带审核语义上面已归类 moderation；其余 4xx 视为确定性失败
+        return "fatal"
+    return "fatal"
+
+
+ERROR_LABELS = {
+    "quota": "额度不足或触发限流（可在模型设置追加备用 Key）",
+    "auth": "API Key 鉴权失败",
+    "moderation": "内容审核未通过（源图或提示词触发平台风控）",
+    "network": "网络超时或连接失败",
+    "fatal": "",
+}
+
+
+def describe_error(exc) -> str:
+    """把原始异常翻译成面向用户的中文一句话（fatal 保留原始信息）。"""
+
+    kind = classify_error(exc)
+    label = ERROR_LABELS.get(kind) or ""
+    raw = str(exc).strip()
+    if not label:
+        return raw[:200] or "生成失败"
+    if kind == "moderation":
+        return label  # 审核响应体是一坨 JSON，对用户没有信息量
+    return "{}：{}".format(label, raw[:140])
+
+
+# 安全改写：审核轮用的词表替换（正则词边界，大小写不敏感）+ 合规尾缀。
+# i2v 提示词里的攻击性词汇（attack/strike/punch…）是审核拦截的常见诱因。
+_SOFTEN_REPLACEMENTS = (
+    (r"\battacks?\b", "practice form"),
+    (r"\battacking\b", "performing a practice form"),
+    (r"\bstrikes?\b", "controlled swing"),
+    (r"\bstriking\b", "swinging in a controlled way"),
+    (r"\bpunch(?:es|ing)?\b", "arm extension"),
+    (r"\bkick(?:s|ing)?\b", "leg extension"),
+    (r"\bslash(?:es|ing)?\b", "sweeping motion"),
+    (r"\bstab(?:s|bing)?\b", "forward reach"),
+    (r"\bsword\b|\bblade\b|\bblades\b", "prop"),
+    (r"\bguns?\b|\bfirearms?\b", "prop"),
+    (r"\bblood\w*\b|\bgore\b", "dramatic shading"),
+    (r"\bweapon\w*\b", "prop"),
+)
+_SOFTEN_SUFFIX = (
+    " Family-friendly stylized cartoon performance, purely athletic and non-violent, "
+    "no blood, no gore, no realistic harm."
+)
+
+
+def _soften_prompt(prompt: str) -> str:
+    """把提示词里的高风险词替换成中性表达并追加合规尾缀（审核重试轮）。"""
+
+    import re as _re
+
+    softened = prompt
+    for pattern, replacement in _SOFTEN_REPLACEMENTS:
+        softened = _re.sub(pattern, replacement, softened, flags=_re.IGNORECASE)
+    if _SOFTEN_SUFFIX.strip() not in softened:
+        softened = softened.rstrip() + _SOFTEN_SUFFIX
+    return softened
 
 
 PROVIDER_PRESETS = {
@@ -412,48 +542,73 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     }
     if settings.get("negative_prompt"):
         parameters["negative_prompt"] = settings["negative_prompt"]
+
+    def _create(key, model, prompt_now):
+        return httpx.post(
+            DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
+            headers={
+                "Authorization": "Bearer " + key,
+                "Content-Type": "application/json",
+                "X-DashScope-Async": "enable",
+            },
+            json={
+                "model": model,
+                "input": {"prompt": prompt_now, "img_url": "data:image/png;base64," + encoded},
+                "parameters": parameters,
+            },
+            timeout=60,
+        )
+
+    # 两轮策略：第 1 轮原始提示词；若被内容审核拦截，第 2 轮用安全改写
+    # （高风险词中性化 + 合规尾缀）整体重试一遍——审核失败换 Key/换模型
+    # 都无意义，只浪费调用次数。
     last_error = None
-    for attempt_key in _keys_for(settings):
-        # Key 池：额度类错误自动切换下一把（模型候选链对每把 Key 完整重试）
-        for model in models:
-            create = httpx.post(
-                DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
-                headers={
-                    "Authorization": "Bearer " + attempt_key,
-                    "Content-Type": "application/json",
-                    "X-DashScope-Async": "enable",
-                },
-                json={
-                    "model": model,
-                    "input": {"prompt": prompt, "img_url": "data:image/png;base64," + encoded},
-                    "parameters": parameters,
-                },
-                timeout=60,
-            )
-            if create.status_code >= 400:
-                err = RuntimeError(
-                    "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
-                )
-                if _is_quota_error(err):
+    moderation_error = None
+    for safe_round in (False, True):
+        if safe_round:
+            if moderation_error is None:
+                break
+            prompt_now = _soften_prompt(prompt)
+        else:
+            prompt_now = prompt
+        hit_moderation = False
+        for attempt_key in _keys_for(settings):
+            # Key 池：额度/鉴权类错误自动切换下一把（模型候选链对每把 Key 完整重试）
+            for model in models:
+                create = _create(attempt_key, model, prompt_now)
+                if create.status_code >= 400:
+                    err = RuntimeError(
+                        "HTTP {} ({}): {}".format(create.status_code, model, create.text[:220])
+                    )
+                    kind = classify_error(err)
+                    if kind == "moderation":
+                        if not safe_round:
+                            moderation_error = moderation_error or err
+                        hit_moderation = True
+                        break
+                    if kind in ("quota", "auth"):
+                        last_error = err
+                        break
                     last_error = err
-                    break
-                last_error = err
-                continue
-            task_id = (create.json().get("output") or {}).get("task_id")
-            if not task_id:
-                last_error = RuntimeError("dashscope: no task_id in response")
-                continue
-            url = poll_video_task(attempt_key, task_id, timeout_seconds)
-            video = httpx.get(url, timeout=120)
-            video.raise_for_status()
-            try:
-                os.makedirs(_VIDEO_CACHE_DIR, exist_ok=True)
-                with open(cached_path, "wb") as handle:
-                    handle.write(video.content)
-            except OSError:
-                pass
-            return video.content, model
-    raise last_error or RuntimeError("video generation failed")
+                    continue
+                task_id = (create.json().get("output") or {}).get("task_id")
+                if not task_id:
+                    last_error = RuntimeError("dashscope: no task_id in response")
+                    continue
+                url = poll_video_task(attempt_key, task_id, timeout_seconds)
+                video = httpx.get(url, timeout=120)
+                video.raise_for_status()
+                try:
+                    os.makedirs(_VIDEO_CACHE_DIR, exist_ok=True)
+                    with open(cached_path, "wb") as handle:
+                        handle.write(video.content)
+                except OSError:
+                    pass
+                return video.content, model
+            if hit_moderation:
+                break
+    # 审核拦截优先呈现（安全改写轮失败时它是真正的根因）；其余取最后一次错误
+    raise moderation_error or last_error or RuntimeError("video generation failed")
 
 
 def poll_dashscope_task(api_key, task_id, timeout_seconds):
@@ -527,7 +682,9 @@ class ChatProvider:
                 content = response.json()["choices"][0]["message"]["content"]
                 return {"model": model, "prompt": content.strip()}
             except httpx.HTTPStatusError as exc:
-                if _is_quota_error(exc):
+                # 额度/鉴权/网络类错误换下一把 Key 重试；其余（参数、模型名
+                # 错误等确定性失败）原样上抛
+                if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
                 raise _http_error(exc)
@@ -758,7 +915,8 @@ class ImageEditProvider:
                     base_image_url, instruction, poll_timeout
                 )
             except Exception as exc:  # noqa: BLE001
-                if _is_quota_error(exc):
+                # 额度/鉴权/网络类错误换下一把 Key；确定性失败直接上抛
+                if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
                 raise

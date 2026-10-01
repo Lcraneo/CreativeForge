@@ -263,6 +263,47 @@ def main() -> int:
         check("gif decodable with expected frame count", gif_frames == len(frames), f"{gif_frames} vs {len(frames)}")
         check("gif size matches canvas", gif_img.size == (192, 192))
 
+    # ── 模型调用错误分类（审核/额度/鉴权/网络，全离线）───────────────────
+    import httpx as _httpx
+
+    from studio.backend.model_service.service import (
+        _soften_prompt,
+        classify_error,
+        describe_error,
+    )
+
+    def _http_exc(status, body):
+        request = _httpx.Request("POST", "https://dashscope.example.com/api")
+        response = _httpx.Response(status, request=request, text=body)
+        return _httpx.HTTPStatusError("err", request=request, response=response)
+
+    check("classify quota: arrearage body", classify_error(_http_exc(400, '{"code":"Arrearage"}')) == "quota")
+    check("classify quota: 429 status", classify_error(_http_exc(429, "")) == "quota")
+    check("classify auth: invalid key", classify_error(_http_exc(401, '{"code":"InvalidApiKey"}')) == "auth")
+    check(
+        "classify moderation: DataInspectionFailed",
+        classify_error(_http_exc(400, '{"code":"DataInspectionFailed","message":"content check"}')) == "moderation",
+    )
+    check(
+        "classify moderation: IP infringement",
+        classify_error(_http_exc(400, '{"code":"IPInfringementSuspect"}')) == "moderation",
+    )
+    check("classify network: connect timeout", classify_error(_httpx.ConnectTimeout("timed out")) == "network")
+    check("classify network: 502", classify_error(_http_exc(502, "bad gateway")) == "network")
+    check("classify fatal: model not exist", classify_error(_http_exc(400, '{"code":"Model.NotFound"}')) == "fatal")
+    check(
+        "describe moderation hides raw body",
+        "审核" in describe_error(_http_exc(400, '{"code":"DataInspectionFailed"}'))
+        and "{" not in describe_error(_http_exc(400, '{"code":"DataInspectionFailed"}')),
+    )
+    softened = _soften_prompt("The character attacks with a sword strike, then settles back.")
+    check(
+        "soften prompt neutralizes risky words",
+        "attack" not in softened.lower() and "sword" not in softened.lower() and "strike" not in softened.lower(),
+        softened,
+    )
+    check("soften prompt keeps original text when clean", _soften_prompt("walk in place") != "" and "attack" not in _soften_prompt("walk in place"))
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

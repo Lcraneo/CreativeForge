@@ -592,6 +592,8 @@ export interface ActionBatchTask {
   status: "pending" | "generating" | "done" | "failed" | "skipped";
   note?: string;
   error?: string;
+  /** 失败分类：moderation/quota/auth/network/fatal（后端 classify_error） */
+  error_kind?: string;
   animation_id?: string;
 }
 
