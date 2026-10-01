@@ -155,6 +155,28 @@ def animate_rigged(
             _region_layer(subject, (cx - w * 0.17, hip_y - 12, cx + w * 0.17, y1), size, feather=4.0),
             points["root"],
         ),
+        # 双骨链子层：小腿（膝下含脚）与前臂（肘下含手）——跟随父段旋转角
+        # 之上再叠加膝弯/肘屈，取代整腿/整臂单刚体旋转的"分段拼接感"
+        "shin_l": (
+            _region_layer(subject, (x0, points["knee_l"][1] - 22, cx + w * 0.12, y1), size, feather=5.5),
+            points["knee_l"],
+        ),
+        "shin_r": (
+            _region_layer(subject, (cx - w * 0.12, points["knee_r"][1] - 22, x1, y1), size, feather=5.5),
+            points["knee_r"],
+        ),
+        "forearm_l": (
+            _region_layer(
+                subject, (x0, points["elbow_l"][1] - 6, cx + torso_half * 0.1, hand_y + 14), size, feather=3.0
+            ),
+            points["elbow_l"],
+        ),
+        "forearm_r": (
+            _region_layer(
+                subject, (cx - torso_half * 0.1, points["elbow_r"][1] - 6, x1, hand_y + 14), size, feather=3.0
+            ),
+            points["elbow_r"],
+        ),
     }
 
     frames = []
@@ -167,14 +189,26 @@ def animate_rigged(
         leg = pose["leg"]
 
         frame = base_bg.copy()
-        # legs behind, then the crotch pillar (fills the centre seam, no
-        # rotation), then the whole upper body (covers the hip seam), then arms
-        _place(frame, regions["leg_l"][0], regions["leg_l"][1], -leg * 14, (sway * 0.3, dy))
-        _place(frame, regions["leg_r"][0], regions["leg_r"][1], leg * 14, (sway * 0.3, dy))
+        # 双骨链合成：大腿 → 小腿（父段角 + 膝弯）→ 裆部立柱（填中缝，无旋转）
+        # → 躯干 → 上臂 → 前臂（父段角 + 肘屈）。膝/肘的滞后与屈曲让肢体
+        # 呈两段式运动，消除整段刚体旋转的分段拼接感。
+        thigh_l = pose.get("thigh_l", leg)
+        thigh_r = pose.get("thigh_r", leg)
+        knee_l = pose.get("knee_l", 0.0)
+        knee_r = pose.get("knee_r", 0.0)
+        elbow_l = pose.get("elbow_l", 0.0)
+        elbow_r = pose.get("elbow_r", 0.0)
+
+        _place(frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
+        _place(frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy))
+        _place(frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
+        _place(frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy))
         _place(frame, regions["crotch"][0], regions["crotch"][1], 0.0, (0.0, dy))
         _place(frame, regions["upper"][0], regions["upper"][1], -lean, (sway, dy))
         _place(frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy))
+        _place(frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy))
         _place(frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy))
+        _place(frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy))
         frames.append((size, size, bytearray(frame.tobytes())))
 
     reference = (size, size, bytearray(canvas.tobytes()))

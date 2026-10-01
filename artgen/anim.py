@@ -79,8 +79,19 @@ def _pose(action, phase, config=None):
                 max(0.0, -math.sin(t)) * 12.0 * float(cfg.get("lift", 1.0)),
             ),
         )
-        state["leg"] *= float(cfg.get("stride", 1.0))
+        stride = float(cfg.get("stride", 1.0))
+        state["leg"] *= stride
         state["arm"] *= float(cfg.get("arm", 1.0))
+        # ── 人体运动学关节角（riganim 双骨链消费；矢量路径忽略）──────────
+        # 膝二次屈曲：摆动相中后期收腿屈膝（峰 ~30°），支撑相反相伸直。
+        # 摆动相中点在 cos 极值之后（t≈1.4π），故曲线用 sin(t-0.4π) 取峰。
+        swing_l = max(0.0, math.sin(t - 0.4 * math.pi))
+        state["knee_l"] = -(swing_l ** 1.2) * 30.0 * stride
+        state["knee_r"] = -((max(0.0, math.sin(t - 0.4 * math.pi + math.pi))) ** 1.2) * 30.0 * stride
+        # 肘屈曲：基础 ~14°（持物微屈）+ 前摆加深，与上臂摆动相位耦合
+        arm_lag = max(0.0, float(cfg.get("lag", 0.45)))
+        state["elbow_l"] = -(14.0 + 14.0 * max(0.0, -math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
+        state["elbow_r"] = -(14.0 + 14.0 * max(0.0, math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
     elif action == "run":
         state.update(
             leg=math.cos(t) * 1.25,
@@ -93,8 +104,15 @@ def _pose(action, phase, config=None):
                 max(0.0, -math.sin(t)) * 22.0 * float(cfg.get("lift", 1.0)),
             ),
         )
-        state["leg"] *= float(cfg.get("stride", 1.0))
+        stride = float(cfg.get("stride", 1.0))
+        state["leg"] *= stride
         state["arm"] *= float(cfg.get("arm", 1.0))
+        swing_l = max(0.0, math.sin(t - 0.4 * math.pi))
+        state["knee_l"] = -(swing_l ** 1.1) * 52.0 * stride
+        state["knee_r"] = -((max(0.0, math.sin(t - 0.4 * math.pi + math.pi))) ** 1.1) * 52.0 * stride
+        arm_lag = max(0.0, float(cfg.get("lag", 0.5)))
+        state["elbow_l"] = -(30.0 + 18.0 * max(0.0, -math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
+        state["elbow_r"] = -(30.0 + 18.0 * max(0.0, math.sin(t - arm_lag))) * float(cfg.get("arm", 1.0))
     elif action == "attack":
         # anticipation (wind-up) -> fast strike -> follow-through -> recover
         # (one-shot action: never time-scaled by cycles)

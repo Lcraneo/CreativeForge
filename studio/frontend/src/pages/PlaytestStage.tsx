@@ -181,8 +181,11 @@ export default function PlaytestStage() {
   const frameMsRef = useRef(FALLBACK_FRAME_MS);
   useEffect(() => {
     const fps = stripMeta?.fps ?? previews.data?.fps ?? 1000 / FALLBACK_FRAME_MS;
-    frameMsRef.current = 1000 / Math.max(1, fps);
-  }, [stripMeta, previews.data]);
+    // 速度感知播放：奔跑步频加快 1.3 倍，行走/待机用原始帧率——
+    // 移动速度与步态频率匹配，walk→run 切换观感平滑
+    const scaled = action === "run" ? fps * 1.3 : fps;
+    frameMsRef.current = 1000 / Math.max(1, scaled);
+  }, [stripMeta, previews.data, action]);
 
   function triggerOverride(name: OverrideAction["name"]) {
     const durationMs = framesFor(name) * frameMsRef.current + OVERRIDE_TAIL_MS;
