@@ -1627,6 +1627,46 @@ def build_router(runtime):
             raise HTTPException(status_code=404, detail="unknown batch")
         return snapshot
 
+    @router.get("/queue/snapshot")
+    def queue_snapshot():
+        """队列中心：资产批次 + 动作批次聚合快照。
+
+        两个批次存储都在内存（重启即清空），这里合并为单一视图供前端
+        轮询；各取最近 20 条，running 计数驱动前端轮询频率。"""
+
+        asset_batches = []
+        batches = getattr(runtime, "batches", {})
+        for batch_id in sorted(
+            batches, key=lambda bid: (batches.get(bid) or {}).get("created_at", 0), reverse=True
+        )[:20]:
+            snapshot = runtime.batch_snapshot(batch_id)
+            if snapshot:
+                snapshot["kind"] = "assets"
+                asset_batches.append(snapshot)
+
+        from studio.backend.animation_service.service import (
+            _ACTION_BATCHES,
+            AnimationService,
+        )
+
+        action_batches = []
+        for batch_id in sorted(
+            _ACTION_BATCHES,
+            key=lambda bid: (_ACTION_BATCHES.get(bid) or {}).get("created_at", 0),
+            reverse=True,
+        )[:20]:
+            view = AnimationService(ANIMATION_DIR).action_batch_snapshot(batch_id)
+            if view:
+                view["kind"] = "actions"
+                action_batches.append(view)
+
+        merged = asset_batches + action_batches
+        return {
+            "running": sum(1 for batch in merged if batch.get("status") == "running"),
+            "asset_batches": asset_batches,
+            "action_batches": action_batches,
+        }
+
     @router.post("/export/batch")
     def export_batch(request: BatchExportRequest):
         from studio.backend.export_service.service import ExportService

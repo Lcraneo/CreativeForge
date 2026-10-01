@@ -649,6 +649,14 @@ export interface ActionBatchSnapshot {
   status: "running" | "done";
   total: number;
   tasks: ActionBatchTask[];
+  created_at?: number;
+}
+
+/** 队列中心：资产批次 + 动作批次聚合快照（内存态，重启即清空） */
+export interface QueueSnapshot {
+  running: number;
+  asset_batches: Array<BatchStatus & { kind?: "assets" }>;
+  action_batches: Array<ActionBatchSnapshot & { kind?: "actions" }>;
 }
 
 export interface InterpretedAction {

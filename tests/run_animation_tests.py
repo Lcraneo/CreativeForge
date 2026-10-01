@@ -508,6 +508,56 @@ def main() -> int:
         except OSError:
             pass
 
+    # ── 队列中心：资产批次 + 动作批次聚合 ────────────────────────────────
+    import copy as _copy
+
+    from studio.backend.api import routes as _routes
+    from studio.backend.animation_service import service as _queue_anim
+
+    class _QueueRuntime:
+        def __init__(self):
+            self.batches = {
+                "b1": {
+                    "id": "b1", "goal": "像素法师一批", "count": 2, "mode": "seed",
+                    "status": "running", "created_at": 2.0,
+                    "tasks": [{"task_id": "t1", "index": 1, "status": "success"}],
+                }
+            }
+
+        def batch_snapshot(self, batch_id):
+            return _copy.deepcopy(self.batches.get(batch_id))
+
+    _queue_anim._ACTION_BATCHES.clear()
+    _queue_anim._ACTION_BATCHES["a1"] = {
+        "id": "a1", "asset_id": "astQ", "status": "running", "total": 3, "created_at": 3.0,
+        "tasks": [{"action": "walk", "status": "generating"}, {"action": "run", "status": "done"}],
+    }
+    try:
+        _router = _routes.build_router(_QueueRuntime())
+        _queue_endpoint = next(
+            route.endpoint
+            for route in _router.routes
+            if getattr(route, "path", "") == "/api/queue/snapshot"
+        )
+        _snap = _queue_endpoint()
+        check(
+            "queue: running counts both stores",
+            _snap["running"] == 2,
+            str(_snap.get("running")),
+        )
+        check(
+            "queue: asset batch aggregated with live task status",
+            _snap["asset_batches"][0]["tasks"][0]["status"] == "success",
+            str(_snap["asset_batches"])[:120],
+        )
+        check(
+            "queue: action batch merged with kind tag",
+            _snap["action_batches"][0]["kind"] == "actions"
+            and _snap["asset_batches"][0]["kind"] == "assets",
+        )
+    finally:
+        _queue_anim._ACTION_BATCHES.clear()
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

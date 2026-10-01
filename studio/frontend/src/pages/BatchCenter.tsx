@@ -49,6 +49,13 @@ export default function BatchCenter() {
     refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
   });
 
+  // 队列总览：资产批次 + 动作批次聚合（有运行中批次时 3s 刷新）
+  const queue = useQuery({
+    queryKey: ["queue-snapshot"],
+    queryFn: api.queueSnapshot,
+    refetchInterval: (query) => ((query.state.data?.running ?? 0) > 0 ? 3000 : 8000),
+  });
+
   const status: BatchStatus | undefined = batch.data;
   useEffect(() => {
     return () => {
@@ -124,6 +131,27 @@ export default function BatchCenter() {
 
   const running = status?.status === "running";
 
+  const queueAssetBatches = queue.data?.asset_batches ?? [];
+  const queueActionBatches = queue.data?.action_batches ?? [];
+  const queueEmpty = queueAssetBatches.length === 0 && queueActionBatches.length === 0;
+
+  function queueProgress(
+    tasks: Array<{ status: string }>,
+    total?: number,
+  ): { done: number; total: number } {
+    const all = total ?? tasks.length;
+    const done = tasks.filter(
+      (task) => task.status !== "running" && task.status !== "pending" && task.status !== "generating",
+    ).length;
+    return { done, total: all };
+  }
+
+  function queueTime(ts?: number): string {
+    if (!ts) return "—";
+    const date = new Date(ts * 1000);
+    return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
@@ -135,6 +163,11 @@ export default function BatchCenter() {
             <Badge tone={running ? "primary" : "neutral"} icon="spark">
               {running ? `生产中 ${doneCount}/${status?.count ?? 0}` : "产线空闲"}
             </Badge>
+            {(queue.data?.running ?? 0) > 0 && (
+              <Badge tone="primary" icon="activity">
+                队列 {queue.data?.running} 个进行中
+              </Badge>
+            )}
             {okTasks.length > 0 && !running && (
               <Badge tone="success" icon="check">
                 本批合格 {okTasks.length}
@@ -143,6 +176,65 @@ export default function BatchCenter() {
           </>
         }
       />
+
+      <Card
+        title="队列总览"
+        icon="activity"
+        right={
+          <Badge tone={(queue.data?.running ?? 0) > 0 ? "primary" : "neutral"}>
+            {(queue.data?.running ?? 0) > 0 ? `${queue.data?.running} 个进行中` : "空闲"}
+          </Badge>
+        }
+      >
+        {queueEmpty ? (
+          <p className="text-xs text-ink-3">
+            暂无批次记录——启动批量生成，或在试玩舞台用「一键生成全部动作」后，这里会汇总显示所有进行中/已完成的批次。
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {queueAssetBatches.map((item) => {
+              const progress = queueProgress(item.tasks ?? [], item.count);
+              const isRunning = item.status === "running";
+              return (
+                <li
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-2.5 rounded-md border border-line-subtle bg-surface-1 px-3 py-2"
+                >
+                  <Badge tone={isRunning ? "primary" : "neutral"}>资产批次</Badge>
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] text-ink-2">
+                    {item.goal || item.id}
+                  </span>
+                  <span className="font-mono text-[11px] text-ink-3">
+                    {progress.done}/{progress.total}
+                  </span>
+                  <span className="font-mono text-[10.5px] text-ink-4">{queueTime(item.created_at)}</span>
+                  <Badge tone={isRunning ? "primary" : "success"}>{isRunning ? "进行中" : "完成"}</Badge>
+                </li>
+              );
+            })}
+            {queueActionBatches.map((item) => {
+              const progress = queueProgress(item.tasks ?? [], item.total);
+              const isRunning = item.status === "running";
+              return (
+                <li
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-2.5 rounded-md border border-line-subtle bg-surface-1 px-3 py-2"
+                >
+                  <Badge tone={isRunning ? "primary" : "neutral"}>动作批次</Badge>
+                  <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-ink-2">
+                    资产 {item.asset_id}
+                  </span>
+                  <span className="font-mono text-[11px] text-ink-3">
+                    {progress.done}/{progress.total}
+                  </span>
+                  <span className="font-mono text-[10.5px] text-ink-4">{queueTime(item.created_at)}</span>
+                  <Badge tone={isRunning ? "primary" : "success"}>{isRunning ? "进行中" : "完成"}</Badge>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Card>
 
       <Card title="生产订单" icon="spark">
         <textarea

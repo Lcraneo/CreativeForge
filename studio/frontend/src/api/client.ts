@@ -299,6 +299,7 @@ export const api = {
       body: JSON.stringify({ goal, count, mode, overrides }),
     }),
   batchStatus: (batchId: string) => request<BatchStatus>(`/api/batch/${batchId}`),
+  queueSnapshot: () => request<import("../types").QueueSnapshot>("/api/queue/snapshot"),
   batchExport: (assetIds: string[], engine: string) =>
     request<BatchExportResult>("/api/export/batch", {
       method: "POST",
