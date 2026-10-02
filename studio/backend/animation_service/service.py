@@ -418,15 +418,21 @@ class AnimationService:
             entry = next((t for t in batch.get("tasks", []) if t.get("action") == action), None)
             if entry:
                 entry["status"] = "generating"
+                entry["stage"] = "prompt"
+                entry["started_at"] = time.time()
             try:
                 base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
                 enhanced_prompt = ai_enhance_motion_prompt(
                     settings, action, base_prompt, context=enhance_context
                 )
                 prompt = enhanced_prompt + " " + FRAMING_CLAUSE
+                if entry:
+                    entry["stage"] = "video"  # i2v 生成是 60~90s 的大头
                 video_bytes, video_model = generate_video_with_policy(
                     settings, prompt, source_bytes, timeout_seconds=420.0
                 )
+                if entry:
+                    entry["stage"] = "sampling"
                 frames_rgba = self._slice_video(
                     video_bytes,
                     source_bytes,
@@ -435,6 +441,8 @@ class AnimationService:
                     384,
                     min_count=VIDEO_SAMPLE_MIN_COUNT,
                 )
+                if entry:
+                    entry["stage"] = "composing"
                 from artgen import compose_animation
 
                 result = compose_animation(frames_rgba=frames_rgba, fps=12, size=384)
@@ -449,6 +457,8 @@ class AnimationService:
                 self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
                 if entry:
                     entry["status"] = "done"
+                    entry["stage"] = "done"
+                    entry["progress"] = 100
                     entry["animation_id"] = animation_id
             except VideoGenerationError as error:
                 # 分类失败：审核拦截/额度不足/Key 无效…前端按 error_kind 出徽章

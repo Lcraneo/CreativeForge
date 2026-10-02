@@ -640,6 +640,9 @@ export interface RestyleInfo {
 export interface ActionBatchTask {
   action: string;
   status: "pending" | "generating" | "done" | "failed" | "skipped";
+  stage?: "prompt" | "video" | "sampling" | "composing" | "done";
+  started_at?: number;
+  progress?: number;
   note?: string;
   error?: string;
   /** 失败分类：moderation/quota/auth/network/fatal（后端 classify_error） */

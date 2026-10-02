@@ -124,6 +124,12 @@ export default function PlaytestStage() {
     (task) => task.status === "done" || task.status === "skipped",
   ).length;
   const batchRunning = batchData?.status === "running";
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!generatingAction && !batchRunning) return;
+    const timer = setInterval(() => setTick((v) => v + 1), 400);
+    return () => clearInterval(timer);
+  }, [generatingAction, batchRunning]);
 
   // refetch 引用稳定，避免依赖整个 previews（每次渲染都是新引用 → 无限 refetch）
   const refetchPreviews = previews.refetch;
@@ -132,6 +138,31 @@ export default function PlaytestStage() {
       void refetchPreviews();
     }
   }, [batchData?.status, batchId, refetchPreviews]);
+
+  function batchTaskFor(name: string): ActionBatchTask | undefined {
+    return (batchData?.tasks ?? []).find((t) => t.action === name);
+  }
+
+  /** 阶段映射进度：i2v 是大头（90s 预估线性爬升至 80%），后段快速走完 */
+  function stageProgressPct(task?: ActionBatchTask): number {
+    if (!task) return 0;
+    if (task.status === "done") return 100;
+    if (task.status !== "generating") return 4;
+    const base: Record<string, number> = { prompt: 5, video: 10, sampling: 84, composing: 93 };
+    let pct = base[task.stage ?? "video"] ?? 10;
+    if (task.stage === "video" && task.started_at) {
+      const elapsed = Date.now() / 1000 - task.started_at;
+      pct = Math.min(80, base.video + Math.round((elapsed / 90) * 70));
+    }
+    return pct;
+  }
+
+  const STAGE_LABEL: Record<string, string> = {
+    prompt: "提交生成任务…",
+    video: "AI 视频生成中…（约 60~90 秒）",
+    sampling: "抽帧与稳定处理…",
+    composing: "合成动作条带…",
+  };
 
   async function generateAllActions() {
     if (!selected?.id || generatingAction || batchRunning) return;
@@ -590,32 +621,42 @@ export default function PlaytestStage() {
                       {previews.data?.strips?.[name]?.engine === "ai-video" && (
                         <Badge tone="primary">AI</Badge>
                       )}
+                      {generatingAction === name && <Badge tone="warning">生成中</Badge>}
                     </span>
                     <span className="block truncate text-[10.5px] text-ink-3">
                       {ACTION_HINT[name]}
                     </span>
-                    {previews.data?.strips?.[name]?.engine !== "ai-video" && (
+                    {previews.data?.strips?.[name]?.engine !== "ai-video" && !generatingAction && (
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
                           void generateAiAnimation(name);
                         }}
-                        disabled={generatingAction !== null}
-                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-primary underline-offset-2 hover:underline"
                       >
-                        {generatingAction === name ? (
-                          <>
-                            <Icon name="clock" className="h-3 w-3 animate-pulse" />
-                            AI 生成中…（约 90 秒）
-                          </>
-                        ) : (
-                          <>
-                            <Icon name="spark" className="h-3 w-3" />
-                            生成 AI 动画
-                          </>
-                        )}
+                        <Icon name="spark" className="h-3 w-3" />
+                        生成 AI 动画
                       </button>
                     )}
+                    {(generatingAction === name || batchTaskFor(name)?.status === "generating") && (() => {
+                      const task = batchTaskFor(name) ?? { action: name, status: "generating", stage: "video", started_at: Date.now() / 1000 };
+                      const pct = stageProgressPct(task);
+                      void tick;
+                      return (
+                        <div className="mt-1.5" data-tick={tick}>
+                          <div className="flex justify-between text-[10px] text-ink-4">
+                            <span>{STAGE_LABEL[task?.stage ?? "prompt"]}</span>
+                            <span className="font-mono">{pct}%</span>
+                          </div>
+                          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10">
+                            <div
+                              className="h-full rounded-full bg-primary transition-[width] duration-700 ease-linear"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </span>
                   {previews.data?.previews?.[name] && (
                     <img
