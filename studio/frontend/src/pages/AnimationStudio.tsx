@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ModelApiPanel } from "../components/ModelApiPanel";
-import { useAssetLoader } from "../stores/assetStore";
+import { useAssetLoader, useAssetStore } from "../stores/assetStore";
+import { clearPeople, loadPeople, pushPerson, removePerson, type PersonEntry } from "../lib/peopleHistory";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
+import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import { preloadImages } from "../lib/preload";
 
@@ -52,6 +54,28 @@ interface SeqFrame {
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
+  const setAsset = useAssetStore((state) => state.set);
+  // 历史人物（P1 体验）：localStorage 持久化，最近选择的人物一键载入
+  const [people, setPeople] = useState<PersonEntry[]>(() => loadPeople());
+  const [showPeople, setShowPeople] = useState(false);
+
+  function usePerson(entry: PersonEntry) {
+    api
+      .getAsset(entry.asset_id)
+      .then((loaded) => {
+        setAsset(loaded);
+        setPeople(pushPerson({
+          asset_id: loaded.id,
+          name: loaded.name,
+          image_url: loaded.image?.url ?? entry.image_url,
+        }));
+        toast({ tone: "success", title: `已载入「${entry.name}」`, description: "生成与动作编辑将使用该人物" });
+      })
+      .catch((cause) =>
+        toast({ tone: "danger", title: "载入失败", description: String(cause).slice(0, 140) }),
+      );
+  }
+
   const [mode, setMode] = useState<"smart" | "sequence" | "cloud">("smart");
   const [skeletal, setSkeletal] = useState(true);
   const rigCheck = useQuery({
@@ -179,6 +203,10 @@ export default function AnimationStudio() {
           payload.asset_id = asset.id;
         }
         const animationResult = await api.createAnimation(payload);
+        // 自动记录当前人物到历史（下次直接载入）
+        if (asset?.id) {
+          setPeople(pushPerson({ asset_id: asset.id, name: asset.name, image_url: asset.image?.url }));
+        }
         // 生成成功后清掉编辑器相位帧：展示区 frameUrl 优先级高于 result，
         // 不清会导致画布停在静态预览帧、动画 GIF 永远不显示（"无法播放"）。
         // 用户下次拖时间轴/调滑杆时相位帧自动恢复。
@@ -490,6 +518,75 @@ export default function AnimationStudio() {
 
             {mode === "smart" && (
               <div className="flex flex-col gap-4">
+                <div className="rounded-lg border border-line-subtle bg-surface-2/30 p-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] uppercase tracking-widest text-ink-4">
+                      历史人物 · 点击载入到当前工作区
+                    </span>
+                    {people.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setPeople(clearPeople());
+                          toast({ tone: "info", title: "历史人物记录已清空" });
+                        }}
+                        className="text-[10.5px] text-ink-4 underline-offset-2 hover:text-danger hover:underline"
+                      >
+                        清空记录
+                      </button>
+                    )}
+                  </div>
+                  {people.length === 0 ? (
+                    <p className="text-[11.5px] text-ink-4">
+                      暂无历史选择——生成动画或点击人物后自动记录，最近 12 个跨会话保留。
+                    </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2.5">
+                      {people.map((person) => (
+                        <div
+                          key={person.asset_id}
+                          className={cx(
+                            "group relative flex items-center gap-2 rounded-lg border py-1.5 pl-1.5 pr-2.5 transition-colors",
+                            asset?.id === person.asset_id
+                              ? "border-primary/60 bg-primary-tint/40"
+                              : "border-line-subtle bg-surface-1 hover:border-line",
+                          )}
+                        >
+                          <button
+                            onClick={() => usePerson(person)}
+                            title={`载入「${person.name}」`}
+                            className="flex items-center gap-2 text-left"
+                          >
+                            {person.image_url ? (
+                              <img
+                                src={person.image_url}
+                                alt={person.name}
+                                loading="lazy"
+                                className="h-9 w-9 rounded-md border border-line-subtle bg-[#f1efe9] object-contain"
+                              />
+                            ) : (
+                              <span className="grid h-9 w-9 place-items-center rounded-md border border-line-subtle bg-surface-2 text-ink-4">
+                                <Icon name="cube" className="h-4 w-4" />
+                              </span>
+                            )}
+                            <span className="max-w-[110px] truncate text-[11.5px] text-ink-2">
+                              {person.name}
+                            </span>
+                          </button>
+                          <button
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setPeople(removePerson(person.asset_id));
+                            }}
+                            title="从历史记录移除"
+                            className="text-[11px] leading-none text-ink-4 hover:text-danger"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 {useVideo && (
                   <div className="rounded-lg border border-line-subtle bg-surface-2/40 px-3 py-2 text-[11.5px] text-ink-3">
                     AI 视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。
