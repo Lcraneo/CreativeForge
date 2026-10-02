@@ -1,0 +1,32 @@
+{
+  "name": "cf-paper",
+  "from": "generated_showcase_smoke/assets/art.png",
+  "mood": "the product's own colours, measured from its screenshots",
+  "color": {
+    "ground": "#3434c4",
+    "deep": "#1d1d6c",
+    "card": "#3f3fc6",
+    "line": "#5c5c54",
+    "mute": "#d4d4cc",
+    "ink": "#ecece4",
+    "accent": "#4454cc",
+    "accent2": "#6cece4"
+  },
+  "type": {
+    "display": {
+      "face": "Instrument Serif",
+      "weight": 400,
+      "tracking": -0.01
+    },
+    "text": {
+      "face": "Inter",
+      "weight": 500,
+      "tracking": -0.02
+    },
+    "mono": {
+      "face": "Geist Mono",
+      "weight": 400,
+      "tracking": 0
+    }
+  }
+}

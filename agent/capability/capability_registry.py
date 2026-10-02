@@ -293,6 +293,43 @@ def run_gimport(asset, task):
     return asset
 
 
+def run_onetake_showcase(asset, task):
+    """motion_video_generation（OneTake External Capability）：CreativeAsset →
+    发布展示计划。纯映射（scene/timeline mapper），真实渲染走 studio 的
+    ShowcaseService 任务队列（懒加载 adapters，legacy 管线零依赖）。"""
+
+    asset = asset or {}
+    if asset.get("id") is None and not asset.get("name"):
+        raise ValueError("motion_video_generation requires an existing CreativeAsset")
+    from adapters.onetake.asset_mapper import slugify
+    from adapters.onetake.scene_mapper import build_scene
+    from adapters.onetake.timeline_mapper import build_timeline
+
+    material = {
+        "name": asset.get("name"),
+        "prompt": ((asset.get("identity") or {}).get("prompt") or asset.get("name") or ""),
+        "slug": slugify(asset.get("name") or asset.get("id")),
+    }
+    presentation = asset.get("presentation") or {}
+    scene = build_scene(material, presentation)
+    cf = build_timeline(scene, {}, presentation)
+    asset.setdefault("presentation", {}).update(
+        {
+            "type": "launch_video",
+            "style": "one_take",
+            "duration": cf["meta"]["dur"],
+            "camera": "continuous",
+            "look": "cf-paper",
+            "storyboard": {
+                "beats": list(cf["beats"].keys()),
+                "copy": cf["copy"],
+                "shots": cf["cuts"],
+            },
+        }
+    )
+    return asset
+
+
 def build_default_registry():
     """Default capability registry binding the Phase 1-5 engines."""
     registry = CapabilityRegistry()
@@ -314,5 +351,16 @@ def build_default_registry():
     registry.register(Capability("FAlign", "processor", handler=run_falign, cost=0.2, quality=0.95))
     registry.register(
         Capability("GImport", "exporter", handler=run_gimport, cost=0.1, quality=0.96)
+    )
+    registry.register(
+        Capability(
+            "motion_video_generation",
+            "publisher",
+            handler=run_onetake_showcase,
+            input="CreativeAsset",
+            output="CreativeAsset",
+            cost=0.3,
+            quality=0.9,
+        )
     )
     return registry

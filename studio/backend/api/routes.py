@@ -1304,6 +1304,67 @@ def build_router(runtime):
 
         return capabilities()
 
+    # ------------------------------------------------------------------
+    # OneTake 发布展示视频（External Creative Capability）
+    # ------------------------------------------------------------------
+
+    def _showcase_service():
+        from studio.backend.model_service.service import GENERATED_DIR
+        from studio.backend.showcase_service.service import ShowcaseService
+
+        return ShowcaseService(
+            os.path.join(GENERATED_DIR, "showcase"), ANIMATION_DIR
+        )
+
+    @router.post("/showcase", status_code=202)
+    def start_showcase(request: dict):
+        """CreativeAsset → OneTake 发布片（一镜到底）。素材缺失 409 + 中文
+        可读提示（不做静默兜底）；渲染环境缺失 409 + 修复指引。"""
+
+        from fastapi import HTTPException
+
+        from adapters.onetake import render_client
+
+        asset = _resolve_asset(runtime, str(request.get("asset_id") or ""))
+        if asset is None:
+            raise HTTPException(status_code=404, detail="unknown asset")
+        if not render_client.playwright_available():
+            raise HTTPException(
+                status_code=409,
+                detail="演示机未安装 playwright/chromium：先执行 `python -m pip install playwright` "
+                "与 `python -m playwright install chromium`",
+            )
+        service = _showcase_service()
+        job_id = service.start_showcase(asset, duration=float(request.get("duration") or 15.0))
+        return {"job_id": job_id, "snapshot": service.snapshot(job_id)}
+
+    @router.get("/showcase/{job_id}")
+    def showcase_status(job_id: str):
+        from fastapi import HTTPException
+
+        snapshot = _showcase_service().snapshot(job_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="unknown showcase job")
+        return snapshot
+
+    @router.get("/showcase/{job_id}/file/{rel_path:path}")
+    def showcase_file(job_id: str, rel_path: str):
+        """job 产物伺服（mp4/poster/comp 预览；目录穿越防护同 AnimationService.path）。"""
+
+        from fastapi import HTTPException
+        from fastapi.responses import FileResponse
+
+        path = _showcase_service().file(job_id, rel_path)
+        if path is None:
+            raise HTTPException(status_code=404, detail="not found")
+        media = "text/html" if path.endswith(".html") else "application/octet-stream"
+        if path.endswith(".png"):
+            media = "image/png"
+        elif path.endswith(".mp4"):
+            media = "video/mp4"
+        return FileResponse(path, media_type=media)
+
+
     @router.get("/playtest/previews")
     def playtest_previews(asset_id: str | None = None):
         """试玩舞台动作预览。

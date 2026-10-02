@@ -24,6 +24,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
       { to: "/history", label: "历史记录", icon: "clock" },
       { to: "/batch", label: "批量生产线", icon: "package" },
       { to: "/playtest", label: "试玩舞台", icon: "film" },
+      { to: "/showcase", label: "发布展示间", icon: "spark" },
     ],
   },
   {

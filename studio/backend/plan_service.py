@@ -54,9 +54,12 @@ AGENT_FOR_CAPABILITY = {
     "FAlign": "AnimationAgent",
     "GImport": "EngineAgent",
     "quality_check": "QAAgent",
+    "motion_video_generation": "ShowcaseAgent",
 }
 
 CYCLE = ["generation", "PReCon", "FAlign", "GImport", "quality_check"]
+
+SHOWCASE_KEYWORDS = ("发布视频", "宣传片", "showcase", "一镜到底", "demo 视频", "trailer", "发布片", "展示视频")
 
 CAPABILITY_CATALOG = {
     "generation": {
@@ -94,6 +97,12 @@ CAPABILITY_CATALOG = {
         "action": "quality_check",
         "label": "质量校验",
         "description": "像素 / 动画 / 引擎三路阈值门 + 修复轮",
+    },
+    "motion_video_generation": {
+        "agent": "ShowcaseAgent",
+        "action": "generate_showcase_video",
+        "label": "发布视频生成",
+        "description": "OneTake 外部能力：CreativeAsset → 一镜到底发布片（15s，onetake 渲染管线 + oracle 验收）",
     },
 }
 
@@ -143,6 +152,9 @@ def build_plan(goal: str, asset_id: str | None = None) -> dict:
     # quality gate only makes sense when there is a downstream processor
     if any(cap in capabilities for cap in ("PReCon", "FAlign", "GImport", "edit_asset")):
         capabilities.append("quality_check")
+    # OneTake 发布片（External Creative Capability）：显式关键词触发，不进默认闭环
+    if _has(text, SHOWCASE_KEYWORDS):
+        capabilities.append("motion_video_generation")
 
     tasks = []
     for index, capability in enumerate(capabilities, start=1):

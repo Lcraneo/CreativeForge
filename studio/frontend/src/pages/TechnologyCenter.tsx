@@ -187,6 +187,44 @@ export default function TechnologyCenter() {
         </Card>
       </div>
 
+      <Card
+        title="External Creative Capabilities · 生态能力"
+        icon="layers"
+        right={<Badge tone="neutral">非自研核心</Badge>}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          {[
+            {
+              name: "OneTake",
+              role: "发布视频生成 / Showcase Engine",
+              detail: "CreativeAsset → 一镜到底发布片（15s，f(t) 合成 + 快门运动模糊 + oracle 自动验收），发布展示间可直接生成。",
+            },
+            {
+              name: "Windup",
+              role: "舞台交互与着色参照",
+              detail: "试玩舞台交互语义与三渲二着色思路的参照实现（思路参照，非代码拷贝）。",
+            },
+            {
+              name: "Holonic",
+              role: "资产管理端口参照",
+              detail: "对象存储与资产映射的端口模式参照。",
+            },
+          ].map((item) => (
+            <div key={item.name} className="rounded-xl border border-line-subtle bg-surface-2 p-3.5">
+              <div className="flex items-center gap-2">
+                <span className="font-display text-[14px] font-black">{item.name}</span>
+                <span className="text-[10.5px] text-ink-4">{item.role}</span>
+              </div>
+              <p className="mt-1.5 text-[11.5px] leading-5 text-ink-3">{item.detail}</p>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-[11px] text-ink-4">
+          自研壁垒是 CreativeAsset 协议 + PReCon + FAlign + GImport + Agent Pipeline；生态能力经
+          adapters/ 接入、可独立替换。OneTake 采用 PolyForm Noncommercial 许可（比赛 / 演示用途）。
+        </p>
+      </Card>
+
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-subtle pt-5 text-xs text-ink-4">
         <span>CreativeForge AI · AI Game Asset Factory</span>
         <span className="flex items-center gap-2">

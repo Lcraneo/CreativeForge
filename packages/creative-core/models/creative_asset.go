@@ -12,4 +12,7 @@ type CreativeAsset struct {
     Quality map[string]any `json:"quality"`
     Provenance map[string]any `json:"provenance"`
     Version map[string]any `json:"version"`
+    // Presentation — 发布/展示层（OneTake External Capability 产物）：
+    // {type, style, duration, camera, look, assets, copy, render_output}
+    Presentation map[string]any `json:"presentation,omitempty"`
 }

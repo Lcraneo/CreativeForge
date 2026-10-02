@@ -45,4 +45,13 @@ describe("architecture boundaries", () => {
       .filter((file) => /duration:\s*0?\.\d+/.test(read(file)));
     expect(violations).toEqual([]);
   });
+
+  it("third_party/onetake 只经 showcase API 触达（前端零直连）", () => {
+    // onetake 的 comp/motion.js 以 iframe/文件 URL 承载，前端源码不允许
+    // 出现对其路径的 import 或字符串拼接（防 bbox 泄漏到主 bundle）
+    const violations = allFiles.filter((file) =>
+      /third_party|onetake\/(lib|scripts|templates)/.test(read(file)),
+    );
+    expect(violations).toEqual([]);
+  });
 });

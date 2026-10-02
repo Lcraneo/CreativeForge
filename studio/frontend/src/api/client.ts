@@ -76,6 +76,23 @@ export interface TaskDetail {
   events: TaskEvent[];
 }
 
+/* ── OneTake 发布展示视频任务（showcase_service）── */
+export interface ShowcaseJob {
+  id: string;
+  asset_id: string | null;
+  asset_name: string | null;
+  status: "running" | "done" | "failed";
+  stage: string;
+  created_at: number;
+  duration: number;
+  error: string | null;
+  error_kind?: string;
+  verdict?: { passed: boolean | null; report_tail?: string; error?: string } | null;
+  video_url?: string;
+  poster_url?: string;
+  preview_url?: string;
+}
+
 export interface StyleProfile {
   style: string;
   style_label: string;
@@ -292,6 +309,13 @@ export const api = {
       `/api/playtest/previews${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
     ),
 
+  /* ── OneTake 发布展示视频（External Creative Capability）── */
+  startShowcase: (assetId: string, duration?: number) =>
+    request<{ job_id: string; snapshot: ShowcaseJob }>("/api/showcase", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId, duration }),
+    }),
+  showcaseStatus: (jobId: string) => request<ShowcaseJob>(`/api/showcase/${jobId}`),
   /* ── P1-B 批量生产线 ── */
   startBatch: (goal: string, count: number, mode: string, overrides?: Record<string, unknown>) =>
     request<{ batch_id: string; count: number; mode: string }>("/api/batch", {

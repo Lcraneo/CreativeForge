@@ -16,6 +16,7 @@ const PixelStudio = lazy(() => import("./pages/PixelStudio"));
 const CreativeStudio = lazy(() => import("./pages/CreativeStudio"));
 const BatchCenter = lazy(() => import("./pages/BatchCenter"));
 const PlaytestStage = lazy(() => import("./pages/PlaytestStage"));
+const ShowcaseStudio = lazy(() => import("./pages/ShowcaseStudio"));
 const VersionCenter = lazy(() => import("./pages/VersionCenter"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const TechnologyCenter = lazy(() => import("./pages/TechnologyCenter"));
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="pixel" element={<PixelStudio />} />
             <Route path="animation" element={<AnimationStudio />} />
             <Route path="playtest" element={<PlaytestStage />} />
+            <Route path="showcase" element={<ShowcaseStudio />} />
             <Route path="benchmark" element={<BenchmarkCenter />} />
             <Route path="export" element={<ExportCenter />} />
             <Route path="technology" element={<TechnologyCenter />} />
