@@ -190,6 +190,8 @@ export default function Workspace() {
   const setAsset = useAssetStore((state) => state.set);
 
   const tasks = useQuery({ queryKey: ["tasks"], queryFn: api.listTasks });
+  // 持久化历史：内存任务表重启即空，历史记录补齐"最近任务"（合并去重）
+  const historyTasks = useQuery({ queryKey: ["workspace-history"], queryFn: () => api.listHistory({ limit: 15 }) });
   const benchmark = useQuery({
     queryKey: ["benchmark"],
     queryFn: api.benchmark,
@@ -308,6 +310,23 @@ export default function Workspace() {
       }
     }
   }
+
+  // 合并"最近任务"：内存任务（含进行中）+ 持久化历史（重启后仍可见）
+  const mergedTasks = useMemo(() => {
+    const live = tasks.data?.tasks ?? [];
+    const seen = new Set(live.map((t) => t.task_id));
+    const fromHistory = (historyTasks.data?.records ?? [])
+      .filter((r) => r.task_id && !seen.has(r.task_id))
+      .map((r) => ({
+        task_id: r.task_id,
+        goal: r.goal,
+        status: r.status,
+        asset_id: r.asset_id,
+        event_count: r.qa_rounds ?? 0,
+        created_at: r.created_at,
+      }));
+    return [...live, ...fromHistory];
+  }, [tasks.data, historyTasks.data]);
 
   const kpis = benchmark.data;
 
@@ -590,7 +609,7 @@ export default function Workspace() {
             <Skeleton className="h-9" />
             <Skeleton className="h-9" />
           </div>
-        ) : (tasks.data?.tasks.length ?? 0) === 0 ? (
+        ) : mergedTasks.length === 0 ? (
           <EmptyState
             icon="cube"
             title="还没有生产记录"
@@ -613,7 +632,7 @@ export default function Workspace() {
               </tr>
             </thead>
             <tbody>
-              {tasks.data!.tasks.map((task) => (
+              {mergedTasks.map((task) => (
                 <tr
                   key={task.task_id}
                   onClick={() => openTask(task)}
