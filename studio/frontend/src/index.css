@@ -77,6 +77,8 @@
   --motion-slow: 260ms;
   --motion-deliberate: 280ms;
   --motion-reveal: 600ms;
+  /* 进度条平滑爬升专用：两次 tick 之间的追赶过渡，比常规过渡长 */
+  --motion-progress: 700ms;
   --animate-pulse-run: pulse-run 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-flow: flow 1.2s linear infinite;

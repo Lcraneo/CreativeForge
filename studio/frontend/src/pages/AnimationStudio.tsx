@@ -4,6 +4,12 @@ import { ModelApiPanel } from "../components/ModelApiPanel";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
 import { clearHidden, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
+import {
+  editorStateFor,
+  resolveGeneration,
+  selectionAfterRemoval,
+  type ActionSource,
+} from "../lib/actionSelection";
 import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
 import { Icon } from "../components/icons";
@@ -116,7 +122,12 @@ export default function AnimationStudio() {
   });
   const [useVideo, setUseVideo] = useState(false);
   const [view, setView] = useState("side");
-  const [action, setAction] = useState("walk");
+  // ── 动作选择(基础/自定义彻底分离)────────────────────────────
+  // 基础动作(内置 5 种)与自定义动作(用户保存)是两个独立来源,
+  // selected 判别联合保证任意时刻至多一个活跃动作、无双选中/双空态;
+  // 生成参数由 resolveGeneration 按来源解析,两条路径互不掺和。
+  const [selected, setSelected] = useState<ActionSource>({ kind: "base", name: "walk" });
+  const [busySource, setBusySource] = useState<"base" | "custom" | null>(null);
   const [fps, setFps] = useState(12);
   const [duration, setDuration] = useState(1.0);
   const [size, setSize] = useState(384);
@@ -198,6 +209,7 @@ export default function AnimationStudio() {
   }
   const [phase, setPhase] = useState(0);
   const [frameUrl, setFrameUrl] = useState<string | null>(null);
+  const [previewWarn, setPreviewWarn] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
   const [presets, setPresets] = useState<
     Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>
@@ -205,26 +217,36 @@ export default function AnimationStudio() {
   const [presetName, setPresetName] = useState("");
   const [editorBusy, setEditorBusy] = useState(false);
 
+  // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
+  // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
   const assetImage =
+    (asset?.id ? `/api/assets/${asset.id}/image.png?view=front&size=512` : undefined) ||
     (asset as { image?: { url?: string } } | null)?.image?.url ||
-    (asset?.source as { ai_image?: { url?: string } } | undefined)?.ai_image?.url ||
-    (asset?.id ? `/api/assets/${asset.id}/image.png?view=front&size=512` : undefined);
+    (asset?.source as { ai_image?: { url?: string } } | undefined)?.ai_image?.url;
 
   const generate = useCallback(
-    async (opts?: { action?: string; view?: string; pose_config?: PoseConfig }) => {
+    async (source: ActionSource) => {
       if (busy) return;
+      // 参数严格按来源解析:基础动作=内置默认(不带 pose_config),
+      // 自定义动作=preset 原样——选中项被删等异常时拒绝生成
+      const plan = resolveGeneration(source, presets, view);
+      if (!plan) {
+        setError("所选动作不存在,请重新选择");
+        return;
+      }
       setBusy(true);
+      setBusySource(source.kind);
       setError(null);
       setMainError(false);
       try {
         const payload: Parameters<typeof api.createAnimation>[0] = {
-          action: opts?.action ?? action,
+          action: plan.action,
           fps,
           duration,
           size,
           skeletal,
-          view: opts?.view ?? view,
-          pose_config: opts?.pose_config,
+          view: plan.view,
+          pose_config: plan.pose_config,
           use_video: useVideo,
         };
         if (upload) {
@@ -250,9 +272,10 @@ export default function AnimationStudio() {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
         setBusy(false);
+        setBusySource(null);
       }
     },
-    [action, fps, duration, size, upload, asset?.id, skeletal, view, busy, useVideo],
+    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, useVideo],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
@@ -286,12 +309,24 @@ export default function AnimationStudio() {
             URL.revokeObjectURL(url);
             return;
           }
+          setPreviewWarn(null);
           setFrameUrl((old) => {
             if (old) URL.revokeObjectURL(old);
             return url;
           });
         })
-        .catch(() => {});
+        .catch((cause) => {
+          if (!alive) return;
+          // 相位帧渲染失败(最常见:资产原图缺失/远端失效 409)不再静默,
+          // 画布退回展示资产原图,并给出可见原因
+          const text = String((cause as Error)?.message ?? cause);
+          const detail = /"detail"\s*:\s*"([^"]+)"/.exec(text)?.[1] ?? text.replace(/^\d+:\s*/, "");
+          setPreviewWarn(detail.slice(0, 140));
+          setFrameUrl((old) => {
+            if (old) URL.revokeObjectURL(old);
+            return null;
+          });
+        });
     }, 120);
     return () => {
       alive = false;
@@ -313,6 +348,37 @@ export default function AnimationStudio() {
       .catch(() => {});
   }, [mode]);
 
+  // ── 动作选择:基础/自定义互斥,编辑器(预览台)跟随载入 ──────────────
+  // 选中一侧自动取消另一侧——基础区与自定义区的按钮/徽章状态由各自的
+  // selected.kind 判定,不会互相干扰;编辑器滑杆只影响预览与「保存为自定义」。
+  const selectBase = useCallback(
+    (name: string) => {
+      const source: ActionSource = { kind: "base", name };
+      const state = editorStateFor(source, presets, DEFAULT_POSE_CONFIG);
+      if (!state) return;
+      setSelected(source);
+      setEditorAction(state.action);
+      if (state.view) setEditorView(state.view);
+      setPoseConfig(state.pose_config);
+      setPhase(0);
+    },
+    [presets],
+  );
+
+  const selectCustom = useCallback(
+    (name: string, list?: Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>) => {
+      const source: ActionSource = { kind: "custom", name };
+      const state = editorStateFor(source, list ?? presets, DEFAULT_POSE_CONFIG);
+      if (!state) return;
+      setSelected(source);
+      setEditorAction(state.action);
+      if (state.view) setEditorView(state.view);
+      setPoseConfig(state.pose_config);
+      setPhase(0);
+    },
+    [presets],
+  );
+
   const savePreset = async () => {
     if (!presetName.trim() || editorBusy) return;
     setEditorBusy(true);
@@ -325,7 +391,17 @@ export default function AnimationStudio() {
       });
       const r = await api.listCustomActions();
       setPresets(r.actions);
+      // 保存即选中:新动作立刻成为当前活跃动作,可在自定义动作区直接生成
+      if (r.actions.some((p) => p.name === presetName.trim())) {
+        selectCustom(presetName.trim(), r.actions);
+      }
+      setPresetName("");
       setError(null);
+      toast({
+        tone: "success",
+        title: `自定义动作「${presetName.trim()}」已保存并选中`,
+        description: "在自定义动作区点击「用此动作生成」即可按该动作出片",
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -337,6 +413,9 @@ export default function AnimationStudio() {
     try {
       await api.deleteCustomAction(name);
       setPresets((prev) => prev.filter((p) => p.name !== name));
+      // 删除的是当前选中动作时,回落到默认基础动作,不留悬空选中态
+      const fallback = selectionAfterRemoval(name, selected);
+      if (fallback) setSelected(fallback);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -407,6 +486,17 @@ export default function AnimationStudio() {
     .join(" ");
 
   const isLocomotion = editorAction === "walk" || editorAction === "run";
+
+  // 编辑器滑杆只影响预览与「保存为自定义」;与选中动作的保存参数不一致时
+  // 明确提示,避免"预览是 A、生成是 B"的困惑
+  const editorDirty = useMemo(() => {
+    const plan = editorStateFor(selected, presets, DEFAULT_POSE_CONFIG);
+    if (!plan) return false;
+    return POSE_PARAMS.some(
+      (param) =>
+        Math.abs((poseConfig[param.key] ?? 0) - (plan.pose_config[param.key] ?? 0)) > 1e-6,
+    );
+  }, [selected, presets, poseConfig]);
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -490,6 +580,11 @@ export default function AnimationStudio() {
                 <div className="text-sm text-ink-3">生成资产，或上传一张图片作为动画源。</div>
               )}
             </div>
+            {previewWarn && (
+              <div className="mt-2 rounded-md border border-line-subtle bg-surface-2 px-3 py-1.5 text-[12px] text-danger">
+                相位预览不可用:{previewWarn}
+              </div>
+            )}
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px] text-ink-3">
               <span>
                 源：
@@ -671,7 +766,9 @@ export default function AnimationStudio() {
                       </button>
                     </div>
                   </div>
-                  {skeletal && (action === "walk" || action === "run") && (
+                  {skeletal &&
+                    selected.kind === "base" &&
+                    (selected.name === "walk" || selected.name === "run") && (
                     <div>
                       <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
                         视角
@@ -725,29 +822,75 @@ export default function AnimationStudio() {
                       </button>
                     </div>
                   )}
-                  <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
-                      动作
+                  {/* 基础动作区:内置 5 种动作 + 该区的「生成动画」按钮。
+                      活跃标识(徽章/边框高亮)只在 selected.kind === "base" 时出现,
+                      与自定义动作区的状态完全隔离。 */}
+                  <div
+                    className={cx(
+                      "w-full rounded-lg border p-3 transition-colors",
+                      selected.kind === "base"
+                        ? "border-primary/50 bg-primary-tint/30"
+                        : "border-line-subtle bg-surface-2/30",
+                    )}
+                  >
+                    <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[11px] uppercase tracking-widest text-ink-4">
+                          基础动作 · 内置 5 种
+                        </span>
+                        {selected.kind === "base" && (
+                          <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-medium text-white">
+                            当前使用 · {ACTION_LABELS[selected.name]}
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon="spark"
+                        loading={busySource === "base"}
+                        disabled={busy || selected.kind !== "base"}
+                        onClick={() => {
+                          if (selected.kind === "base") void generate(selected);
+                        }}
+                        title={
+                          selected.kind !== "base"
+                            ? "当前使用的是自定义动作——点击上方任一基础动作切换回来"
+                            : `按内置默认参数生成「${ACTION_LABELS[selected.name]}」动画`
+                        }
+                      >
+                        {busySource === "base"
+                          ? "生成中…"
+                          : selected.kind === "base"
+                            ? `生成动画（${ACTION_LABELS[selected.name]}）`
+                            : "生成动画"}
+                      </Button>
                     </div>
-                    <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                      {ACTIONS.map((item) => (
-                        <button
-                          key={item}
-                          onClick={() => {
-                            setAction(item);
-                            setEditorAction(item);
-                          }}
-                          className={cx(
-                            "px-3 py-1.5 text-[12px] transition-colors",
-                            action === item
-                              ? "bg-primary text-white"
-                              : "text-ink-2 hover:bg-surface-2",
-                          )}
-                        >
-                          {ACTION_LABELS[item]}
-                        </button>
-                      ))}
+                    <div className="flex flex-wrap gap-2">
+                      {ACTIONS.map((item) => {
+                        const active = selected.kind === "base" && selected.name === item;
+                        return (
+                          <button
+                            key={item}
+                            onClick={() => selectBase(item)}
+                            title={`内置${ACTION_LABELS[item]}动作,使用姿态引擎默认参数`}
+                            className={cx(
+                              "rounded-lg border px-3.5 py-1.5 text-[12px] transition-colors",
+                              active
+                                ? "border-primary bg-primary text-white"
+                                : "border-line-subtle bg-surface-1 text-ink-2 hover:border-line hover:bg-surface-2",
+                            )}
+                          >
+                            {ACTION_LABELS[item]}
+                          </button>
+                        );
+                      })}
                     </div>
+                    {selected.kind !== "base" && (
+                      <p className="mt-2 text-[10.5px] text-ink-4">
+                        当前活跃的是自定义动作——点击任一基础动作切换后,此区的「生成动画」按钮才会激活。
+                      </p>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-end gap-6">
@@ -804,15 +947,6 @@ export default function AnimationStudio() {
                     >
                       上传源图
                     </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon="spark"
-                      onClick={() => generate()}
-                      disabled={busy}
-                    >
-                      {busy ? (useVideo ? "AI 生成视频中…（1~3 分钟）" : "生成中…") : "生成动画"}
-                    </Button>
                   </div>
                 </div>
                 {upload && (
@@ -829,26 +963,25 @@ export default function AnimationStudio() {
             {mode === "smart" && (
               <div className="flex flex-col gap-4">
                 <div className="flex flex-wrap items-center gap-6">
-                  <div>
-                    <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
-                      基础动作
-                    </div>
-                    <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                      {ACTIONS.map((item) => (
-                        <button
-                          key={item}
-                          onClick={() => setEditorAction(item)}
-                          className={cx(
-                            "px-3 py-1.5 text-[12px] transition-colors",
-                            editorAction === item
-                              ? "bg-primary text-white"
-                              : "text-ink-2 hover:bg-surface-2",
-                          )}
-                        >
-                          {ACTION_LABELS[item]}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] uppercase tracking-widest text-ink-4">
+                      当前编辑
+                    </span>
+                    {selected.kind === "base" ? (
+                      <span className="rounded-full border border-primary/40 bg-primary-tint/30 px-2.5 py-0.5 text-[10.5px] font-medium text-ink">
+                        基础动作 · {ACTION_LABELS[editorAction]}
+                      </span>
+                    ) : (
+                      <span className="rounded-full border border-ember/40 bg-ember-tint/30 px-2.5 py-0.5 text-[10.5px] font-medium text-ink">
+                        自定义动作 · {selected.name}（基于
+                        {ACTION_LABELS[editorAction] ?? editorAction}）
+                      </span>
+                    )}
+                    {editorDirty && (
+                      <span className="text-[10px] text-warning">
+                        滑杆已调整(仅影响预览)——生成按所选动作的保存参数,调整后请保存为新自定义动作
+                      </span>
+                    )}
                   </div>
                   {isLocomotion && (
                     <div>
@@ -881,21 +1014,6 @@ export default function AnimationStudio() {
                       onClick={() => setPlaying((p) => !p)}
                     >
                       {playing ? "暂停" : "播放循环"}
-                    </Button>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      icon="spark"
-                      loading={busy}
-                      onClick={() =>
-                        generate({
-                          action: editorAction,
-                          view: editorView,
-                          pose_config: poseConfig,
-                        })
-                      }
-                    >
-                      用此动作生成
                     </Button>
                   </div>
                 </div>
@@ -955,7 +1073,7 @@ export default function AnimationStudio() {
                       套用到动作编辑器
                     </Button>
                     <span className="text-[10.5px] text-ink-4">
-                      套用后可在下方滑杆微调，再点「用此动作生成」
+                      套用后可在下方滑杆微调,保存为自定义动作后到下方「自定义动作」区生成
                     </span>
                   </div>
                 </div>
@@ -1030,7 +1148,7 @@ export default function AnimationStudio() {
 
                 <div className="flex flex-wrap items-end gap-4 rounded-lg border border-line-subtle bg-surface-2/40 p-3">
                   <label className="text-[11px] text-ink-4">
-                    <span className="mb-1.5 block uppercase tracking-widest">保存当前动作</span>
+                    <span className="mb-1.5 block uppercase tracking-widest">保存当前动作为自定义</span>
                     <input
                       value={presetName}
                       onChange={(e) => setPresetName(e.target.value)}
@@ -1043,50 +1161,118 @@ export default function AnimationStudio() {
                     size="sm"
                     icon="check"
                     loading={editorBusy}
+                    disabled={!presetName.trim()}
                     onClick={savePreset}
                   >
                     保存
                   </Button>
-                  {presets.length > 0 && (
-                    <>
-                      <label className="text-[11px] text-ink-4">
-                        <span className="mb-1.5 block uppercase tracking-widest">
-                          已保存动作 ({presets.length})
+                  <span className="text-[10.5px] text-ink-4">
+                    保存后自动选中,到下方「自定义动作」区点击「用此动作生成」。
+                  </span>
+                </div>
+
+                {/* 自定义动作区:与基础动作区(上方 primary 高亮)完全独立的
+                    存储来源与生成入口,ember 暖橙做区域识别色。 */}
+                <div
+                  className={cx(
+                    "flex flex-col gap-3 rounded-lg border p-3 transition-colors",
+                    selected.kind === "custom"
+                      ? "border-ember/50 bg-ember-tint/20"
+                      : "border-line-subtle bg-surface-2/30",
+                  )}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] uppercase tracking-widest text-ink-4">
+                        自定义动作 · 用户创建
+                      </span>
+                      {selected.kind === "custom" && (
+                        <span className="rounded-full bg-ember px-2 py-0.5 text-[10px] font-medium text-white">
+                          当前使用 · {selected.name}
                         </span>
-                        <select
-                          className="h-8 w-52 rounded-md border border-line bg-surface-1 px-2 text-[12px] text-ink"
-                          onChange={(e) => {
-                            const preset = presets.find((p) => p.name === e.target.value);
-                            if (!preset) return;
-                            setEditorAction(preset.action);
-                            setEditorView(preset.view);
-                            setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...preset.pose_config });
-                            setPhase(0);
-                          }}
-                          value=""
-                        >
-                          <option value="" disabled>
-                            选择要载入的动作…
-                          </option>
-                          {presets.map((preset) => (
-                            <option key={preset.name} value={preset.name}>
-                              {preset.name} · {ACTION_LABELS[preset.action] ?? preset.action}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        icon="x"
-                        onClick={() => {
-                          const selected = presets[0];
-                          if (selected) removePreset(selected.name);
-                        }}
-                      >
-                        删除最新
-                      </Button>
-                    </>
+                      )}
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      icon="spark"
+                      loading={busySource === "custom"}
+                      disabled={busy || selected.kind !== "custom"}
+                      onClick={() => {
+                        if (selected.kind === "custom") void generate(selected);
+                      }}
+                      title={
+                        selected.kind !== "custom"
+                          ? "先在下方点击一张自定义动作卡片选中"
+                          : `严格按「${selected.name}」保存时的参数生成动画`
+                      }
+                    >
+                      {busySource === "custom"
+                        ? "生成中…"
+                        : selected.kind === "custom"
+                          ? `用此动作生成（${selected.name}）`
+                          : "用此动作生成"}
+                    </Button>
+                  </div>
+                  {presets.length === 0 ? (
+                    <p className="text-[11.5px] text-ink-4">
+                      暂无自定义动作——在上方编辑器调整动作与参数后,输入名称保存即可出现在这里。
+                    </p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      {presets.map((preset) => {
+                        const active = selected.kind === "custom" && selected.name === preset.name;
+                        return (
+                          <div
+                            key={preset.name}
+                            className={cx(
+                              "group relative flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors",
+                              active
+                                ? "border-ember bg-ember-tint/40"
+                                : "border-line-subtle bg-surface-1 hover:border-line",
+                            )}
+                          >
+                            <button
+                              onClick={() => selectCustom(preset.name)}
+                              title={`选中「${preset.name}」`}
+                              className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                            >
+                              <span
+                                className={cx(
+                                  "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors",
+                                  active
+                                    ? "border-ember bg-ember text-white"
+                                    : "border-line text-transparent",
+                                )}
+                              >
+                                <Icon name="check" className="h-3 w-3" />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate text-[12px] text-ink">
+                                  {preset.name}
+                                </span>
+                                <span className="block text-[10.5px] text-ink-4">
+                                  基于{ACTION_LABELS[preset.action] ?? preset.action} ·{" "}
+                                  {preset.view === "side" ? "侧视" : "正面"}
+                                </span>
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => removePreset(preset.name)}
+                              title="删除该自定义动作"
+                              className="text-[11px] leading-none text-ink-4 hover:text-danger"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {selected.kind !== "custom" && (
+                    <p className="text-[10.5px] text-ink-4">
+                      点击卡片选中自定义动作后,「用此动作生成」按钮才会激活;生成严格按该动作保存时的参数执行。
+                    </p>
                   )}
                 </div>
               </div>
