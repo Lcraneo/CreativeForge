@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ModelApiPanel } from "../components/ModelApiPanel";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
-import { clearPeople, loadPeople, pushPerson, removePerson, type PersonEntry } from "../lib/peopleHistory";
+import { clearHidden, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
 import { api, type AnimationResult, type PoseConfig } from "../api/client";
 import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
@@ -55,8 +55,38 @@ interface SeqFrame {
 export default function AnimationStudio() {
   const asset = useAssetLoader();
   const setAsset = useAssetStore((state) => state.set);
-  // 历史人物（P1 体验）：localStorage 持久化，最近选择的人物一键载入
-  const [people, setPeople] = useState<PersonEntry[]>(() => loadPeople());
+  // 历史人物（P1 体验）：数据源为后端生成历史（每个生成过的人物一行），
+  // localStorage 只记录「隐藏清单」与「最近使用排序」——后端数据不受影响
+  const historyQuery = useQuery({
+    queryKey: ["animation-people"],
+    queryFn: () => api.listHistory({ limit: 30 }),
+  });
+  const [hiddenIds, setHiddenIds] = useState<string[]>(() => loadHidden());
+
+  // 展示列表：后端最近生成 → 按资产去重（每人取最近一条）→ 过滤已隐藏 → 前 12
+  const people: PersonEntry[] = useMemo(() => {
+    const seen = new Set<string>();
+    const out: PersonEntry[] = [];
+    for (const record of historyQuery.data?.records ?? []) {
+      const assetId = record.asset_id;
+      if (!assetId || seen.has(assetId) || hiddenIds.includes(assetId)) continue;
+      seen.add(assetId);
+      out.push({
+        asset_id: assetId,
+        name: record.name || record.goal || "未命名人物",
+        image_url: record.image?.url ?? record.asset?.image?.url,
+        selected_at: record.finished_at || record.created_at || 0,
+      });
+      if (out.length >= 12) break;
+    }
+    // 最近使用过的人物置顶（载入/生成过的排前面）
+    out.sort((a, b) => {
+      const ra = loadRecent().find((p) => p.asset_id === a.asset_id)?.selected_at ?? 0;
+      const rb = loadRecent().find((p) => p.asset_id === b.asset_id)?.selected_at ?? 0;
+      return rb - ra;
+    });
+    return out;
+  }, [historyQuery.data, hiddenIds]);
   const [showPeople, setShowPeople] = useState(false);
 
   function usePerson(entry: PersonEntry) {
@@ -64,11 +94,11 @@ export default function AnimationStudio() {
       .getAsset(entry.asset_id)
       .then((loaded) => {
         setAsset(loaded);
-        setPeople(pushPerson({
+        pushRecent({
           asset_id: loaded.id,
           name: loaded.name,
           image_url: loaded.image?.url ?? entry.image_url,
-        }));
+        });
         toast({ tone: "success", title: `已载入「${entry.name}」`, description: "生成与动作编辑将使用该人物" });
       })
       .catch((cause) =>
@@ -205,7 +235,7 @@ export default function AnimationStudio() {
         const animationResult = await api.createAnimation(payload);
         // 自动记录当前人物到历史（下次直接载入）
         if (asset?.id) {
-          setPeople(pushPerson({ asset_id: asset.id, name: asset.name, image_url: asset.image?.url }));
+          pushRecent({ asset_id: asset.id, name: asset.name, image_url: asset.image?.url });
         }
         // 生成成功后清掉编辑器相位帧：展示区 frameUrl 优先级高于 result，
         // 不清会导致画布停在静态预览帧、动画 GIF 永远不显示（"无法播放"）。
@@ -526,12 +556,13 @@ export default function AnimationStudio() {
                     {people.length > 0 && (
                       <button
                         onClick={() => {
-                          setPeople(clearPeople());
+                          setHiddenIds(clearHidden());
                           toast({ tone: "info", title: "历史人物记录已清空" });
                         }}
                         className="text-[10.5px] text-ink-4 underline-offset-2 hover:text-danger hover:underline"
+                        title="仅从本列表隐藏，生成历史不受影响"
                       >
-                        清空记录
+                        全部隐藏
                       </button>
                     )}
                   </div>
@@ -575,7 +606,7 @@ export default function AnimationStudio() {
                           <button
                             onClick={(event) => {
                               event.stopPropagation();
-                              setPeople(removePerson(person.asset_id));
+                              setHiddenIds(hidePerson(person.asset_id));
                             }}
                             title="从历史记录移除"
                             className="text-[11px] leading-none text-ink-4 hover:text-danger"
