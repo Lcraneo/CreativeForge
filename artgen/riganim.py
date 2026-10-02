@@ -21,6 +21,33 @@ from artgen.style import similarity_rgba
 CANVAS_BG = (0, 0, 0, 0)
 
 
+def _inpaint_background(canvas, mask, grow=6):
+    """主体区逐行水平插值回填背景（替代单一中值色填充）。
+
+    分区旋转后，原主体位置会短暂露底；旧版用边缘中值色整块填充，而
+    AI 原画的背景几乎都有渐变——露底区与周围真实背景形成一圈可见的
+    色差亮边（工作台预览实测：手臂/躯干轮廓外的白边环）。逐行用主体
+    左右最近的背景像素插值，填充色跟随渐变，露底与背景无缝。"""
+    arr = np.asarray(canvas.convert("RGBA"), dtype=np.float32).copy()
+    grown = mask.filter(ImageFilter.MaxFilter(grow * 2 + 1))
+    holes = np.asarray(grown) > 128
+    height, width = holes.shape
+    for y in range(height):
+        xs = np.nonzero(holes[y])[0]
+        if xs.size == 0:
+            continue
+        x0, x1 = int(xs[0]), int(xs[-1])
+        left = arr[y, x0 - 1, :3] if x0 > 0 else arr[y, min(width - 1, x1 + 1), :3]
+        right = arr[y, x1 + 1, :3] if x1 < width - 1 else left
+        span = x1 - x0
+        if span <= 0:
+            arr[y, x0, :3] = (left + right) / 2.0
+            continue
+        t = np.linspace(0.0, 1.0, span + 1)[:, None]
+        arr[y, x0 : x1 + 1, :3] = left[None, :] * (1.0 - t) + right[None, :] * t
+    return Image.fromarray(arr.astype(np.uint8), mode="RGBA")
+
+
 def _absorb_enclosed_background(mask, rgb, bg_color=None):
     """把主体内与背景色同色的**封闭区**回收为背景（分体修复 R1）。
 
@@ -36,7 +63,12 @@ def _absorb_enclosed_background(mask, rgb, bg_color=None):
       1. 当前被标记为主体；
       2. 颜色与背景参考色的逐通道差 ≤ BG_DIFF_THRESHOLD（与洪泛同口径）；
       3. 所属连通域**不接触**画布边缘（接触边缘的保留不动，保守处理
-         渐变背景漏吃的情况）。
+         渐变背景漏吃的情况）；
+      4. 连通域**质心落在主体下半部**（y ≥ 主体 bbox 中线）。腿间/脚边
+         的封闭洞都在下半身；而浅肤色、白衣高光这类"颜色接近背景的大
+         面积面部/躯干区域"也满足前三条——实测整张脸被当洞回收、躯干
+         层在脸上开洞透出背景填充色（帧上就是碎裂竖缝）。质心判据让
+         上半身的候选一律保留。
 
     任何失败返回原 mask（该修复永不阻塞动画生成）。"""
 
@@ -61,7 +93,11 @@ def _absorb_enclosed_background(mask, rgb, bg_color=None):
         border_touch[0, :] = border_touch[-1, :] = True
         border_touch[:, 0] = border_touch[:, -1] = True
 
+        ys_all, _xs_all = np.nonzero(subject)
+        floor_y = float(ys_all.min()) + 0.5 * float(ys_all.max() - ys_all.min() + 1)
+
         absorbed = np.zeros_like(candidates)
+        visited = np.zeros_like(candidates)
         remaining = candidates & ~border_touch
         # 向量 BFS：从任意未访问种子做二值传播标注连通域
         while remaining.any():
@@ -77,8 +113,11 @@ def _absorb_enclosed_background(mask, rgb, bg_color=None):
                 grew[:, 1:] |= frontier[:, :-1]
                 grew[:, :-1] |= frontier[:, 1:]
                 frontier = grew & candidates & ~comp
-            absorbed |= comp
-            remaining = candidates & ~absorbed
+            visited |= comp
+            comp_ys, _comp_xs = np.nonzero(comp)
+            if float(comp_ys.mean()) >= floor_y:
+                absorbed |= comp
+            remaining = candidates & ~visited
 
         if not absorbed.any():
             return mask
@@ -222,6 +261,24 @@ def animate_rigged(
     head_h = max(0.30, min(0.75, float(rig.get("head_height") or 0.30)))
     chin_y = y0 + head_h * (y1 - y0) + 2.0
 
+    # ── 腿部横向边界:双脚列段给出真实中缝 ─────────────────────────
+    # 旧版腿带以画布中线 ±12%w 硬分,与两腿真实分界(常因站姿偏移数像素)
+    # 不符;大腿带顶部 hip_y-26 还把腰带/外套下摆整块裹进腿层随腿旋转。
+    # 底部列段分离出两只脚 → 间隙中点作中缝;腿带顶部收到 hip_y-12,
+    # 腰带/下摆交给 upper/crotch 层(它们不随大腿旋转)。
+    from artgen.rig import _column_runs as _foot_column_runs
+    from artgen.rig import _extent as _row_extent
+
+    bottom_runs = [r for r in _foot_column_runs(mask, int(y1) - 9, int(y1)) if r[1] > r[0]]
+    if len(bottom_runs) >= 2:
+        widest = sorted(bottom_runs, key=lambda run: run[1] - run[0], reverse=True)[:2]
+        widest.sort(key=lambda run: run[0])
+        leg_split = (widest[0][1] + widest[1][0]) / 2.0
+    else:
+        hip_row = _row_extent(mask, int(hip_y) - 2, int(hip_y) + 3)
+        leg_split = (hip_row[0] + hip_row[1]) / 2.0 if hip_row else cx
+    leg_split = max(min(leg_split, cx + w * 0.12), cx - w * 0.12)
+
     # subject layer (its alpha is the subject) + background with the subject removed
     if transparent:
         subject = canvas.copy()
@@ -231,9 +288,7 @@ def animate_rigged(
         subject = canvas.copy()
         subject.putalpha(mask)
         if keep_background:
-            base_bg = canvas.copy()
-            fill = (bg[0], bg[1], bg[2], 255) if bg else (0, 0, 0, 255)
-            base_bg.paste(Image.new("RGBA", (size, size), fill), (0, 0), mask)
+            base_bg = _inpaint_background(canvas, mask)
         else:
             base_bg = Image.new("RGBA", (size, size), CANVAS_BG)
 
@@ -248,7 +303,10 @@ def animate_rigged(
                 (x0, shoulder_y - 8, cx + torso_half * 0.1, min(y1, points["elbow_l"][1] + 6)),
                 size,
                 feather=4.0,
-                exclude_above=chin_y,
+                # 肩 pivot 以上的像素（发梢/肩线上缘）一律不归臂层：源像素
+                # 全在肩线下方，裁掉不影响任何抬臂动作，却能让"垂在肩上
+                # 方的发梢"不再随摆臂甩动；肩部本身由 upper 层渲染。
+                exclude_above=max(chin_y, shoulder_y + 4),
             ),
             points["shoulder_l"],
         ),
@@ -258,7 +316,7 @@ def animate_rigged(
                 (cx - torso_half * 0.1, shoulder_y - 8, x1, min(y1, points["elbow_r"][1] + 6)),
                 size,
                 feather=4.0,
-                exclude_above=chin_y,
+                exclude_above=max(chin_y, shoulder_y + 4),
             ),
             points["shoulder_r"],
         ),
@@ -271,7 +329,7 @@ def animate_rigged(
         "leg_l": (
             _region_layer(
                 subject,
-                (x0, hip_y - 26, cx + w * 0.12, min(y1, points["knee_l"][1] + 8)),
+                (x0, hip_y - 12, leg_split + 2, min(y1, points["knee_l"][1] + 8)),
                 size,
                 feather=5.0,
             ),
@@ -280,7 +338,7 @@ def animate_rigged(
         "leg_r": (
             _region_layer(
                 subject,
-                (cx - w * 0.12, hip_y - 26, x1, min(y1, points["knee_r"][1] + 8)),
+                (leg_split - 2, hip_y - 12, x1, min(y1, points["knee_r"][1] + 8)),
                 size,
                 feather=5.0,
             ),
@@ -296,9 +354,9 @@ def animate_rigged(
             _region_layer(
                 subject,
                 (
-                    cx - w * 0.17,
+                    leg_split - w * 0.17,
                     hip_y - 12,
-                    cx + w * 0.17,
+                    leg_split + w * 0.17,
                     min(y1, points["knee_l"][1] + 6),
                 ),
                 size,
@@ -309,11 +367,11 @@ def animate_rigged(
         # 双骨链子层：小腿（膝下含脚）与前臂（肘下含手）——跟随父段旋转角
         # 之上再叠加膝弯/肘屈，取代整腿/整臂单刚体旋转的"分段拼接感"
         "shin_l": (
-            _region_layer(subject, (x0, points["knee_l"][1] - 22, cx + w * 0.12, y1), size, feather=5.5),
+            _region_layer(subject, (x0, points["knee_l"][1] - 22, leg_split + 2, y1), size, feather=5.5),
             points["knee_l"],
         ),
         "shin_r": (
-            _region_layer(subject, (cx - w * 0.12, points["knee_r"][1] - 22, x1, y1), size, feather=5.5),
+            _region_layer(subject, (leg_split - 2, points["knee_r"][1] - 22, x1, y1), size, feather=5.5),
             points["knee_r"],
         ),
         "forearm_l": (

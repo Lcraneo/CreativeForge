@@ -1010,6 +1010,15 @@ class AnimationService:
         if isinstance(content, dict) and content.get("image_render"):
             candidates.append(os.path.join(base, os.path.basename(str(content["image_render"]))))
 
+        # 远端图落地时优先用资产记录的 file 名：与 file/path 候选同链路，
+        # 落盘一次后整条解析链（含 /api/generated/<file>）都本地可达
+        remote_file = None
+        for meta in metas:
+            if isinstance(meta, dict) and meta.get("url"):
+                remote_file = remote_file or (
+                    os.path.basename(str(meta["file"])) if meta.get("file") else None
+                )
+
         remote = None
         for candidate in candidates:
             if candidate.startswith(("http://", "https://")):
@@ -1023,7 +1032,7 @@ class AnimationService:
                         return handle.read()
         if remote:
             # 远端 AI 原画仅存 URL：先按文件名找本地缓存，未命中再拉取
-            name = os.path.basename(remote.split("?")[0])
+            name = remote_file or os.path.basename(remote.split("?")[0])
             local = os.path.join(base, name)
             if name and os.path.isfile(local):
                 with open(local, "rb") as handle:
@@ -1032,7 +1041,16 @@ class AnimationService:
                 import urllib.request
 
                 with urllib.request.urlopen(remote, timeout=20) as response:
-                    return response.read()
+                    data = response.read()
+                # 立即落盘：OSS/签名 URL 会过期，过期后原图永久丢失。
+                # 访问过一次就本地化，之后该资产与经典工作台同源同图。
+                if name and data:
+                    try:
+                        with open(local, "wb") as handle:
+                            handle.write(data)
+                    except OSError:
+                        pass
+                return data
             except Exception:
                 return None
         return None

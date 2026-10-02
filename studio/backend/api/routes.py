@@ -747,6 +747,22 @@ def build_router(runtime):
 
                     source = AnimationService(ANIMATION_DIR)._asset_render(asset)
                     if source is None:
+                        # 有原画记录但拉不到（本机缺失 + 远端签名失效）时，
+                        # 程序化兜底会用另一个形象冒充该角色——预览"不是
+                        # 原画"就是这么来的。明确报错让前端提示，只对本来
+                        # 就没有原画记录的资产才回落程序化渲染。
+                        art_meta = [
+                            asset.get("image"),
+                            (asset.get("source") or {}).get("ai_image"),
+                        ]
+                        if any(
+                            isinstance(m, dict) and (m.get("file") or m.get("url") or m.get("path"))
+                            for m in art_meta
+                        ):
+                            raise HTTPException(
+                                status_code=409,
+                                detail="该资产的 AI 原画在本机缺失且远端链接已失效，无法按原画预览（原画由其他设备生成时需重新生成）",
+                            )
                         from artgen import render_asset_view
 
                         source = render_asset_view(
@@ -812,7 +828,14 @@ def build_router(runtime):
             raise HTTPException(status_code=409, detail="AI 动画生成需要先启用自定义模型")
         source = AnimationService(ANIMATION_DIR)._asset_render(asset)
         if not source:
-            raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
+            art_meta = [asset.get("image"), (asset.get("source") or {}).get("ai_image")]
+            detail = "该资产没有可用的 AI 原画"
+            if any(
+                isinstance(m, dict) and (m.get("file") or m.get("url") or m.get("path"))
+                for m in art_meta
+            ):
+                detail = "该资产的 AI 原画在本机缺失且远端链接已失效，无法生成动画"
+            raise HTTPException(status_code=409, detail=detail)
 
         service = AnimationService(ANIMATION_DIR)
         batch_id = service.start_action_batch(
@@ -1409,8 +1432,9 @@ def build_router(runtime):
         os.makedirs(cache_dir, exist_ok=True)
 
         # v5：帧粘连修复（分区独占所有权：父段裁到膝/肘 + 裆部立柱只填洞）
-        # 改变渲染语义，旧条带全部作废
-        PLAYTEST_CACHE_VERSION = 5
+        # v6：比例修复（R1 封闭洞回收限主体下半部 + 双脚分离关节点 + 膝线
+        # 剖面检测 + 腿带中缝/顶部按真实双脚收窄）——渲染语义再变，旧条带作废
+        PLAYTEST_CACHE_VERSION = 6
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(
