@@ -438,7 +438,7 @@ class AnimationService:
                 from artgen import compose_animation
 
                 result = compose_animation(frames_rgba=frames_rgba, fps=12, size=384)
-                animation_id = _uuid.uuid4().hex[:12]
+                animation_id = uuid.uuid4().hex[:12]  # 模块级已导入；修复批次作用域引用未导入别名导致的 NameError
                 meta = self._persist(result, animation_id, "video")
                 meta["video_model"] = video_model
                 meta["asset_id"] = asset_id
