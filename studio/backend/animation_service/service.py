@@ -21,12 +21,20 @@ from artgen.style import analyze_rgba, dominant_palette, extract_character
 
 # 构图约束（借鉴 Windup _framing.py：代码统一追加、只写正向句——该类接口没有
 # negative_prompt，否定句里的名词会被 latch 进画面）
+# 帧粘连修复（正向句版）：i2v 模型在关节快速运动时常见"上一帧姿态残影叠加
+# 到下一帧、肢体分裂成双重轮廓"伪影（试玩区/动画工作台实测的拖影粘连）。
+# 主提示词不能写"no ghosting/no motion blur"（否定句名词会被 latch），只能
+# 用正向句要求"每帧只有一份清晰轮廓、每个肢体只有一个明确位置"；残影类
+# 伪影的否定交给 generate_video 的 negative_prompt 参数（见 model_service）。
 FRAMING_CLAUSE = (
     "Preserve the reference character's exact face, hairstyle, clothing, accessories, "
     "color palette, linework, silhouette, textures, and local details throughout every frame. "
     "Use a locked camera with unchanged projection, framing, character scale, and canvas "
     "occupancy throughout the video. Exactly one character is in the frame, and the whole "
-    "body from head to feet stays inside the frame at all times."
+    "body from head to feet stays inside the frame at all times. Every frame shows exactly "
+    "one single crisp copy of the character: each limb, joint and held item keeps a clean "
+    "sharp outline and one well-defined position, staying just as sharply drawn at the "
+    "fastest point of the motion as in a held pose."
 )
 
 # 动作提示词（i2v 模板）：**视角无关**——旧版硬编码 "seen from the side"，
@@ -88,7 +96,9 @@ MOTION_ENHANCE_SYSTEM = (
     "Rewrite the given motion description into ONE richer English paragraph (<=90 words). "
     "Preserve exactly: the action's identity (a walk stays walking, an attack stays ONE "
     "committed attack), in-place motion, the character keeping the input image's facing "
-    "direction, a locked camera, and the character's design/outfit/colors unchanged. "
+    "direction, a locked camera, the character's design/outfit/colors unchanged, and one "
+    "single crisp silhouette in every frame (each limb drawn once with sharp edges, never "
+    "blended between two poses). "
     "Enrich with plausible secondary motion implied by the character context "
     "(e.g. armor plates shifting, cloth and hair settling, weapon weight affecting "
     "posture and rhythm) plus pacing, weight shift and easing details. "

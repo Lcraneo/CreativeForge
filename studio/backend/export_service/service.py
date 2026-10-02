@@ -177,7 +177,11 @@ class ExportService:
     @staticmethod
     def _texture_entries(asset_id, asset):
         """Render the asset's artwork into the package (best-effort: a render
-        failure never blocks the JSON export)."""
+        failure never blocks the JSON export).
+
+        真实原画优先（与 /api/assets/{id}/image.png 同一语义）：有 AI 原画/
+        上传源图的资产导出真实图；程序化矢量渲染只在资产没有真实图时兜底
+        （旧版无条件小熊，导出包里的贴图与动画实际绑定的原画不一致）。"""
 
         from io import BytesIO
 
@@ -190,25 +194,40 @@ class ExportService:
             image.save(buffer, "PNG")
             return buffer.getvalue()
 
+        real_art = None
+        try:
+            from studio.backend.animation_service.service import AnimationService
+
+            # _asset_render 只读 GENERATED_DIR 与资产 meta，不使用 self.directory
+            real_art = AnimationService(".")._asset_render(asset)
+        except Exception:  # noqa: BLE001
+            real_art = None
+
         produced = []
-        try:
-            produced.append(
-                (
-                    "Texture/{}_front.png".format(asset_id),
-                    png_bytes(Image.open(BytesIO(render_asset_view(asset, "front", 512)))),
+        if real_art is not None:
+            try:
+                produced.append(("Texture/{}_front.png".format(asset_id), real_art))
+            except Exception:  # noqa: BLE001
+                pass
+        else:
+            try:
+                produced.append(
+                    (
+                        "Texture/{}_front.png".format(asset_id),
+                        png_bytes(Image.open(BytesIO(render_asset_view(asset, "front", 512)))),
+                    )
                 )
-            )
-        except Exception:  # noqa: BLE001
-            pass
-        try:
-            produced.append(
-                (
-                    "Texture/{}_sheet.png".format(asset_id),
-                    png_bytes(Image.open(BytesIO(render_asset_sheet(asset, 512, 24)))),
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                produced.append(
+                    (
+                        "Texture/{}_sheet.png".format(asset_id),
+                        png_bytes(Image.open(BytesIO(render_asset_sheet(asset, 512, 24)))),
+                    )
                 )
-            )
-        except Exception:  # noqa: BLE001
-            pass
+            except Exception:  # noqa: BLE001
+                pass
 
         # 像素工作台编辑版渲染图
         edited = (asset.get("pixel") or {}).get("edited_png") or ""

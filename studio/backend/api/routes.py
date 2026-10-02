@@ -334,21 +334,45 @@ def build_router(runtime):
 
     @router.get("/assets/{asset_id}/image.png")
     def asset_image(asset_id: str, view: str = "front", size: int = 512):
-        """Deterministic 2D character artwork (front/side/top view)."""
+        """资产头像图：优先返回资产的真实原画（AI 生成图/上传源图），资产
+        确实没有真实图时才回落程序化矢量角色。
+
+        回落小熊修复：旧版无条件 render_asset_view，有 AI 原画的资产也会被
+        程序化橙熊冒名顶替（动画链路实际绑定的是真实原画，头像与rig 不一致
+        会误导排查）。view 参数只对程序化路径有意义——真实原画只有一张。"""
         from artgen import render_asset_view
+        from studio.backend.animation_service.service import AnimationService
 
         # 也从历史解析：重启后工作台仍会展示历史资产图，动画/预览共用此图
         asset = _resolve_asset(runtime, asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
         bounded = max(64, min(1024, int(size)))
+        real_art = None
+        try:
+            real_art = AnimationService(ANIMATION_DIR)._asset_render(asset)
+        except Exception:  # noqa: BLE001 - 原画解析失败回落程序化渲染
+            real_art = None
+        if real_art is not None:
+            import io as _io
+
+            from PIL import Image as PILImage
+
+            image = PILImage.open(_io.BytesIO(real_art)).convert("RGBA")
+            image.thumbnail((bounded, bounded), PILImage.LANCZOS)
+            buffer = _io.BytesIO()
+            image.save(buffer, "PNG")
+            content = buffer.getvalue()
+        else:
+            content = render_asset_view(asset, view=view, size=bounded)
         return Response(
-            content=render_asset_view(asset, view=view, size=bounded),
+            content=content,
             media_type="image/png",
             headers={
                 "Cache-Control": "public, max-age=86400",
                 "X-Image-Style": "2d",
                 "X-Image-View": view,
+                "X-Image-Source": "real-art" if real_art is not None else "procedural",
             },
         )
 
@@ -1323,8 +1347,9 @@ def build_router(runtime):
         cache_dir = os.path.join(ANIMATION_DIR, "play_cache")
         os.makedirs(cache_dir, exist_ok=True)
 
-        # v4：分体修复（封闭背景洞回收 + 手臂区域头部保护区）改变渲染语义
-        PLAYTEST_CACHE_VERSION = 4
+        # v5：帧粘连修复（分区独占所有权：父段裁到膝/肘 + 裆部立柱只填洞）
+        # 改变渲染语义，旧条带全部作废
+        PLAYTEST_CACHE_VERSION = 5
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(
@@ -1531,7 +1556,6 @@ def build_router(runtime):
             ).hexdigest()[:10]
             out_name = "play_ai_{}_{}.png".format(meta.get("requested_action"), digest)
             out_path = os.path.join(cache_dir, out_name)
-            samples = [f for f in frame_files if f]
             samples = [f for f in frame_files if f]
             if len(samples) < 4:
                 return None

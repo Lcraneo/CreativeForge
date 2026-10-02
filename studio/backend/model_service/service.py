@@ -552,6 +552,24 @@ def poll_video_task(api_key, task_id, timeout_seconds):
     raise RuntimeError("dashscope video task timeout: " + str(task_id))
 
 
+# 帧粘连抑制的代码级默认项（wan 系模型中文负面提示词生效最好）：覆盖
+# 残影叠加（重影/残影/拖影/双重曝光/鬼影）、肢体分裂（肢体分裂/多余肢体）、
+# 形变与闪烁（形变破碎/画面闪烁）三大类实测伪影。
+DEFAULT_VIDEO_NEGATIVE_PROMPT = (
+    "重影, 残影, 拖影, 双重曝光, 鬼影, 肢体分裂, 多余肢体, 形变破碎, 画面闪烁"
+)
+
+
+def _video_negative_prompt(settings) -> str:
+    """最终负面提示词：用户配置优先，代码默认项去重后追加。"""
+
+    user = str((settings or {}).get("negative_prompt") or "").strip()
+    if not user:
+        return DEFAULT_VIDEO_NEGATIVE_PROMPT
+    extras = [t.strip() for t in DEFAULT_VIDEO_NEGATIVE_PROMPT.split(",") if t.strip() not in user]
+    return ", ".join([user] + extras)
+
+
 def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     """图生视频 (Windup 式 i2v 路线): source image + motion prompt -> mp4 bytes.
 
@@ -562,9 +580,23 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     if not api_key:
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
 
-    # 视频缓存：相同 提示词+模型+源图 直接复用已生成的 mp4（视频是额度大头）
-    video_key = _cache_key(prompt, settings.get("video_model") or settings.get("model"),
-                           hashlib.sha1(image_bytes).hexdigest())
+    # 帧粘连抑制（代码级默认负面提示词）：i2v 在关节快速运动时常见"上一帧
+    # 姿态残影叠加到下一帧、肢体分裂成双重轮廓"伪影。主提示词只写正向句
+    # （Windup _framing 纪律），残影类伪影统一交给 negative_prompt 参数抑制
+    # ——这正是该参数的用途。用户配置的 negative_prompt 优先、默认项去重后
+    # 追加；最终串必须参与视频缓存 key（见下）。
+    negative_prompt = _video_negative_prompt(settings)
+
+    # 视频缓存：相同 提示词+模型+源图+负面提示词 直接复用已生成的 mp4
+    # （视频是额度大头）。负面提示词必须参与 key：同 prompt 不同 negative
+    # 共用旧 key 会让新加的伪影抑制静默失效（命中未抑制的旧缓存），不同
+    # 配置间还会互相覆盖缓存。
+    video_key = _cache_key(
+        prompt,
+        settings.get("video_model") or settings.get("model"),
+        hashlib.sha1(image_bytes).hexdigest(),
+        hashlib.sha1(negative_prompt.encode("utf-8")).hexdigest(),
+    )
     cached_path = os.path.join(_VIDEO_CACHE_DIR, video_key + ".mp4")
     if os.path.isfile(cached_path):
         with open(cached_path, "rb") as handle:
@@ -587,9 +619,8 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
         "size": settings.get("video_size") or "1280*720",
         "prompt_extend": bool(settings.get("video_prompt_extend", False)),
         "watermark": False,
+        "negative_prompt": negative_prompt,
     }
-    if settings.get("negative_prompt"):
-        parameters["negative_prompt"] = settings["negative_prompt"]
 
     def _create(key, model, prompt_now):
         return httpx.post(

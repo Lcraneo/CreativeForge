@@ -129,6 +129,7 @@ def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
 def _place(base, layer, pivot, angle, offset):
     rotated = layer.rotate(angle, resample=Image.BICUBIC, center=(pivot[0], pivot[1]), expand=False)
     base.paste(rotated, (int(round(offset[0])), int(round(offset[1]))), rotated)
+    return rotated
 
 
 def _falign(frames):
@@ -244,7 +245,7 @@ def animate_rigged(
         "arm_l": (
             _region_layer(
                 subject,
-                (x0, shoulder_y - 8, cx + torso_half * 0.1, hand_y + 12),
+                (x0, shoulder_y - 8, cx + torso_half * 0.1, min(y1, points["elbow_l"][1] + 6)),
                 size,
                 feather=4.0,
                 exclude_above=chin_y,
@@ -254,27 +255,55 @@ def animate_rigged(
         "arm_r": (
             _region_layer(
                 subject,
-                (cx - torso_half * 0.1, shoulder_y - 8, x1, hand_y + 12),
+                (cx - torso_half * 0.1, shoulder_y - 8, x1, min(y1, points["elbow_r"][1] + 6)),
                 size,
                 feather=4.0,
                 exclude_above=chin_y,
             ),
             points["shoulder_r"],
         ),
+        # 帧粘连修复（分区独占所有权）：父段层只拥有自己的肢段——大腿层裁到
+        # 膝（膝下像素只由小腿层渲染）、上臂层裁到肘（肘下只由前臂层渲染）。
+        # 旧版父段层含整肢像素：膝弯/肘屈时父段层里那份"肢端拷贝"仍按父段
+        # 角刚体旋转，与小腿/前臂层的弯角渲染同屏叠加——就是试玩区/工作台
+        # 实测的"上一帧骨骼姿态残留 + 顶点裂变 + 拖影"。焊缝由子层顶部 22px
+        # 的羽化搭接带吸收（子层绕关节旋转，关节处位移≈0）。
         "leg_l": (
-            _region_layer(subject, (x0, hip_y - 26, cx + w * 0.12, y1), size, feather=5.0),
+            _region_layer(
+                subject,
+                (x0, hip_y - 26, cx + w * 0.12, min(y1, points["knee_l"][1] + 8)),
+                size,
+                feather=5.0,
+            ),
             points["hip_l"],
         ),
         "leg_r": (
-            _region_layer(subject, (cx - w * 0.12, hip_y - 26, x1, y1), size, feather=5.0),
+            _region_layer(
+                subject,
+                (cx - w * 0.12, hip_y - 26, x1, min(y1, points["knee_r"][1] + 8)),
+                size,
+                feather=5.0,
+            ),
             points["hip_r"],
         ),
         # 裆部立柱（修复"身材切割"）：左右腿反向旋转时中缝会撕裂、露出底下
-        # 的背景填充色。这一层取自原画自身的裆部像素，**不参与旋转**、只跟随
-        # 起伏平移，画在两腿之上——腿摆动时中缝始终被角色自己的裤子像素填满，
-        # 不再露出竖直亮缝。
+        # 的背景填充色。这一层取自原画自身的裆部像素，**不参与旋转**——且
+        # 只做"填洞者"：逐帧用已绘制覆盖图门控，只贴到两条大腿摆开后露出的
+        # 楔形空隙里，绝不压在运动中的腿上（旧版矩形一路到脚底、整列原姿态
+        # 腿像素盖在每一帧上，正是"初始骨骼状态残留"的来源）。矩形也裁到
+        # 膝：膝下的填缝属于小腿层的事。
         "crotch": (
-            _region_layer(subject, (cx - w * 0.17, hip_y - 12, cx + w * 0.17, y1), size, feather=4.0),
+            _region_layer(
+                subject,
+                (
+                    cx - w * 0.17,
+                    hip_y - 12,
+                    cx + w * 0.17,
+                    min(y1, points["knee_l"][1] + 6),
+                ),
+                size,
+                feather=4.0,
+            ),
             points["root"],
         ),
         # 双骨链子层：小腿（膝下含脚）与前臂（肘下含手）——跟随父段旋转角
@@ -311,6 +340,22 @@ def animate_rigged(
 
     frames = []
     scales = _motion_scales(rig, size)
+
+    coverage = Image.new("L", (size, size), 0)
+
+    def _place_tracked(layer, pivot, angle, offset):
+        """贴层并累计"已绘制覆盖图"——裆部立柱只填洞门控的依据。"""
+        nonlocal coverage
+        rotated = _place(frame, layer, pivot, angle, offset)
+        ox, oy = int(round(offset[0])), int(round(offset[1]))
+        blank = Image.new("RGBA", (size, size), CANVAS_BG)
+        blank.paste(rotated, (ox, oy))
+        grown = np.maximum(
+            np.asarray(coverage, dtype=np.uint8),
+            np.asarray(blank.getchannel("A"), dtype=np.uint8),
+        )
+        coverage = Image.fromarray(grown, "L")
+
     for index in range(frame_count):
         pose = _pose(action, index / frame_count, config)
         dy = (pose["bob"] - pose["jump"]) * scales["bob"]
@@ -321,9 +366,10 @@ def animate_rigged(
         leg = pose["leg"] * scales["limb"]
 
         frame = base_bg.copy()
-        # 双骨链合成：大腿 → 小腿（父段角 + 膝弯）→ 裆部立柱（填中缝，无旋转）
-        # → 躯干 → 上臂 → 前臂（父段角 + 肘屈）。膝/肘的滞后与屈曲让肢体
-        # 呈两段式运动，消除整段刚体旋转的分段拼接感。躯干在 lean 之上
+        # 双骨链合成：大腿 → 小腿（父段角 + 膝弯）→ 裆部立柱（只填洞，无
+        # 旋转）→ 躯干 → 上臂 → 前臂（父段角 + 肘屈）。膝/肘的滞后与屈曲让
+        # 肢体呈两段式运动，消除整段刚体旋转的分段拼接感。父段层已裁到膝/肘
+        # （分区独占所有权），焊缝由子层顶部羽化搭接带吸收；躯干在 lean 之上
         # 叠加 tilt（肩线与髋部横移反向的微小倾斜 = 肩盆反向次级动作）。
         thigh_l = pose.get("thigh_l", leg) * scales["limb"]
         thigh_r = pose.get("thigh_r", leg) * scales["limb"]
@@ -332,11 +378,21 @@ def animate_rigged(
         elbow_l = pose.get("elbow_l", 0.0) * scales["limb"]
         elbow_r = pose.get("elbow_r", 0.0) * scales["limb"]
 
-        _place(frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
-        _place(frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy))
-        _place(frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
-        _place(frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy))
-        _place(frame, regions["crotch"][0], regions["crotch"][1], 0.0, (0.0, dy))
+        _place_tracked(regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
+        _place_tracked(
+            regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
+        )
+        _place_tracked(regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
+        _place_tracked(
+            regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
+        )
+        # 裆部立柱"只填洞"：门控 = 立柱 alpha × NOT(已绘制覆盖)。两腿摆开
+        # 露出的楔形中缝由角色自己的裆部像素补上；运动中的腿永远不会被这层
+        # 未旋转的静态列盖住（帧粘连修复的最后一环）。
+        pillar_gate = ImageChops.multiply(
+            regions["crotch"][0].getchannel("A"), ImageChops.invert(coverage)
+        )
+        frame.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
         _place(frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy))
         _place(frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy))
         _place(frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy))

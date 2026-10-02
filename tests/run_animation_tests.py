@@ -880,6 +880,151 @@ def main() -> int:
         len(_stats) >= 6,
     )
 
+    # ── 帧粘连修复（分区独占所有权）回归 ─────────────────────────────────
+    # 症状（试玩区/工作台实测）：膝弯/肘屈时父段层里那份"肢端拷贝"按父段
+    # 角刚体旋转、与子层（小腿/前臂）的弯角渲染同屏叠加——观感即"上一帧
+    # 骨骼姿态残留 + 顶点裂变 + 拖影"；裆部立柱矩形到脚底，把未旋转的
+    # 原姿态腿列盖在每一帧上。修复：父段裁到膝/肘（子层独占肢端）、立柱
+    # 裁到膝且逐帧只贴"已绘制覆盖图"之外的洞。
+    # 夹具探针摆放纪律（缺一即门禁失效）：
+    #   * 小腿/前臂色带只落在**子层独占区**——小腿带 y>knee+10（新大腿层
+    #     已裁到 knee+8）、前臂带 y<knee-22 且抬高到臂侧（新上臂层已裁到
+    #     elbow+6）；旧代码里这些带同时落在父段矩形 → 双份渲染 → 计数膨胀；
+    #   * 膝下两腿之间放橙色柱：旧立柱矩形到脚底会把它**不旋转**地盖回
+    #     （立柱门控/裁剪后新代码不再渲染它）；
+    #   * 用 run 动作标定——58° 膝弯让新旧拷贝的分离距离最大。
+    def _make_two_segment_png():
+        img = _TImg.new("RGB", (128, 128), (250, 250, 250))
+        draw = _TDraw.Draw(img)
+        draw.ellipse((48, 2, 80, 26), fill=(60, 60, 70))  # 头
+        draw.rectangle((50, 24, 78, 60), fill=(90, 130, 170))  # 躯干
+        draw.rectangle((28, 28, 48, 50), fill=(80, 80, 92))  # 左上臂
+        draw.rectangle((80, 28, 100, 50), fill=(80, 80, 92))  # 右上臂
+        draw.rectangle((18, 56, 32, 70), fill=(150, 80, 190))  # 左前臂+手（紫探针）
+        draw.rectangle((96, 56, 110, 70), fill=(150, 80, 190))  # 右前臂+手（紫探针）
+        draw.rectangle((40, 60, 52, 92), fill=(70, 170, 190))  # 左大腿
+        draw.rectangle((76, 60, 88, 92), fill=(70, 170, 190))  # 右大腿
+        draw.rectangle((36, 103, 48, 124), fill=(230, 120, 40))  # 左小腿+脚（橙探针）
+        draw.rectangle((80, 103, 92, 124), fill=(230, 120, 40))  # 右小腿+脚（橙探针）
+        draw.rectangle((56, 66, 72, 94), fill=(190, 210, 90))  # 裆柱探针（髋→膝）
+        draw.rectangle((56, 100, 72, 122), fill=(230, 120, 40))  # 膝下两腿间橙柱
+        buffer = _io.BytesIO()
+        img.save(buffer, "PNG")
+        return buffer.getvalue()
+
+    def _fake_straight_rig():
+        return {
+            "bbox": [14, 2, 114, 126],
+            "size": [128, 128],
+            "source_size": [128, 128],
+            "transparent": False,
+            "confidence": 0.9,
+            "proportion": "normal",
+            "head_ratio": 0.28,
+            "head_height": 0.28,
+            "source_hash": "two-segment-test",
+            "points": {
+                "root": [64, 126],
+                "head": [64, 14],
+                "neck": [64, 26],
+                "shoulder_l": [44, 30],
+                "elbow_l": [34, 52],
+                "hand_l": [30, 72],
+                "shoulder_r": [84, 30],
+                "elbow_r": [94, 52],
+                "hand_r": [98, 72],
+                "hip_l": [48, 62],
+                "knee_l": [46, 93],
+                "foot_l": [42, 126],
+                "hip_r": [80, 62],
+                "knee_r": [82, 93],
+                "foot_r": [86, 126],
+            },
+        }
+
+    def _band_counts(frames, matcher):
+        counts = []
+        for _w, _h, _rgba in frames:
+            _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+            _n = 0
+            for _y in range(_h):
+                for _x in range(_w):
+                    _r, _g, _b, _a = _img.getpixel((_x, _y))
+                    if _a > 128 and matcher(_r, _g, _b):
+                        _n += 1
+            counts.append(_n)
+        return counts
+
+    _seg_frames, _, _, _ = animate_rigged(
+        _make_two_segment_png(),
+        "run",
+        16,
+        128,
+        rig=_fake_straight_rig(),
+        segment_mask=None,
+        keep_background=False,
+    )
+    _is_orange = lambda r, g, b: r > 180 and 70 < g < 170 and b < 90  # noqa: E731
+    _is_purple = lambda r, g, b: 110 < r < 190 and g < 120 and b > 150  # noqa: E731
+    _is_crotch = lambda r, g, b: r > 150 and g > 180 and b < 130  # noqa: E731
+    _orange = _band_counts(_seg_frames, _is_orange)
+    _purple = _band_counts(_seg_frames, _is_purple)
+    _crotch = _band_counts(_seg_frames, _is_crotch)
+    # 不变量一（膝下单次渲染）：小腿色带像素数逐帧不得膨胀——旧代码里父段
+    # （大腿层）按大腿角再渲染一份膝下拷贝、立柱再盖一份不旋转拷贝，run 的
+    # 58° 膝弯让三份拷贝几乎不重叠（计数膨胀 ~1.5x+）
+    _orange_base = max(1, sorted(_orange)[len(_orange) // 2])
+    _orange_growth = max(_orange) / _orange_base
+    check(
+        "ghost fix: shin band rendered once (count growth < 1.25x)",
+        len(_orange) == 16 and _orange_growth < 1.25,
+        f"growth={_orange_growth:.2f} counts={_orange}",
+    )
+    # 不变量二（肘下单次渲染·回归上界）：前臂色带同理。注意肘屈与摆臂
+    # 行程耦合（旧代码里两份拷贝部分重合），本断言是独占所有权裁剪的
+    # 回归上界，判别性由不变量一承担（旧代码实测 1.41 vs 新 1.08）
+    _arm_frames, _, _, _ = animate_rigged(
+        _make_two_segment_png(),
+        "walk",
+        16,
+        128,
+        rig=_fake_straight_rig(),
+        config={"arm": 2.5},
+        segment_mask=None,
+        keep_background=False,
+    )
+    _purple = _band_counts(_arm_frames, _is_purple)
+    _purple_base = max(1, sorted(_purple)[len(_purple) // 2])
+    _purple_growth = max(_purple) / _purple_base
+    check(
+        "ghost fix: forearm band rendered once (count growth < 1.25x)",
+        len(_purple) == 16 and _purple_growth < 1.25,
+        f"growth={_purple_growth:.2f} counts={_purple}",
+    )
+    # 不变量三（立柱裁到膝）：立柱色带不得出现在膝线之下（旧版矩形到脚底，
+    # 把未旋转的原姿态小腿列盖在每一帧上）
+    _knee_y = 93
+    _pillar_leak = 0
+    for _w, _h, _rgba in _seg_frames:
+        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+        for _y in range(_h):
+            for _x in range(_w):
+                _r, _g, _b, _a = _img.getpixel((_x, _y))
+                if _a > 128 and _is_crotch(_r, _g, _b) and _y > _knee_y + 14:
+                    _pillar_leak += 1
+    check(
+        "ghost fix: crotch pillar trimmed at knee (no pixels below knee line)",
+        _pillar_leak == 0,
+        f"{_pillar_leak} pillar pixels below knee",
+    )
+    # 不变量四（立柱仍履职）：镜像摆腿最大帧里中缝楔形仍被立柱像素填补
+    # ——"只填洞"门控不能把填洞能力也门没了
+    check(
+        "ghost fix: crotch pillar still fills stance gap (present in mirror frames)",
+        min(_crotch[0], _crotch[8]) > 0,
+        f"counts at mirror frames = {_crotch[0]}, {_crotch[8]}",
+    )
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

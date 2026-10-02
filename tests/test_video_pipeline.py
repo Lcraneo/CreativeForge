@@ -7,6 +7,8 @@
   * meta 契约：落盘产物字段齐全（前端/试玩舞台/资产包导出依赖的字段集合）
   * 高并发压力：6 线程并行抽帧+合成互不干扰、结果可区分
   * 长时间稳定（浸泡）：30 轮顺序管线循环，时间有界、临时文件零残留
+  * 帧粘连抑制契约：FRAMING_CLAUSE 正向清晰轮廓句、代码级默认负面提示词
+    （用户项优先去重合并）、负面提示词参与视频缓存 key（换 negative 必换缓存）
 
 Run: python tests/test_video_pipeline.py
 """
@@ -185,6 +187,128 @@ def main() -> int:
         time.sleep(0.3)
         leftovers = [name for name in os.listdir(tmpdir) if name.startswith("tmp_")]
     check("soak: zero tmp video leftovers (reaper within 10s)", not leftovers, str(leftovers[:5]))
+
+    # ── 6) 帧粘连抑制契约：正向句构图约束 + 默认负面提示词 + 缓存 key 隔离 ──
+    # 背景：i2v 在关节快速运动时产生"上一帧姿态残影叠加/肢体分裂"伪影，
+    # 管线侧无跨帧状态可修，修复点在生成源头（提示词 + negative_prompt）。
+    # 本节固化三件事：约束句在主提示词里、负面提示词默认值生效且用户项
+    # 优先、负面提示词参与缓存 key（否则旧缓存让抑制静默失效）。
+    import studio.backend.model_service.usage as _usage_mod
+
+    from studio.backend.animation_service.service import FRAMING_CLAUSE
+
+    check(
+        "framing clause: crisp single-silhouette sentence present",
+        "one single crisp copy" in FRAMING_CLAUSE and "one well-defined position" in FRAMING_CLAUSE,
+    )
+    # 正向句纪律（Windup _framing）：主提示词里不得出现否定伪影名词的写法
+    check(
+        "framing clause: positive-only phrasing (no negated artifact nouns)",
+        not any(token in FRAMING_CLAUSE for token in ("no ghost", "no motion blur", "no double")),
+    )
+
+    check(
+        "negative prompt: code default when unset",
+        msvc._video_negative_prompt({}) == msvc.DEFAULT_VIDEO_NEGATIVE_PROMPT,
+    )
+    merged = msvc._video_negative_prompt({"negative_prompt": "低质量, 拖影"})
+    check(
+        "negative prompt: user first, defaults dedup-merged",
+        merged.startswith("低质量") and "低质量" in merged and "拖影" in merged
+        and merged.count("拖影") == 1 and "残影" in merged,
+        merged[:80],
+    )
+
+    original_post = msvc.httpx.post
+    original_get = msvc.httpx.get
+    original_usage = _usage_mod.record_usage
+    original_cache_dir = msvc._VIDEO_CACHE_DIR
+    try:
+        _usage_mod.record_usage = lambda *a, **k: None
+        msvc._VIDEO_CACHE_DIR = os.path.join(tmpdir, "video_cache")
+        os.makedirs(msvc._VIDEO_CACHE_DIR, exist_ok=True)
+
+        class _FakeCreateResponse:
+            status_code = 200
+
+            def json(self):
+                return {"output": {"task_id": "task-fix-1"}}
+
+        class _FakePollResponse:
+            status_code = 200
+
+            def __init__(self, payload):
+                self._payload = payload
+
+            def json(self):
+                return self._payload
+
+        class _FakeDownloadResponse:
+            status_code = 200
+            content = b"FAKE-MP4-BYTES-FOR-CONTRACT-TEST"
+
+            def raise_for_status(self):
+                return None
+
+        captured = {}
+        post_calls = {"n": 0}
+
+        def _fake_post(url, headers=None, json=None, timeout=None):
+            post_calls["n"] += 1
+            captured["json"] = json
+            return _FakeCreateResponse()
+
+        def _fake_get(url, timeout=None, **kwargs):
+            if "/tasks/" in url:
+                return _FakePollResponse(
+                    {
+                        "output": {
+                            "task_status": "SUCCEEDED",
+                            "video_url": "http://example.test/video.mp4",
+                        }
+                    }
+                )
+            return _FakeDownloadResponse()
+
+        msvc.httpx.post = _fake_post
+        msvc.httpx.get = _fake_get
+
+        base_settings = {
+            "enabled": True,
+            "api_key": "k-contract-test",
+            "video_model": "wan2.2-i2v-flash",
+        }
+        settings_a = dict(base_settings, negative_prompt="低质量")
+        settings_b = dict(base_settings, negative_prompt="低质量, 文字")
+
+        video_bytes_a, model_a = msvc.generate_video(settings_a, "prompt A", b"img-a", 5.0)
+        check(
+            "generate_video: request carries merged negative prompt",
+            "低质量" in captured["json"]["parameters"]["negative_prompt"]
+            and "残影" in captured["json"]["parameters"]["negative_prompt"],
+            str(captured["json"]["parameters"].get("negative_prompt"))[:80],
+        )
+        check("generate_video: returns model name", bool(model_a), str(model_a))
+        check("generate_video: bytes round-trip", video_bytes_a == b"FAKE-MP4-BYTES-FOR-CONTRACT-TEST")
+
+        msvc.generate_video(settings_a, "prompt A", b"img-a", 5.0)
+        check(
+            "generate_video: same request hits mp4 cache (no re-burn)",
+            post_calls["n"] == 1,
+            f"post calls = {post_calls['n']}",
+        )
+
+        msvc.generate_video(settings_b, "prompt A", b"img-a", 5.0)
+        check(
+            "generate_video: different negative prompt bypasses cache (key isolation)",
+            post_calls["n"] == 2,
+            f"post calls = {post_calls['n']}",
+        )
+    finally:
+        msvc.httpx.post = original_post
+        msvc.httpx.get = original_get
+        _usage_mod.record_usage = original_usage
+        msvc._VIDEO_CACHE_DIR = original_cache_dir
 
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)

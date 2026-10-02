@@ -11,6 +11,12 @@ tests/release/_tmp_runtime/
 # 含真实密钥，一律本地持有（key 轮换后亦不得重新入库）
 studio/backend/model_service/model_settings.json
 
+# 运行期产物：生成缓存（视频/图片）、用量台账、备份文件、临时探针图
+studio/backend/model_service/generated/
+studio/backend/model_service/usage_ledger.json
+*.bak
+tmp_*.png
+
 # backend (Phase 11-15)
 backend/.env
 backend/data/
