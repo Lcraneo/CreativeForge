@@ -650,7 +650,7 @@ export default function PlaytestStage() {
                           </div>
                           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10">
                             <div
-                              className="h-full rounded-full bg-primary transition-[width] duration-700 ease-linear"
+                              className="h-full rounded-full bg-primary transition-[width] duration-(--motion-progress) ease-linear"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
