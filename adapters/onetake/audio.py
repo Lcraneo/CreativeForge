@@ -51,7 +51,11 @@ def _ffmpeg() -> str | None:
 
 
 def load_sample(name: str) -> np.ndarray:
-    """按名加载音效（sfx_samples/<name>.ogg 或自合成材质），48k mono f32。"""
+    """按名加载音效（sfx_samples/<name>.ogg 或自合成材质），48k mono f32。
+
+    文件采样统一修剪静音头/慢起音——攻击点必须落在放置时刻上，
+    否则片尾封印这类慢起音采样会晚响 200ms+（实测 confirm_01 晚 246ms）。
+    """
 
     if name in _DECODED:
         return _DECODED[name]
@@ -63,9 +67,28 @@ def load_sample(name: str) -> np.ndarray:
         path = os.path.join(SAMPLES_DIR, "{}.ogg".format(name))
         if not os.path.isfile(path):
             raise FileNotFoundError("音效采样缺失：{}".format(path))
-        clip = _decode_file(path)
+        clip = _trim_head(_decode_file(path))
     _DECODED[name] = clip
     return clip
+
+
+def _trim_head(samples: np.ndarray, ratio: float = 0.04, pad_ms: float = 10.0) -> np.ndarray:
+    """修剪静音头：让发声攻击点精确落在放置时刻（音画同步关键）。
+
+    TTS 产物实测带 90~100ms 静音头、部分采样有慢起音，不修剪则声音
+    系统性晚于画面拍点 4~8 帧。阈值取峰值 4%，保留 10ms 起振垫，确定性。
+    """
+
+    if samples.size == 0:
+        return samples
+    peak = float(np.abs(samples).max())
+    if peak <= 0:
+        return samples
+    idx = np.nonzero(np.abs(samples) > peak * ratio)[0]
+    if idx.size == 0:
+        return samples
+    cut = max(0, int(idx[0] - pad_ms / 1000 * SR))
+    return samples[cut:]
 
 
 def _decode_file(path: str, tempo: float = 1.0) -> np.ndarray:
@@ -217,12 +240,14 @@ def build_sfx_track(job_dir: str, cf: dict, vo_segments: list[dict] | None = Non
     for seg in vo_segments or []:
         try:
             window = float(seg.get("window") or 2.0)
-            clip = _decode_file(seg["path"])
+            # 先修剪静音头再算超窗：TTS 的 90~100ms 静音头不该吃窗长，
+            # 也不该让声音晚于拍点（实测晚 145ms ≈ 4~5 帧）
+            clip = _trim_head(_decode_file(seg["path"]))
             real = len(clip) / SR
             tempo = 1.0
             if real > window - 0.05:
                 tempo = min(1.3, real / max(0.5, window - 0.1))
-                clip = _decode_file(seg["path"], tempo=tempo)
+                clip = _trim_head(_decode_file(seg["path"], tempo=tempo))
             _place(master, clip, float(seg.get("start") or 0.0), 0.92)
             vo_windows.append((float(seg.get("start") or 0.0), float(seg.get("start") or 0.0) + len(clip) / SR))
             vo_count += 1

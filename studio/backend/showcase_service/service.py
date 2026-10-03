@@ -225,12 +225,18 @@ class ShowcaseService:
                 raise RuntimeError("旁白脚本为空")
             if self.chat_fn:
                 try:
+                    template_texts = [s["text"] for s in segments]
                     polished = self._polish_segments(segments)
                     segments = vo_script.apply_polish(segments, polished)
                     voice["polished"] = True
-                    log.info("showcase %s: 旁白 AI 润色完成", job["id"])
+                    for before, after in zip(template_texts, segments):
+                        if before != after["text"]:
+                            log.info("showcase %s: 润色 [%s] %s → %s",
+                                     job["id"], after["kind"], before, after["text"])
                 except Exception as exc:  # noqa: BLE001 - 润色失败回落模板
                     log.warning("showcase %s: 旁白润色失败，用模板：%s", job["id"], exc)
+            log.info("showcase %s: 终稿旁白：%s", job["id"],
+                     " / ".join("{}:{}".format(s["kind"], s["text"]) for s in segments))
             keys = []
             if self.settings_provider:
                 from studio.backend.model_service.service import _keys_for
@@ -256,15 +262,29 @@ class ShowcaseService:
         return voiced
 
     def _polish_segments(self, segments: list[dict]) -> list[str]:
-        """对话模型把模板旁白润色得更像发布会解说；结果由 apply_polish 钳制。"""
+        """对话模型润色旁白：画面事实锚定 + 严格字数纪律，结果由
+        apply_polish 钳制（超限整句回落原文，防"说得漂亮但对不上画面"）。"""
 
         import json as _json
 
-        payload = [{"kind": s["kind"], "cap": s["cap"], "text": s["text"]} for s in segments]
+        from adapters.onetake import vo_script
+
+        payload = []
+        for seg in segments:
+            payload.append({
+                "kind": seg["kind"],
+                "画面": vo_script.BEAT_VISUALS.get(seg["kind"], ""),
+                "字数上限": seg["cap"],
+                "草稿": seg["text"],
+            })
         prompt = (
-            "你是高端产品发布片的旁白撰稿人。下面是发布片五个节拍的旁白草稿"
-            "（kind=节拍，cap=该段字数上限含标点），逐段改写得更有发布会质感，"
-            "不改技术术语。只输出 JSON 数组（五个字符串，顺序对应），不要解释：\n"
+            "你是高端产品发布片的旁白撰稿人。下面是发布片五个节拍的画面内容与"
+            "旁白草稿，逐段把草稿改写得更符合高端发布会的口吻。硬性要求：\n"
+            "1. 只描述「画面」栏里观众此刻看到的内容，不得提及画面外或尚未出现的"
+            "功能，不得虚构特性、数据或夸大宣传（如「最强」「颠覆」一律不用）；\n"
+            "2. 每段严格不超过该段的「字数上限」（含标点），超限整段作废；\n"
+            "3. 口语化短句，节奏干脆，技术术语与画面标注保持一致；\n"
+            "4. 保持五段顺序，只输出 JSON 数组（五个字符串），不要解释。\n"
             + _json.dumps(payload, ensure_ascii=False)
         )
         raw = self.chat_fn(prompt)
