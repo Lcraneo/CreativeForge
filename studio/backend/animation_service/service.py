@@ -342,7 +342,14 @@ class AnimationService:
     # -- 一键补齐全套动作（串行队列，跳过已生成） --------------------------
 
     def existing_ai_actions(self, asset_id: str | None) -> set:
-        """该资产已生成过 AI 动画的动作集合（扫描动画 meta）。"""
+        """该资产已生成过 **AI 视频驱动** 动画的动作集合（扫描动画 meta）。
+
+        判定三条件（缺一不可，修复"补齐 0 个/永远不完成"的双口径 bug）：
+        1. ``source == "video"`` —— 源图摆动（asset）等确定性动画不算 AI 动画，
+           否则旧动画会永久阻塞同类动作的 AI 生成；
+        2. 本地帧文件实存 ≥ 4 —— 坏 meta/文件被清理的记录不算，避免永久跳过；
+        3. 动作名可识别。
+        """
 
         import glob as _glob
 
@@ -355,12 +362,19 @@ class AnimationService:
                     meta = json.load(handle)
             except (ValueError, OSError):
                 continue
-            if meta.get("asset_id") != asset_id:
+            if meta.get("source") != "video" or meta.get("asset_id") != asset_id:
                 continue
-            if len(meta.get("frame_urls") or []) >= 2:
-                action = meta.get("requested_action") or meta.get("action")
-                if action:
-                    done.add(action)
+            frame_urls = meta.get("frame_urls") or []
+            local = sum(
+                1
+                for url in frame_urls
+                if os.path.isfile(os.path.join(self.directory, os.path.basename(url)))
+            )
+            if local < 4:
+                continue
+            action = meta.get("requested_action") or meta.get("action")
+            if action:
+                done.add(action)
         return done
 
     def start_action_batch(
