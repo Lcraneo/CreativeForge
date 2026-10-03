@@ -131,9 +131,12 @@ def _pump(proc, chunks, on_line):
 
 
 def render_draft(job_dir: str, comp_name: str = "comp.html", out_name: str = "draft.mp4",
-                 dur: float = 15.0, workers: int = 4, on_line=None) -> str:
+                 dur: float = 15.0, workers: int = 4, on_line=None,
+                 sfx_name: str | None = None) -> str:
     """1080p30 草稿渲染（快门运动模糊）。→ mp4 绝对路径。
 
+    sfx_name：job 目录内的音频文件名（audio.py 产出的 sfx.wav），传给
+    render.py --sfx 混入成片；None 为无声版。
     注意：render.py 以 cwd 解析 --out，必须传相对文件名（cwd=job_dir）。"""
 
     ensure_environment()
@@ -148,6 +151,8 @@ def render_draft(job_dir: str, comp_name: str = "comp.html", out_name: str = "dr
         "--workers",
         str(max(1, min(8, int(workers)))),
     ]
+    if sfx_name:
+        cmd += ["--sfx", sfx_name]
     code, output = _run(cmd, cwd=job_dir, timeout=RENDER_TIMEOUT_S, on_line=on_line)
     out = os.path.join(job_dir, out_name)
     if code != 0 or not os.path.isfile(out):

@@ -18,6 +18,7 @@ const BEATS: Array<{ key: string; label: string; hint: string }> = [
 const STAGE_LABEL: Record<string, string> = {
   prepare: "素材准备中…",
   compose: "合成节拍中…",
+  voice: "配音合成中…",
   render: "渲染中（1080p30，约 1~3 分钟）…",
   verify: "oracle 验收中…",
   done: "完成",
@@ -171,6 +172,11 @@ export default function ShowcaseStudio() {
                     loop
                   />
                   <div className="flex flex-wrap items-center gap-2 text-[11.5px] text-ink-3">
+                    {jobData.voice && (
+                      <Badge tone={jobData.voice.degraded ? "neutral" : "primary"} icon="spark">
+                        {jobData.voice.degraded ? "音效版" : "有声版"}
+                      </Badge>
+                    )}
                     {jobData.verdict && (
                       <Badge tone={jobData.verdict.passed ? "primary" : jobData.verdict.passed === null ? "neutral" : "danger"}>
                         oracle {jobData.verdict.passed === true ? "PASS" : jobData.verdict.passed === null ? "未验收" : "FAIL"}

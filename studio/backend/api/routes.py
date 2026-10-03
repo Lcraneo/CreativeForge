@@ -1336,7 +1336,11 @@ def build_router(runtime):
         from studio.backend.showcase_service.service import ShowcaseService
 
         return ShowcaseService(
-            os.path.join(GENERATED_DIR, "showcase"), ANIMATION_DIR
+            os.path.join(GENERATED_DIR, "showcase"),
+            ANIMATION_DIR,
+            # 配音链路：Key 池（TTS 额度轮换）+ 对话模型润色（失败回落模板）
+            settings_provider=lambda: runtime.model_settings.effective(),
+            chat_fn=lambda prompt: _chat_once(runtime.model_settings.effective(), prompt),
         )
 
     @router.post("/showcase", status_code=202)

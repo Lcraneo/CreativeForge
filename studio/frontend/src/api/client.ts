@@ -88,6 +88,17 @@ export interface ShowcaseJob {
   error: string | null;
   error_kind?: string;
   verdict?: { passed: boolean | null; report_tail?: string; error?: string } | null;
+  /* 配音链路状态（showcase_service voice 阶段）：degraded=true 为纯音效降级版 */
+  voice?: {
+    status?: string;
+    degraded?: boolean;
+    error?: string;
+    model?: string;
+    voice?: string;
+    segments?: number;
+    cached?: number;
+    polished?: boolean;
+  } | null;
   video_url?: string;
   poster_url?: string;
   preview_url?: string;

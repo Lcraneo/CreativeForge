@@ -1,7 +1,9 @@
 """ShowcaseService — 发布展示视频的任务编排与产物持久化。"""
 
 import json
+import logging
 import os
+import re
 import threading
 import time
 import uuid
@@ -17,6 +19,8 @@ from adapters.onetake import (
 )
 from adapters.onetake import render_client
 from adapters.onetake.timeline_mapper import template_path as render_comp_template_path
+
+log = logging.getLogger("studio.showcase")
 
 _JOBS: dict[str, dict] = {}
 _JOBS_TTL = 3600.0
@@ -39,9 +43,14 @@ def _prune() -> None:
 class ShowcaseService:
     """POST /api/showcase → start_showcase(asset) → job_id；GET 轮询 snapshot。"""
 
-    def __init__(self, directory: str, animation_dir: str):
+    def __init__(self, directory: str, animation_dir: str,
+                 settings_provider=None, chat_fn=None):
         self.directory = directory
         self.animation_dir = animation_dir
+        # 配音链路（可选）：settings_provider 生效模型配置（Key 池），chat_fn
+        # 对话模型润色（_chat_once 口径）。二者缺省时旁白跳过，纯音效出片。
+        self.settings_provider = settings_provider
+        self.chat_fn = chat_fn
         os.makedirs(self.directory, exist_ok=True)
         self.jobs = _JOBS
 
@@ -118,12 +127,16 @@ class ShowcaseService:
             with open(os.path.join(job_dir, "comp.html"), "w", encoding="utf-8") as handle:
                 handle.write(comp)
 
+            job["stage"] = "voice"
+            vo_segments = self._build_voice_track(job, job_dir, cf, scene)
+
             job["stage"] = "render"
             render_client.render_draft(
                 job_dir,
                 dur=cf["meta"]["dur"],
                 workers=4,
                 on_line=lambda line: job.setdefault("log_tail", []).append(line[-120:]),
+                sfx_name="sfx.wav" if os.path.isfile(os.path.join(job_dir, "sfx.wav")) else None,
             )
             if isinstance(job.get("log_tail"), list) and len(job["log_tail"]) > 12:
                 job["log_tail"] = job["log_tail"][-12:]
@@ -158,6 +171,7 @@ class ShowcaseService:
                 },
                 },
                 "verdict": job.get("verdict"),
+                "voice": job.get("voice"),
             }
             with open(os.path.join(job_dir, "meta.json"), "w", encoding="utf-8") as handle:
                 json.dump(meta, handle, ensure_ascii=False)
@@ -182,6 +196,81 @@ class ShowcaseService:
             job["stage"] = "failed"
             job["error"] = str(error)[:400]
             job["error_kind"] = "fatal"
+
+    # -- 旁白配音（规格阶段 1-3：文本 → TTS → 混音） ----------------------
+
+    def _build_voice_track(self, job: dict, job_dir: str, cf: dict, scene: dict):
+        """旁白脚本 → TTS → 与音效混音（audio.py 落 sfx.wav）。
+
+        任何配音失败都降级为纯音效版，出片永不因配音失败而失败；
+        音轨本身失败才无声成片。返回值传给 render_draft 的 --sfx 依据
+        （sfx.wav 的存在性由 _run 复查）。"""
+
+        from adapters.onetake import audio, tts, vo_script
+
+        voice = {
+            "status": "sfx_only", "degraded": True,
+            "model": tts.TTS_MODEL, "voice": tts.VOICE,
+            "segments": 0, "cached": 0,
+        }
+        job["voice"] = voice
+        voiced = None
+        try:
+            segments = vo_script.build_script(scene, cf)
+            log.info(
+                "showcase %s: 旁白脚本 %d 段：%s", job["id"], len(segments),
+                " / ".join("{}:{}".format(s["kind"], s["text"]) for s in segments),
+            )
+            if not segments:
+                raise RuntimeError("旁白脚本为空")
+            if self.chat_fn:
+                try:
+                    polished = self._polish_segments(segments)
+                    segments = vo_script.apply_polish(segments, polished)
+                    voice["polished"] = True
+                    log.info("showcase %s: 旁白 AI 润色完成", job["id"])
+                except Exception as exc:  # noqa: BLE001 - 润色失败回落模板
+                    log.warning("showcase %s: 旁白润色失败，用模板：%s", job["id"], exc)
+            keys = []
+            if self.settings_provider:
+                from studio.backend.model_service.service import _keys_for
+
+                keys = _keys_for(self.settings_provider() or {})
+            cache_dir = os.path.join(os.path.dirname(self.directory), "tts")
+            voiced = tts.synthesize_segments(segments, keys, cache_dir)
+            voice.update({
+                "status": "vo", "degraded": False,
+                "segments": len(voiced),
+                "cached": sum(1 for s in voiced if s.get("cached")),
+            })
+        except Exception as exc:  # noqa: BLE001 - 配音降级，出片不阻塞
+            log.warning("showcase %s: 配音降级纯音效：%s", job["id"], exc)
+            voice.update({"status": "degraded", "error": str(exc)[:200]})
+        try:
+            audio.build_sfx_track(job_dir, cf, voiced)
+            voice["track"] = "sfx.wav"
+        except Exception as exc:  # noqa: BLE001 - 音轨失败才真正无声
+            log.error("showcase %s: 音轨合成失败，无声成片：%s", job["id"], exc)
+            voice.update({"status": "silent", "error": str(exc)[:200]})
+            return None
+        return voiced
+
+    def _polish_segments(self, segments: list[dict]) -> list[str]:
+        """对话模型把模板旁白润色得更像发布会解说；结果由 apply_polish 钳制。"""
+
+        import json as _json
+
+        payload = [{"kind": s["kind"], "cap": s["cap"], "text": s["text"]} for s in segments]
+        prompt = (
+            "你是高端产品发布片的旁白撰稿人。下面是发布片五个节拍的旁白草稿"
+            "（kind=节拍，cap=该段字数上限含标点），逐段改写得更有发布会质感，"
+            "不改技术术语。只输出 JSON 数组（五个字符串，顺序对应），不要解释：\n"
+            + _json.dumps(payload, ensure_ascii=False)
+        )
+        raw = self.chat_fn(prompt)
+        match = re.search(r"\[.*\]", raw, re.S)
+        texts = _json.loads(match.group(0)) if match else None
+        return texts if isinstance(texts, list) else []
 
     def _prompt_for(self, asset: dict) -> str:
         identity = asset.get("identity") or {}
