@@ -771,7 +771,7 @@ export default function AnimationStudio() {
                     (selected.name === "walk" || selected.name === "run") && (
                     <div>
                       <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
-                        视角
+                        生成视角 · 基础动作专用
                       </div>
                       <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                         <button
@@ -889,6 +889,7 @@ export default function AnimationStudio() {
                     {selected.kind !== "base" && (
                       <p className="mt-2 text-[10.5px] text-ink-4">
                         当前活跃的是自定义动作——点击任一基础动作切换后,此区的「生成动画」按钮才会激活。
+                        自定义动作的创建与使用都在下方「自定义动作功能区」,与本区相互独立。
                       </p>
                     )}
                   </div>
@@ -962,18 +963,29 @@ export default function AnimationStudio() {
 
             {mode === "smart" && (
               <div className="flex flex-col gap-4">
+                {/* ── 自定义动作功能区分界 ─────────────────────────────
+                    本分隔线以下只服务自定义动作：创作台（调参/命名/保存）
+                    与动作库（选卡/生成）。基础动作的服务只在上方基础动作
+                    区，两区不交叉、不互相包含。 */}
+                <div className="flex items-center gap-3" aria-hidden>
+                  <span className="h-px flex-1 bg-line-subtle" />
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember">
+                    自定义动作 · 功能区（创作与使用）
+                  </span>
+                  <span className="h-px flex-1 bg-line-subtle" />
+                </div>
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] uppercase tracking-widest text-ink-4">
-                      当前编辑
+                      创作台 · 当前参数
                     </span>
                     {selected.kind === "base" ? (
-                      <span className="rounded-full border border-primary/40 bg-primary-tint/30 px-2.5 py-0.5 text-[10.5px] font-medium text-ink">
-                        基础动作 · {ACTION_LABELS[editorAction]}
+                      <span className="rounded-full border border-line-subtle bg-surface-2 px-2.5 py-0.5 text-[10.5px] font-medium text-ink-2">
+                        创作基底 · 内置「{ACTION_LABELS[editorAction]}」（改动不影响上方基础动作区）
                       </span>
                     ) : (
                       <span className="rounded-full border border-ember/40 bg-ember-tint/30 px-2.5 py-0.5 text-[10.5px] font-medium text-ink">
-                        自定义动作 · {selected.name}（基于
+                        编辑中 · {selected.name}（基于
                         {ACTION_LABELS[editorAction] ?? editorAction}）
                       </span>
                     )}
@@ -986,7 +998,7 @@ export default function AnimationStudio() {
                   {isLocomotion && (
                     <div>
                       <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
-                        视角
+                        预览视角 · 仅创作台预览
                       </div>
                       <div className="flex overflow-hidden rounded-lg border border-line-subtle">
                         {(["side", "front"] as const).map((item) => (
@@ -1021,7 +1033,7 @@ export default function AnimationStudio() {
                 <div className="rounded-lg border border-line-subtle bg-surface-2/40 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[11px] uppercase tracking-widest text-ink-4">
-                      自然语言自定义动作 · 用一句话描述你想要的动作
+                      自然语言创作 · 一句话生成动作参数（自定义动作专用）
                     </span>
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -1073,7 +1085,7 @@ export default function AnimationStudio() {
                       套用到动作编辑器
                     </Button>
                     <span className="text-[10.5px] text-ink-4">
-                      套用后可在下方滑杆微调,保存为自定义动作后到下方「自定义动作」区生成
+                      套用后可在下方滑杆微调,保存后在下方「动作库」中生成
                     </span>
                   </div>
                 </div>
@@ -1148,7 +1160,7 @@ export default function AnimationStudio() {
 
                 <div className="flex flex-wrap items-end gap-4 rounded-lg border border-line-subtle bg-surface-2/40 p-3">
                   <label className="text-[11px] text-ink-4">
-                    <span className="mb-1.5 block uppercase tracking-widest">保存当前动作为自定义</span>
+                    <span className="mb-1.5 block uppercase tracking-widest">保存当前调参为新自定义动作</span>
                     <input
                       value={presetName}
                       onChange={(e) => setPresetName(e.target.value)}
@@ -1167,8 +1179,17 @@ export default function AnimationStudio() {
                     保存
                   </Button>
                   <span className="text-[10.5px] text-ink-4">
-                    保存后自动选中,到下方「自定义动作」区点击「用此动作生成」。
+                    保存后自动选中,到下方「动作库」点击「用此动作生成」。
                   </span>
+                </div>
+
+                {/* ── 动作库分界：创作台到此为止，下面是已保存动作的选择与生成 ── */}
+                <div className="flex items-center gap-3" aria-hidden>
+                  <span className="h-px flex-1 bg-line-subtle" />
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember">
+                    自定义动作 · 动作库（选中后生成）
+                  </span>
+                  <span className="h-px flex-1 bg-line-subtle" />
                 </div>
 
                 {/* 自定义动作区:与基础动作区(上方 primary 高亮)完全独立的
@@ -1184,7 +1205,7 @@ export default function AnimationStudio() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[11px] uppercase tracking-widest text-ink-4">
-                        自定义动作 · 用户创建
+                        动作库 · 已保存的自定义动作
                       </span>
                       {selected.kind === "custom" && (
                         <span className="rounded-full bg-ember px-2 py-0.5 text-[10px] font-medium text-white">
@@ -1203,7 +1224,7 @@ export default function AnimationStudio() {
                       }}
                       title={
                         selected.kind !== "custom"
-                          ? "先在下方点击一张自定义动作卡片选中"
+                          ? "先在下方动作库点击一张自定义动作卡片选中"
                           : `严格按「${selected.name}」保存时的参数生成动画`
                       }
                     >
@@ -1216,7 +1237,7 @@ export default function AnimationStudio() {
                   </div>
                   {presets.length === 0 ? (
                     <p className="text-[11.5px] text-ink-4">
-                      暂无自定义动作——在上方编辑器调整动作与参数后,输入名称保存即可出现在这里。
+                      暂无自定义动作——在上方创作台调整动作与参数后,输入名称保存即可出现在这里。
                     </p>
                   ) : (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
