@@ -946,14 +946,25 @@ def build_router(runtime):
         import json as _json
 
         prompt = (
-            "你是游戏动画参数师。把用户的动作描述转换成 JSON（只输出 JSON 本体，"
-            "不要 markdown 代码块、不要解释）。JSON 格式：\n"
-            '{"label": "动作名，4字以内中文", '
-            '"base_action": "idle/walk/run/attack/jump 之一（最接近的整体动作类型）", '
-            '"view": "front 或 side（side=侧视横版步态，仅 walk/run 建议）", '
-            '"pose_config": {"bob": 上下起伏0~2, "stride": 步幅0~2, "arm": 摆臂0~2, '
-            '"lift": 抬脚0~2, "lean": 前倾角度-15~30, "lag": 手臂滞后0~1.2, "cycles": 循环周期0.25~3}}\n'
-            "数值必须落在范围内。\n\n用户描述：" + text
+            "你是游戏动画参数师。姿态引擎是「循环动作参数引擎」，把用户的动作描述"
+            "转换成 JSON（只输出 JSON 本体，不要 markdown 代码块、不要解释）。\n"
+            "两种表达：\n"
+            "A. 单一循环动作：{\"label\": \"动作名4字内\", \"base_action\": "
+            "\"idle/walk/run/attack/jump 之一\", \"view\": \"front 或 side"
+            "（side=侧视横版步态，仅 walk/run 建议）\", \"pose_config\": {\"bob\": 起伏0~2, "
+            "\"stride\": 步幅0~2, \"arm\": 摆臂0~2, \"lift\": 抬脚0~2, \"lean\": 前倾-15~30, "
+            "\"lag\": 手臂滞后0~1.2, \"cycles\": 周期0.25~3, \"turn\": 转身幅度0~180}}\n"
+            "B. 多段编排（描述含先后顺序时必须用，如出现「先/然后/接着/最后/再」等"
+            "顺序词就禁止用单一循环硬套）：pose_config 增加 "
+            "\"phases\": [{\"action\": \"idle/walk/run/attack/jump\", \"weight\": 时长比重1~4, "
+            "\"turn\": 该段转身幅度0~180}]，2~5 段；7 个全局参数仍要给出。\n"
+            "硬性规则：\n"
+            "1. 引擎无平移/位移/镜头能力；「旋转/转身」一律用 turn 度数表达"
+            "（缓慢旋转=60~120，完整转体=180）；\n"
+            "2. 跳跃段的 cycles 不得低于 1（慢周期大弧线会呈悬浮/飞行观感）；\n"
+            "3. 舞蹈类用 idle 基底 + 调大 bob/arm + 适度 lift/turn，不要用 jump 承载舞蹈；\n"
+            "4. 「站立/起立」用 idle 段表达（引擎无起立原语）；\n"
+            "5. 数值必须落在范围内。\n\n用户描述：" + text
         )
         try:
             raw = _chat_once(settings, prompt)
@@ -990,7 +1001,34 @@ def build_router(runtime):
             "lean": clamp(raw_pose.get("lean"), -15, 30, 0),
             "lag": clamp(raw_pose.get("lag"), 0, 1.2, 0.45),
             "cycles": clamp(raw_pose.get("cycles"), 0.25, 3, 1),
+            "turn": clamp(raw_pose.get("turn"), 0, 180, 0),
         }
+        # 多段编排（可选）：校验段合法性；「站立后转身跳跃舞蹈」这类顺序
+        # 请求由解读模型映射为 phases，引擎按权重切片跑各段完整原语循环
+        phases_raw = raw_pose.get("phases")
+        if isinstance(phases_raw, list) and len(phases_raw) >= 2:
+            phases = []
+            for item in phases_raw[:5]:
+                if not isinstance(item, dict):
+                    continue
+                act = str(item.get("action") or "")
+                if act not in ("idle", "walk", "run", "attack", "jump"):
+                    continue
+                phases.append({
+                    "action": act,
+                    "weight": clamp(item.get("weight"), 0.5, 4, 1),
+                    "turn": clamp(item.get("turn"), 0, 180, 0),
+                })
+            if len(phases) >= 2:
+                pose_config["phases"] = phases
+        # 反飞行钳制：jump 的弹道弧高 158px，cycles<1 的慢周期会把滞空段
+        # 拉成悬浮——实测「起舞→飞行」的根因。凡跳跃参与（基底或编排段）
+        # 一律把周期抬回 ≥1
+        jumps = base_action == "jump" or any(
+            p["action"] == "jump" for p in pose_config.get("phases", [])
+        )
+        if jumps and float(pose_config["cycles"]) < 1.0:
+            pose_config["cycles"] = 1.0
         return {
             "label": label[:12],
             "base_action": base_action,
