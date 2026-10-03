@@ -43,11 +43,35 @@ class CustomActionStore:
         config = payload.get("pose_config")
         if not isinstance(config, dict):
             raise ValueError("pose_config 必须是对象")
+        # 数值参数直存；phases（多段编排）逐段校验后保留——静默丢弃会让
+        # 「先…然后…」类编排动作保存后退化成单一循环
+        clean_config: dict[str, Any] = {}
+        for key, value in config.items():
+            if isinstance(value, bool):
+                continue
+            if isinstance(value, (int, float)):
+                clean_config[key] = value
+            elif key == "phases" and isinstance(value, list):
+                phases = []
+                for seg in value[:5]:
+                    if not isinstance(seg, dict):
+                        continue
+                    act = str(seg.get("action") or "")
+                    if act not in ("idle", "walk", "run", "attack", "jump"):
+                        continue
+                    try:
+                        weight = max(0.5, min(4.0, float(seg.get("weight", 1.0) or 1.0)))
+                        turn = max(0.0, min(180.0, float(seg.get("turn", 0) or 0.0)))
+                    except (TypeError, ValueError):
+                        continue
+                    phases.append({"action": act, "weight": weight, "turn": turn})
+                if len(phases) >= 2:
+                    clean_config["phases"] = phases
         clean = {
             "name": name,
             "action": str(payload.get("action") or "walk"),
             "view": payload.get("view") if payload.get("view") in ("front", "side") else "front",
-            "pose_config": {k: v for k, v in config.items() if isinstance(v, (int, float))},
+            "pose_config": clean_config,
             "updated_at": time.time(),
             "created_at": self._actions.get(name, {}).get("created_at", time.time()),
         }

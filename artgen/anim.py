@@ -72,7 +72,12 @@ def _bump(u, peak=0.5):
 def _pose(action, phase, config=None):
     """Pose state for one phase. ``config`` (动作自定义参数) scales/offsets the
     raw curves: bob 起伏、stride 步幅、arm 摆臂、lift 抬脚、lean 前倾、
-    lag 手臂滞后（重叠动作）、cycles 每循环运动周期数。
+    lag 手臂滞后（重叠动作）、cycles 每循环运动周期数、turn 转身幅度
+    （0~180°，there-and-back 律动，riganim 以水平压缩模拟绕纵轴旋转）。
+
+    ``config["phases"]``（多段编排）: [{"action", "weight", "turn"}, ...]
+    按权重把一个循环切成多段，各段独立跑完整原语循环——所有原语段首尾
+    都回站立位，天然 C0；turn 跨段线性过渡（含首尾环绕）。
 
     曲线设计纪律（专业级观感的底线）：
     * 循环动作（idle/walk/run）在 phase 0/1 接缝处 C0+C1 连续——起伏用
@@ -84,6 +89,97 @@ def _pose(action, phase, config=None):
     * 次级动作（呼吸/重心横移/肩盆反向倾斜）叠加在主循环之上，
       幅度小、频率错开，避免与主节拍共振。"""
     cfg = config or {}
+    seq = _sequence_phases(cfg.get("phases"))
+    if seq:
+        state, turn_deg = _pose_sequence(seq, phase, cfg)
+    else:
+        state = _pose_single(action, phase, cfg)
+        turn_deg = _turn_sway(phase, cfg)
+    state["turn"] = turn_deg
+    return state
+
+
+def _sequence_phases(raw):
+    """校验 phases 配置 → [{action, weight, turn}]；非法返回 None（回落单原语）。"""
+
+    if not isinstance(raw, list) or len(raw) < 2 or len(raw) > 6:
+        return None
+    out = []
+    for item in raw:
+        if not isinstance(item, dict):
+            return None
+        act = str(item.get("action") or "")
+        if act not in ACTIONS:
+            return None
+        try:
+            weight = max(0.2, min(6.0, float(item.get("weight", 1.0))))
+        except (TypeError, ValueError):
+            return None
+        try:
+            turn = max(0.0, min(180.0, float(item.get("turn", 0.0) or 0.0)))
+        except (TypeError, ValueError):
+            turn = 0.0
+        out.append({"action": act, "weight": weight, "turn": turn})
+    return out
+
+
+def _pose_sequence(seq, phase, cfg):
+    """多段编排：权重切片 + 各段完整原语循环（天然 C0）+ turn 段中心结点
+    插值——每段在自己的中心保持本段 turn，过渡跨越段边界（站立段保持
+    正脸、转体落在跳跃段内），环绕插值保证接缝闭合。→ (state, turn_deg)。"""
+
+    total = sum(item["weight"] for item in seq)
+    centers = []
+    acc = 0.0
+    for item in seq:
+        acc += item["weight"]
+        centers.append(acc - item["weight"] / 2.0)
+    pos = (phase % 1.0) * total
+
+    acc = 0.0
+    index = len(seq) - 1
+    local = 1.0
+    for i, item in enumerate(seq):
+        if pos <= acc + item["weight"] or i == len(seq) - 1:
+            index = i
+            local = min(1.0, max(0.0, (pos - acc) / item["weight"]))
+            break
+        acc += item["weight"]
+    state = _pose_single(seq[index]["action"], local, cfg)
+
+    # turn：环绕结点插值。pos 在首中心之前 = 头部环绕区（从末中心插向首
+    # 中心）；其余按中心 k → 中心 k+1 线性过渡（k 为末段时目标 = 环绕结点
+    # c0+total）——turn(phase=1) ≡ turn(phase=0)，接缝闭合
+    n = len(seq)
+    k = n - 1
+    for i in range(n):
+        if centers[i] <= pos:
+            k = i
+    if pos < centers[0]:
+        span = (total - centers[n - 1]) + centers[0]
+        t = (pos + total - centers[n - 1]) / span
+        turn = seq[n - 1]["turn"] + (seq[0]["turn"] - seq[n - 1]["turn"]) * t
+    else:
+        k_next = (k + 1) % n
+        span = (centers[0] + total - centers[k]) if k == n - 1 else (centers[k_next] - centers[k])
+        t = (pos - centers[k]) / span
+        turn = seq[k]["turn"] + (seq[k_next]["turn"] - seq[k]["turn"]) * t
+    return state, turn
+
+
+def _turn_sway(phase, cfg):
+    """单原语路径的转身律动：there-and-back（sin(π·k·phase)，k 取整保证
+    循环接缝必回 0°——非整 k 的 sin(2π·cycles·phase) 在接缝会跳角度）。"""
+
+    amplitude = max(0.0, min(180.0, float(cfg.get("turn", 0.0) or 0.0)))
+    if amplitude <= 0.5:
+        return 0.0
+    k = max(1, round(float(cfg.get("cycles", 1.0) or 1.0)))
+    return amplitude * math.sin(math.pi * k * phase)
+
+
+def _pose_single(action, phase, cfg):
+    """单一原语的姿态状态（_pose 的主体，phases 分派到此处求值）。"""
     cycles = max(0.25, min(4.0, float(cfg.get("cycles", 1.0))))
     cyclic = action in ("idle", "walk", "run")
     t = phase * 2.0 * math.pi * (cycles if cyclic else 1.0)

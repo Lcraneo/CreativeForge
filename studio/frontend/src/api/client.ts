@@ -153,9 +153,17 @@ export interface AnimationResult {
   created_at: number;
 }
 
-export interface PoseConfig {
-  [key: string]: number;
+/** 多段编排段（AI 解读「先…然后…」类描述生成）：action 为该段基元，
+ * weight 为时长比重，turn 为该段转身幅度（度）。 */
+export interface MotionPhase {
+  action: string;
+  weight: number;
+  turn?: number;
 }
+
+/** 姿态参数：数值键为滑杆参数（bob/stride/arm/lift/lean/lag/cycles/turn），
+ * phases 为可选多段编排（非数值，保存/生成链路透传）。 */
+export type PoseConfig = { [key: string]: number } & { phases?: MotionPhase[] };
 
 export interface CustomActionPreset {
   name: string;

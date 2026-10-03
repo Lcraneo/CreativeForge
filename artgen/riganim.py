@@ -9,6 +9,7 @@ animations; no fixed template character is ever produced.
 """
 
 import io
+import math
 
 import numpy as np
 from PIL import Image, ImageChops, ImageDraw, ImageFilter
@@ -165,10 +166,64 @@ def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
     return layer
 
 
-def _place(base, layer, pivot, angle, offset):
-    rotated = layer.rotate(angle, resample=Image.BICUBIC, center=(pivot[0], pivot[1]), expand=False)
-    base.paste(rotated, (int(round(offset[0])), int(round(offset[1]))), rotated)
-    return rotated
+def _rotate_clean(layer, pivot, angle):
+    """预乘空间旋转：双三次重采样在透明边界会把透明像素的 RGB（洞底色/
+    袋底白）拉进可见区（实测封闭白洞在腿缘漏出 α=131 的 240+ 近白像素）。
+    先 RGB×alpha 预乘、旋转、再除回 alpha——边缘颜色与透明度同步过渡，
+    零色溢。alpha=0 处 RGB 归零，旋转后按 alpha 安全除回。"""
+
+    arr = np.asarray(layer, dtype=np.float32)
+    alpha = arr[..., 3:4] / 255.0
+    premul = arr.copy()
+    premul[..., :3] *= alpha
+    img = Image.fromarray(np.clip(premul, 0, 255).astype(np.uint8), "RGBA")
+    rotated = img.rotate(angle, resample=Image.BICUBIC, center=(pivot[0], pivot[1]), expand=False)
+    out = np.asarray(rotated, dtype=np.float32)
+    a = out[..., 3:4] / 255.0
+    safe = np.maximum(a, 1.0 / 255.0)
+    out[..., :3] = np.where(a > 1.0 / 255.0, np.clip(out[..., :3] / safe, 0, 255), 0.0)
+    # 双三次在硬边的过冲（腿缘 120 冲到 ~130）经低 alpha 除回会被放大成
+    # 近白色（实测 130/0.514=253 的"白洞泄漏"）——钳回本图层不透明像素
+    # 的色域：重采样不可能创造源色域之外的颜色
+    opaque = arr[..., 3] > 250
+    if opaque.any():
+        lo = np.min(arr[..., :3][opaque], axis=0)
+        hi = np.max(arr[..., :3][opaque], axis=0)
+        out[..., :3] = np.clip(out[..., :3], lo, hi)
+    return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA")
+
+
+def _rotated_canvas(layer, pivot, angle, offset, size):
+    """旋转后的图层铺到全幅透明画布（offset 取整定位）。"""
+
+    rotated = _rotate_clean(layer, pivot, angle)
+    canvas = Image.new("RGBA", (size, size), CANVAS_BG)
+    canvas.paste(rotated, (int(round(offset[0])), int(round(offset[1]))))
+    return canvas
+
+
+def _place_over(subject, layer, pivot, angle, offset, size):
+    """真 alpha over：图层合到主体画布。旧 paste 直贴在透明底上会把被覆盖
+    图层的 alpha 拉低（羽化边缘透底），over 合成保持不透明区域不透明。"""
+
+    return Image.alpha_composite(subject, _rotated_canvas(layer, pivot, angle, offset, size))
+
+
+def _apply_yaw(subject, yaw_deg, cx, size):
+    """绕纵轴假转身（2D 骨骼引擎的标准做法）：主体整体水平压缩到
+    cos(|yaw|)，|yaw|>90° 时水平镜像（背面）。纯画布后变换，不触碰
+    分层/双骨链——分体与拖影修复都在此之前已完成，不受影响。
+    turn 曲线在 anim._pose 端保证接缝回 0°，循环闭合。"""
+
+    rad = math.radians(max(-180.0, min(180.0, float(yaw_deg))))
+    sx = max(0.15, abs(math.cos(rad)))
+    w2 = max(1, int(round(size * sx)))
+    squeezed = subject.resize((w2, size), Image.LANCZOS)
+    if math.cos(rad) < 0:
+        squeezed = squeezed.transpose(Image.FLIP_LEFT_RIGHT)
+    out = Image.new("RGBA", (size, size), CANVAS_BG)
+    out.paste(squeezed, (int(round(cx - w2 / 2.0)), 0))
+    return out
 
 
 def _falign(frames):
@@ -398,32 +453,36 @@ def animate_rigged(
 
     frames = []
     scales = _motion_scales(rig, size)
+    # 跳跃/抬升的上边界保护：dy 以向下为正，主体头顶（y0）移出画布就是
+    # "削头"——编排跳跃段实测跳弧 158px 时头部出框。钳到头顶留 8px 余量
+    max_up = y0 - max(8.0, size * 0.02)
 
     coverage = Image.new("L", (size, size), 0)
 
-    def _place_tracked(layer, pivot, angle, offset):
-        """贴层并累计"已绘制覆盖图"——裆部立柱只填洞门控的依据。"""
+    def _place_tracked(subject, layer, pivot, angle, offset):
+        """真 over 贴层并累计"已绘制覆盖图"——裆部立柱只填洞门控的依据。"""
         nonlocal coverage
-        rotated = _place(frame, layer, pivot, angle, offset)
-        ox, oy = int(round(offset[0])), int(round(offset[1]))
-        blank = Image.new("RGBA", (size, size), CANVAS_BG)
-        blank.paste(rotated, (ox, oy))
+        blank = _rotated_canvas(layer, pivot, angle, offset, size)
         grown = np.maximum(
             np.asarray(coverage, dtype=np.uint8),
             np.asarray(blank.getchannel("A"), dtype=np.uint8),
         )
         coverage = Image.fromarray(grown, "L")
+        return Image.alpha_composite(subject, blank)
 
     for index in range(frame_count):
         pose = _pose(action, index / frame_count, config)
         dy = (pose["bob"] - pose["jump"]) * scales["bob"]
+        dy = max(dy, -max_up)
         lean = pose["lean"]
         sway = pose.get("sway", 0.0) * scales["offset"]
         tilt = pose.get("tilt", 0.0)
         arm = pose["arm"] * scales["limb"]
         leg = pose["leg"] * scales["limb"]
 
-        frame = base_bg.copy()
+        # 所有图层先落到透明主体画布（而非直接贴背景）：turn 假转身需要对
+        # "完整主体"做水平压缩，背景必须保持静止不参与变形
+        subject_frame = Image.new("RGBA", (size, size), CANVAS_BG)
         # 双骨链合成：大腿 → 小腿（父段角 + 膝弯）→ 裆部立柱（只填洞，无
         # 旋转）→ 躯干 → 上臂 → 前臂（父段角 + 肘屈）。膝/肘的滞后与屈曲让
         # 肢体呈两段式运动，消除整段刚体旋转的分段拼接感。父段层已裁到膝/肘
@@ -436,13 +495,13 @@ def animate_rigged(
         elbow_l = pose.get("elbow_l", 0.0) * scales["limb"]
         elbow_r = pose.get("elbow_r", 0.0) * scales["limb"]
 
-        _place_tracked(regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
-        _place_tracked(
-            regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
+        subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
+        subject_frame = _place_tracked(
+            subject_frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
         )
-        _place_tracked(regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
-        _place_tracked(
-            regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
+        subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
+        subject_frame = _place_tracked(
+            subject_frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
         )
         # 裆部立柱"只填洞"：门控 = 立柱 alpha × NOT(已绘制覆盖)。两腿摆开
         # 露出的楔形中缝由角色自己的裆部像素补上；运动中的腿永远不会被这层
@@ -450,12 +509,20 @@ def animate_rigged(
         pillar_gate = ImageChops.multiply(
             regions["crotch"][0].getchannel("A"), ImageChops.invert(coverage)
         )
-        frame.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
-        _place(frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy))
-        _place(frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy))
-        _place(frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy))
-        _place(frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy))
-        _place(frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy))
+        pillar_canvas = Image.new("RGBA", (size, size), CANVAS_BG)
+        pillar_canvas.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
+        subject_frame = Image.alpha_composite(subject_frame, pillar_canvas)
+        subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
+        subject_frame = _place_over(subject_frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy), size)
+        subject_frame = _place_over(subject_frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy), size)
+        subject_frame = _place_over(subject_frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy), size)
+        subject_frame = _place_over(subject_frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy), size)
+
+        yaw = float(pose.get("turn", 0.0) or 0.0)
+        if abs(yaw) > 2.0:
+            subject_frame = _apply_yaw(subject_frame, yaw, cx, size)
+        frame = base_bg.copy()
+        frame.alpha_composite(subject_frame)
         frames.append((size, size, bytearray(frame.tobytes())))
 
     reference = (size, size, bytearray(canvas.tobytes()))

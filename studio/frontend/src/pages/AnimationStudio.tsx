@@ -3,7 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { ModelApiPanel } from "../components/ModelApiPanel";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
 import { clearHidden, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
-import { api, type AnimationResult, type PoseConfig } from "../api/client";
+import {
+  api,
+  type AnimationResult,
+  type MotionPhase,
+  type PoseConfig,
+} from "../api/client";
 import {
   editorStateFor,
   resolveGeneration,
@@ -41,6 +46,7 @@ const POSE_PARAMS: Array<{
   { key: "lean", label: "身体前倾 (°)", min: -15, max: 30, step: 1 },
   { key: "lag", label: "手臂滞后 (重叠)", min: 0, max: 1.2, step: 0.05 },
   { key: "cycles", label: "循环周期数", min: 0.25, max: 3, step: 0.25 },
+  { key: "turn", label: "转身幅度 (°)", min: 0, max: 180, step: 5 },
 ];
 
 const DEFAULT_POSE_CONFIG: PoseConfig = {
@@ -51,6 +57,7 @@ const DEFAULT_POSE_CONFIG: PoseConfig = {
   lean: 0,
   lag: 0.45,
   cycles: 1,
+  turn: 0,
 };
 
 interface SeqFrame {
@@ -1029,6 +1036,24 @@ export default function AnimationStudio() {
                     </Button>
                   </div>
                 </div>
+
+                {Array.isArray(poseConfig.phases) && poseConfig.phases.length >= 2 && (
+                  <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-ember/30 bg-ember-tint/10 px-3 py-2">
+                    <span className="text-[10.5px] font-medium text-ink-3">编排序列</span>
+                    {(poseConfig.phases as MotionPhase[]).map((seg, index) => (
+                      <span
+                        key={index}
+                        className="rounded-full border border-ember/30 bg-ember-tint/20 px-2 py-0.5 text-[10px] text-ink-2"
+                      >
+                        {index + 1}. {ACTION_LABELS[seg.action] ?? seg.action}
+                        {seg.turn ? ` · 转${Math.round(seg.turn)}°` : ""}
+                      </span>
+                    ))}
+                    <span className="text-[10px] text-ink-4">
+                      （AI 解读生成；滑杆为全局幅度，保存后按序列出片）
+                    </span>
+                  </div>
+                )}
 
                 <div className="rounded-lg border border-line-subtle bg-surface-2/40 p-3">
                   <div className="mb-2 flex items-center justify-between">
