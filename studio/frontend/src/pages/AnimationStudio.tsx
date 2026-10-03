@@ -1278,6 +1278,25 @@ export default function AnimationStudio() {
                                 </span>
                               </span>
                             </button>
+                            {/* 每张卡片专属的生成按钮：点卡片=选中，点生成=选中并
+                                立即按该动作保存参数出片——与基础动作区"每个动作
+                                可直接生成"对齐，自定义动作不再依赖顶部总按钮 */}
+                            <button
+                              onClick={() => {
+                                selectCustom(preset.name);
+                                void generate({ kind: "custom", name: preset.name });
+                              }}
+                              disabled={busy}
+                              title={`选中并立即按「${preset.name}」保存时的参数生成动画`}
+                              className={cx(
+                                "shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors",
+                                active
+                                  ? "border-ember bg-ember text-white hover:opacity-90"
+                                  : "border-line-subtle bg-surface-2 text-ink-2 hover:border-ember hover:text-ember",
+                              )}
+                            >
+                              {busy && active ? "生成中…" : "生成"}
+                            </button>
                             <button
                               onClick={() => removePreset(preset.name)}
                               title="删除该自定义动作"
@@ -1292,7 +1311,7 @@ export default function AnimationStudio() {
                   )}
                   {selected.kind !== "custom" && (
                     <p className="text-[10.5px] text-ink-4">
-                      点击卡片选中自定义动作后,「用此动作生成」按钮才会激活;生成严格按该动作保存时的参数执行。
+                      每张卡片的「生成」按钮可选中并立即按该动作出片（严格按保存时的参数执行）；点卡片本身仅选中,顶部按钮对应当前选中项。
                     </p>
                   )}
                 </div>
