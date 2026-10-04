@@ -33005,7 +33005,7 @@
     "palette": [],
     "image": {
       "file": "img_1791102161690.png",
-      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+      "url": "/api/generated/img_1791102161690.png",
       "model": "wanx2.1-t2i-turbo",
       "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
       "width": 1024,
@@ -33040,7 +33040,7 @@
         },
         "ai_image": {
           "file": "img_1791102161690.png",
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+          "url": "/api/generated/img_1791102161690.png",
           "model": "wanx2.1-t2i-turbo",
           "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
           "width": 1024,
@@ -33238,7 +33238,7 @@
       },
       "image": {
         "file": "img_1791102161690.png",
-        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+        "url": "/api/generated/img_1791102161690.png",
         "model": "wanx2.1-t2i-turbo",
         "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
         "width": 1024,
@@ -33246,23 +33246,1083 @@
       },
       "design_views": {
         "front": {
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+          "url": "/api/generated/img_1791102161690.png",
           "model": "wanx2.1-t2i-turbo"
         },
         "side": {
           "file": "edit_1791102179600.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/d3/20261004/17bff29b/79a66329-b23f-4c38-9075-3462d1066732-1.png?Expires=1791707979&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=usGAWkISdD8pLUAqHCMi8fA%2FJD4%3D",
+          "url": "/api/generated/edit_1791102179600.png",
           "model": "qwen-image-edit",
           "view": "side"
         },
         "back": {
           "file": "edit_1791102197352.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/bc/20261004/17bff29b/d6301805-1a92-4698-b422-1c2c97f5f460-1.png?Expires=1791707996&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=XA5o1G%2FA2OV0Tk0FwsYSB0dZJLk%3D",
+          "url": "/api/generated/edit_1791102197352.png",
           "model": "qwen-image-edit",
           "view": "back"
         }
       }
     },
     "id": "T0001-23"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791121380.5633228,
+    "finished_at": 1791121393.5584524,
+    "goal": "测试用像素风小狐狸法师，橙色围巾，带待机动画",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "idle",
+    "frames": 12,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.926,
+      "animation": 0.9867
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 12.995,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#8e7491",
+      "#8e7492",
+      "#925e5a",
+      "#ba745c",
+      "#fc7c22",
+      "#8b6f89",
+      "#ca9c7b",
+      "#a17985",
+      "#ed8b53",
+      "#be8175",
+      "#e4b8a0",
+      "#a84926",
+      "#aa5a3e",
+      "#8d7391",
+      "#886e8c"
+    ],
+    "image": {
+      "file": "img_1791121388322.png",
+      "url": "/api/generated/img_1791121388322.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791121388322.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791121388322.png",
+          "url": "/api/generated/img_1791121388322.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791121388322.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 1,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 2,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 3,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 4,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 5,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 6,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 7,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 8,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 9,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 10,
+            "action": "idle",
+            "image": null
+          },
+          {
+            "id": 11,
+            "action": "idle",
+            "image": null
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "idle",
+          "phase": [
+            0.0,
+            0.0909,
+            0.1818,
+            0.2727,
+            0.3636,
+            0.4545,
+            0.5455,
+            0.6364,
+            0.7273,
+            0.8182,
+            0.9091,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        },
+        "render": {
+          "action": "idle",
+          "frame_count": 12,
+          "duration": 1.0,
+          "size": 384,
+          "consistency": {
+            "palette": 0.9573,
+            "color": 0.9991,
+            "line": 0.99,
+            "hash": 0.8308,
+            "overall": 0.9553,
+            "passed": true,
+            "floor": 0.6,
+            "frames_checked": 6
+          },
+          "source": "current-character-source"
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.88,
+          "contour_score": 0.92,
+          "overall": 0.926
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.926,
+            "animation": 0.9867
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#8e7491",
+            "#8e7492",
+            "#925e5a",
+            "#ba745c",
+            "#fc7c22",
+            "#8b6f89",
+            "#ca9c7b",
+            "#a17985",
+            "#ed8b53",
+            "#be8175",
+            "#e4b8a0",
+            "#a84926",
+            "#aa5a3e",
+            "#8d7391",
+            "#886e8c"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#8e7491",
+            "#8e7491",
+            "#8e7492",
+            "#8e7492",
+            "#8e7492",
+            "#8e7492",
+            "#8e7492",
+            "#8e7492"
+          ],
+          [
+            "#8e7492",
+            "#8e7492",
+            "#925e5a",
+            "#925e5a",
+            "#925e5a",
+            "#925e5a",
+            "#8e7492",
+            "#8e7492"
+          ],
+          [
+            "#8e7492",
+            "#8e7492",
+            "#ba745c",
+            "#fc7c22",
+            "#fc7c22",
+            "#ba745c",
+            "#8b6f89",
+            "#8e7492"
+          ],
+          [
+            "#8e7492",
+            "#8e7492",
+            "#ca9c7b",
+            "#ca9c7b",
+            "#ca9c7b",
+            "#ca9c7b",
+            "#925e5a",
+            "#8b6f89"
+          ],
+          [
+            "#8e7492",
+            "#8e7492",
+            "#a17985",
+            "#ed8b53",
+            "#ed8b53",
+            "#be8175",
+            "#925e5a",
+            "#8b6f89"
+          ],
+          [
+            "#8e7492",
+            "#ed8b53",
+            "#ed8b53",
+            "#e4b8a0",
+            "#e4b8a0",
+            "#be8175",
+            "#8b6f89",
+            "#8e7492"
+          ],
+          [
+            "#8e7492",
+            "#ca9c7b",
+            "#a84926",
+            "#a84926",
+            "#a84926",
+            "#aa5a3e",
+            "#8d7391",
+            "#8e7492"
+          ],
+          [
+            "#8e7492",
+            "#8d7391",
+            "#886e8c",
+            "#886e8c",
+            "#886e8c",
+            "#886e8c",
+            "#8e7492",
+            "#8e7492"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "测试用像素风小狐狸法师，橙色围巾，带待机动画",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791121388322.png",
+        "url": "/api/generated/img_1791121388322.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791121388322.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-24"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791122439.2373285,
+    "finished_at": 1791122485.8870795,
+    "goal": "二十岁沙漠流浪女乐手，深褐色长卷发半扎红布条，浅橘色轻薄斗篷，银质简易耳饰，宽松米白长裤，绑带皮凉鞋，腰挂小牛皮鼓，赤脚立于沙丘，风扬发丝，神情专注，背景落日余晖。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast66547",
+    "name": "二十岁沙漠流浪女乐手_深褐色长卷发半扎红布条_浅",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 46.649,
+    "character": {
+      "id": "ast66547",
+      "name": "二十岁沙漠流浪女乐手_深褐色长卷发半扎红布条_浅",
+      "type": "character",
+      "role": "npc",
+      "seed": 964366547,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6f1c10",
+        "base": "#ff7940",
+        "highlight": "#f1c73c",
+        "accent": "#ffea91",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791122449307.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast66547",
+      "name": "二十岁沙漠流浪女乐手_深褐色长卷发半扎红布条_浅",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 964366547,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#ff7940",
+          "highlight": "#f1c73c",
+          "accent": "#ffea91",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791122449307.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast66547",
+        "name": "二十岁沙漠流浪女乐手_深褐色长卷发半扎红布条_浅",
+        "type": "character",
+        "role": "npc",
+        "seed": 964366547,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#ff7940",
+          "highlight": "#f1c73c",
+          "accent": "#ffea91",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast66547",
+          "type": "character",
+          "resources": {
+            "texture": "ast66547.png",
+            "animation": "ast66547.anim",
+            "prefab": "ast66547.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast66547.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast66547.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast66547.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast66547.png",
+          "Animation": "Assets/Animation/ast66547.anim",
+          "Prefab": "Assets/Prefab/ast66547.prefab",
+          "Controller": "Assets/Controller/ast66547.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "二十岁沙漠流浪女乐手，深褐色长卷发半扎红布条，浅橘色轻薄斗篷，银质简易耳饰，宽松米白长裤，绑带皮凉鞋，腰挂小牛皮鼓，赤脚立于沙丘，风扬发丝，神情专注，背景落日余晖。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791122449307.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1791122467201.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/1d/20261004/17bff29b/f8d61a7c-1ca7-4d43-a2ad-6c07d5033464-1.png?Expires=1791728266&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=X4V2xFdXADE8Ww4ctMCXbQky5NY%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1791122485337.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/a5/20261004/17bff29b/63d349c1-c073-431c-a056-888ace53b784-1.png?Expires=1791728284&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=7uah8Dd7b6I8r6UexCG8tQRRm78%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-25"
   }
 ]
