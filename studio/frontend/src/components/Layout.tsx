@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { api } from "../api/client";
 import { useAgentStore } from "../stores/agentStore";
 import { useAssetStore } from "../stores/assetStore";
 import { CommandPalette } from "./CommandPalette";
@@ -127,9 +128,9 @@ export default function Layout() {
   useEffect(() => {
     if (window.location.port === "5173") return;
     let alive = true;
-    fetch("/api/health")
-      .then((r) => r.json())
-      .then((d: { frontend_stale?: boolean }) => {
+    api
+      .health()
+      .then((d) => {
         if (alive) setBuildStale(Boolean(d.frontend_stale));
       })
       .catch(() => {});

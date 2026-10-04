@@ -204,6 +204,10 @@ export default function AnimationStudio() {
   // -- 动作编辑器状态 -----------------------------------------------------
   const [editorAction, setEditorAction] = useState("walk");
   const [editorView, setEditorView] = useState("side");
+  // 编辑器触摸标记：false=打开/刷新页面未动过——画布保持原图静止，不自动
+  // 渲染骨架预览帧（骨架管线对原画做分区变形，rig 推断不完美时可见接缝，
+  // 用户报「打开就变形/自发动作」即此帧未经操作就替换了原图）
+  const [editorTouched, setEditorTouched] = useState(false);
   const [poseConfig, setPoseConfig] = useState<PoseConfig>(DEFAULT_POSE_CONFIG);
   // 自然语言自定义动作（P1 体验）：描述 → 润色 → 结构化参数套用编辑器
   const [nlText, setNlText] = useState("");
@@ -252,6 +256,7 @@ export default function AnimationStudio() {
       setEditorAction(action.base_action);
       setEditorView(action.view as "front" | "side");
       setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...action.pose_config });
+      setEditorTouched(true); // 解读套用=用户交互，允许渲染姿态预览
       setPhase(0);
       setPresetName(action.label);
       // 词表外动作标记：常驻提示条引导切换 AI 视频驱动（下次解读无标记时清除）
@@ -499,7 +504,9 @@ export default function AnimationStudio() {
 
   // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
   useEffect(() => {
-    if (mode !== "smart") return;
+    // 仅在用户与编辑器交互后渲染姿态预览：拖时间轴/调滑杆/选动作/解读
+    // 套用/点播放会置 editorTouched。打开页面保持原图静止（见 editorTouched 注释）
+    if (mode !== "smart" || !editorTouched) return;
     let alive = true;
     const timer = setTimeout(() => {
       api
@@ -541,7 +548,7 @@ export default function AnimationStudio() {
       alive = false;
       clearTimeout(timer);
     };
-  }, [mode, editorAction, editorView, phase, poseConfig, size, asset?.id, upload]);
+  }, [mode, editorTouched, editorAction, editorView, phase, poseConfig, size, asset?.id, upload]);
 
   useEffect(() => {
     if (mode !== "smart" || !playing) return;
@@ -565,6 +572,7 @@ export default function AnimationStudio() {
       const source: ActionSource = { kind: "base", name };
       const state = editorStateFor(source, presets, DEFAULT_POSE_CONFIG);
       if (!state) return;
+      setEditorTouched(true); // 用户选动作=编辑器交互，允许渲染姿态预览
       setSelected(source);
       setEditorAction(state.action);
       if (state.view) setEditorView(state.view);
@@ -579,6 +587,7 @@ export default function AnimationStudio() {
       const source: ActionSource = { kind: "custom", name };
       const state = editorStateFor(source, list ?? presets, DEFAULT_POSE_CONFIG);
       if (!state) return;
+      setEditorTouched(true); // 用户选动作=编辑器交互，允许渲染姿态预览
       setSelected(source);
       setEditorAction(state.action);
       if (state.view) setEditorView(state.view);
@@ -934,7 +943,7 @@ export default function AnimationStudio() {
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-700"
+                    className="h-full rounded-full bg-primary transition-all duration-(--motion-slow) ease-standard"
                     style={{
                       width: `${Math.max(4, Math.min(100, videoTaskStage.progress))}%`,
                     }}
@@ -1412,7 +1421,10 @@ export default function AnimationStudio() {
                         {(["side", "front"] as const).map((item) => (
                           <button
                             key={item}
-                            onClick={() => setEditorView(item)}
+                            onClick={() => {
+                              setEditorTouched(true);
+                              setEditorView(item);
+                            }}
                             className={cx(
                               "px-3 py-1.5 text-[12px] transition-colors",
                               editorView === item
@@ -1431,7 +1443,10 @@ export default function AnimationStudio() {
                       variant="secondary"
                       size="sm"
                       icon="play"
-                      onClick={() => setPlaying((p) => !p)}
+                      onClick={() => {
+                        setEditorTouched(true);
+                        setPlaying((p) => !p);
+                      }}
                     >
                       {playing ? "暂停" : "播放循环"}
                     </Button>
@@ -1531,12 +1546,13 @@ export default function AnimationStudio() {
                         max={param.max}
                         step={param.step}
                         value={Number(poseConfig[param.key] ?? 0)}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          setEditorTouched(true);
                           setPoseConfig((prev) => ({
                             ...prev,
                             [param.key]: Number(e.target.value),
-                          }))
-                        }
+                          }));
+                        }}
                         className="w-full"
                       />
                     </label>
@@ -1556,6 +1572,7 @@ export default function AnimationStudio() {
                         key={value}
                         onClick={() => {
                           setPlaying(false);
+                          setEditorTouched(true);
                           setPhase(value);
                         }}
                         title={`相位 ${value.toFixed(2)}`}
@@ -1578,6 +1595,7 @@ export default function AnimationStudio() {
                     value={phase}
                     onChange={(e) => {
                       setPlaying(false);
+                      setEditorTouched(true);
                       setPhase(Number(e.target.value));
                     }}
                     className="mt-2 w-full"

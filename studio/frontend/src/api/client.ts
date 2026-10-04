@@ -323,7 +323,8 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
 }
 
 export const api = {
-  health: () => request<{ status: string }>("/api/health"),
+  health: () =>
+    request<{ status: string; frontend_stale?: boolean }>("/api/health"),
 
   /* ── P1-A 版本控制 ── */
   versionGroups: () => request<{ groups: VersionGroup[] }>("/api/versions/groups"),
