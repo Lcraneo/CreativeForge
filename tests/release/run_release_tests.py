@@ -273,6 +273,26 @@ def _():
     assert cf["overall"] >= 0.9
 
 
+@check("L4 performance", "video pipeline meets baseline gates (delivery spec + quality)")
+def _():
+    """V4：视频转换管线（i2v mp4 → 抽帧选帧 → 合成循环动画）交付规格与
+    质量指标不低于 benchmark/video_baseline.json——与 run_tests 的
+    video-quality 门同一套硬门，发布层再拦一次。"""
+    import json
+
+    import benchmark.video_quality as vq
+    from studio.backend.animation_service.service import (
+        VIDEO_SAMPLE_DURATION,
+        VIDEO_SAMPLE_MIN_COUNT,
+    )
+
+    metrics = vq.run_pipeline(VIDEO_SAMPLE_MIN_COUNT, VIDEO_SAMPLE_DURATION)
+    with open(vq.BASELINE_PATH, encoding="utf-8") as handle:
+        baseline = json.load(handle)["baseline"]
+    _rows, failures, _loop = vq.compare(baseline, {"metrics": metrics})
+    assert not failures, "video quality regression: {}".format("、".join(failures))
+
+
 # ---------------------------------------------------------------
 # Layer 5 — Frontend（Q4 可持续质量保障）
 # ---------------------------------------------------------------

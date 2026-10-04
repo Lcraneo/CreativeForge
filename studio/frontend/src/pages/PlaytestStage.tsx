@@ -151,7 +151,9 @@ export default function PlaytestStage() {
     const base: Record<string, number> = { prompt: 5, video: 10, sampling: 84, composing: 93 };
     let pct = base[task.stage ?? "video"] ?? 10;
     if (task.stage === "video" && task.started_at) {
-      const elapsed = Date.now() / 1000 - task.started_at;
+      // 进度条动画启发式：页面本就 2.5s 轮询重渲染，每次重渲染取新时刻
+      // 即可平滑爬升——这里的"不纯"是有意为之（react-hooks/purity）
+      const elapsed = Date.now() / 1000 - task.started_at; // eslint-disable-line react-hooks/purity
       pct = Math.min(80, base.video + Math.round((elapsed / 90) * 70));
     }
     return pct;

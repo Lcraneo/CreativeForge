@@ -64,6 +64,7 @@ class AnimationRequest(BaseModel):
     use_video: bool = False  # AI 视频驱动（Windup 式 i2v）：让 AI 原画本身动起来
     final_quality: bool = False  # V2 双档：定稿档走 video_model_final（plus）出片
     deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
+    secondary_motion: bool = False  # V3 次级运动：发层摆动（首次生成发层约 0.3 元，之后缓存免费）
 
 
 class PreviewFrameRequest(BaseModel):
@@ -713,6 +714,7 @@ def build_router(runtime):
                 view=request.view,
                 pose_config=pose_config or None,
                 model_settings=runtime.model_settings.effective(),
+                secondary_motion=request.secondary_motion,
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error))

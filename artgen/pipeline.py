@@ -139,6 +139,7 @@ def create_animation(
     pose_config=None,
     segment_mask=None,
     rigged=False,
+    overlays=None,
 ):
     """Build a style-consistent animation.
 
@@ -179,6 +180,7 @@ def create_animation(
             size,
             config=pose_config,
             segment_mask=segment_mask,
+            overlays=overlays,
         )
     elif source_bytes:
         from artgen.sourceanim import animate_source

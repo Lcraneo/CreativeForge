@@ -655,6 +655,81 @@ def main() -> int:
         str(_edge_smooth(_new_subject.getchannel("A"))),
     )
 
+    # ── V3 次级运动（发/裙摆动）回归 ─────────────────────────────────────
+    # ①差分提取：白底 + 蓝身躯 + 深红"头发"块，「头发变白」编辑图与原图
+    #   相减必须只圈出头发区，发根锚点落在头发内；②overlay 摆动：带发层
+    #   的帧在头部区比无 overlay 多出可见像素、amp=0 与 amp>0 输出不同、
+    #   循环首尾相似（C0）；③未配置模型时 _hair_overlay 返回 None（绝不
+    #   静默计费）。
+    import io as _hair_io
+
+    from artgen.sourceanim import extract_hair_layer as _extract_hair
+    from PIL import ImageDraw as _HairDraw
+    from studio.backend.animation_service.service import AnimationService as _HairSvc
+
+    _hair_base = _GifImg.new("RGB", (128, 128), (250, 250, 250))
+    _HairDraw.Draw(_hair_base).rectangle((48, 46, 80, 122), fill=(70, 130, 190))   # 身躯
+    _HairDraw.Draw(_hair_base).ellipse((40, 8, 88, 52), fill=(110, 40, 120))       # 头发
+    _HairDraw.Draw(_hair_base).ellipse((52, 34, 76, 50), fill=(255, 224, 196))     # 脸
+    _hair_whitened = _hair_base.copy()
+    _HairDraw.Draw(_hair_whitened).ellipse((40, 8, 88, 52), fill=(255, 255, 255))  # 头发变白
+    _hair_rgba, _hair_root, _hair_cov = _extract_hair(_hair_base, _hair_whitened)
+    check(
+        "hair layer: differential extraction isolates hair (coverage sane)",
+        0.01 <= _hair_cov <= 0.30,
+        f"coverage={_hair_cov}",
+    )
+    check(
+        "hair layer: root anchor inside hair region (upper part)",
+        0.0 <= _hair_root[0] <= 1.0 and 0.0 <= _hair_root[1] <= 0.45,
+        str(_hair_root),
+    )
+
+    _ov_layer = _hair_rgba.resize((128, 128))
+    _ov = {"layer": _ov_layer, "root": _hair_root, "amp": 10.0, "lag": 0.1}
+    _frames_plain, _, _, _ = _animate_rigged_skin(
+        _make_two_segment_png(), "walk", 12, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False, skin="mesh",
+    )
+    _frames_hair, _, _, _ = _animate_rigged_skin(
+        _make_two_segment_png(), "walk", 12, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False, skin="mesh",
+        overlays=[_ov],
+    )
+    _head_opaque = lambda fr: int(_np_skin.asarray(  # noqa: E731
+        _GifImg.frombytes("RGBA", (fr[0], fr[1]), bytes(fr[2])).getchannel("A")
+    )[:40, :].sum())
+    check(
+        "hair overlay: hair visibly rendered in head region",
+        _head_opaque(_frames_hair[0]) > _head_opaque(_frames_plain[0]),
+        f"{_head_opaque(_frames_hair[0])} vs {_head_opaque(_frames_plain[0])}",
+    )
+    _frames_still, _, _, _ = _animate_rigged_skin(
+        _make_two_segment_png(), "walk", 12, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False, skin="mesh",
+        overlays=[dict(_ov, amp=0.0)],
+    )
+    check(
+        "hair overlay: amp=0 (follow-only) differs from swinging",
+        any(
+            bytes(_frames_hair[i][2]) != bytes(_frames_still[i][2])
+            for i in range(12)
+        ),
+    )
+    _loop_sim = similarity_rgba(_frames_hair[0], _frames_hair[-1])["overall"]
+    check(
+        "hair overlay: loop continuity holds (first vs last >= 0.9)",
+        _loop_sim >= 0.9,
+        f"{_loop_sim:.4f}",
+    )
+    check(
+        "hair overlay: no model configured -> None (never silent billing)",
+        _HairSvc(__import__("tempfile").mkdtemp())._hair_overlay(
+            _make_two_segment_png(), {}, 128, None
+        )
+        is None,
+    )
+
     # ── AI 视频驱动产物回归（防"生成的动画无法播放"类退化）──────────────
     # 全离线：合成 mp4（前 10 帧静止模拟 i2v 开头，之后方块平移起伏模拟
     # 角色动作）→ _slice_video 抽帧 → compose_animation → GIF 结构校验。

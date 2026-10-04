@@ -354,6 +354,16 @@ def _reap_file(path, timeout=30.0):
             return
 
 
+# 发/裙次级运动：让编辑模型把头发变纯白，再与原图差分提取发层
+# （「隔离头发到白底」单提示实测不可靠——模型不执行；「变白」有
+# SEGMENT_PROMPT 同族先例，差分可靠，2026-10-04 骑士实测覆盖率 8.12%）
+HAIR_WHITE_PROMPT = (
+    "把这张图中角色的头发全部变成纯白色(#FFFFFF)。其余部分（脸、身体、"
+    "衣服、武器、背景）保持完全原样：不缺失、不变色、不位移。只允许头发"
+    "像素变成纯白。"
+)
+
+
 class AnimationService:
     def __init__(self, directory: str):
         self.directory = directory
@@ -543,6 +553,82 @@ class AnimationService:
         metas.sort(key=lambda m: m.get("created_at", 0), reverse=True)
         return metas
 
+    def _hair_overlay(
+        self,
+        source_bytes: bytes,
+        settings: dict[str, Any],
+        size: int,
+        pose_config: dict[str, Any] | None,
+    ):
+        """发层 overlay（V3 次级运动）：按动画源图哈希落盘缓存——首期调用
+        一次"头发变白"编辑（~0.3 元）差分提取，之后同源图永久免费。返回
+        riganim overlays dict 或 None（模型不可用/提取不可信/用户关幅度）。
+
+        幅度/滞后可由 pose_config 的 ``hair_amp``（度，默认 7）/``hair_lag``
+        （0..1，默认 0.12）覆盖；hair_amp=0 即关闭摆动（仍跟随头部）。"""
+
+        import base64 as _b64
+
+        from artgen.sourceanim import extract_hair_layer
+        from studio.backend.model_service.service import GENERATED_DIR
+
+        if not source_bytes:
+            return None
+        amp = float((pose_config or {}).get("hair_amp", 7.0))
+        lag = float((pose_config or {}).get("hair_lag", 0.12))
+        if amp <= 0:
+            return None
+
+        source_hash = hashlib.sha1(source_bytes).hexdigest()[:12]
+        layer_path = os.path.join(GENERATED_DIR, "hair_{}.png".format(source_hash))
+        meta_path = os.path.join(GENERATED_DIR, "hair_{}.json".format(source_hash))
+        try:
+            if os.path.isfile(layer_path) and os.path.isfile(meta_path):
+                with open(meta_path, encoding="utf-8") as handle:
+                    info = json.load(handle)
+                with open(layer_path, "rb") as handle:
+                    from PIL import Image
+
+                    layer = Image.open(io.BytesIO(handle.read())).convert("RGBA")
+            else:
+                if not ((settings or {}).get("enabled") and (settings or {}).get("api_key")):
+                    return None
+                from PIL import Image
+
+                from studio.backend.model_service.service import ImageEditProvider
+
+                editor = ImageEditProvider(settings)
+                result = editor.edit(
+                    "data:image/png;base64," + _b64.b64encode(source_bytes).decode(),
+                    HAIR_WHITE_PROMPT,
+                )
+                edited_path = safe_generated_path(result.get("file"))
+                if not edited_path:
+                    return None
+                with open(edited_path, "rb") as handle:
+                    edited = Image.open(io.BytesIO(handle.read())).convert("RGB")
+                front = Image.open(io.BytesIO(source_bytes)).convert("RGB")
+                layer, root, coverage = extract_hair_layer(front, edited)
+                if not (0.005 <= coverage <= 0.35):
+                    return None  # 提取不可信：宁可不加发层也不糊脸
+                buffer = io.BytesIO()
+                layer.save(buffer, "PNG")
+                layer_bytes = buffer.getvalue()
+                with open(layer_path, "wb") as handle:
+                    handle.write(layer_bytes)
+                info = {"root": list(root), "coverage": coverage, "size": list(layer.size)}
+                with open(meta_path, "w", encoding="utf-8") as handle:
+                    json.dump(info, handle, ensure_ascii=False)
+            root = info.get("root") or [0.5, 0.5]
+            return {
+                "layer": layer,
+                "root": (float(root[0]), float(root[1])),
+                "amp": amp,
+                "lag": lag,
+            }
+        except Exception:  # noqa: BLE001 - 次级运动是增益项，永不阻塞生成
+            return None
+
     def create(
         self,
         asset: dict[str, Any] | None = None,
@@ -556,6 +642,7 @@ class AnimationService:
         view: str = "front",
         pose_config: dict[str, Any] | None = None,
         model_settings: dict[str, Any] | None = None,
+        secondary_motion: bool = False,
     ) -> dict[str, Any]:
         action = action if action in ACTIONS else "walk"
 
@@ -615,6 +702,16 @@ class AnimationService:
                 except Exception:
                     source_bytes = None
 
+        # V3 次级运动（发/裙摆动）：secondary_motion 开启时构建发层 overlay。
+        # 首次生成调用一次图像编辑（~0.3 元），按源图哈希落盘缓存后永久免费。
+        overlays = None
+        if secondary_motion and source_bytes is not None:
+            overlay = self._hair_overlay(
+                source_bytes, model_settings or {}, size, pose_config
+            )
+            if overlay:
+                overlays = [overlay]
+
         # 原图驱动的主体分离：AI 原画是复杂场景背景，经典洪泛抠图会把背景
         # 连同人一起判定为主体（整图一起动）。启用自定义模型时先用
         # qwen-image-edit 把角色抠到纯白底再分离；失败回退经典洪泛。
@@ -639,6 +736,7 @@ class AnimationService:
             pose_config=pose_config,
             segment_mask=segment_mask,
             rigged=(source_kind == "skeletal"),
+            overlays=overlays,
         )
 
         animation_id = uuid.uuid4().hex[:12]
@@ -647,6 +745,9 @@ class AnimationService:
         if side_bound:
             # V3-②：本次侧视动画绑定的是三视图 side 真源图（供前端徽标/测试断言）
             meta["view_bound"] = "side"
+        if overlays:
+            # V3 次级运动：本次动画携带发层摆动（meta 落盘供前端徽标）
+            meta["hair_overlay"] = True
         # V3 网格变形：记录实际生效的皮肤模式（A/B 开关的落盘证据）
         if source_kind == "skeletal":
             from artgen.riganim import RIGANIM_SKIN_DEFAULT

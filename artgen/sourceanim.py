@@ -52,6 +52,53 @@ def edge_halo_px(mask, binary):
     return int((soft & ~hard).sum())
 
 
+def extract_hair_layer(front_rgb, whitened_rgb, diff_threshold=90):
+    """差分法发层提取（V3 次级运动·生产版）：原画 vs「头发变白」编辑图
+    逐像素相减，显著差异区即头发。
+
+    输入两张同尺寸 RGB PIL 图；返回 ``(hair_rgba, root, coverage)``：
+    hair_rgba 为原画像素 × 发 mask 的 RGBA，root 为发根锚点（mask 底部
+    12% 行质心，归一化 [0..1]，供动画端按任意画布尺寸缩放），coverage
+    为发区面积占比（调用方做合理性门控，建议 0.005~0.35）。
+
+    「隔离头发到白底」单提示实测不可靠（模型不执行），「头发变纯白」
+    有 SEGMENT_PROMPT 同族先例、差分可靠。"""
+    import numpy as np
+    from PIL import Image, ImageFilter
+
+    orig = np.asarray(front_rgb.convert("RGB"), dtype=np.int16)
+    white = np.asarray(whitened_rgb.convert("RGB"), dtype=np.int16)
+    if orig.shape != white.shape:
+        white = np.asarray(
+            Image.fromarray(white.astype(np.uint8)).resize(
+                (orig.shape[1], orig.shape[0]), Image.LANCZOS
+            ),
+            dtype=np.int16,
+        )
+    diff = np.abs(orig - white).sum(axis=-1)
+    mask = Image.fromarray(np.where(diff > diff_threshold, 255, 0).astype(np.uint8), "L")
+    mask = mask.filter(ImageFilter.MaxFilter(3)).filter(ImageFilter.MedianFilter(5))
+    # 轻腐蚀去皮肤色残留 + 微羽化
+    mask = mask.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.GaussianBlur(0.8))
+
+    hist = mask.histogram()
+    coverage = sum(hist[128:]) / max(1, mask.width * mask.height)
+
+    hair = front_rgb.convert("RGBA")
+    hair.putalpha(mask)
+    arr = np.asarray(mask)
+    ys, xs = np.where(arr > 128)
+    if len(ys) == 0:
+        return hair, (0.5, 0.5), 0.0
+    y0, y1 = ys.min(), ys.max()
+    root_band = ys >= y1 - 0.12 * max(1, y1 - y0)
+    root = (
+        float(xs[root_band].mean()) / mask.width,
+        float(ys[root_band].mean()) / mask.height,
+    )
+    return hair, root, round(coverage, 4)
+
+
 def refine_edge_alpha(image, mask, bg=(255, 255, 255), band=2.0):
     """白底 alpha 反解（V3 matting 精修·路线 A）：边界带内按合成方程
     反解每个像素的真实 alpha 与前景色。

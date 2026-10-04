@@ -198,6 +198,8 @@ export interface AnimationRequestPayload {
   final_quality?: boolean;
   /** V3 网格变形：膝/肘皮肤化开关；缺省跟随后端默认（mesh） */
   deform?: "mesh" | "rigid";
+  /** V3 次级运动：发层摆动（首次对该源图花约 0.3 元提取发层，之后缓存免费） */
+  secondary_motion?: boolean;
 }
 
 export interface PlanTask {

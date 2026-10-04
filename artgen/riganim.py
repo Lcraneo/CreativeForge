@@ -361,6 +361,7 @@ def animate_rigged(
     segment_mask=None,
     keep_background=True,
     skin=None,
+    overlays=None,
 ):
     """-> (frames, reference, rig, falign).
 
@@ -374,7 +375,11 @@ def animate_rigged(
     ``skin``：网格变形开关（V3）——"mesh" 膝/肘皮肤化（默认，
     RIGANIM_SKIN_DEFAULT），"rigid" 完全还原 v5/v6 刚体路径；config 键
     ``skin`` 可同样指定（pose_config 透传），显式参数优先。
-    """
+
+    ``overlays``：次级运动图层（V3，发/裙摆动）——dict 列表
+    ``{"layer": RGBA Image, "root": (nx, ny) 归一化锚点, "amp": 摆幅角,
+    "lag": 相位滞后 0..1}``。图层跟随躯干变换（lean/tilt/sway/dy）并叠加
+    sin 摆动，置于躯干之后、手臂之前。amp=0 时仅跟随不摆动。"""
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(60, int(frame_count)))
     action = action if action in ACTIONS else "walk"
@@ -557,6 +562,24 @@ def animate_rigged(
     # "削头"——编排跳跃段实测跳弧 158px 时头部出框。钳到头顶留 8px 余量
     max_up = y0 - max(8.0, size * 0.02)
 
+    # 次级运动图层预处理：缩放到画布、锚点换算画布坐标（V3 发/裙摆动）
+    layer_overlays = []
+    for overlay in overlays or []:
+        layer = overlay.get("layer")
+        if layer is None:
+            continue
+        if layer.size != (size, size):
+            layer = layer.resize((size, size), Image.LANCZOS)
+        nx, ny = overlay.get("root") or (0.5, 0.5)
+        layer_overlays.append(
+            {
+                "layer": layer,
+                "pivot": (float(nx) * size, float(ny) * size),
+                "amp": float(overlay.get("amp") or 0.0),
+                "lag": max(0.0, min(1.0, float(overlay.get("lag") or 0.0))),
+            }
+        )
+
     coverage = Image.new("L", (size, size), 0)
 
     def _place_tracked(subject, layer, pivot, angle, offset):
@@ -640,6 +663,14 @@ def animate_rigged(
         pillar_canvas.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
         subject_frame = Image.alpha_composite(subject_frame, pillar_canvas)
         subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
+        for _ov in layer_overlays:
+            # 次级运动：图层跟随躯干（lean/tilt/sway/dy），叠加相位滞后的
+            # sin 摆动——发/裙"迟一拍"的跟随感（幅度经体型自适应收敛）
+            _swing = _ov["amp"] * math.sin(2.0 * math.pi * (index / frame_count - _ov["lag"])) * scales["limb"]
+            subject_frame = Image.alpha_composite(
+                subject_frame,
+                _rotated_canvas(_ov["layer"], _ov["pivot"], -lean - tilt + _swing, (sway, dy), size),
+            )
         subject_frame = _place_over(subject_frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy), size)
         if use_mesh:
             subject_frame = Image.alpha_composite(

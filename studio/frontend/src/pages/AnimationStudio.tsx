@@ -102,7 +102,9 @@ export default function AnimationStudio() {
   }, [historyQuery.data, hiddenIds]);
   const [showPeople, setShowPeople] = useState(false);
 
-  function usePerson(entry: PersonEntry) {
+  // 载入历史人物（事件处理器；命名避开 use 前缀——非 Hook，react-hooks 规则按
+  // 名字识别会误报"回调内调用 Hook"）
+  function loadPerson(entry: PersonEntry) {
     api
       .getAsset(entry.asset_id)
       .then((loaded) => {
@@ -123,6 +125,8 @@ export default function AnimationStudio() {
   const [skeletal, setSkeletal] = useState(true);
   // V3 网格变形：膝/肘皮肤化开关（仅骨骼模式生效；关闭=刚体分区 v5/v6 行为）
   const [meshSkin, setMeshSkin] = useState(true);
+  // V3 次级运动：发层摆动开关（首次开启对该资产花约 0.3 元提取发层，之后缓存免费）
+  const [hairMotion, setHairMotion] = useState(false);
   const rigCheck = useQuery({
     queryKey: ["rig-check", asset?.id],
     queryFn: () => api.rigCheck(asset?.id ?? undefined),
@@ -152,8 +156,17 @@ export default function AnimationStudio() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [mainError, setMainError] = useState(false);
-  // mp4 直通预览失败时回退 GIF（浏览器解码器差异/文件缺失兜底）
-  const [videoFailed, setVideoFailed] = useState(false);
+  // mp4 直通预览失败时回退 GIF（浏览器解码器差异/文件缺失兜底）。
+  // 新结果到来时在渲染期重置（React 认可的派生状态调整模式——react-hooks
+  // 门禁禁止在 effect 体内直接 setState，首版 setVideoFailed(false) 被拦）
+  const [videoFailedRaw, setVideoFailedRaw] = useState(false);
+  const [videoFailedFor, setVideoFailedFor] = useState<string | null>(null);
+  const videoUrl = result?.urls.video ?? null;
+  if (videoFailedFor !== videoUrl) {
+    setVideoFailedFor(videoUrl);
+    setVideoFailedRaw(false);
+  }
+  const videoFailed = videoFailedRaw && videoUrl !== null;
   const fileRef = useRef<HTMLInputElement>(null);
 
   // -- 动作编辑器状态 -----------------------------------------------------
@@ -261,6 +274,7 @@ export default function AnimationStudio() {
           view: plan.view,
           pose_config: plan.pose_config,
           deform: skeletal ? (meshSkin ? "mesh" : "rigid") : undefined,
+          secondary_motion: skeletal ? hairMotion : false,
           use_video: useVideo,
           final_quality: useVideo ? finalQuality : false,
         };
@@ -290,14 +304,14 @@ export default function AnimationStudio() {
         setBusySource(null);
       }
     },
-    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, useVideo, finalQuality],
+    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, hairMotion, useVideo, finalQuality],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
   // 用户往下滚动到逐帧网格/播放时不再有首次解码尖峰
+  // （mp4 回退标记的重置在上方渲染期完成——react-hooks 禁止 effect 内直接 setState）
   useEffect(() => {
     if (!result) return;
-    setVideoFailed(false);
     void preloadImages(
       [result.urls.gif, result.urls.sheet, ...(result.frame_urls ?? [])],
       0,
@@ -589,7 +603,7 @@ export default function AnimationStudio() {
                     loop
                     muted
                     playsInline
-                    onError={() => setVideoFailed(true)}
+                    onError={() => setVideoFailedRaw(true)}
                     className="max-h-[300px] max-w-full object-contain"
                   />
                 ) : (
@@ -721,7 +735,7 @@ export default function AnimationStudio() {
                           )}
                         >
                           <button
-                            onClick={() => usePerson(person)}
+                            onClick={() => loadPerson(person)}
                             title={`载入「${person.name}」`}
                             className="flex items-center gap-2 text-left"
                           >
@@ -832,6 +846,19 @@ export default function AnimationStudio() {
                           onChange={(event) => setMeshSkin(event.target.checked)}
                         />
                         网格变形（膝/肘皮肤化）
+                      </label>
+                    )}
+                    {skeletal && (
+                      <label
+                        className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-ink-2"
+                        title="V3 次级运动：AI 提取发层并按相位滞后跟随步伐摆动。该资产首次开启会调用一次图像编辑（约 0.3 元），之后按源图缓存免费；幅度可用自定义参数 hair_amp/hair_lag 调节"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={hairMotion}
+                          onChange={(event) => setHairMotion(event.target.checked)}
+                        />
+                        次级运动（发丝摆动）
                       </label>
                     )}
                   </div>
