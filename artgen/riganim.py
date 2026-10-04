@@ -351,6 +351,16 @@ def _motion_scales(rig, size):
     }
 
 
+def _tint_layer(layer, factor=0.72):
+    """远侧肢体调暗（2D 侧视深度线索）：不透明像素 RGB×factor，alpha 不变。
+    预乘语义安全（先除回 alpha 的色域钳制在 tint 后仍成立）。"""
+
+    arr = np.asarray(layer, dtype=np.float32)
+    alpha = arr[..., 3:4] / 255.0
+    arr[..., :3] *= np.where(alpha > 0, factor, 1.0)
+    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGBA")
+
+
 def animate_rigged(
     image_bytes,
     action="walk",
@@ -362,6 +372,7 @@ def animate_rigged(
     keep_background=True,
     skin=None,
     overlays=None,
+    view="front",
 ):
     """-> (frames, reference, rig, falign).
 
@@ -386,6 +397,10 @@ def animate_rigged(
     # 网格变形开关（V3）：显式参数 > config 键 > 模块默认
     skin_mode = skin or (config or {}).get("skin") or RIGANIM_SKIN_DEFAULT
     use_mesh = skin_mode == "mesh"
+    # 侧视深度模式（V3 步态修复）：侧视原画的双腿/双臂在画面上重叠，
+    # "左右半身切分"会把身体撕成两半反相拉扯（实测左右髋仅差 22px）。
+    # 侧视改为近/远肢体 = 同一完整块的两份拷贝：远侧调暗+反相+先画。
+    side_view = view == "side"
 
     canvas = _fit(Image.open(io.BytesIO(image_bytes)), size)
     mask, transparent, bg = _subject_mask(canvas)
@@ -556,6 +571,44 @@ def animate_rigged(
         ),
     }
 
+    if side_view:
+        # ── 侧视分区重构（V3 步态修复）─────────────────────────────────
+        # 侧视原画的双腿/双臂在画面上是**重叠**的：实测骑士侧图左右髋仅差
+        # 22px，"左右半身切分 + 反相摆动"会把腿块从中间撕开、左右两半各往
+        # 前后拉——盲评指出的"关节轨迹异常/步态失真"的主因。正确语义是
+        # 近/远肢体 = **同一完整块的两份拷贝**：远侧调暗（深度线索）、
+        # 反相、先画；pivot 取左右关节中点（侧视下左右关节几乎重合）。
+        leg_block = (x0, hip_y - 12, x1, min(y1, points["knee_l"][1] + 8))
+        shin_block = (x0, points["knee_l"][1] - 22, x1, y1)
+        arm_block = (x0, shoulder_y - 8, x1, min(y1, points["elbow_l"][1] + 6))
+        forearm_block = (x0, points["elbow_l"][1] - 6, x1, hand_y + 14)
+        hip_mid = ((points["hip_l"][0] + points["hip_r"][0]) / 2.0, hip_y)
+        knee_mid = ((points["knee_l"][0] + points["knee_r"][0]) / 2.0, points["knee_l"][1])
+        shoulder_mid = ((points["shoulder_l"][0] + points["shoulder_r"][0]) / 2.0, shoulder_y)
+        elbow_mid = ((points["elbow_l"][0] + points["elbow_r"][0]) / 2.0, points["elbow_l"][1])
+        regions["leg_l"] = (_region_layer(subject, leg_block, size, feather=5.0), hip_mid)
+        regions["leg_r"] = (_region_layer(subject, leg_block, size, feather=5.0), hip_mid)
+        regions["shin_l"] = (_region_layer(subject, shin_block, size, feather=5.5), knee_mid)
+        regions["shin_r"] = (_region_layer(subject, shin_block, size, feather=5.5), knee_mid)
+        regions["arm_l"] = (
+            _region_layer(subject, arm_block, size, feather=4.0, exclude_above=max(chin_y, shoulder_y + 4)),
+            shoulder_mid,
+        )
+        regions["arm_r"] = (
+            _region_layer(subject, arm_block, size, feather=4.0, exclude_above=max(chin_y, shoulder_y + 4)),
+            shoulder_mid,
+        )
+        regions["forearm_l"] = (
+            _region_layer(subject, forearm_block, size, feather=3.0, exclude_above=chin_y),
+            elbow_mid,
+        )
+        regions["forearm_r"] = (
+            _region_layer(subject, forearm_block, size, feather=3.0, exclude_above=chin_y),
+            elbow_mid,
+        )
+        for _far in ("leg_r", "shin_r", "arm_r", "forearm_r"):
+            regions[_far] = (_tint_layer(regions[_far][0]), regions[_far][1])
+
     frames = []
     scales = _motion_scales(rig, size)
     # 跳跃/抬升的上边界保护：dy 以向下为正，主体头顶（y0）移出画布就是
@@ -604,6 +657,23 @@ def animate_rigged(
         coverage = Image.fromarray(grown, "L")
         return Image.alpha_composite(subject, blank)
 
+    def _place(subject, layer, pivot, angle_far, offset, a_near=None, band=0.0, track=False):
+        """统一贴层入口：band>0 且 mesh 开启时走皮肤化（a_near=父段角），
+        否则刚体；track=True 时累计覆盖图（立柱门控依赖）。行为与旧的
+        _place_tracked / _place_over / _place_mesh_tracked 逐一等价。"""
+        nonlocal coverage
+        if a_near is not None and use_mesh and band >= SKIN_MIN_ANGLE:
+            blank = _mesh_canvas(layer, pivot, a_near, angle_far, band, offset, size)
+        else:
+            blank = _rotated_canvas(layer, pivot, angle_far, offset, size)
+        if track:
+            grown = np.maximum(
+                np.asarray(coverage, dtype=np.uint8),
+                np.asarray(blank.getchannel("A"), dtype=np.uint8),
+            )
+            coverage = Image.fromarray(grown, "L")
+        return Image.alpha_composite(subject, blank)
+
     for index in range(frame_count):
         pose = _pose(action, index / frame_count, config)
         dy = (pose["bob"] - pose["jump"]) * scales["bob"]
@@ -629,70 +699,98 @@ def animate_rigged(
         elbow_l = pose.get("elbow_l", 0.0) * scales["limb"]
         elbow_r = pose.get("elbow_r", 0.0) * scales["limb"]
 
-        if use_mesh:
-            # V3 网格变形：小腿/前臂皮肤化——过渡带内世界角从父段角连续
-            # 插值到完整屈曲角（近角=父段世界角，远角=旧刚体角，姿态端点
-            # 不变）；大腿/躯干/上臂保持刚体（其父链取向本就连续）。
-            # 贴层顺序与刚体路径严格一致：腿 → 小腿 → 立柱 → 躯干 → 上臂 → 前臂
-            subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
-            subject_frame = _place_mesh_tracked(
-                subject_frame, regions["shin_l"][0], regions["shin_l"][1],
-                -thigh_l * 14, -thigh_l * 14 + knee_l, SKIN_BAND_SHIN, (sway * 0.3, dy),
+        if side_view:
+            # ── 侧视深度顺序：远侧（调暗/反相）→ 躯干 → 近侧 ──────────
+            # 立柱跳过：侧视无两腿间隙，静态柱只会污染远腿。
+            subject_frame = _place(
+                subject_frame, regions["forearm_r"][0], regions["forearm_r"][1],
+                -arm * 22 + elbow_r, (sway * 0.5, dy), a_near=-arm * 22, band=SKIN_BAND_FOREARM,
             )
-            subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
-            subject_frame = _place_mesh_tracked(
+            subject_frame = _place(
+                subject_frame, regions["arm_r"][0], regions["arm_r"][1],
+                -arm * 22, (sway * 0.5, dy),
+            )
+            subject_frame = _place(
+                subject_frame, regions["leg_r"][0], regions["leg_r"][1],
+                thigh_r * 14, (sway * 0.3, dy), track=True,
+            )
+            subject_frame = _place(
                 subject_frame, regions["shin_r"][0], regions["shin_r"][1],
-                thigh_r * 14, thigh_r * 14 + knee_r, SKIN_BAND_SHIN, (sway * 0.3, dy),
+                thigh_r * 14 + knee_r, (sway * 0.3, dy), a_near=thigh_r * 14, band=SKIN_BAND_SHIN, track=True,
+            )
+            subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
+            for _ov in layer_overlays:
+                _swing = _ov["amp"] * math.sin(2.0 * math.pi * (index / frame_count - _ov["lag"])) * scales["limb"]
+                subject_frame = Image.alpha_composite(
+                    subject_frame,
+                    _rotated_canvas(_ov["layer"], _ov["pivot"], -lean - tilt + _swing, (sway, dy), size),
+                )
+            subject_frame = _place(
+                subject_frame, regions["leg_l"][0], regions["leg_l"][1],
+                -thigh_l * 14, (sway * 0.3, dy), track=True,
+            )
+            subject_frame = _place(
+                subject_frame, regions["shin_l"][0], regions["shin_l"][1],
+                -thigh_l * 14 + knee_l, (sway * 0.3, dy), a_near=-thigh_l * 14, band=SKIN_BAND_SHIN, track=True,
+            )
+            subject_frame = _place(
+                subject_frame, regions["arm_l"][0], regions["arm_l"][1],
+                arm * 22, (sway * 0.5, dy),
+            )
+            subject_frame = _place(
+                subject_frame, regions["forearm_l"][0], regions["forearm_l"][1],
+                arm * 22 + elbow_l, (sway * 0.5, dy), a_near=arm * 22, band=SKIN_BAND_FOREARM,
             )
         else:
-            subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
-            subject_frame = _place_tracked(
-                subject_frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
+            # ── 正视：腿 → 小腿 → 立柱 → 躯干 → 上臂 → 前臂（语义不变）──
+            subject_frame = _place(
+                subject_frame, regions["leg_l"][0], regions["leg_l"][1],
+                -thigh_l * 14, (sway * 0.3, dy), track=True,
             )
-            subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
-            subject_frame = _place_tracked(
-                subject_frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
+            subject_frame = _place(
+                subject_frame, regions["shin_l"][0], regions["shin_l"][1],
+                -thigh_l * 14 + knee_l, (sway * 0.3, dy), a_near=-thigh_l * 14, band=SKIN_BAND_SHIN, track=True,
             )
-        # 裆部立柱"只填洞"：门控 = 立柱 alpha × NOT(已绘制覆盖)。两腿摆开
-        # 露出的楔形中缝由角色自己的裆部像素补上；运动中的腿永远不会被这层
-        # 未旋转的静态列盖住（帧粘连修复的最后一环）。
-        pillar_gate = ImageChops.multiply(
-            regions["crotch"][0].getchannel("A"), ImageChops.invert(coverage)
-        )
-        pillar_canvas = Image.new("RGBA", (size, size), CANVAS_BG)
-        pillar_canvas.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
-        subject_frame = Image.alpha_composite(subject_frame, pillar_canvas)
-        subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
-        for _ov in layer_overlays:
-            # 次级运动：图层跟随躯干（lean/tilt/sway/dy），叠加相位滞后的
-            # sin 摆动——发/裙"迟一拍"的跟随感（幅度经体型自适应收敛）
-            _swing = _ov["amp"] * math.sin(2.0 * math.pi * (index / frame_count - _ov["lag"])) * scales["limb"]
-            subject_frame = Image.alpha_composite(
-                subject_frame,
-                _rotated_canvas(_ov["layer"], _ov["pivot"], -lean - tilt + _swing, (sway, dy), size),
+            subject_frame = _place(
+                subject_frame, regions["leg_r"][0], regions["leg_r"][1],
+                thigh_r * 14, (sway * 0.3, dy), track=True,
             )
-        subject_frame = _place_over(subject_frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy), size)
-        if use_mesh:
-            subject_frame = Image.alpha_composite(
-                subject_frame,
-                _mesh_canvas(
-                    regions["forearm_l"][0], regions["forearm_l"][1],
-                    arm * 22, arm * 22 + elbow_l, SKIN_BAND_FOREARM, (sway * 0.5, dy), size,
-                ),
+            subject_frame = _place(
+                subject_frame, regions["shin_r"][0], regions["shin_r"][1],
+                thigh_r * 14 + knee_r, (sway * 0.3, dy), a_near=thigh_r * 14, band=SKIN_BAND_SHIN, track=True,
             )
-        else:
-            subject_frame = _place_over(subject_frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy), size)
-        subject_frame = _place_over(subject_frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy), size)
-        if use_mesh:
-            subject_frame = Image.alpha_composite(
-                subject_frame,
-                _mesh_canvas(
-                    regions["forearm_r"][0], regions["forearm_r"][1],
-                    -arm * 22, -arm * 22 + elbow_r, SKIN_BAND_FOREARM, (sway * 0.5, dy), size,
-                ),
+            # 裆部立柱"只填洞"：门控 = 立柱 alpha × NOT(已绘制覆盖)。两腿摆开
+            # 露出的楔形中缝由角色自己的裆部像素补上；运动中的腿永远不会被这层
+            # 未旋转的静态列盖住（帧粘连修复的最后一环）。
+            pillar_gate = ImageChops.multiply(
+                regions["crotch"][0].getchannel("A"), ImageChops.invert(coverage)
             )
-        else:
-            subject_frame = _place_over(subject_frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy), size)
+            pillar_canvas = Image.new("RGBA", (size, size), CANVAS_BG)
+            pillar_canvas.paste(regions["crotch"][0], (0, int(round(dy))), pillar_gate)
+            subject_frame = Image.alpha_composite(subject_frame, pillar_canvas)
+            subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
+            for _ov in layer_overlays:
+                _swing = _ov["amp"] * math.sin(2.0 * math.pi * (index / frame_count - _ov["lag"])) * scales["limb"]
+                subject_frame = Image.alpha_composite(
+                    subject_frame,
+                    _rotated_canvas(_ov["layer"], _ov["pivot"], -lean - tilt + _swing, (sway, dy), size),
+                )
+            subject_frame = _place(
+                subject_frame, regions["arm_l"][0], regions["arm_l"][1],
+                arm * 22, (sway * 0.5, dy),
+            )
+            subject_frame = _place(
+                subject_frame, regions["forearm_l"][0], regions["forearm_l"][1],
+                arm * 22 + elbow_l, (sway * 0.5, dy), a_near=arm * 22, band=SKIN_BAND_FOREARM,
+            )
+            subject_frame = _place(
+                subject_frame, regions["arm_r"][0], regions["arm_r"][1],
+                -arm * 22, (sway * 0.5, dy),
+            )
+            subject_frame = _place(
+                subject_frame, regions["forearm_r"][0], regions["forearm_r"][1],
+                -arm * 22 + elbow_r, (sway * 0.5, dy), a_near=-arm * 22, band=SKIN_BAND_FOREARM,
+            )
 
         yaw = float(pose.get("turn", 0.0) or 0.0)
         if abs(yaw) > 2.0:
@@ -706,11 +804,13 @@ def animate_rigged(
 
 
 def render_rigged_frame_rgba(
-    image_bytes, action, phase, size, rig=None, config=None, segment_mask=None, count=24
+    image_bytes, action, phase, size, rig=None, config=None, segment_mask=None, count=24,
+    view="front",
 ):
     """One rig-driven frame at an arbitrary phase (preview-frame endpoint)."""
     frames, reference, rig, _ = animate_rigged(
-        image_bytes, action, count, size, rig=rig, config=config, segment_mask=segment_mask
+        image_bytes, action, count, size, rig=rig, config=config, segment_mask=segment_mask,
+        view=view,
     )
     index = min(count - 1, max(0, int(round(phase * count)) % count))
     return frames[index], rig

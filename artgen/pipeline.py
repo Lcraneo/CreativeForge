@@ -181,6 +181,7 @@ def create_animation(
             config=pose_config,
             segment_mask=segment_mask,
             overlays=overlays,
+            view=view,
         )
     elif source_bytes:
         from artgen.sourceanim import animate_source

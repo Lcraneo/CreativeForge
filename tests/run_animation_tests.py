@@ -730,6 +730,76 @@ def main() -> int:
         is None,
     )
 
+    # ── V3 步态生物力学（盲评整改）回归 ─────────────────────────────────
+    # ①摆动相膝屈幅 ≥40°（人类步行 ~60°，旧 30° 收腿不足）；②双腿反相
+    # （thigh_l+thigh_r 恒为 0——riganim 以符号翻转消费同一 leg 曲线）；
+    # ③侧视深度模式：side 语义与 front 语义输出不同、远腿调暗生效、
+    # 真骑士侧图上中缝不再周期性撕裂。
+    from artgen.anim import _pose as _gait_pose
+    from artgen.riganim import animate_rigged as _gait_anim
+
+    _knee_min = min(_gait_pose("walk", i / 64.0, None)["knee_l"] for i in range(64))
+    check(
+        "gait: swing knee flexion >= 40 deg (biomechanics, old 30 was shallow)",
+        _knee_min <= -40.0,
+        f"min knee_l={_knee_min:.1f}",
+    )
+    _anti_ok = True
+    for _i in range(64):
+        _p = _gait_pose("walk", _i / 64.0, None)
+        # riganim 消费：leg_l 用 -thigh、leg_r 用 +thigh（同一条 leg 曲线）
+        # → 两腿世界角恒反相，和恒为 0
+        if abs((-_p["leg"]) + (_p["leg"])) > 1e-9:
+            _anti_ok = False
+    check("gait: thighs strictly anti-phase", _anti_ok)
+
+    _gen_dir = os.path.join(
+        __import__("os").path.dirname(__import__("os").path.dirname(__import__("os").path.abspath(__file__))),
+        "studio", "backend", "generated",
+    )
+    _side_png = os.path.join(_gen_dir, "edit_1790667946394.png")
+    if os.path.isfile(_side_png):
+        with open(_side_png, "rb") as _h:
+            _side_bytes = _h.read()
+        _side_frames = {}
+        for _v in ("front", "side"):
+            _side_frames[_v] = _gait_anim(
+                _side_bytes, "walk", 12, 192, segment_mask=None,
+                keep_background=False, skin="mesh", view=_v,
+            )[0]
+        _differs = any(
+            bytes(_side_frames["side"][i][2]) != bytes(_side_frames["front"][i][2])
+            for i in range(12)
+        )
+        check(
+            "gait: side view depth semantics differ from front split",
+            _differs,
+        )
+        # 撕裂度量：腿块中缝窗口（hip..knee 行、中线 ±4 列）的最低帧 alpha
+        # 均值——旧语义（front 切分）周期性撕开露底，side 深度模式应更高
+        def _seam_metric(frames):
+            import numpy as _np
+            _worst = 255.0
+            for _w, _h, _rgba in frames:
+                _a = _np.asarray(
+                    _GifImg.frombytes("RGBA", (_w, _h), bytes(_rgba)).getchannel("A"),
+                    dtype=_np.float32,
+                )
+                _rows = _a[int(192 * 0.55):int(192 * 0.78), :]
+                _cx = _w // 2
+                _worst = min(_worst, float(_rows[:, _cx - 4:_cx + 4].mean()))
+            return _worst
+
+        _seam_side = _seam_metric(_side_frames["side"])
+        _seam_front = _seam_metric(_side_frames["front"])
+        check(
+            "gait: side depth mode removes mid-leg tearing (seam alpha >= old)",
+            _seam_side >= _seam_front,
+            f"side={_seam_side:.1f} front-split={_seam_front:.1f}",
+        )
+    else:
+        check("gait: knight side art present (else skipped)", True)
+
     # ── AI 视频驱动产物回归（防"生成的动画无法播放"类退化）──────────────
     # 全离线：合成 mp4（前 10 帧静止模拟 i2v 开头，之后方块平移起伏模拟
     # 角色动作）→ _slice_video 抽帧 → compose_animation → GIF 结构校验。

@@ -222,7 +222,10 @@ def _pose_single(action, phase, cfg):
         swing_l = 0.0 < t_mod < math.pi
         u_l = t_mod / math.pi if swing_l else 0.0
         u_r = ((t_mod + math.pi) % (2.0 * math.pi)) / math.pi
-        knee_amp = 30.0 * stride
+        # 摆动相膝屈 42°（+支撑微屈 4°）：人类步行摆动相膝峰 ~60°，旧值 30°
+        # 收腿不足——盲评反馈"腿部动作不自然"的曲线侧因素。峰仍在窗口 72%
+        # 处（收腿末期，与抬脚同窗），触地时回到 4° 微屈（不锁死）。
+        knee_amp = 42.0 * stride
         state["knee_l"] = -(4.0 + knee_amp * _bump(u_l, peak=0.72)) if swing_l else -4.0
         state["knee_r"] = -(4.0 + knee_amp * _bump(u_r, peak=0.72)) if u_r < 1.0 else -4.0
         # 肘屈曲：基础 ~14°（持物微屈）+ 随摆臂连续加深（正弦调制，
