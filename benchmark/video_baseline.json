@@ -7,20 +7,20 @@
       "size": 384
     },
     "metrics": {
-      "frames": 30,
+      "frames": 32,
       "fps": 12,
-      "loop_seconds": 2.5,
-      "sharpness": 13.716,
-      "temporal_consistency": 0.9928,
-      "color_fidelity": 0.9676,
+      "loop_seconds": 2.667,
+      "sharpness": 13.706,
+      "temporal_consistency": 0.9908,
+      "color_fidelity": 0.9633,
       "dynamic_range_spread": 233.0,
       "clip_high": 0.00609,
       "clip_low": 0.0,
-      "motion_total": 18.56,
-      "motion_mean": 0.64,
-      "motion_cv": 0.301,
-      "pipeline_seconds": 0.273,
-      "gif_bytes": 749111,
+      "motion_total": 22.41,
+      "motion_mean": 0.723,
+      "motion_cv": 0.5064,
+      "pipeline_seconds": 0.286,
+      "gif_bytes": 839714,
       "delivery_size": 384,
       "source_fps": 24.0,
       "mp4_width": 384,
@@ -28,7 +28,7 @@
       "mp4_duration": 4.792,
       "mp4_bitrate_kbps": 34
     },
-    "recorded_at": "2026-10-03 20:54:35"
+    "recorded_at": "2026-10-04 11:24:04"
   },
   "goal_loop_ratio": 1.5,
   "tolerances": {

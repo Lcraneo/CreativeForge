@@ -1,0 +1,549 @@
+{
+  "generated_at": "2026-10-04 11:40:37",
+  "matrix": {
+    "procedural": {
+      "walk/front/mesh": {
+        "frames": 12,
+        "seconds": 10.2,
+        "motion_max": 16.78,
+        "content_top_row": 5,
+        "loop_sim": 0.959
+      },
+      "walk/front/rigid": {
+        "frames": 12,
+        "seconds": 4.19,
+        "motion_max": 17.8,
+        "content_top_row": 5,
+        "loop_sim": 0.9565
+      },
+      "walk/side/mesh": {
+        "frames": 12,
+        "seconds": 9.58,
+        "motion_max": 6.55,
+        "content_top_row": 9,
+        "loop_sim": 0.9317,
+        "seam_min": 247.2
+      },
+      "walk/side/rigid": {
+        "frames": 12,
+        "seconds": 3.59,
+        "motion_max": 6.52,
+        "content_top_row": 9,
+        "loop_sim": 0.9348,
+        "seam_min": 247.2
+      },
+      "run/front/mesh": {
+        "frames": 12,
+        "seconds": 9.99,
+        "motion_max": 17.58,
+        "content_top_row": 26,
+        "loop_sim": 0.9551
+      },
+      "run/front/rigid": {
+        "frames": 12,
+        "seconds": 4.11,
+        "motion_max": 17.82,
+        "content_top_row": 26,
+        "loop_sim": 0.9542
+      },
+      "run/side/mesh": {
+        "frames": 12,
+        "seconds": 9.41,
+        "motion_max": 6.76,
+        "content_top_row": 10,
+        "loop_sim": 0.9297,
+        "seam_min": 251.9
+      },
+      "run/side/rigid": {
+        "frames": 12,
+        "seconds": 3.61,
+        "motion_max": 6.72,
+        "content_top_row": 10,
+        "loop_sim": 0.9303,
+        "seam_min": 251.9
+      },
+      "idle/front/mesh": {
+        "frames": 12,
+        "seconds": 4.13,
+        "motion_max": 3.16,
+        "content_top_row": 9,
+        "loop_sim": 0.961
+      },
+      "idle/front/rigid": {
+        "frames": 12,
+        "seconds": 4.19,
+        "motion_max": 3.16,
+        "content_top_row": 9,
+        "loop_sim": 0.961
+      },
+      "idle/side/mesh": {
+        "frames": 12,
+        "seconds": 3.59,
+        "motion_max": 3.43,
+        "content_top_row": 12,
+        "loop_sim": 0.9478,
+        "seam_min": 253.0
+      },
+      "idle/side/rigid": {
+        "frames": 12,
+        "seconds": 3.6,
+        "motion_max": 3.43,
+        "content_top_row": 12,
+        "loop_sim": 0.9478,
+        "seam_min": 253.0
+      },
+      "attack/front/mesh": {
+        "frames": 12,
+        "seconds": 4.17,
+        "motion_max": 19.22,
+        "content_top_row": 6
+      },
+      "attack/front/rigid": {
+        "frames": 12,
+        "seconds": 4.16,
+        "motion_max": 19.22,
+        "content_top_row": 6
+      },
+      "attack/side/mesh": {
+        "frames": 12,
+        "seconds": 3.6,
+        "motion_max": 4.85,
+        "content_top_row": 14,
+        "seam_min": 253.3
+      },
+      "attack/side/rigid": {
+        "frames": 12,
+        "seconds": 3.62,
+        "motion_max": 4.85,
+        "content_top_row": 14,
+        "seam_min": 253.3
+      },
+      "jump/front/mesh": {
+        "frames": 12,
+        "seconds": 4.16,
+        "motion_max": 34.77,
+        "content_top_row": 9
+      },
+      "jump/front/rigid": {
+        "frames": 12,
+        "seconds": 4.18,
+        "motion_max": 34.77,
+        "content_top_row": 9
+      },
+      "jump/side/mesh": {
+        "frames": 12,
+        "seconds": 3.62,
+        "motion_max": 12.66,
+        "content_top_row": 9,
+        "seam_min": 249.3
+      },
+      "jump/side/rigid": {
+        "frames": 12,
+        "seconds": 3.6,
+        "motion_max": 12.66,
+        "content_top_row": 9,
+        "seam_min": 249.3
+      },
+      "walk/front/mesh+hair": {
+        "frames": 12,
+        "seconds": 10.35,
+        "motion_max": 18.3,
+        "content_top_row": 5,
+        "loop_sim": 0.9578,
+        "hair_head_alpha": 3060
+      },
+      "walk+turn/front/mesh+phases": {
+        "frames": 12,
+        "seconds": 9.67,
+        "motion_max": 26.81,
+        "content_top_row": 5
+      },
+      "idle/side/mesh+hair": {
+        "frames": 12,
+        "seconds": 3.96,
+        "motion_max": 10.58,
+        "content_top_row": 1,
+        "loop_sim": 0.9199,
+        "seam_min": 253.0,
+        "hair_head_alpha": 3060
+      }
+    },
+    "i2v_downstream": {
+      "flash_v1/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 6.01,
+        "motion_peak": 16.03,
+        "loop_mean": 7.89,
+        "seconds": 10.01
+      },
+      "flash_v1/idle": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 1.09,
+        "motion_peak": 2.76,
+        "loop_mean": 1.29,
+        "seconds": 9.95
+      },
+      "flash_v1/jump": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.18,
+        "motion_peak": 26.03,
+        "loop_mean": 14.26,
+        "seconds": 10.39
+      },
+      "flash_v1/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 7.39,
+        "motion_peak": 21.18,
+        "loop_mean": 16.43,
+        "seconds": 11.08
+      },
+      "flash_v1/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 8.18,
+        "motion_peak": 23.51,
+        "loop_mean": 16.37,
+        "seconds": 11.54
+      },
+      "flash_v2/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 7.7,
+        "motion_peak": 20.47,
+        "loop_mean": 11.76,
+        "seconds": 11.41
+      },
+      "flash_v2/idle": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 1.01,
+        "motion_peak": 2.74,
+        "loop_mean": 1.53,
+        "seconds": 10.2
+      },
+      "flash_v2/jump": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 8.99,
+        "motion_peak": 11.13,
+        "loop_mean": 5.52,
+        "seconds": 10.81
+      },
+      "flash_v2/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 6.11,
+        "motion_peak": 17.88,
+        "loop_mean": 12.97,
+        "seconds": 10.1
+      },
+      "flash_v2/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.47,
+        "motion_peak": 17.27,
+        "loop_mean": 10.34,
+        "seconds": 15.88
+      },
+      "flash_v2_1080p/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.36,
+        "motion_peak": 23.49,
+        "loop_mean": 13.09,
+        "seconds": 9.3
+      },
+      "flash_v2_1080p/idle": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 2.93,
+        "motion_peak": 6.44,
+        "loop_mean": 3.45,
+        "seconds": 10.38
+      },
+      "flash_v2_1080p/jump": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.35,
+        "motion_peak": 21.63,
+        "loop_mean": 11.0,
+        "seconds": 10.43
+      },
+      "flash_v2_1080p/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 7.65,
+        "motion_peak": 22.79,
+        "loop_mean": 16.61,
+        "seconds": 10.89
+      },
+      "flash_v2_1080p/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 5.43,
+        "motion_peak": 15.72,
+        "loop_mean": 10.38,
+        "seconds": 9.27
+      },
+      "flash_v2_ext/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 6.67,
+        "motion_peak": 18.41,
+        "loop_mean": 8.34,
+        "seconds": 10.24
+      },
+      "flash_v2_ext/idle": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 1.26,
+        "motion_peak": 2.68,
+        "loop_mean": 1.62,
+        "seconds": 11.9
+      },
+      "flash_v2_ext/jump": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 10.1,
+        "motion_peak": 25.19,
+        "loop_mean": 15.27,
+        "seconds": 13.77
+      },
+      "flash_v2_ext/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.75,
+        "motion_peak": 28.94,
+        "loop_mean": 20.7,
+        "seconds": 9.89
+      },
+      "flash_v2_ext/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 10.12,
+        "motion_peak": 27.84,
+        "loop_mean": 18.5,
+        "seconds": 13.59
+      },
+      "plus_v2/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 1440,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 6.98,
+        "motion_peak": 20.2,
+        "loop_mean": 13.74,
+        "seconds": 11.19
+      },
+      "plus_v2/idle": {
+        "sliced": 32,
+        "mp4": {
+          "width": 1440,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 2.95,
+        "motion_peak": 2.95,
+        "loop_mean": 1.75,
+        "seconds": 11.28
+      },
+      "plus_v2/jump": {
+        "sliced": 32,
+        "mp4": {
+          "width": 1440,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.01,
+        "motion_peak": 26.63,
+        "loop_mean": 14.25,
+        "seconds": 10.93
+      },
+      "plus_v2/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 1440,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 7.72,
+        "motion_peak": 22.46,
+        "loop_mean": 16.83,
+        "seconds": 10.71
+      },
+      "plus_v2/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 1440,
+          "fps": 30.0,
+          "duration": 4.733
+        },
+        "loop_seam": 9.19,
+        "motion_peak": 25.45,
+        "loop_mean": 17.23,
+        "seconds": 10.93
+      },
+      "wanx_v2/attack": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 5.1
+        },
+        "loop_seam": 8.08,
+        "motion_peak": 15.41,
+        "loop_mean": 9.99,
+        "seconds": 12.89
+      },
+      "wanx_v2/run": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 5.1
+        },
+        "loop_seam": 9.06,
+        "motion_peak": 13.53,
+        "loop_mean": 8.1,
+        "seconds": 20.4
+      },
+      "wanx_v2/walk": {
+        "sliced": 32,
+        "mp4": {
+          "width": 960,
+          "fps": 30.0,
+          "duration": 5.1
+        },
+        "loop_seam": 5.36,
+        "motion_peak": 14.05,
+        "loop_mean": 10.71,
+        "seconds": 11.08
+      }
+    },
+    "i2v_summary": {
+      "flash_v1": {
+        "clips": 5,
+        "ok": 5,
+        "loop_seam_max": 9.18,
+        "mp4_ok": 5
+      },
+      "flash_v2": {
+        "clips": 5,
+        "ok": 5,
+        "loop_seam_max": 9.47,
+        "mp4_ok": 5
+      },
+      "flash_v2_1080p": {
+        "clips": 5,
+        "ok": 5,
+        "loop_seam_max": 9.36,
+        "mp4_ok": 5
+      },
+      "flash_v2_ext": {
+        "clips": 5,
+        "ok": 5,
+        "loop_seam_max": 10.12,
+        "mp4_ok": 5
+      },
+      "plus_v2": {
+        "clips": 5,
+        "ok": 5,
+        "loop_seam_max": 9.19,
+        "mp4_ok": 5
+      },
+      "wanx_v2": {
+        "clips": 3,
+        "ok": 3,
+        "loop_seam_max": 9.06,
+        "mp4_ok": 3
+      }
+    }
+  },
+  "fails": []
+}

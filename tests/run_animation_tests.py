@@ -891,9 +891,9 @@ def main() -> int:
             synth_bytes, b"", fps=12, duration=1.0, size=192, min_count=20, with_info=True
         )
         check(
-            "slice_video with_info: indices match frames",
-            len(_info_i["indices"]) == len(_frames_i),
-            f"{len(_info_i['indices'])} vs {len(_frames_i)}",
+            "slice_video with_info: frames = selected + cross-fade tail",
+            len(_frames_i) == len(_info_i["indices"]) + 2,
+            f"frames={len(_frames_i)} indices={len(_info_i['indices'])}",
         )
         check(
             "slice_video with_info: source fps detected",

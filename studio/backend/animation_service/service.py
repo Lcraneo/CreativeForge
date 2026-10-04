@@ -1235,8 +1235,40 @@ class AnimationService:
                 "indices": found_indices,
                 "cut": cut,
             }
-            return frames_rgba, info
-        return frames_rgba
+            return self._loop_blend(frames_rgba), info
+        return self._loop_blend(frames_rgba)
+
+    @staticmethod
+    def _blend_rgba(frame_a, frame_b, alpha):
+        """两帧 RGBA 线性混合（循环交叉溶解的过渡帧）。"""
+
+        import numpy as np
+        from PIL import Image
+
+        a = np.asarray(Image.frombytes("RGBA", (frame_a[0], frame_a[1]), bytes(frame_a[2])), dtype=np.float32)
+        b = np.asarray(Image.frombytes("RGBA", (frame_b[0], frame_b[1]), bytes(frame_b[2])), dtype=np.float32)
+        mixed = a * (1.0 - alpha) + b * alpha
+        return (frame_a[0], frame_a[1], bytearray(np.clip(mixed, 0, 255).astype(np.uint8).tobytes()))
+
+    @staticmethod
+    def _loop_blend(frames_rgba, blend_k=2):
+        """循环交叉溶解（V4 功能体检发现的共性缺陷·统一修复）：i2v 源视频
+        首尾状态天然差异大（开头=静止原图、结尾=运动后状态），接缝重排只能
+        把最大跳变**藏**到循环边界、不能消除它——全模型配置产出接缝残留
+        实测 2.5~3× 平均帧差（matrix B 六组全部命中）。在循环边界追加 K 帧
+        首尾交叉混合（12fps 下 ~160ms 渐变），硬回跳变肉眼顺滑过渡。
+        帧数 +K，循环时长略增；对程序化链不适用（其首尾本就 C0 连续）。"""
+
+        if not frames_rgba or len(frames_rgba) < 6 or blend_k <= 0:
+            return frames_rgba
+        first, last = frames_rgba[0], frames_rgba[-1]
+        if first[0] != last[0] or first[1] != last[1]:
+            return frames_rgba
+        blended = [
+            AnimationService._blend_rgba(last, first, k / (blend_k + 1.0))
+            for k in range(1, blend_k + 1)
+        ]
+        return frames_rgba + blended
 
     def _deliver_video_mp4(self, video_bytes: bytes, info: dict, animation_id: str):
         """i2v 源 mp4 直通交付：按抽帧选中的时间窗从**源视频**精确裁出
