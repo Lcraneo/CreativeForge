@@ -6,6 +6,8 @@ import { clearHidden, hidePerson, loadHidden, loadRecent, pushRecent, type Perso
 import {
   api,
   type AnimationResult,
+  type CustomActionDetail,
+  type CustomActionPreset,
   type MotionPhase,
   type PoseConfig,
 } from "../api/client";
@@ -59,6 +61,17 @@ const DEFAULT_POSE_CONFIG: PoseConfig = {
   cycles: 1,
   turn: 0,
 };
+
+/** 后端 epoch 秒 → 本地「MM-DD HH:mm」；缺省给 —（卡片与详情弹窗的时间元数据） */
+const fmtTime = (value?: number) =>
+  value
+    ? new Date(value * 1000).toLocaleString("zh-CN", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
 
 interface SeqFrame {
   name: string;
@@ -225,10 +238,16 @@ export default function AnimationStudio() {
       setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...action.pose_config });
       setPhase(0);
       setPresetName(action.label);
+      // 词表外动作标记：常驻提示条引导切换 AI 视频驱动（下次解读无标记时清除）
+      setSuggestVideoAction(
+        action.suggest_video ? action.label || text.slice(0, 8) : null,
+      );
       toast({
         tone: "success",
         title: `已套用动作「${action.label}」`,
-        description: `${action.base_action} · ${action.view} · 滑杆参数已更新，可直接生成或微调后保存`,
+        description: action.suggest_video
+          ? "该动作超出骨骼引擎词表——建议用「AI 视频驱动」生成（见上方提示条）"
+          : `${action.base_action} · ${action.view} · 滑杆参数已更新，可直接生成或微调后保存`,
       });
     } catch (cause) {
       toast({ tone: "danger", title: "动作解读失败", description: String(cause).slice(0, 160) });
@@ -240,11 +259,18 @@ export default function AnimationStudio() {
   const [frameUrl, setFrameUrl] = useState<string | null>(null);
   const [previewWarn, setPreviewWarn] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [presets, setPresets] = useState<
-    Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>
-  >([]);
+  const [presets, setPresets] = useState<CustomActionPreset[]>([]);
   const [presetName, setPresetName] = useState("");
   const [editorBusy, setEditorBusy] = useState(false);
+  // 自定义动作编辑/详情（P2 体验）：编辑复用创作台（保存走覆盖链路，改名时
+  // 后端迁移元数据），详情弹窗展示完整描述、参数与修改历史（可追溯）
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [detailName, setDetailName] = useState<string | null>(null);
+  const [detail, setDetail] = useState<CustomActionDetail | null>(null);
+  const [detailBusy, setDetailBusy] = useState(false);
+  // 解读出的词表外动作（鞠躬/挥手等一次性手势）：常驻提示条 + 一键切换
+  // AI 视频驱动——骨骼链只能给近似姿态，用户该在出片前就知道走哪条链
+  const [suggestVideoAction, setSuggestVideoAction] = useState<string | null>(null);
 
   // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
   // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
@@ -286,6 +312,12 @@ export default function AnimationStudio() {
           payload.image = upload.dataUrl.split(",")[1];
         } else if (asset?.id) {
           payload.asset_id = asset.id;
+        }
+        // 自定义动作的描述随请求送达 i2v 链（词表外动作的表达通道）；
+        // 基础动作不带——内置词表路径保持原样
+        if (source.kind === "custom") {
+          payload.action_description =
+            presets.find((preset) => preset.name === source.name)?.description ?? "";
         }
         const animationResult = await api.createAnimation(payload);
         // 自动记录当前人物到历史（下次直接载入）
@@ -417,29 +449,80 @@ export default function AnimationStudio() {
     if (!presetName.trim() || editorBusy) return;
     setEditorBusy(true);
     try {
+      // 编辑态：original_name 指向被编辑的旧动作——同名=就地覆盖（后端保留
+      // 创建时间/版本数/历史），改名=整卡迁移元数据；描述取自然语言框原文
       await api.saveCustomAction({
         name: presetName.trim(),
         action: editorAction,
         view: editorView,
         pose_config: poseConfig,
+        description: nlText.trim(),
+        ...(editingName ? { original_name: editingName } : {}),
       });
       const r = await api.listCustomActions();
       setPresets(r.actions);
+      const savedName = presetName.trim();
       // 保存即选中:新动作立刻成为当前活跃动作,可在自定义动作区直接生成
-      if (r.actions.some((p) => p.name === presetName.trim())) {
-        selectCustom(presetName.trim(), r.actions);
+      if (r.actions.some((p) => p.name === savedName)) {
+        selectCustom(savedName, r.actions);
       }
+      const wasEditing = editingName !== null;
       setPresetName("");
+      setEditingName(null);
       setError(null);
       toast({
         tone: "success",
-        title: `自定义动作「${presetName.trim()}」已保存并选中`,
-        description: "在自定义动作区点击「用此动作生成」即可按该动作出片",
+        title: wasEditing
+          ? `自定义动作「${savedName}」已保存修改并选中`
+          : `自定义动作「${savedName}」已保存并选中`,
+        description: wasEditing
+          ? "创建时间与修改历史已保留，可在动作库点「详情」查看版本记录"
+          : "在自定义动作区点击「用此动作生成」即可按该动作出片",
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setEditorBusy(false);
+    }
+  };
+
+  // 编辑已有动作：整卡载入创作台（名称/描述/基底/视角/滑杆参数），保存时
+  // 走覆盖链路——不新建记录，创建时间等元数据由后端保留
+  const startEdit = (preset: CustomActionPreset) => {
+    setEditingName(preset.name);
+    setPresetName(preset.name);
+    setEditorAction(preset.action);
+    setEditorView(preset.view);
+    setPoseConfig(preset.pose_config);
+    setNlText(preset.description ?? "");
+    // 旧版动作（无 revision 字段=描述存档功能上线前创建）载入编辑时提醒
+    // 补写描述——否则用户会以为描述又被弄丢了
+    if (!preset.description && !preset.revision) {
+      toast({
+        tone: "info",
+        title: `「${preset.name}」创建于描述存档功能之前`,
+        description: "当时的描述未能保存——在自然语言框补写后点「保存修改」即可归档",
+      });
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingName(null);
+    setPresetName("");
+  };
+
+  // 详情弹窗：列表接口不带修改历史，单独拉完整记录（含历史快照）
+  const openDetail = async (name: string) => {
+    setDetailName(name);
+    setDetail(null);
+    setDetailBusy(true);
+    try {
+      setDetail(await api.getCustomAction(name));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setDetailName(null);
+    } finally {
+      setDetailBusy(false);
     }
   };
 
@@ -450,6 +533,12 @@ export default function AnimationStudio() {
       // 删除的是当前选中动作时,回落到默认基础动作,不留悬空选中态
       const fallback = selectionAfterRemoval(name, selected);
       if (fallback) setSelected(fallback);
+      // 删除的是正在编辑/查看详情的动作时,收起对应面板,不留悬空引用
+      if (editingName === name) {
+        setEditingName(null);
+        setPresetName("");
+      }
+      if (detailName === name) setDetailName(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -805,6 +894,24 @@ export default function AnimationStudio() {
                 {useVideo && (
                   <div className="rounded-lg border border-line-subtle bg-surface-2/40 px-3 py-2 text-[11.5px] text-ink-3">
                     AI 视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。
+                  </div>
+                )}
+                {suggestVideoAction && !useVideo && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ember/40 bg-ember-tint/20 px-3 py-2">
+                    <span className="text-[11.5px] text-ink">
+                      「{suggestVideoAction}」超出骨骼引擎词表（内置 5 种动作之外的一次性手势）——全身骨骼只能给近似姿态，AI 视频驱动才能真实演出该动作。
+                    </span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="spark"
+                      onClick={() => {
+                        setUseVideo(true);
+                        setSuggestVideoAction(null);
+                      }}
+                    >
+                      切换到 AI 视频驱动
+                    </Button>
                   </div>
                 )}
                 <div className="flex flex-wrap items-center gap-6">
@@ -1315,9 +1422,24 @@ export default function AnimationStudio() {
                   />
                 </div>
 
+                {editingName && (
+                  <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ember/40 bg-ember-tint/20 px-3 py-2">
+                    <span className="text-[11px] text-ember">
+                      正在编辑「{editingName}」——保存后覆盖该动作（保留创建时间并记入修改历史；改名则整卡迁移元数据）
+                    </span>
+                    <button
+                      onClick={cancelEdit}
+                      className="text-[11px] text-ink-3 underline-offset-2 hover:text-ink hover:underline"
+                    >
+                      取消编辑
+                    </button>
+                  </div>
+                )}
                 <div className="flex flex-wrap items-end gap-4 rounded-lg border border-line-subtle bg-surface-2/40 p-3">
                   <label className="text-[11px] text-ink-4">
-                    <span className="mb-1.5 block uppercase tracking-widest">保存当前调参为新自定义动作</span>
+                    <span className="mb-1.5 block uppercase tracking-widest">
+                      {editingName ? "编辑自定义动作（保存即覆盖）" : "保存当前调参为新自定义动作"}
+                    </span>
                     <input
                       value={presetName}
                       onChange={(e) => setPresetName(e.target.value)}
@@ -1333,10 +1455,12 @@ export default function AnimationStudio() {
                     disabled={!presetName.trim()}
                     onClick={savePreset}
                   >
-                    保存
+                    {editingName ? "保存修改" : "保存"}
                   </Button>
                   <span className="text-[10.5px] text-ink-4">
-                    保存后自动选中,到下方「动作库」点击「用此动作生成」。
+                    {editingName
+                      ? "可改动作基底、视角、滑杆与描述后保存；改名称即另存为新动作（元数据随迁）。"
+                      : "保存后自动选中,到下方「动作库」点击「用此动作生成」。"}
                   </span>
                 </div>
 
@@ -1404,63 +1528,99 @@ export default function AnimationStudio() {
                           <div
                             key={preset.name}
                             className={cx(
-                              "group relative flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors",
+                              "group relative flex flex-col gap-1.5 rounded-lg border px-2.5 py-2 transition-colors",
                               active
                                 ? "border-ember bg-ember-tint/40"
                                 : "border-line-subtle bg-surface-1 hover:border-line",
                             )}
                           >
-                            <button
-                              onClick={() => selectCustom(preset.name)}
-                              title={`选中「${preset.name}」`}
-                              className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-                            >
-                              <span
+                            <div className="flex items-center gap-2.5">
+                              <button
+                                onClick={() => selectCustom(preset.name)}
+                                title={`选中「${preset.name}」`}
+                                className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+                              >
+                                <span
+                                  className={cx(
+                                    "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors",
+                                    active
+                                      ? "border-ember bg-ember text-white"
+                                      : "border-line text-transparent",
+                                  )}
+                                >
+                                  <Icon name="check" className="h-3 w-3" />
+                                </span>
+                                <span className="min-w-0">
+                                  <span className="block truncate text-[12px] text-ink">
+                                    {preset.name}
+                                  </span>
+                                  <span className="block text-[10.5px] text-ink-4">
+                                    基于{ACTION_LABELS[preset.action] ?? preset.action} ·{" "}
+                                    {preset.view === "side" ? "侧视" : "正面"}
+                                    {preset.revision && preset.revision > 1
+                                      ? ` · 已修改 ${preset.revision - 1} 次`
+                                      : ""}
+                                  </span>
+                                </span>
+                              </button>
+                              {/* 每张卡片专属的生成按钮：点卡片=选中，点生成=选中并
+                                  立即按该动作保存参数出片——与基础动作区"每个动作
+                                  可直接生成"对齐，自定义动作不再依赖顶部总按钮 */}
+                              <button
+                                onClick={() => {
+                                  selectCustom(preset.name);
+                                  void generate({ kind: "custom", name: preset.name });
+                                }}
+                                disabled={busy}
+                                title={`选中并立即按「${preset.name}」保存时的参数生成动画`}
                                 className={cx(
-                                  "grid h-5 w-5 shrink-0 place-items-center rounded-full border transition-colors",
+                                  "shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors",
                                   active
-                                    ? "border-ember bg-ember text-white"
-                                    : "border-line text-transparent",
+                                    ? "border-ember bg-ember text-white hover:opacity-90"
+                                    : "border-line-subtle bg-surface-2 text-ink-2 hover:border-ember hover:text-ember",
                                 )}
                               >
-                                <Icon name="check" className="h-3 w-3" />
+                                {busy && active ? "生成中…" : "生成"}
+                              </button>
+                            </div>
+                            {/* 第二行：描述摘要（详情看全文）+ 详情/编辑/删除入口 */}
+                            <div className="flex items-center gap-2">
+                              <span
+                                className="min-w-0 flex-1 truncate text-[10.5px] text-ink-4"
+                                title={
+                                  preset.description ||
+                                  (preset.revision
+                                    ? "未填写描述——点「详情」查看完整参数"
+                                    : "旧版创建的动作，描述未存档——点「编辑」补写后保存即可归档")
+                                }
+                              >
+                                {preset.description ||
+                                  (preset.revision
+                                    ? "（未填写描述）"
+                                    : "（描述未存档 · 旧版创建，编辑可补写）")}
                               </span>
-                              <span className="min-w-0">
-                                <span className="block truncate text-[12px] text-ink">
-                                  {preset.name}
-                                </span>
-                                <span className="block text-[10.5px] text-ink-4">
-                                  基于{ACTION_LABELS[preset.action] ?? preset.action} ·{" "}
-                                  {preset.view === "side" ? "侧视" : "正面"}
-                                </span>
-                              </span>
-                            </button>
-                            {/* 每张卡片专属的生成按钮：点卡片=选中，点生成=选中并
-                                立即按该动作保存参数出片——与基础动作区"每个动作
-                                可直接生成"对齐，自定义动作不再依赖顶部总按钮 */}
-                            <button
-                              onClick={() => {
-                                selectCustom(preset.name);
-                                void generate({ kind: "custom", name: preset.name });
-                              }}
-                              disabled={busy}
-                              title={`选中并立即按「${preset.name}」保存时的参数生成动画`}
-                              className={cx(
-                                "shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors",
-                                active
-                                  ? "border-ember bg-ember text-white hover:opacity-90"
-                                  : "border-line-subtle bg-surface-2 text-ink-2 hover:border-ember hover:text-ember",
-                              )}
-                            >
-                              {busy && active ? "生成中…" : "生成"}
-                            </button>
-                            <button
-                              onClick={() => removePreset(preset.name)}
-                              title="删除该自定义动作"
-                              className="text-[11px] leading-none text-ink-4 hover:text-danger"
-                            >
-                              ×
-                            </button>
+                              <button
+                                onClick={() => void openDetail(preset.name)}
+                                title="查看完整描述、姿态参数、创建/修改时间与修改历史"
+                                className="shrink-0 text-[10.5px] text-ink-3 hover:text-primary"
+                              >
+                                详情
+                              </button>
+                              <button
+                                onClick={() => startEdit(preset)}
+                                title="载入上方创作台，修改动作属性与参数后覆盖保存"
+                                className="shrink-0 text-[10.5px] text-ink-3 hover:text-ember"
+                              >
+                                编辑
+                              </button>
+                              <button
+                                onClick={() => removePreset(preset.name)}
+                                title="删除该自定义动作"
+                                className="shrink-0 text-[11px] leading-none text-ink-4 hover:text-danger"
+                              >
+                                ×
+                              </button>
+                            </div>
                           </div>
                         );
                       })}
@@ -1807,6 +1967,142 @@ export default function AnimationStudio() {
                 setPreviewError(true);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* 自定义动作详情弹窗：完整描述 + 元数据（创建/修改时间、版本数）+
+          修改历史快照——列表卡片只放摘要，全量信息在这里追溯 */}
+      {detailName && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-6"
+          onClick={() => setDetailName(null)}
+        >
+          <div
+            className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line-subtle bg-surface-1 p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              onClick={() => setDetailName(null)}
+              className="absolute -right-3 -top-3 grid h-8 w-8 place-items-center rounded-full border border-line-subtle bg-surface-1 text-ink-2"
+            >
+              ✕
+            </button>
+            {detailBusy || !detail ? (
+              <div className="grid h-40 place-items-center text-sm text-ink-3">
+                正在加载动作详情…
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h3 className="text-[15px] font-semibold text-ink">{detail.name}</h3>
+                  <p className="mt-0.5 text-[11px] text-ink-4">
+                    基于{ACTION_LABELS[detail.action] ?? detail.action} ·{" "}
+                    {detail.view === "side" ? "侧视" : "正面"} · 第 {detail.revision ?? 1} 版
+                  </p>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[10.5px] uppercase tracking-widest text-ink-4">
+                    动作描述
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-md border border-line-subtle bg-surface-2/40 p-2.5 text-[12px] leading-relaxed text-ink-2">
+                    {detail.description ||
+                      (detail.revision
+                        ? "（未填写描述——可点「编辑此动作」补写并保存）"
+                        : "该动作创建于「描述存档」功能上线之前，当时在自然语言框填写的描述未被保存下来，且无法从本地数据找回。点下方「编辑此动作」补写描述并保存即可归档，之后的每次修改都会自动记入历史。")}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11.5px]">
+                  <span className="text-ink-4">创建时间</span>
+                  <span className="text-ink-2">{fmtTime(detail.created_at)}</span>
+                  <span className="text-ink-4">最后修改</span>
+                  <span className="text-ink-2">{fmtTime(detail.updated_at)}</span>
+                  <span className="text-ink-4">累计修改</span>
+                  <span className="text-ink-2">{Math.max(0, (detail.revision ?? 1) - 1)} 次</span>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[10.5px] uppercase tracking-widest text-ink-4">
+                    姿态参数
+                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11.5px]">
+                    {POSE_PARAMS.map((param) => (
+                      <div key={param.key} className="flex justify-between gap-2">
+                        <span className="text-ink-4">{param.label}</span>
+                        <span className="font-mono text-ink-2">
+                          {typeof detail.pose_config[param.key] === "number"
+                            ? detail.pose_config[param.key]
+                            : "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {Array.isArray(detail.pose_config.phases) &&
+                    detail.pose_config.phases.length >= 2 && (
+                      <p className="mt-2 text-[11px] text-ink-3">
+                        多段编排：
+                        {detail.pose_config.phases
+                          .map(
+                            (seg) =>
+                              `${ACTION_LABELS[seg.action] ?? seg.action}(比重${seg.weight}${
+                                seg.turn ? ` · 转${Math.round(seg.turn)}°` : ""
+                              })`,
+                          )
+                          .join(" → ")}
+                      </p>
+                    )}
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[10.5px] uppercase tracking-widest text-ink-4">
+                    修改历史（{detail.history?.length ?? 0} 条快照）
+                  </p>
+                  {(detail.history?.length ?? 0) === 0 ? (
+                    <p className="text-[11px] text-ink-4">
+                      尚无修改记录——该动作自创建以来未被覆盖保存过。
+                    </p>
+                  ) : (
+                    <ol className="flex flex-col gap-1.5">
+                      {detail.history.map((entry, index) => (
+                        <li
+                          key={`${entry.time}-${index}`}
+                          className="rounded-md border border-line-subtle bg-surface-2/30 px-2.5 py-1.5 text-[11px]"
+                        >
+                          <div className="text-ink-4">
+                            v{entry.revision} · {fmtTime(entry.time)} ·{" "}
+                            {entry.trigger === "import" ? "动作包导入覆盖前" : "编辑覆盖前"}
+                          </div>
+                          <div className="mt-0.5 text-ink-2">
+                            基于{ACTION_LABELS[entry.action] ?? entry.action} ·{" "}
+                            {entry.view === "side" ? "侧视" : "正面"}
+                            {entry.description ? ` · ${entry.description}` : ""}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      const target = presets.find((p) => p.name === detail.name);
+                      setDetailName(null);
+                      if (target) startEdit(target);
+                    }}
+                  >
+                    编辑此动作
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={() => setDetailName(null)}>
+                    关闭
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

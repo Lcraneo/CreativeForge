@@ -66,6 +66,9 @@ class AnimationRequest(BaseModel):
     deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
     secondary_motion: bool = False  # V3 次级运动：发层摆动（首次生成发层约 0.3 元，之后缓存免费）
     equipment_aware: bool = True  # V3.5 装备/服装识别：看图认出武器/服装并贴合动作（首次 ~0.002 元，之后缓存免费）
+    # 自定义动作的用户描述（词表外动作如鞠躬/挥手的唯一表达通道）：仅 i2v
+    # 链消费——经独立润色通道替换词表主体句；骨骼链与内置动作不受影响
+    action_description: str = ""
 
 
 class PreviewFrameRequest(BaseModel):
@@ -94,6 +97,11 @@ class CustomActionRequest(BaseModel):
     action: str = "walk"
     view: str = "front"
     pose_config: dict
+    # 编辑增强（P2 体验）：description=动作完整描述；original_name 指向被
+    # 编辑的旧记录（同名就地修改=等于 name；改名=旧名），供存储层迁移
+    # 元数据（创建时间/版本数/修改历史）
+    description: str = ""
+    original_name: str = ""
 
 
 class SequenceRequest(BaseModel):
@@ -697,6 +705,7 @@ def build_router(runtime):
                     enhance_context=_enhance_context_for(asset),
                     final_quality=request.final_quality,
                     equipment_aware=request.equipment_aware,
+                    action_description=(request.action_description or "").strip()[:500],
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -1003,7 +1012,11 @@ def build_router(runtime):
             "2. 跳跃段的 cycles 不得低于 1（慢周期大弧线会呈悬浮/飞行观感）；\n"
             "3. 舞蹈类用 idle 基底 + 调大 bob/arm + 适度 lift/turn，不要用 jump 承载舞蹈；\n"
             "4. 「站立/起立」用 idle 段表达（引擎无起立原语）；\n"
-            "5. 数值必须落在范围内。"
+            "5. 数值必须落在范围内；\n"
+            "6. 词表外动作判定：一次性礼仪/手势动作（鞠躬/作揖/点头/摇头/挥手/"
+            "敬礼/鼓掌/叉腰/抱臂等）骨骼引擎无法真实表达——pose_config 仍按"
+            "最近似参数给出（通常 idle + lean 前倾），同时在 JSON 顶层额外返回 "
+            "\"suggest_video\": true；常规动作一律返回 \"suggest_video\": false。"
             + equipment_note
             + "\n\n用户描述：" + text
         )
@@ -1076,6 +1089,9 @@ def build_router(runtime):
             "view": view,
             "pose_config": pose_config,
             "source_text": text,
+            # 词表外动作标记：前端据此提示用户切换 AI 视频驱动（骨骼链只能
+            # 给近似姿态）
+            "suggest_video": data.get("suggest_video") is True,
         }
 
     @router.get("/animation/action-pack")
@@ -1111,7 +1127,9 @@ def build_router(runtime):
                         "action": str(item.get("action") or "walk"),
                         "view": str(item.get("view") or "front"),
                         "pose_config": item.get("pose_config") or {},
-                    }
+                        "description": str(item.get("description") or ""),
+                    },
+                    trigger="import",
                 )
                 imported += 1
             except Exception as error:  # noqa: BLE001
@@ -1122,7 +1140,19 @@ def build_router(runtime):
     def list_custom_actions():
         from studio.backend.animation_service.custom_actions import CustomActionStore
 
+        # 列表不含 history 快照（投影在存储层统一做）；完整含历史的记录走详情端点
         return {"actions": CustomActionStore(ANIMATION_DIR + "/custom_actions.json").list()}
+
+    @router.get("/animation/custom-actions/{name}")
+    def get_custom_action(name: str):
+        """自定义动作详情（P2 体验）：完整描述 + 元数据 + 修改历史快照。"""
+
+        from studio.backend.animation_service.custom_actions import CustomActionStore
+
+        record = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").get(name)
+        if record is None:
+            raise HTTPException(status_code=404, detail="unknown custom action")
+        return record
 
     @router.post("/animation/custom-actions")
     def save_custom_action(request: CustomActionRequest):

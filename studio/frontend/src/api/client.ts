@@ -204,6 +204,27 @@ export interface CustomActionPreset {
   pose_config: PoseConfig;
   created_at: number;
   updated_at: number;
+  /** 动作完整描述（自然语言创作时用户输入的原文，可空） */
+  description?: string;
+  /** 修改次数：创建=1，每次覆盖保存/改名 +1 */
+  revision?: number;
+}
+
+/** 修改历史快照：一次覆盖保存前的旧版本（最新在前，后端封顶 12 条） */
+export interface CustomActionHistoryEntry {
+  time: number;
+  /** edit=编辑覆盖 / import=动作包导入覆盖 */
+  trigger: string;
+  revision: number;
+  action: string;
+  view: string;
+  pose_config: PoseConfig;
+  description?: string;
+}
+
+/** 动作详情（GET /api/animation/custom-actions/{name}）：列表字段 + 修改历史 */
+export interface CustomActionDetail extends CustomActionPreset {
+  history: CustomActionHistoryEntry[];
 }
 
 export interface AnimationRequestPayload {
@@ -225,6 +246,9 @@ export interface AnimationRequestPayload {
   secondary_motion?: boolean;
   /** V3.5 装备/服装识别：骨骼链姿态自适应 + i2v 提示词贴合（按源图缓存，约 0.002 元/角色） */
   equipment_aware?: boolean;
+  /** 自定义动作的用户描述：仅 i2v 链消费（独立润色通道，词表外动作的
+   * 表达通道）；基础动作不带，内置词表路径保持原样 */
+  action_description?: string;
 }
 
 export interface PlanTask {
@@ -474,11 +498,19 @@ export const api = {
     action: string;
     view: string;
     pose_config: PoseConfig;
+    description?: string;
+    /** 编辑保存时指向被编辑的旧动作名（改名=旧名；就地修改=同名） */
+    original_name?: string;
   }) =>
     request<CustomActionPreset>("/api/animation/custom-actions", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  getCustomAction: (name: string) =>
+    request<CustomActionDetail>(
+      `/api/animation/custom-actions/${encodeURIComponent(name)}`,
+    ),
 
   deleteCustomAction: (name: string) =>
     request<{ status: string }>(`/api/animation/custom-actions/${encodeURIComponent(name)}`, {

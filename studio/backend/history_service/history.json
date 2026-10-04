@@ -31857,7 +31857,7 @@
     "palette": [],
     "image": {
       "file": "img_1790761320367.png",
-      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260930/77c9ad12/ab6c2d6d-f361-473f-8eda-bd518f9701d4-1.png?Expires=1790847726&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=F9WRD%2F%2F0kCgNbdVe2KUCgEy0Rsk%3D",
+      "url": "/api/generated/img_1790761320367.png",
       "model": "wanx2.1-t2i-turbo",
       "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790761320367.png",
       "width": 1024,
@@ -31892,7 +31892,7 @@
         },
         "ai_image": {
           "file": "img_1790761320367.png",
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260930/77c9ad12/ab6c2d6d-f361-473f-8eda-bd518f9701d4-1.png?Expires=1790847726&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=F9WRD%2F%2F0kCgNbdVe2KUCgEy0Rsk%3D",
+          "url": "/api/generated/img_1790761320367.png",
           "model": "wanx2.1-t2i-turbo",
           "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790761320367.png",
           "width": 1024,
@@ -32090,7 +32090,7 @@
       },
       "image": {
         "file": "img_1790761320367.png",
-        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260930/77c9ad12/ab6c2d6d-f361-473f-8eda-bd518f9701d4-1.png?Expires=1790847726&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=F9WRD%2F%2F0kCgNbdVe2KUCgEy0Rsk%3D",
+        "url": "/api/generated/img_1790761320367.png",
         "model": "wanx2.1-t2i-turbo",
         "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1790761320367.png",
         "width": 1024,
@@ -32098,18 +32098,18 @@
       },
       "design_views": {
         "front": {
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/5e/20260930/77c9ad12/ab6c2d6d-f361-473f-8eda-bd518f9701d4-1.png?Expires=1790847726&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=F9WRD%2F%2F0kCgNbdVe2KUCgEy0Rsk%3D",
+          "url": "/api/generated/img_1790761320367.png",
           "model": "wanx2.1-t2i-turbo"
         },
         "side": {
           "file": "edit_1790761338743.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/c3/20260930/aa4f9372/b897a90f-9ffe-4bfa-ae90-18d31d1c8196-1.png?Expires=1791367147&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=9oMwOgcg8U%2Fh9Bd2W8pLu7u6bLc%3D",
+          "url": "/api/generated/edit_1790761338743.png",
           "model": "qwen-image-edit",
           "view": "side"
         },
         "back": {
           "file": "edit_1790761357077.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/a0/20260930/17bff29b/b4dc5392-c781-4eb5-b5fe-2e7bbd054469-1.png?Expires=1791367165&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=VC9JK%2FPDuKu4BWPslbSS%2FuA1c7s%3D",
+          "url": "/api/generated/edit_1790761357077.png",
           "model": "qwen-image-edit",
           "view": "back"
         }
@@ -32960,5 +32960,309 @@
       }
     },
     "id": "T0004-4"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791102151.6712837,
+    "finished_at": 1791102197.8789022,
+    "goal": "14岁奇幻古堡小书童，银灰色短发，圆圆大眼，穿浅灰长袍，袖口饰细银纹，腰挂铜钥匙串，怀中紧抱厚重旧魔法书，神情专注，背景隐约可见古堡石墙与魔法符文。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast93505",
+    "name": "14岁奇幻古堡小书童_银灰色短发_圆圆大眼_穿浅",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 46.207,
+    "character": {
+      "id": "ast93505",
+      "name": "14岁奇幻古堡小书童_银灰色短发_圆圆大眼_穿浅",
+      "type": "character",
+      "role": "npc",
+      "seed": 890593505,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#791f12",
+        "base": "#ff6a2b",
+        "highlight": "#e5bd39",
+        "accent": "#f5e085",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791102161690.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast93505",
+      "name": "14岁奇幻古堡小书童_银灰色短发_圆圆大眼_穿浅",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 890593505,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#791f12",
+          "base": "#ff6a2b",
+          "highlight": "#e5bd39",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791102161690.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast93505",
+        "name": "14岁奇幻古堡小书童_银灰色短发_圆圆大眼_穿浅",
+        "type": "character",
+        "role": "npc",
+        "seed": 890593505,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#791f12",
+          "base": "#ff6a2b",
+          "highlight": "#e5bd39",
+          "accent": "#f5e085",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast93505",
+          "type": "character",
+          "resources": {
+            "texture": "ast93505.png",
+            "animation": "ast93505.anim",
+            "prefab": "ast93505.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast93505.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast93505.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast93505.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast93505.png",
+          "Animation": "Assets/Animation/ast93505.anim",
+          "Prefab": "Assets/Prefab/ast93505.prefab",
+          "Controller": "Assets/Controller/ast93505.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "14岁奇幻古堡小书童，银灰色短发，圆圆大眼，穿浅灰长袍，袖口饰细银纹，腰挂铜钥匙串，怀中紧抱厚重旧魔法书，神情专注，背景隐约可见古堡石墙与魔法符文。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791102161690.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791102161690.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/54/20261004/77c9ad12/81d6a28a-1af2-45c1-a83a-d51aefc2d964-1.png?Expires=1791188558&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=i0A69BJGKtKbJIlgMLMKUkDjCKA%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1791102179600.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/d3/20261004/17bff29b/79a66329-b23f-4c38-9075-3462d1066732-1.png?Expires=1791707979&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=usGAWkISdD8pLUAqHCMi8fA%2FJD4%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1791102197352.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/bc/20261004/17bff29b/d6301805-1a92-4698-b422-1c2c97f5f460-1.png?Expires=1791707996&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=XA5o1G%2FA2OV0Tk0FwsYSB0dZJLk%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-23"
   }
 ]

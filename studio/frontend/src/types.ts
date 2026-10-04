@@ -674,6 +674,8 @@ export interface InterpretedAction {
   view: string;
   pose_config: Record<string, number>;
   source_text?: string;
+  /** 词表外动作标记：骨骼引擎只能给近似姿态，建议切换 AI 视频驱动 */
+  suggest_video?: boolean;
 }
 
 export interface PlaytestStrip {
