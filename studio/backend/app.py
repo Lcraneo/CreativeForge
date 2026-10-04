@@ -52,13 +52,19 @@ def create_app():
     app.include_router(build_ws_router(runtime))
 
     if os.path.isdir(FRONTEND_DIST):
-        from fastapi.responses import FileResponse
+        from fastapi.responses import FileResponse, JSONResponse
         from fastapi.staticfiles import StaticFiles
 
         # hashed build assets served straight from disk…
         app.mount(
             "/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets"
         )
+
+        # /api 前缀的未知路径必须 404 JSON——SPA 兜底会把它们当成前端路由
+        # 返回 200 index.html，前端 request() 会拿 HTML 当 JSON 解析报错
+        @app.get("/api/{full_path:path}", include_in_schema=False)
+        def api_not_found(full_path: str):
+            return JSONResponse({"detail": "not found"}, status_code=404)
 
         # …everything else falls back to index.html so client-side routes
         # (/asset, /agents, ...) survive a hard refresh

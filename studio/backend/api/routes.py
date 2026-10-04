@@ -745,6 +745,9 @@ def build_router(runtime):
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
+            except OSError as error:
+                # 源图无法解码（PIL UnidentifiedImageError 是 OSError 子类）
+                raise HTTPException(status_code=400, detail="源图无法解码：{}".format(str(error)[:140]))
         # V3 网格变形：deform 注入 pose_config 的保留键 skin（riganim 读取），
         # 不污染用户滑杆参数
         pose_config = dict(request.pose_config or {})
@@ -765,8 +768,10 @@ def build_router(runtime):
                 secondary_motion=request.secondary_motion,
                 equipment_aware=request.equipment_aware,
             )
-        except ValueError as error:
-            raise HTTPException(status_code=400, detail=str(error))
+        except (ValueError, OSError) as error:
+            # OSError：PIL UnidentifiedImageError 继承链是 OSError——垃圾图
+            # (2MB 非法字节)曾以 500 裸奔，错误处理需显式归一为 400
+            raise HTTPException(status_code=400, detail=str(error)[:200])
 
     @router.post("/animation/tasks", status_code=202)
     def start_animation_task(request: AnimationRequest):
