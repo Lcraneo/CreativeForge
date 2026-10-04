@@ -32116,5 +32116,849 @@
       }
     },
     "id": "T0001-21"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791018055.7860396,
+    "finished_at": 1791018057.6414979,
+    "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast57008",
+    "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {},
+    "qa_rounds": 0,
+    "elapsed_seconds": 1.854,
+    "character": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "seed": 450257008,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff7338",
+        "highlight": "#ffd753",
+        "accent": "#ffeb94",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 450257008,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast57008",
+        "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+        "type": "character",
+        "role": "npc",
+        "seed": 450257008,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "report": {
+          "scores": {},
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001-22"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1791018095.0531025,
+    "finished_at": 1791018096.8671117,
+    "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast57008",
+    "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {},
+    "qa_rounds": 0,
+    "elapsed_seconds": 1.813,
+    "character": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "seed": 450257008,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff7338",
+        "highlight": "#ffd753",
+        "accent": "#ffeb94",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 450257008,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast57008",
+        "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+        "type": "character",
+        "role": "npc",
+        "seed": 450257008,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "report": {
+          "scores": {},
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0002-12"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1791018109.1063678,
+    "finished_at": 1791018110.924005,
+    "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast57008",
+    "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {},
+    "qa_rounds": 0,
+    "elapsed_seconds": 1.818,
+    "character": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "seed": 450257008,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#761e11",
+        "base": "#ff7338",
+        "highlight": "#ffd753",
+        "accent": "#ffeb94",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast57008",
+      "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 450257008,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast57008",
+        "name": "日式动漫风格机器猫_干净利落线稿_平涂色块_柔和",
+        "type": "character",
+        "role": "npc",
+        "seed": 450257008,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#761e11",
+          "base": "#ff7338",
+          "highlight": "#ffd753",
+          "accent": "#ffeb94",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "report": {
+          "scores": {},
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "日式动漫风格机器猫，干净利落线稿，平涂色块，柔和双层阴影，通透高光，高饱和点缀色；圆润胖乎乎身躯，蓝白配色，大眼睛带笑意，胸前挂四次元口袋，耳朵竖立带天线，尾巴卷曲，站立姿态，背景留白，典型哆啦A梦风格。",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0003-9"
+  },
+  {
+    "task_id": "T0004",
+    "created_at": 1791018784.9281163,
+    "finished_at": 1791018785.6772664,
+    "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒，大眼睛带黑眼圈，穿红色项圈，站在草地上，右手插兜，左手自然下垂，表情憨厚微笑，背景是晴朗蓝天与几朵白云，风格为经典日式动画风，色彩明亮柔和。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast41584",
+    "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒_大眼睛带黑",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.749,
+    "character": {
+      "id": "ast41584",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒_大眼睛带黑",
+      "type": "character",
+      "role": "npc",
+      "seed": 1254141584,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#1b401d",
+        "base": "#57a35b",
+        "highlight": "#c9f0b1",
+        "accent": "#f8cc3d",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast41584",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒_大眼睛带黑",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 1254141584,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1b401d",
+          "base": "#57a35b",
+          "highlight": "#c9f0b1",
+          "accent": "#f8cc3d",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast41584",
+        "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒_大眼睛带黑",
+        "type": "character",
+        "role": "npc",
+        "seed": 1254141584,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1b401d",
+          "base": "#57a35b",
+          "highlight": "#c9f0b1",
+          "accent": "#f8cc3d",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast41584",
+          "type": "character",
+          "resources": {
+            "texture": "ast41584.png",
+            "animation": "ast41584.anim",
+            "prefab": "ast41584.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast41584.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast41584.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast41584.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast41584.png",
+          "Animation": "Assets/Animation/ast41584.anim",
+          "Prefab": "Assets/Prefab/ast41584.prefab",
+          "Controller": "Assets/Controller/ast41584.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒，大眼睛带黑眼圈，穿红色项圈，站在草地上，右手插兜，左手自然下垂，表情憨厚微笑，背景是晴朗蓝天与几朵白云，风格为经典日式动画风，色彩明亮柔和。，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "review": {
+        "approved": false,
+        "note": null,
+        "at": 1791018821.2823398
+      }
+    },
+    "id": "T0004-4"
   }
 ]
