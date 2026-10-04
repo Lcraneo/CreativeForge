@@ -1,0 +1,60 @@
+{
+ "source": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\edit_1791077182024.png",
+ "arms": {
+  "A_equipment_on": {
+   "animation_id": "a51b53a34239",
+   "video_model": "wan2.2-i2v-flash",
+   "quality_tier": "draft",
+   "equipment": {
+    "weapon": "sword",
+    "weapon_label": "武器·剑刃",
+    "armor": "heavy",
+    "skirt": false,
+    "skirt_length": "none",
+    "cape": false,
+    "hair": "short",
+    "outfit": "白色金属质感紧身战甲",
+    "accessories": [
+     "手套"
+    ],
+    "labels": [
+     "武器·剑刃",
+     "重甲",
+     "手套"
+    ],
+    "summary_zh": "武器·剑刃；重甲；手套",
+    "summary_en": "wields a bladed weapon; wears heavy armor; accessories: 手套"
+   },
+   "equipment_prompt_clauses": true,
+   "prompt": "The armored warrior, clad in heavy plate and gloved hands, coils slightly back with controlled tension, then unleashes a single decisive sword strike—blade snapping forward with weight and momentum, armor plates shifting subtly, fabric and gauntlets settling mid-motion. The strike resolves cleanly into the original stance, limbs sharply silhouetted, no camera move, no facing change, colors and pro",
+   "blade": {
+    "blade_peak_px": 1731,
+    "blade_alive_ratio": 1.0,
+    "blade_mean_px": 582.4
+   },
+   "smoothness": {
+    "motion_cv": 0.3633,
+    "seam_abs": 7.2513,
+    "mean_energy": 8.6735
+   }
+  },
+  "B_equipment_off": {
+   "animation_id": "1446d4ec08e3",
+   "video_model": "wan2.2-i2v-flash",
+   "quality_tier": "draft",
+   "equipment": null,
+   "equipment_prompt_clauses": false,
+   "prompt": "The character delivers one crisp, committed attack in place: a subtle coil back into the hips and shoulders, then a fluid, weighted extension of the leading arm in a single decisive strike—limbs drawn once with sharp edges, no blending—followed by a controlled settle back into the original stance. Armor plates shift slightly with momentum, fabric and hair settle mid-motion, weapon’s weight subtly ",
+   "blade": {
+    "blade_peak_px": 2141,
+    "blade_alive_ratio": 1.0,
+    "blade_mean_px": 589.9
+   },
+   "smoothness": {
+    "motion_cv": 0.4276,
+    "seam_abs": 6.8759,
+    "mean_energy": 6.6205
+   }
+  }
+ }
+}

@@ -1,169 +1,169 @@
 {
-  "generated_at": "2026-10-04 11:40:37",
+  "generated_at": "2026-10-04 15:19:59",
   "matrix": {
     "procedural": {
       "walk/front/mesh": {
         "frames": 12,
-        "seconds": 10.2,
-        "motion_max": 16.78,
+        "seconds": 12.99,
+        "motion_max": 16.83,
         "content_top_row": 5,
-        "loop_sim": 0.959
+        "loop_sim": 0.9598
       },
       "walk/front/rigid": {
         "frames": 12,
-        "seconds": 4.19,
-        "motion_max": 17.8,
+        "seconds": 5.94,
+        "motion_max": 17.86,
         "content_top_row": 5,
-        "loop_sim": 0.9565
+        "loop_sim": 0.959
       },
       "walk/side/mesh": {
         "frames": 12,
-        "seconds": 9.58,
-        "motion_max": 6.55,
+        "seconds": 13.26,
+        "motion_max": 6.56,
         "content_top_row": 9,
-        "loop_sim": 0.9317,
-        "seam_min": 247.2
+        "loop_sim": 0.9316,
+        "seam_min": 247.3
       },
       "walk/side/rigid": {
         "frames": 12,
-        "seconds": 3.59,
-        "motion_max": 6.52,
+        "seconds": 5.2,
+        "motion_max": 6.53,
         "content_top_row": 9,
         "loop_sim": 0.9348,
-        "seam_min": 247.2
+        "seam_min": 247.3
       },
       "run/front/mesh": {
         "frames": 12,
-        "seconds": 9.99,
-        "motion_max": 17.58,
+        "seconds": 13.56,
+        "motion_max": 17.64,
         "content_top_row": 26,
-        "loop_sim": 0.9551
+        "loop_sim": 0.9522
       },
       "run/front/rigid": {
         "frames": 12,
-        "seconds": 4.11,
-        "motion_max": 17.82,
+        "seconds": 5.75,
+        "motion_max": 17.92,
         "content_top_row": 26,
-        "loop_sim": 0.9542
+        "loop_sim": 0.951
       },
       "run/side/mesh": {
         "frames": 12,
-        "seconds": 9.41,
-        "motion_max": 6.76,
+        "seconds": 13.17,
+        "motion_max": 6.77,
         "content_top_row": 10,
         "loop_sim": 0.9297,
-        "seam_min": 251.9
+        "seam_min": 252.0
       },
       "run/side/rigid": {
         "frames": 12,
-        "seconds": 3.61,
-        "motion_max": 6.72,
+        "seconds": 5.01,
+        "motion_max": 6.73,
         "content_top_row": 10,
-        "loop_sim": 0.9303,
-        "seam_min": 251.9
+        "loop_sim": 0.9309,
+        "seam_min": 252.0
       },
       "idle/front/mesh": {
         "frames": 12,
-        "seconds": 4.13,
+        "seconds": 5.65,
         "motion_max": 3.16,
         "content_top_row": 9,
-        "loop_sim": 0.961
+        "loop_sim": 0.9615
       },
       "idle/front/rigid": {
         "frames": 12,
-        "seconds": 4.19,
+        "seconds": 5.45,
         "motion_max": 3.16,
         "content_top_row": 9,
-        "loop_sim": 0.961
+        "loop_sim": 0.9615
       },
       "idle/side/mesh": {
         "frames": 12,
-        "seconds": 3.59,
-        "motion_max": 3.43,
+        "seconds": 4.87,
+        "motion_max": 3.44,
         "content_top_row": 12,
-        "loop_sim": 0.9478,
+        "loop_sim": 0.9468,
         "seam_min": 253.0
       },
       "idle/side/rigid": {
         "frames": 12,
-        "seconds": 3.6,
-        "motion_max": 3.43,
+        "seconds": 4.82,
+        "motion_max": 3.44,
         "content_top_row": 12,
-        "loop_sim": 0.9478,
+        "loop_sim": 0.9468,
         "seam_min": 253.0
       },
       "attack/front/mesh": {
         "frames": 12,
-        "seconds": 4.17,
-        "motion_max": 19.22,
-        "content_top_row": 6
+        "seconds": 8.8,
+        "motion_max": 27.46,
+        "content_top_row": 5
       },
       "attack/front/rigid": {
         "frames": 12,
-        "seconds": 4.16,
-        "motion_max": 19.22,
-        "content_top_row": 6
+        "seconds": 5.54,
+        "motion_max": 27.49,
+        "content_top_row": 5
       },
       "attack/side/mesh": {
         "frames": 12,
-        "seconds": 3.6,
-        "motion_max": 4.85,
-        "content_top_row": 14,
+        "seconds": 8.29,
+        "motion_max": 7.34,
+        "content_top_row": 15,
         "seam_min": 253.3
       },
       "attack/side/rigid": {
         "frames": 12,
-        "seconds": 3.62,
-        "motion_max": 4.85,
-        "content_top_row": 14,
+        "seconds": 4.78,
+        "motion_max": 7.34,
+        "content_top_row": 15,
         "seam_min": 253.3
       },
       "jump/front/mesh": {
         "frames": 12,
-        "seconds": 4.16,
-        "motion_max": 34.77,
+        "seconds": 5.37,
+        "motion_max": 34.78,
         "content_top_row": 9
       },
       "jump/front/rigid": {
         "frames": 12,
-        "seconds": 4.18,
-        "motion_max": 34.77,
+        "seconds": 5.35,
+        "motion_max": 34.78,
         "content_top_row": 9
       },
       "jump/side/mesh": {
         "frames": 12,
-        "seconds": 3.62,
-        "motion_max": 12.66,
+        "seconds": 4.87,
+        "motion_max": 12.68,
         "content_top_row": 9,
         "seam_min": 249.3
       },
       "jump/side/rigid": {
         "frames": 12,
-        "seconds": 3.6,
-        "motion_max": 12.66,
+        "seconds": 4.77,
+        "motion_max": 12.68,
         "content_top_row": 9,
         "seam_min": 249.3
       },
       "walk/front/mesh+hair": {
         "frames": 12,
-        "seconds": 10.35,
-        "motion_max": 18.3,
+        "seconds": 13.63,
+        "motion_max": 18.33,
         "content_top_row": 5,
-        "loop_sim": 0.9578,
+        "loop_sim": 0.9582,
         "hair_head_alpha": 3060
       },
       "walk+turn/front/mesh+phases": {
         "frames": 12,
-        "seconds": 9.67,
-        "motion_max": 26.81,
+        "seconds": 13.0,
+        "motion_max": 26.86,
         "content_top_row": 5
       },
       "idle/side/mesh+hair": {
         "frames": 12,
-        "seconds": 3.96,
-        "motion_max": 10.58,
+        "seconds": 5.32,
+        "motion_max": 10.59,
         "content_top_row": 1,
-        "loop_sim": 0.9199,
+        "loop_sim": 0.9209,
         "seam_min": 253.0,
         "hair_head_alpha": 3060
       }
@@ -179,7 +179,7 @@
         "loop_seam": 6.01,
         "motion_peak": 16.03,
         "loop_mean": 7.89,
-        "seconds": 10.01
+        "seconds": 12.07
       },
       "flash_v1/idle": {
         "sliced": 32,
@@ -191,7 +191,7 @@
         "loop_seam": 1.09,
         "motion_peak": 2.76,
         "loop_mean": 1.29,
-        "seconds": 9.95
+        "seconds": 11.77
       },
       "flash_v1/jump": {
         "sliced": 32,
@@ -203,7 +203,7 @@
         "loop_seam": 9.18,
         "motion_peak": 26.03,
         "loop_mean": 14.26,
-        "seconds": 10.39
+        "seconds": 13.17
       },
       "flash_v1/run": {
         "sliced": 32,
@@ -215,7 +215,7 @@
         "loop_seam": 7.39,
         "motion_peak": 21.18,
         "loop_mean": 16.43,
-        "seconds": 11.08
+        "seconds": 15.44
       },
       "flash_v1/walk": {
         "sliced": 32,
@@ -227,7 +227,7 @@
         "loop_seam": 8.18,
         "motion_peak": 23.51,
         "loop_mean": 16.37,
-        "seconds": 11.54
+        "seconds": 16.05
       },
       "flash_v2/attack": {
         "sliced": 32,
@@ -239,7 +239,7 @@
         "loop_seam": 7.7,
         "motion_peak": 20.47,
         "loop_mean": 11.76,
-        "seconds": 11.41
+        "seconds": 15.59
       },
       "flash_v2/idle": {
         "sliced": 32,
@@ -251,7 +251,7 @@
         "loop_seam": 1.01,
         "motion_peak": 2.74,
         "loop_mean": 1.53,
-        "seconds": 10.2
+        "seconds": 13.65
       },
       "flash_v2/jump": {
         "sliced": 32,
@@ -263,7 +263,7 @@
         "loop_seam": 8.99,
         "motion_peak": 11.13,
         "loop_mean": 5.52,
-        "seconds": 10.81
+        "seconds": 15.08
       },
       "flash_v2/run": {
         "sliced": 32,
@@ -275,7 +275,7 @@
         "loop_seam": 6.11,
         "motion_peak": 17.88,
         "loop_mean": 12.97,
-        "seconds": 10.1
+        "seconds": 14.23
       },
       "flash_v2/walk": {
         "sliced": 32,
@@ -287,7 +287,7 @@
         "loop_seam": 9.47,
         "motion_peak": 17.27,
         "loop_mean": 10.34,
-        "seconds": 15.88
+        "seconds": 20.69
       },
       "flash_v2_1080p/attack": {
         "sliced": 32,
@@ -299,7 +299,7 @@
         "loop_seam": 9.36,
         "motion_peak": 23.49,
         "loop_mean": 13.09,
-        "seconds": 9.3
+        "seconds": 12.07
       },
       "flash_v2_1080p/idle": {
         "sliced": 32,
@@ -311,7 +311,7 @@
         "loop_seam": 2.93,
         "motion_peak": 6.44,
         "loop_mean": 3.45,
-        "seconds": 10.38
+        "seconds": 12.74
       },
       "flash_v2_1080p/jump": {
         "sliced": 32,
@@ -323,7 +323,7 @@
         "loop_seam": 9.35,
         "motion_peak": 21.63,
         "loop_mean": 11.0,
-        "seconds": 10.43
+        "seconds": 14.62
       },
       "flash_v2_1080p/run": {
         "sliced": 32,
@@ -335,7 +335,7 @@
         "loop_seam": 7.65,
         "motion_peak": 22.79,
         "loop_mean": 16.61,
-        "seconds": 10.89
+        "seconds": 14.57
       },
       "flash_v2_1080p/walk": {
         "sliced": 32,
@@ -347,7 +347,7 @@
         "loop_seam": 5.43,
         "motion_peak": 15.72,
         "loop_mean": 10.38,
-        "seconds": 9.27
+        "seconds": 12.68
       },
       "flash_v2_ext/attack": {
         "sliced": 32,
@@ -359,7 +359,7 @@
         "loop_seam": 6.67,
         "motion_peak": 18.41,
         "loop_mean": 8.34,
-        "seconds": 10.24
+        "seconds": 13.76
       },
       "flash_v2_ext/idle": {
         "sliced": 32,
@@ -371,7 +371,7 @@
         "loop_seam": 1.26,
         "motion_peak": 2.68,
         "loop_mean": 1.62,
-        "seconds": 11.9
+        "seconds": 14.95
       },
       "flash_v2_ext/jump": {
         "sliced": 32,
@@ -383,7 +383,7 @@
         "loop_seam": 10.1,
         "motion_peak": 25.19,
         "loop_mean": 15.27,
-        "seconds": 13.77
+        "seconds": 17.15
       },
       "flash_v2_ext/run": {
         "sliced": 32,
@@ -395,7 +395,7 @@
         "loop_seam": 9.75,
         "motion_peak": 28.94,
         "loop_mean": 20.7,
-        "seconds": 9.89
+        "seconds": 13.01
       },
       "flash_v2_ext/walk": {
         "sliced": 32,
@@ -407,7 +407,7 @@
         "loop_seam": 10.12,
         "motion_peak": 27.84,
         "loop_mean": 18.5,
-        "seconds": 13.59
+        "seconds": 17.75
       },
       "plus_v2/attack": {
         "sliced": 32,
@@ -419,7 +419,7 @@
         "loop_seam": 6.98,
         "motion_peak": 20.2,
         "loop_mean": 13.74,
-        "seconds": 11.19
+        "seconds": 14.78
       },
       "plus_v2/idle": {
         "sliced": 32,
@@ -431,7 +431,7 @@
         "loop_seam": 2.95,
         "motion_peak": 2.95,
         "loop_mean": 1.75,
-        "seconds": 11.28
+        "seconds": 14.47
       },
       "plus_v2/jump": {
         "sliced": 32,
@@ -443,7 +443,7 @@
         "loop_seam": 9.01,
         "motion_peak": 26.63,
         "loop_mean": 14.25,
-        "seconds": 10.93
+        "seconds": 14.26
       },
       "plus_v2/run": {
         "sliced": 32,
@@ -455,7 +455,7 @@
         "loop_seam": 7.72,
         "motion_peak": 22.46,
         "loop_mean": 16.83,
-        "seconds": 10.71
+        "seconds": 14.52
       },
       "plus_v2/walk": {
         "sliced": 32,
@@ -467,7 +467,7 @@
         "loop_seam": 9.19,
         "motion_peak": 25.45,
         "loop_mean": 17.23,
-        "seconds": 10.93
+        "seconds": 15.32
       },
       "wanx_v2/attack": {
         "sliced": 32,
@@ -479,7 +479,7 @@
         "loop_seam": 8.08,
         "motion_peak": 15.41,
         "loop_mean": 9.99,
-        "seconds": 12.89
+        "seconds": 16.63
       },
       "wanx_v2/run": {
         "sliced": 32,
@@ -491,7 +491,7 @@
         "loop_seam": 9.06,
         "motion_peak": 13.53,
         "loop_mean": 8.1,
-        "seconds": 20.4
+        "seconds": 26.16
       },
       "wanx_v2/walk": {
         "sliced": 32,
@@ -503,7 +503,7 @@
         "loop_seam": 5.36,
         "motion_peak": 14.05,
         "loop_mean": 10.71,
-        "seconds": 11.08
+        "seconds": 14.7
       }
     },
     "i2v_summary": {

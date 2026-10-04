@@ -458,7 +458,30 @@ class AnimationService:
     def _run_action_batch(self, batch_id, asset_id, source_bytes, settings, pending, enhance_context=None):
         import random as _random
 
+        from studio.backend.animation_service.equipment import (
+            context_line as _equipment_context_line,
+        )
+        from studio.backend.animation_service.equipment import (
+            motion_clauses as _equipment_motion_clauses,
+        )
+        from studio.backend.animation_service.equipment import (
+            recognize as _equipment_recognize,
+        )
+
         batch = self.action_batches.get(batch_id) or {}
+        # V3.5 装备识别（批次共享一次调用，之后走源图哈希缓存）：
+        # 上下文并入润色，attack+持械追加武器保持子句（与单条链路同语义）
+        equipment = None
+        if settings.get("equipment_aware", True):
+            equipment = _equipment_recognize(source_bytes, settings)
+        batch_context = enhance_context
+        equipment_line = _equipment_context_line(equipment) if equipment else None
+        if equipment_line:
+            batch_context = (
+                "{}；{}".format(enhance_context, equipment_line)[:200]
+                if enhance_context
+                else equipment_line
+            )
         for action in pending:
             entry = next((t for t in batch.get("tasks", []) if t.get("action") == action), None)
             if entry:
@@ -468,9 +491,11 @@ class AnimationService:
             try:
                 base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
                 enhanced_prompt = ai_enhance_motion_prompt(
-                    settings, action, base_prompt, context=enhance_context
+                    settings, action, base_prompt, context=batch_context
                 )
-                prompt = enhanced_prompt + " " + FRAMING_CLAUSE
+                extra_clauses = _equipment_motion_clauses(equipment, action) if equipment else []
+                clause_text = (" " + " ".join(extra_clauses)) if extra_clauses else ""
+                prompt = enhanced_prompt + clause_text + " " + FRAMING_CLAUSE
                 if entry:
                     entry["stage"] = "video"  # i2v 生成是 60~90s 的大头
                 video_bytes, video_model = generate_video_with_policy(
@@ -499,6 +524,21 @@ class AnimationService:
                 meta["video_model"] = video_model
                 meta["asset_id"] = asset_id
                 meta["requested_action"] = action
+                # V3.5 生成后自动质检（批次链）：同单条链路语义
+                try:
+                    from studio.backend.animation_service.motion_qa import post_validate
+
+                    _qa = post_validate(
+                        frames_rgba, source_bytes=source_bytes, action=action, chain="video"
+                    )
+                    if _qa:
+                        meta["qa"] = _qa
+                except Exception:  # noqa: BLE001
+                    pass
+                if equipment:
+                    meta["equipment"] = equipment
+                    if extra_clauses:
+                        meta["equipment_prompt_clauses"] = True
                 if enhanced_prompt != base_prompt:
                     meta["prompt_enhanced"] = True
                     meta["motion_prompt"] = prompt[:400]
@@ -643,6 +683,7 @@ class AnimationService:
         pose_config: dict[str, Any] | None = None,
         model_settings: dict[str, Any] | None = None,
         secondary_motion: bool = False,
+        equipment_aware: bool = True,
     ) -> dict[str, Any]:
         action = action if action in ACTIONS else "walk"
 
@@ -702,6 +743,26 @@ class AnimationService:
                 except Exception:
                     source_bytes = None
 
+        # V3.5 装备/服装识别：按源图哈希持久缓存（首次一次视觉对话
+        # ~0.002 元，之后终身免费）。骨骼链用它做姿态贴合（持械 attack
+        # 摆臂加大 / 重甲 run 起伏收敛 / 长裙 walk 步幅微收），用户滑杆
+        # 参数永远优先（覆盖只填用户未给的键）。识别失败一律返回 None，
+        # 绝不阻塞生成。
+        equipment = None
+        if source_bytes is not None and equipment_aware:
+            from studio.backend.animation_service.equipment import (
+                pose_overrides as _equipment_pose_overrides,
+            )
+            from studio.backend.animation_service.equipment import (
+                recognize as _equipment_recognize,
+            )
+
+            equipment = _equipment_recognize(source_bytes, model_settings or {})
+            if equipment and skeletal:
+                overrides = _equipment_pose_overrides(equipment, action)
+                if overrides:
+                    pose_config = {**overrides, **(pose_config or {})}
+
         # V3 次级运动（发/裙摆动）：secondary_motion 开启时构建发层 overlay。
         # 首次生成调用一次图像编辑（~0.3 元），按源图哈希落盘缓存后永久免费。
         overlays = None
@@ -742,6 +803,24 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, source_kind)
         meta["skeletal"] = source_kind == "skeletal"
+        # V3.5 生成后自动质检：对交付帧算三维量化指标（流畅/时序/细节还原），
+        # grade ∈ pass/warn/fail 落 meta 供前端徽章；best-effort 绝不阻塞
+        try:
+            from artgen.gif import decode_png as _decode_png
+
+            from studio.backend.animation_service.motion_qa import post_validate
+
+            _qa_frames = [_decode_png(png) for png in result["frames"]]
+            _qa = post_validate(
+                _qa_frames,
+                source_bytes=source_bytes,
+                action=action,
+                chain="skeletal" if source_kind == "skeletal" else "source",
+            )
+            if _qa:
+                meta["qa"] = _qa
+        except Exception:  # noqa: BLE001 - 质检永不阻塞生成
+            pass
         if side_bound:
             # V3-②：本次侧视动画绑定的是三视图 side 真源图（供前端徽标/测试断言）
             meta["view_bound"] = "side"
@@ -753,6 +832,10 @@ class AnimationService:
             from artgen.riganim import RIGANIM_SKIN_DEFAULT
 
             meta["skin_mode"] = (pose_config or {}).get("skin") or RIGANIM_SKIN_DEFAULT
+        # V3.5 装备识别：本次生成使用的装备/服装信息（前端标签徽章数据源）。
+        # 放在资产归属重写之前，保证落盘的 meta 里也有。
+        if equipment:
+            meta["equipment"] = equipment
         # 记录归属资产（资产包导出/队列中心按 asset_id 收集动画）。
         # _persist 内部已写盘，追加字段后必须重写一次，否则磁盘上没有。
         if asset is not None and asset.get("id"):
@@ -876,6 +959,9 @@ class AnimationService:
         }
         if video_spec:
             meta["video_spec"] = video_spec
+        # V3.5 流畅度：walk/run 帧混合（伪运动模糊）已应用到本次产物
+        if result.get("motion_blend"):
+            meta["motion_blend"] = True
         self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         return meta
 
@@ -892,6 +978,7 @@ class AnimationService:
         asset_id: str | None = None,
         enhance_context: str | None = None,
         final_quality: bool = False,
+        equipment_aware: bool = True,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
         → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。失败抛
@@ -902,9 +989,29 @@ class AnimationService:
 
         ``final_quality``：V2 双档策略的定稿档——用 settings
         ``video_model_final``（默认 wan2.2-i2v-plus）出片；草稿档走
-        ``video_model``（默认 flash），成本 1/2.8。meta 记 quality_tier。"""
+        ``video_model``（默认 flash），成本 1/2.8。meta 记 quality_tier。
+
+        ``equipment_aware``：V3.5 装备/服装识别——看图认出武器/服装后
+        并入润色上下文；attack+持械时代码级追加「武器保持在手」子句
+        （快速挥击中武器被挥丢/换手是实测失败模式）。按源图哈希持久
+        缓存，同一张原画终身只识别一次。"""
 
         action = action if action in ACTIONS else "walk"
+
+        # V3.5 装备/服装识别（持久缓存，失败静默跳过）
+        equipment = None
+        if equipment_aware:
+            from studio.backend.animation_service.equipment import (
+                context_line as _equipment_context_line,
+            )
+            from studio.backend.animation_service.equipment import (
+                motion_clauses as _equipment_motion_clauses,
+            )
+            from studio.backend.animation_service.equipment import (
+                recognize as _equipment_recognize,
+            )
+
+            equipment = _equipment_recognize(source_bytes, settings)
 
         # 送 i2v 前自动裁掉白边/留白：主体占比从 ~60% 提到 ~90%，
         # 对齐官方 demo 的输入形态（主体小+平面白底会显著拉低 i2v 质量）
@@ -916,12 +1023,25 @@ class AnimationService:
             work_bytes = source_bytes
 
         # 动作描述 AI 增强（可配置，失败回退原模板）；代码级构图约束
-        # FRAMING_CLAUSE 始终由代码追加，不交给模型发挥
+        # FRAMING_CLAUSE 始终由代码追加，不交给模型发挥。
+        # 装备/服装识别结果并入润色上下文——润色系统提示本就要求
+        # "Character context (outfit/gear/identity hints only)"，现在给它
+        # 真实的看图结论（标签+款式描述）而不是只有角色名。
+        context = enhance_context
+        equipment_line = _equipment_context_line(equipment) if equipment else None
+        if equipment_line:
+            context = (
+                "{}；{}".format(enhance_context, equipment_line)[:200]
+                if enhance_context
+                else equipment_line
+            )
         base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
         enhanced_prompt = ai_enhance_motion_prompt(
-            settings, action, base_prompt, context=enhance_context
+            settings, action, base_prompt, context=context
         )
-        prompt = enhanced_prompt + " " + FRAMING_CLAUSE
+        extra_clauses = _equipment_motion_clauses(equipment, action) if equipment else []
+        clause_text = (" " + " ".join(extra_clauses)) if extra_clauses else ""
+        prompt = enhanced_prompt + clause_text + " " + FRAMING_CLAUSE
         # 双档策略：定稿档强制走 video_model_final（缓存 key 含实际模型，
         # 与草稿档互不命中）；草稿档保持现有回退链
         model_override = None
@@ -966,6 +1086,23 @@ class AnimationService:
         meta = self._persist(result, animation_id, "video")
         meta["video_model"] = video_model
         meta["quality_tier"] = "final" if final_quality else "draft"
+        # V3.5 生成后自动质检（i2v 链）：对抽帧后的交付序列算量化指标；
+        # best-effort 绝不阻塞交付
+        try:
+            from studio.backend.animation_service.motion_qa import post_validate
+
+            _qa = post_validate(
+                frames_rgba, source_bytes=source_bytes, action=action, chain="video"
+            )
+            if _qa:
+                meta["qa"] = _qa
+        except Exception:  # noqa: BLE001
+            pass
+        # V3.5 装备识别：本次视频使用的装备/服装信息（含是否注入了武器子句）
+        if equipment:
+            meta["equipment"] = equipment
+            if extra_clauses:
+                meta["equipment_prompt_clauses"] = True
         # mp4 直通交付（V1）：与 GIF 同窗的原速、原分辨率 H.264。失败只
         # 降级（无 urls.video），不影响已落盘的 GIF 产物。
         video_spec = self._deliver_video_mp4(video_bytes, slice_info, animation_id)

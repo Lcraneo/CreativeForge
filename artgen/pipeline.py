@@ -35,6 +35,35 @@ def analyze_source(source):
     return {"style": profile, "character": extract_character(width, height, rgba)}
 
 
+def _ghost_blend(frames_rgba, alpha=0.25):
+    """循环动作（walk/run）的帧间混合 = 伪运动模糊.
+
+    12fps 的 GIF 是离散步进：快速摆动的肢体在相邻帧间"瞬移"，观感即
+    卡顿。把**前一帧**以 alpha 叠印到当前帧上（与试玩区运行时叠印同
+    语义——前帧残影填补帧间空隙，攻击/跳跃类大姿态动作不混以免糊掉
+    命中帧）。循环首帧的前帧取**末帧**（环绕），GIF 回跳处同样平滑；
+    一次性动作不走此路径，保持帧帧清晰。"""
+
+
+    from PIL import Image
+
+    count = len(frames_rgba)
+    if count < 2:
+        return frames_rgba
+    blended = []
+    for index, (width, height, rgba) in enumerate(frames_rgba):
+        current = Image.frombytes("RGBA", (width, height), bytes(rgba))
+        prev_w, prev_h, prev_rgba = frames_rgba[(index - 1) % count]
+        previous = Image.frombytes("RGBA", (prev_w, prev_h), bytes(prev_rgba))
+        if (prev_w, prev_h) != (width, height):
+            previous = previous.resize((width, height))
+        previous.putalpha(previous.getchannel("A").point(lambda v: int(v * alpha)))
+        blended.append(
+            (width, height, bytearray(Image.alpha_composite(current, previous).tobytes()))
+        )
+    return blended
+
+
 def compose_animation(
     frame_bytes=None,
     frames_rgba=None,
@@ -219,6 +248,12 @@ def create_animation(
     aggregate["floor"] = consistency_floor
     aggregate["frames_checked"] = len(per_frame)
 
+    # 3.5) walk/run 帧混合（伪运动模糊，V3.5 流畅度）：一致性度量取混合前
+    # 的帧（身份校验必须严格对源），编码产物用混合后的帧
+    motion_blend = action in ("walk", "run") and frame_count >= 6
+    if motion_blend:
+        frames_rgba = _ghost_blend(frames_rgba)
+
     # 4) encode animated GIF + sprite sheet
     gif = encode_gif(
         [rgba for _, _, rgba in frames_rgba], size, size, fps=fps, loop=0 if loop else 1
@@ -244,6 +279,7 @@ def create_animation(
         "character": character,
         "consistency": aggregate,
         "per_frame": per_frame,
+        "motion_blend": motion_blend,
         "rig": rig,
         "falign": falign,
         "gif": gif,

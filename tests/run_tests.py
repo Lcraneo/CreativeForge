@@ -822,6 +822,30 @@ def _():
     )
 
 
+@check("motion-quality", "procedural action chain meets baseline gates (V3.5 三维量化)")
+def _():
+    """V3.5 门禁固化：骨骼动作链的**动作流畅度 / 动作辨识度 / 细节还原**
+    三维量化指标不得低于 benchmark/motion_baseline.json（离线确定性夹具，
+    零额度零网络）。基线由 benchmark/motion_quality.py --record 录制；
+    夹具/评分锚点/混合参数变更会使指纹失配，需重录基线。任一 TOLERANCES
+    硬门或关键姿态特征（attack 命中前倾/武器扫掠/walk 抬脚交替/run 膝幅）
+    失败即回归。"""
+
+    import json
+
+    import benchmark.motion_quality as mq
+
+    metrics = mq.run_evaluation(blend=True)
+    with open(mq.BASELINE_PATH, encoding="utf-8") as handle:
+        doc = json.load(handle)
+    assert doc.get("fingerprint") == mq.FINGERPRINT, (
+        "motion baseline fingerprint mismatch — re-record baseline"
+        " (benchmark/motion_quality.py --record)"
+    )
+    _rows, failures = mq.compare(doc["baseline"], metrics)
+    assert not failures, "motion quality regression: {}".format("、".join(failures))
+
+
 def main():
     failures = []
     current_group = None

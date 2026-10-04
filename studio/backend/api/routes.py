@@ -65,6 +65,7 @@ class AnimationRequest(BaseModel):
     final_quality: bool = False  # V2 双档：定稿档走 video_model_final（plus）出片
     deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
     secondary_motion: bool = False  # V3 次级运动：发层摆动（首次生成发层约 0.3 元，之后缓存免费）
+    equipment_aware: bool = True  # V3.5 装备/服装识别：看图认出武器/服装并贴合动作（首次 ~0.002 元，之后缓存免费）
 
 
 class PreviewFrameRequest(BaseModel):
@@ -153,6 +154,7 @@ class ActionPackRequest(BaseModel):
 
 class ActionTextRequest(BaseModel):
     text: str
+    asset_id: str | None = None  # V3.5：注入该资产的装备/服装上下文（只读缓存，绝不触发识别调用）
 
 
 class OpenFolderRequest(BaseModel):
@@ -694,6 +696,7 @@ def build_router(runtime):
                     asset_id=request.asset_id or (asset.get("id") if asset else None),
                     enhance_context=_enhance_context_for(asset),
                     final_quality=request.final_quality,
+                    equipment_aware=request.equipment_aware,
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -715,6 +718,7 @@ def build_router(runtime):
                 pose_config=pose_config or None,
                 model_settings=runtime.model_settings.effective(),
                 secondary_motion=request.secondary_motion,
+                equipment_aware=request.equipment_aware,
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error))
@@ -955,6 +959,31 @@ def build_router(runtime):
             raise HTTPException(status_code=422, detail="text 不能为空")
         import json as _json
 
+        # V3.5 装备上下文（只读缓存）：解读出的动作要贴合角色——「挥砍」对
+        # 持剑角色与徒手角色的参数取向不同。只查 equipment 缓存（同一张
+        # 原画生成过一次动画就有了），绝不在这里触发识别调用烧额度。
+        equipment_note = ""
+        if request.asset_id:
+            from studio.backend.animation_service.equipment import cached_only
+
+            _asset = _resolve_asset(runtime, request.asset_id)
+            if _asset is not None:
+                _source = None
+                try:
+                    from studio.backend.animation_service.service import AnimationService
+
+                    _source = AnimationService(ANIMATION_DIR)._asset_render(_asset)
+                except Exception:  # noqa: BLE001
+                    _source = None
+                if _source:
+                    _equipment = cached_only(_source)
+                    if _equipment and _equipment.get("summary_zh"):
+                        equipment_note = (
+                            "\n角色装备/服装（识别结果，参数取向须贴合）："
+                            + _equipment["summary_zh"]
+                            + "\n"
+                        )
+
         prompt = (
             "你是游戏动画参数师。姿态引擎是「循环动作参数引擎」，把用户的动作描述"
             "转换成 JSON（只输出 JSON 本体，不要 markdown 代码块、不要解释）。\n"
@@ -974,7 +1003,9 @@ def build_router(runtime):
             "2. 跳跃段的 cycles 不得低于 1（慢周期大弧线会呈悬浮/飞行观感）；\n"
             "3. 舞蹈类用 idle 基底 + 调大 bob/arm + 适度 lift/turn，不要用 jump 承载舞蹈；\n"
             "4. 「站立/起立」用 idle 段表达（引擎无起立原语）；\n"
-            "5. 数值必须落在范围内。\n\n用户描述：" + text
+            "5. 数值必须落在范围内。"
+            + equipment_note
+            + "\n\n用户描述：" + text
         )
         try:
             raw = _chat_once(settings, prompt)

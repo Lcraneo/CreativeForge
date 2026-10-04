@@ -1642,6 +1642,492 @@ def main() -> int:
         len(_stats) >= 6,
     )
 
+    # ── V3.5 装备/服装识别：词表规范化 + 缓存契约 + 两条链路贴合 ──────────
+    import json as _eqjson
+    import tempfile as _eqtemp
+
+    import studio.backend.animation_service.equipment as _equip
+
+    _eq_old_path, _eq_old_cache = _equip._EQUIPMENT_CACHE_PATH, dict(_equip._equipment_cache)
+    _eq_tmpdir = _eqtemp.mkdtemp(prefix="cf_equip_test_")
+    _equip._EQUIPMENT_CACHE_PATH = os.path.join(_eq_tmpdir, "equipment_cache.json")
+    _equip._equipment_cache = {}
+    try:
+        # 1) 词表规范化（键=匹配词，中英文都要能命中——「剑」只写英文标签的教训）
+        _n = _equip._normalize(
+            {
+                "weapon": "手持长剑",
+                "armor": "heavy",
+                "skirt": False,
+                "skirt_length": "none",
+                "cape": True,
+                "hair": "long hair",
+                "outfit": "蓝色轻便布甲",
+                "accessories": ["护腕", "腰带"],
+            }
+        )
+        check(
+            "equipment: 中文武器词命中 (长剑→sword)",
+            _n["weapon"] == "sword",
+            str(_n.get("weapon")),
+        )
+        check(
+            "equipment: labels 含武器/重甲/披风/长发",
+            _n["labels"][:4] == ["武器·剑刃", "重甲", "披风", "长发"],
+            str(_n["labels"]),
+        )
+        check(
+            "equipment: summary_en has wields+armor",
+            "wields" in _n["summary_en"] and "heavy armor" in _n["summary_en"],
+            _n["summary_en"],
+        )
+        _n2 = _equip._normalize({"weapon": "一把法杖", "armor": "none", "skirt": True, "skirt_length": "long"})
+        check("equipment: 法杖→staff", _n2["weapon"] == "staff", str(_n2.get("weapon")))
+        check(
+            "equipment: 长裙识别",
+            _n2["skirt"] and _n2["skirt_length"] == "long",
+            str(_n2),
+        )
+        check("equipment: 无武器→None", _equip._normalize({"weapon": ""})["weapon"] is None)
+        _n3 = _equip._normalize({"weapon": "火枪", "armor": "板甲"})
+        check(
+            "equipment: 火枪→firearm, 板甲→heavy",
+            _n3["weapon"] == "firearm" and _n3["armor"] == "heavy",
+            str(_n3),
+        )
+        _n4 = _equip._normalize({"weapon": "长枪", "armor": "皮甲"})
+        check(
+            "equipment: 长枪→spear, 皮甲→light",
+            _n4["weapon"] == "spear" and _n4["armor"] == "light",
+            str(_n4),
+        )
+        _n5 = _equip._normalize({"weapon": "枪", "armor": "none"})
+        check("equipment: 裸枪无火器词→spear", _n5["weapon"] == "spear", str(_n5))
+
+        # 2) 姿态覆盖：持械 attack 摆臂加大 / 重甲 run 收起伏 / 长裙 walk 收步幅
+        check(
+            "equipment: pose attack+sword arm 1.25",
+            _equip.pose_overrides({"weapon": "sword", "armor": "none"}, "attack") == {"arm": 1.25},
+        )
+        check(
+            "equipment: pose run+heavy bob 0.85",
+            _equip.pose_overrides({"weapon": None, "armor": "heavy"}, "run") == {"bob": 0.85},
+        )
+        check(
+            "equipment: pose jump+heavy no override (jump arc not cfg-scaled)",
+            _equip.pose_overrides({"weapon": None, "armor": "heavy"}, "jump") == {},
+        )
+        check(
+            "equipment: pose walk+long skirt stride 0.9",
+            _equip.pose_overrides(
+                {"weapon": None, "armor": "none", "skirt": True, "skirt_length": "long"}, "walk"
+            )
+            == {"stride": 0.9},
+        )
+        check(
+            "equipment: pose idle+weapon no override",
+            _equip.pose_overrides({"weapon": "sword", "armor": "none"}, "idle") == {},
+        )
+        check("equipment: pose None → {}", _equip.pose_overrides(None, "attack") == {})
+
+        # 5) 润色上下文行：标签 + 款式描述（outfit 是唯一带颜色/款式细节的
+        #    字段——v3.5.1 前被识别了却从未进入润色上下文）
+        check(
+            "equipment: context_line joins labels + outfit",
+            _equip.context_line({"summary_zh": "武器·剑刃；重甲", "outfit": "白色金属质感紧身战甲"})
+            == "武器·剑刃；重甲；白色金属质感紧身战甲",
+            str(_equip.context_line({"summary_zh": "武器·剑刃；重甲", "outfit": "白色金属质感紧身战甲"})),
+        )
+        check(
+            "equipment: context_line survives missing fields",
+            _equip.context_line({"summary_zh": ""}) is None
+            and _equip.context_line({"summary_zh": "", "outfit": "灰工装"}) == "灰工装"
+            and _equip.context_line(None) is None,
+        )
+
+        # 3) i2v 子句：attack+持械注入武器保持句；walk 不注入（v2 词表已含服装跟随）
+        _clauses = _equip.motion_clauses({"weapon": "sword"}, "attack")
+        check(
+            "equipment: attack+weapon gets weapon-retention clause",
+            len(_clauses) == 1 and "same hand" in _clauses[0],
+            str(_clauses),
+        )
+        check(
+            "equipment: walk+weapon gets no clause",
+            _equip.motion_clauses({"weapon": "sword"}, "walk") == [],
+        )
+        check(
+            "equipment: no weapon gets no clause",
+            _equip.motion_clauses({"weapon": None}, "attack") == [],
+        )
+
+        # 4) 识别缓存契约：成功永久缓存（第二次不再调用）、失败 1h 内不重试、
+        #    未配置/用户关闭绝不触发模型
+        class _FakeVL:
+            calls = 0
+            payload = None
+
+            def __init__(self, settings):
+                pass
+
+            def chat(self, system, user, image_b64, temperature=0.2):
+                _FakeVL.calls += 1
+                if _FakeVL.payload is None:
+                    raise RuntimeError("network down")
+                return {
+                    "model": "qwen-vl-plus",
+                    "content": _eqjson.dumps(_FakeVL.payload, ensure_ascii=False),
+                }
+
+        import studio.backend.model_service.service as _msvc
+
+        _old_vl = getattr(_msvc, "VisionChatProvider", None)
+        _msvc.VisionChatProvider = _FakeVL
+        _eq_settings = {"enabled": True, "api_key": "k", "equipment_aware": True}
+
+        def _eq_png(tag):
+            """真实 32×32 PNG（recognize 内部会缩图送审，假字节会解析失败）。"""
+            img = _TImg.new("RGB", (32, 32), (240, 240, 240))
+            _TDraw.Draw(img).rectangle((10, 8, 22, 26), fill=(90, 110, 150))
+            buf = _io.BytesIO()
+            img.save(buf, "PNG")
+            return buf.getvalue() + tag.encode()
+
+        try:
+            _FakeVL.payload = {
+                "weapon": "长剑",
+                "armor": "heavy",
+                "skirt": False,
+                "skirt_length": "none",
+                "cape": False,
+                "hair": "short",
+                "outfit": "银甲剑士",
+                "accessories": [],
+            }
+            _rec1 = _equip.recognize(_eq_png("k1"), _eq_settings)
+            check(
+                "equipment: recognize returns normalized dict",
+                _rec1 is not None and _rec1["weapon"] == "sword",
+                str(_rec1),
+            )
+            _calls_after_first = _FakeVL.calls
+            _rec2 = _equip.recognize(_eq_png("k1"), _eq_settings)
+            check(
+                "equipment: second recognize hits cache (no extra call)",
+                _rec2 == _rec1 and _FakeVL.calls == _calls_after_first,
+                f"calls={_FakeVL.calls}",
+            )
+            check(
+                "equipment: cache file written",
+                os.path.isfile(_equip._EQUIPMENT_CACHE_PATH),
+            )
+            check(
+                "equipment: cached_only reads without provider",
+                _equip.cached_only(_eq_png("k1")) == _rec1,
+            )
+            # 失败条目：TTL 内不重试（防重试风暴）
+            _FakeVL.payload = None
+            _rec3 = _equip.recognize(_eq_png("k2"), _eq_settings)
+            _fail_calls = _FakeVL.calls
+            _rec4 = _equip.recognize(_eq_png("k2"), _eq_settings)
+            check(
+                "equipment: failed recognize returns None and caches failure",
+                _rec3 is None and _rec4 is None and _FakeVL.calls == _fail_calls,
+                f"calls={_FakeVL.calls}",
+            )
+            # 未配置 / 用户关闭：绝不调用
+            _FakeVL.calls = 0
+            check(
+                "equipment: disabled settings skip recognition",
+                _equip.recognize(_eq_png("k3"), {"enabled": False}) is None
+                and _FakeVL.calls == 0,
+            )
+            check(
+                "equipment: equipment_aware=False skips recognition",
+                _equip.recognize(
+                    _eq_png("k3"),
+                    {"enabled": True, "api_key": "k", "equipment_aware": False},
+                )
+                is None
+                and _FakeVL.calls == 0,
+            )
+        finally:
+            if _old_vl is not None:
+                _msvc.VisionChatProvider = _old_vl
+    finally:
+        _equip._EQUIPMENT_CACHE_PATH = _eq_old_path
+        _equip._equipment_cache = _eq_old_cache
+
+    # ── V3.5 attack 可读性增强：段边界 C0 + 循环接缝 + 行程加深 + 肘部伸展 ──
+    for _boundary in (0.3, 0.55, 0.8):
+        for _key in ("arm", "lean", "elbow_r", "sway", "bob"):
+            _gap = abs(
+                _pose("attack", _boundary - 1e-9)[_key] - _pose("attack", _boundary + 1e-9)[_key]
+            )
+            check(f"attack v3.5: {_key} C0 at {_boundary}", _gap < 0.05, f"gap={_gap}")
+    for _key in ("arm", "lean", "elbow_r", "elbow_l", "sway", "bob", "weapon"):
+        _gap = abs(_pose("attack", 0.0)[_key] - _pose("attack", 1.0 - 1e-9)[_key])
+        check(f"attack v3.5: {_key} C0 at loop seam", _gap < 1e-6, f"gap={_gap}")
+    _attack_poses = [_pose("attack", _i / 720.0, None) for _i in range(720)]
+    _lean_max = max(_p["lean"] for _p in _attack_poses)
+    _lean_min = min(_p["lean"] for _p in _attack_poses)
+    _arm_sweep = max(_p["arm"] for _p in _attack_poses) - min(_p["arm"] for _p in _attack_poses)
+    _elbow_best = max(_p["elbow_r"] for _p in _attack_poses)
+    check("attack v3.5: strike lean deep (>20°)", _lean_max > 20.0, f"{_lean_max:.1f}")
+    check("attack v3.5: coil leans back (<0°)", _lean_min < 0.0, f"{_lean_min:.1f}")
+    check("attack v3.5: arm sweep doubled (>0.6)", _arm_sweep > 0.6, f"{_arm_sweep:.2f}")
+    check("attack v3.5: strike elbow extends (≥ -1°)", _elbow_best >= -1.0, f"{_elbow_best:.1f}")
+    check(
+        "attack v3.5: elbows never hyperextend (≤0)",
+        all(_p["elbow_l"] <= 1e-9 and _p["elbow_r"] <= 1e-9 for _p in _attack_poses),
+    )
+    check(
+        "attack v3.5: sway lunge returns to rest at seam",
+        abs(_pose("attack", 0.0)["sway"]) < 1e-9 and abs(_pose("attack", 1.0)["sway"]) < 1e-9,
+    )
+    _w_min = min(_p["weapon"] for _p in _attack_poses)
+    _w_max = max(_p["weapon"] for _p in _attack_poses)
+    check(
+        "attack v3.5: weapon swing widened (coil<-130°, strike>+95°)",
+        _w_min < -130.0 and _w_max > 95.0,
+        f"[{_w_min:.0f},{_w_max:.0f}]",
+    )
+    # v3.5 修正回归：attack 此前不消费 cfg 的 arm/bob——自定义动作摆臂/起伏
+    # 滑杆与装备姿态覆盖（持械 arm 1.25）对 attack 全部空操作
+    check(
+        "attack v3.5: cfg arm multiplier honored (slider + equipment override)",
+        abs(
+            _pose("attack", 0.55, {"arm": 1.25})["arm"]
+            - 1.25 * _pose("attack", 0.55, None)["arm"]
+        )
+        < 1e-9,
+    )
+    check(
+        "attack v3.5: cfg bob multiplier honored",
+        abs(
+            _pose("attack", 0.4, {"bob": 2.0})["bob"]
+            - 2.0 * _pose("attack", 0.4, None)["bob"]
+        )
+        < 1e-9,
+    )
+
+    # ── V3.5 动作两两区分度：同一角色五动作渲染，均值像必须彼此可分 ──────
+    import numpy as _np2
+
+    def _make_knight_png():
+        img = _TImg.new("RGB", (128, 128), (250, 250, 250))
+        draw = _TDraw.Draw(img)
+        draw.ellipse((44, 8, 84, 44), fill=(60, 70, 90))  # 头
+        draw.rectangle((46, 44, 82, 78), fill=(90, 110, 150))  # 躯干
+        draw.rectangle((34, 52, 52, 74), fill=(140, 140, 148))  # 左臂
+        draw.rectangle((76, 52, 94, 74), fill=(140, 140, 148))  # 右臂
+        draw.rectangle((46, 78, 60, 118), fill=(70, 80, 100))  # 左腿
+        draw.rectangle((68, 78, 82, 118), fill=(70, 80, 100))  # 右腿
+        draw.rectangle((94, 60, 98, 92), fill=(200, 180, 60))  # 右手武器（金色竖条）
+        buf = _io.BytesIO()
+        img.save(buf, "PNG")
+        return buf.getvalue()
+
+    def _mean_image(frames):
+        acc = None
+        for _w, _h, _rgba in frames:
+            arr = _np2.asarray(
+                _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba)), dtype=_np2.float32
+            )
+            acc = arr if acc is None else acc + arr
+        return acc / len(frames)
+
+    _knight = _make_knight_png()
+    _act_means = {}
+    for _act in _ALL_ACTIONS:
+        _af, _, _, _ = animate_rigged(_knight, _act, 12, 128, keep_background=False)
+        _act_means[_act] = _mean_image(_af)
+    for _a, _b in (
+        ("attack", "idle"),
+        ("jump", "idle"),
+        ("run", "walk"),
+        ("attack", "walk"),
+        ("jump", "walk"),
+    ):
+        _diff = float(_np2.abs(_act_means[_a] - _act_means[_b]).mean())
+        check(
+            f"distinctness: {_a} vs {_b} separable (>4.0)",
+            _diff > 4.0,
+            f"mean|Δ|={_diff:.2f}",
+        )
+    _wf, _, _, _ = animate_rigged(_knight, "walk", 12, 128, keep_background=False)
+    _w0 = _np2.asarray(
+        _TImg.frombytes("RGBA", (_wf[0][0], _wf[0][1]), bytes(_wf[0][2])), dtype=_np2.float32
+    )
+    _w6 = _np2.asarray(
+        _TImg.frombytes("RGBA", (_wf[6][0], _wf[6][1]), bytes(_wf[6][2])), dtype=_np2.float32
+    )
+    check(
+        "distinctness: walk frames actually move (>4.0)",
+        float(_np2.abs(_w0 - _w6).mean()) > 4.0,
+        f"mean|Δ|={float(_np2.abs(_w0 - _w6).mean()):.2f}",
+    )
+
+    # ── V3.5 walk/run 帧混合（伪运动模糊）：环绕接缝 + 管线旗标按动作开关 ──
+    from artgen.pipeline import _ghost_blend
+
+    _gb_a = (2, 2, bytearray(bytes([0, 0, 0, 255]) * 4))  # 全黑不透明
+    _gb_b = (2, 2, bytearray(bytes([255, 255, 255, 255]) * 4))  # 全白不透明
+    _blended = _ghost_blend([_gb_a, _gb_b], alpha=0.5)
+    _mix0 = bytes(_blended[0][2])  # frame0 = 黑 + 0.5×末帧（环绕）
+    _mix1 = bytes(_blended[1][2])  # frame1 = 白 + 0.5×黑
+    check(
+        "ghost blend: wraps last frame into first (50% mix)",
+        120 <= _mix0[0] <= 135 and _mix0[3] == 255,
+        str(list(_mix0[:4])),
+    )
+    check(
+        "ghost blend: symmetric previous-frame overlay",
+        120 <= _mix1[0] <= 135,
+        str(list(_mix1[:4])),
+    )
+    _mb_walk = create_animation(params=params, action="walk", fps=8, duration=1.0, size=128)
+    check(
+        "ghost blend: walk pipeline applies blend",
+        _mb_walk.get("motion_blend") is True,
+        str(_mb_walk.get("motion_blend")),
+    )
+    _mb_atk = create_animation(params=params, action="attack", fps=8, duration=1.0, size=128)
+    check(
+        "ghost blend: attack pipeline keeps crisp frames",
+        _mb_atk.get("motion_blend") is False,
+        str(_mb_atk.get("motion_blend")),
+    )
+
+    # ── V3.5.1 多段编排段间交叉渐变：旧版各段独立求值，walk 段结束
+    #    leg=1（迈步中途）/arm≈-0.9，下一段 idle 起始 leg=0——大腿角瞬跳
+    #    14°（AI 解读「先走然后跳」的帧间卡顿根因）────────────────────
+    _seq_cfg = {
+        "phases": [
+            {"action": "walk", "weight": 1.0},
+            {"action": "idle", "weight": 1.0},
+        ],
+        "cycles": 1,
+    }
+    _seq_total = 2.0
+    _seq_eps = 1.0 / 960.0
+    for _key in ("leg", "arm"):
+        _before = _pose("walk", 1.0 / _seq_total - _seq_eps, _seq_cfg)[_key]
+        _after = _pose("walk", 1.0 / _seq_total + _seq_eps, _seq_cfg)[_key]
+        check(
+            f"seq crossfade: {_key} C0 at walk→idle boundary (was ~14° snap)",
+            abs(_before - _after) < 0.05,
+            f"before={_before:.3f} after={_after:.3f} gap={abs(_before - _after):.4f}",
+        )
+    _head = _pose("walk", 1e-9, _seq_cfg)
+    _tail = _pose("walk", 1.0 - 1e-9, _seq_cfg)
+    check(
+        "seq crossfade: loop seam closed (leg/arm)",
+        abs(_head["leg"] - _tail["leg"]) < 0.05 and abs(_head["arm"] - _tail["arm"]) < 0.05,
+        f"leg {_tail['leg']:.3f}→{_head['leg']:.3f} arm {_tail['arm']:.3f}→{_head['arm']:.3f}",
+    )
+    # 一次性动作接续：attack→jump 编排全程值为有限实数（jump 落地段
+    # (1-u)^1.5 在越界相位会出复数——延长相位已钳到收势）
+    _one_shot_cfg = {
+        "phases": [
+            {"action": "attack", "weight": 1.0},
+            {"action": "jump", "weight": 1.0},
+        ]
+    }
+    _complex_free = True
+    for _i in range(240):
+        _st = _pose("walk", _i / 240.0, _one_shot_cfg)
+        for _k, _v in _st.items():
+            if isinstance(_v, complex) or (isinstance(_v, float) and _v != _v):
+                _complex_free = False
+    check(
+        "seq crossfade: one-shot continuation stays real & finite",
+        _complex_free,
+    )
+    # 段内中段不受交叉渐变污染（渐变只占段首 18%）
+    _mid = _pose("walk", 0.75 / _seq_total, _seq_cfg)
+    _plain = _pose("walk", 0.75, None)
+    check(
+        "seq crossfade: mid-segment pose equals plain primitive",
+        abs(_mid["leg"] - _plain["leg"]) < 1e-9,
+        f"{_mid['leg']} vs {_plain['leg']}",
+    )
+
+    # ── V3.5.2 生成后自动质检：健康/冻结/色彩漂移/细节丢失四例 ────────────
+    from benchmark.motion_quality import _knight_png
+    from PIL import Image as _QAImage
+
+    from studio.backend.animation_service.motion_qa import post_validate as _qa_validate
+
+    def _qa_fixture(action):
+        _raw, _, _, _ = animate_rigged(_knight_png(), action, 24, 192, keep_background=True)
+        return [_QAImage.frombytes("RGBA", (w, h), bytes(rgba)) for w, h, rgba in _raw]
+
+    def _to_tuples(pil_frames):
+        return [(img.size[0], img.size[1], bytearray(img.tobytes())) for img in pil_frames]
+
+    _healthy = _qa_fixture("walk")
+    _qa_ok = _qa_validate(
+        _to_tuples(_healthy), source_bytes=_knight_png(), action="walk", chain="skeletal"
+    )
+    check(
+        "motion qa: healthy walk passes",
+        _qa_ok is not None and _qa_ok["grade"] == "pass",
+        str(_qa_ok),
+    )
+    # 完全冻结：单帧重复 → fail（硬门：平均能量≈0；两帧交替会有能量，测不出冻结）
+    _frozen_frame = _healthy[0]
+    _frozen = [(_frozen_frame.size[0], _frozen_frame.size[1], bytearray(_frozen_frame.tobytes()))] * 12
+    _qa_frozen = _qa_validate(_frozen, source_bytes=None, action="walk", chain="skeletal")
+    check(
+        "motion qa: frozen animation fails",
+        _qa_frozen is not None and _qa_frozen["grade"] == "fail"
+        and any("静止" in issue for issue in _qa_frozen["issues"]),
+        str(_qa_frozen),
+    )
+    # 色彩漂移：帧间调色板渐变（每帧整体色偏）→ palette_sim < 0.85 fail
+    _drift = []
+    for _i, img in enumerate(_healthy[:8]):
+        _r, _g, _b, _a = img.split()
+        _shifted = _QAImage.merge("RGBA", (_r.point(lambda v, d=_i * 18: min(255, v + d)), _g, _b, _a))
+        _drift.append((_shifted.size[0], _shifted.size[1], bytearray(_shifted.tobytes())))
+    _qa_drift = _qa_validate(_drift, source_bytes=None, action="walk", chain="skeletal")
+    check(
+        "motion qa: color drift flagged (warn/fail)",
+        _qa_drift is not None and _qa_drift["grade"] in ("warn", "fail")
+        and any("色彩" in issue for issue in _qa_drift["issues"]),
+        str(_qa_drift),
+    )
+    # 细节丢失：把武器金色像素整体抹成背景灰 → completeness 暴跌 → fail
+    import numpy as _qa_np
+
+    _stripped = []
+    _gold = _qa_np.array([205, 178, 70])
+    for img in _healthy:
+        _arr = _qa_np.asarray(img, dtype=_qa_np.float32).copy()
+        _gold_mask = abs(_arr[..., :3] - _gold[None, None, :]).max(axis=2) < 60
+        _arr[_gold_mask] = (245, 245, 245, 255)
+        _stripped.append(
+            (img.size[0], img.size[1], bytearray(_qa_np.clip(_arr, 0, 255).astype(_qa_np.uint8).tobytes()))
+        )
+    _qa_strip = _qa_validate(_stripped, source_bytes=_knight_png(), action="walk", chain="skeletal")
+    check(
+        "motion qa: weapon color stripped → detail fail",
+        _qa_strip is not None and _qa_strip["grade"] == "fail"
+        and any("细节" in issue for issue in _qa_strip["issues"]),
+        str(_qa_strip),
+    )
+    # 五动作健康冒烟：夹具全动作不产生 fail（一次性动作 cv/慢速帧豁免生效）
+    _qa_clean = True
+    for _act in _ALL_ACTIONS:
+        _fr = _qa_fixture(_act)
+        _rep = _qa_validate(
+            _to_tuples(_fr), source_bytes=_knight_png(), action=_act, chain="skeletal"
+        )
+        if _rep is not None and _rep["grade"] == "fail":
+            _qa_clean = False
+    check("motion qa: all five healthy actions pass (no false fail)", _qa_clean)
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")

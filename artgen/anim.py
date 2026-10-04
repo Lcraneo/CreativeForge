@@ -123,10 +123,49 @@ def _sequence_phases(raw):
     return out
 
 
+def _lerp_pose(state_a, state_b, weight):
+    """两个姿态状态的线性混合（数值/元组通道各自插值；缺失键按 0 补齐——
+    与 riganim 的 pose.get(key, 0) 消费语义一致）。weapon 只在矢量路径
+    消费：任一侧为 None 时取另一侧（不产生半截武器角）。"""
+
+    keys = set(state_a) | set(state_b)
+    out = {}
+    for key in keys:
+        value_a = state_a.get(key)
+        value_b = state_b.get(key)
+        if key == "weapon":
+            out[key] = value_b if value_a is None else (
+                value_a if value_b is None else value_a + (value_b - value_a) * weight
+            )
+            continue
+        if isinstance(value_a, tuple) and isinstance(value_b, tuple):
+            out[key] = tuple(
+                a + (b - a) * weight for a, b in zip(value_a, value_b)
+            )
+            continue
+        number_a = float(value_a) if value_a is not None else 0.0
+        number_b = float(value_b) if value_b is not None else 0.0
+        out[key] = number_a + (number_b - number_a) * weight
+    return out
+
+
+# 段间交叉渐变窗口（每段开头占比）：前一段在此窗口内**继续播放**并与当前
+# 段交叉混合。旧版各段独立求值，段边界只有位置 C0——walk 段结束时 leg=1
+# （迈步中途）、arm≈-0.9，而下一段 idle/jump/attack 起始 leg=0/arm≈0，
+# 大腿角瞬间跳 14°（AI 解读「先走然后跳」类多段动作的帧间卡顿实测根因）。
+# 交叉渐变把速度跳变摊到窗口内：接缝处纯前段延续（C0 严格成立），当前段
+# 权重按 smoothstep 早起缓入，边界导数不连续量从 100% 前段速度降到
+# ~CROSSFADE_EXTEND 倍（下延比例），观感即"衔接"而非"切换"。
+SEQUENCE_CROSSFADE = 0.18
+SEQUENCE_CROSSFADE_EXTEND = 0.12
+
+
 def _pose_sequence(seq, phase, cfg):
-    """多段编排：权重切片 + 各段完整原语循环（天然 C0）+ turn 段中心结点
-    插值——每段在自己的中心保持本段 turn，过渡跨越段边界（站立段保持
-    正脸、转体落在跳跃段内），环绕插值保证接缝闭合。→ (state, turn_deg)。"""
+    """多段编排：权重切片 + 各段完整原语循环 + 段间交叉渐变 + turn 段中心
+    结点插值——每段在自己的中心保持本段 turn，过渡跨越段边界（站立段保持
+    正脸、转体落在跳跃段内），环绕插值保证接缝闭合。→ (state, turn_deg)。
+
+    交叉渐变含**环绕**：首段开头与末段延续混合，循环接缝同样平滑。"""
 
     total = sum(item["weight"] for item in seq)
     centers = []
@@ -146,6 +185,21 @@ def _pose_sequence(seq, phase, cfg):
             break
         acc += item["weight"]
     state = _pose_single(seq[index]["action"], local, cfg)
+
+    # 段间交叉渐变：当前段开头 SEQUENCE_CROSSFADE 窗口内，前一段（环绕时
+    # 取末段）以 SEQUENCE_CROSSFADE_EXTEND 的延长率继续播放并与当前段混合
+    prev_index = (index - 1) % len(seq)
+    if local < SEQUENCE_CROSSFADE:
+        prev_action = seq[prev_index]["action"]
+        extend_phase = 1.0 + (local / SEQUENCE_CROSSFADE) * SEQUENCE_CROSSFADE_EXTEND
+        if prev_action in ("attack", "jump"):
+            # 一次性动作越界相位无定义（jump 落地段的 (1-u)^1.5 会出复数），
+            # 钳到收势站位（相位 1.0 恒为站立）
+            extend_phase = min(1.0, extend_phase)
+        extend = _pose_single(prev_action, extend_phase, cfg)
+        state = _lerp_pose(
+            extend, state, _smoothstep(local / SEQUENCE_CROSSFADE)
+        )
 
     # turn：环绕结点插值。pos 在首中心之前 = 头部环绕区（从末中心插向首
     # 中心）；其余按中心 k → 中心 k+1 线性过渡（k 为末段时目标 = 环绕结点
@@ -264,28 +318,42 @@ def _pose_single(action, phase, cfg):
     elif action == "attack":
         # anticipation (hold the coil) -> accelerate into the strike ->
         # impact recoil -> settle back to stance.
-        # 分段曲线在全部段边界 C0 连续、蓄力段两端 C1——旧版在 0.3 处
-        # 蓄力回零后瞬跳 -0.55、0.8 处 1.07 跳 0.77，成片上是两次"跳帧"。
+        # 分段曲线在全部段边界 C0 连续、蓄力段两端 C1——段间硬切在成片上
+        # 就是"跳帧"。v3.5 可读性加深（动作分辨清楚）：k 行程 -0.55~1.07
+        # → -0.75~1.35，摆臂/肘展/前倾同比例放大——旧版命中帧摆臂仅 ~9°，
+        # 与 walk 摆臂（22°）几乎同量级，骨骼链的 attack 看不出"打了谁"。
+        # 肘部新增伸展通道：蓄力收肘、命中伸肘（前臂绕肘摆过 ~40°），
+        # 躯干前倾 21.6° 提供重量感；全部通道只在屈曲方向弯（不反关节）。
         if phase < 0.3:
             u = phase / 0.3
-            k = -0.55 * _rise(u)
+            k = -0.75 * _rise(u)
         elif phase < 0.55:
             u = (phase - 0.3) / 0.25
-            k = -0.55 + 1.62 * (u * u)  # ease-in：发力段持续加速到命中
+            k = -0.75 + 2.10 * (u * u)  # ease-in：发力段持续加速到命中
         elif phase < 0.8:
             u = (phase - 0.55) / 0.25
-            k = 0.92 + 0.15 * math.cos(math.pi * u)  # 命中反冲，平滑回撤
+            k = 1.16 + 0.19 * math.cos(math.pi * u)  # 命中反冲，平滑回撤
         else:
             u = (phase - 0.8) / 0.2
-            k = 0.77 - 0.77 * _smoothstep(u)
-        # 命中瞬间重心下沉（重量转移），随挥后恢复
-        bob = -3.0 * _bump(min(1.0, phase / 0.62), peak=0.5)
+            k = 0.97 - 0.97 * _smoothstep(u)
+        # 命中瞬间重心下沉（重量转移，随 cfg bob 缩放），随挥后恢复
+        # 肘部行程：0（蓄力收死）→1（命中伸直）——跟随 k 的归一化行程，
+        # 端点值在 phase 0/1 相等（循环接缝 C0）
+        reach = max(0.0, min(1.0, (k + 0.75) / 2.10))
         state.update(
             leg=math.sin(t) * 0.4,
-            arm=0.3 - k * 0.25,
-            lean=4.0 + k * 10.0 + float(cfg.get("lean", 0.0)),
+            # v3.5 修正：attack 原先不消费 cfg 的 arm/bob——自定义动作的
+            # 摆臂/起伏滑杆与装备姿态覆盖（持械 arm 1.25）对 attack 全部
+            # 空操作。现在与 walk/run 同语义：乘法缩放，默认 1.0 不变。
+            arm=(0.3 - k * 0.38) * float(cfg.get("arm", 1.0)),
+            lean=4.0 + k * 13.0 + float(cfg.get("lean", 0.0)),
             weapon=-60.0 + 120.0 * k,
-            bob=bob,
+            bob=-3.0 * _bump(min(1.0, phase / 0.62), peak=0.5) * float(cfg.get("bob", 1.0)),
+            # 命中侧前臂伸肘（挥击甩出），另一侧收肘蓄力（两手对抗姿态）
+            elbow_r=-(22.0 * (1.0 - reach)),
+            elbow_l=-(10.0 * reach),
+            # 重心前压（lunge）：只取 k 的正半程，蓄力段不后移，收势归零
+            sway=3.0 * max(0.0, k),
         )
     elif action == "jump":
         # crouch (hold the coil) -> ballistic flight (抛物线，重力感) ->

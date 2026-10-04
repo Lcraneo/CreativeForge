@@ -393,6 +393,7 @@ class ModelSettingsStore:
         # 能力 → 模型：文本 / 图像 / 图像编辑 / 视频共用同一套 base_url + api_key
         "model": "",  # 图像生成（原画）
         "chat_model": "",  # 文本 / 对话（提示词增强）
+        "vl_model": "qwen-vl-plus",  # 视觉对话（装备/服装识别）：看图输出结构化 JSON
         "edit_model": "",  # 图像编辑（三视图 / 抠图）；留空用服务商默认
         "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
         # 定稿档模型（V2 双档策略）：草稿走 video_model（flash 档确认动作），
@@ -815,6 +816,80 @@ class ChatProvider:
         )
         result = self.chat(system, goal, temperature=0.6)
         return {"model": result["model"], "prompt": result["content"]}
+
+
+class VisionChatProvider:
+    """OpenAI-compatible multimodal chat（视觉语言模型，看图 → 结构化文本）.
+
+    装备/服装识别走这里：请求体 content 为多段列表（image_url data URL +
+    text），与 ChatProvider 共用同一套 Key 池与错误分级。系统提示合入
+    user 文本段发送——部分视觉模型（qwen-vl 原生）不支持 system 角色，
+    合入后两种网关都能稳定工作。
+    """
+
+    def __init__(self, settings):
+        self.settings = settings or {}
+
+    def chat(self, system, user, image_b64, temperature=0.2):
+        """单轮图文对话。``image_b64`` 为纯 base64（不带 data: 前缀）或完整
+        data URL。返回 ``{"model", "content"}``；额度/鉴权/网络类错误切下一
+        把 Key，确定性失败原样上抛。"""
+
+        base_url = (self.settings.get("base_url") or "").rstrip("/")
+        model = self.settings.get("vl_model") or "qwen-vl-plus"
+        if not base_url or not self.settings.get("api_key") or not model:
+            raise RuntimeError("vision chat provider not configured")
+        if image_b64.startswith("data:"):
+            data_url = image_b64
+        else:
+            data_url = "data:image/png;base64," + image_b64
+        last_error = None
+        for key in _keys_for(self.settings):
+            try:
+                response = httpx.post(
+                    base_url + "/chat/completions",
+                    headers={
+                        "Authorization": "Bearer " + key,
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "image_url", "image_url": {"url": data_url}},
+                                    {"type": "text", "text": str(system) + "\n\n" + str(user)},
+                                ],
+                            }
+                        ],
+                        "temperature": temperature,
+                    },
+                    timeout=float(self.settings.get("timeout", 60)),
+                )
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                note_key_outcome(key, False, classify_error(exc))
+                if classify_error(exc) in ("quota", "auth", "network"):
+                    last_error = exc
+                    continue
+                raise _http_error(exc)
+            except httpx.HTTPError as exc:  # 连接/超时等网络类
+                note_key_outcome(key, False, classify_error(exc))
+                last_error = exc
+                continue
+            try:
+                content = response.json()["choices"][0]["message"]["content"]
+            except (KeyError, IndexError, ValueError, TypeError) as exc:
+                raise RuntimeError(
+                    "vision chat 响应结构异常：{}".format(str(exc)[:120])
+                ) from exc
+            from studio.backend.model_service.usage import record_usage
+
+            record_usage("chat", model)
+            note_key_outcome(key, True)
+            return {"model": model, "content": content.strip()}
+        raise last_error or RuntimeError("vision chat completion failed")
 
 
 DASHSCOPE_HOST = "https://dashscope.aliyuncs.com"

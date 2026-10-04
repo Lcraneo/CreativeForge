@@ -136,6 +136,9 @@ export default function AnimationStudio() {
   const [useVideo, setUseVideo] = useState(false);
   // V2 双档：定稿档（plus）开关——草稿确认动作后勾选出定稿片
   const [finalQuality, setFinalQuality] = useState(false);
+  // V3.5 装备/服装识别：看图认出武器/服装并贴合动作（骨骼链姿态自适应 +
+  // i2v 提示词上下文/武器保持子句）；按源图缓存，同一角色终身只识别一次
+  const [equipmentAware, setEquipmentAware] = useState(true);
   const [view, setView] = useState("side");
   // ── 动作选择(基础/自定义彻底分离)────────────────────────────
   // 基础动作(内置 5 种)与自定义动作(用户保存)是两个独立来源,
@@ -216,7 +219,7 @@ export default function AnimationStudio() {
     if (!text || nlBusy) return;
     setNlBusy("apply");
     try {
-      const action = await api.interpretActionText(text);
+      const action = await api.interpretActionText(text, asset?.id);
       setEditorAction(action.base_action);
       setEditorView(action.view as "front" | "side");
       setPoseConfig({ ...DEFAULT_POSE_CONFIG, ...action.pose_config });
@@ -275,6 +278,7 @@ export default function AnimationStudio() {
           pose_config: plan.pose_config,
           deform: skeletal ? (meshSkin ? "mesh" : "rigid") : undefined,
           secondary_motion: skeletal ? hairMotion : false,
+          equipment_aware: equipmentAware,
           use_video: useVideo,
           final_quality: useVideo ? finalQuality : false,
         };
@@ -304,7 +308,7 @@ export default function AnimationStudio() {
         setBusySource(null);
       }
     },
-    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, hairMotion, useVideo, finalQuality],
+    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, hairMotion, equipmentAware, useVideo, finalQuality],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
@@ -539,6 +543,34 @@ export default function AnimationStudio() {
             {result && <Badge tone="falign">{ACTION_LABELS[result.action] ?? result.action}</Badge>}
             {result && <Badge tone="neutral">{result.frame_count} frames</Badge>}
             {result && <Badge tone="neutral">{result.fps} fps</Badge>}
+            {result?.motion_blend && <Badge tone="neutral">帧混合</Badge>}
+            {result?.qa && (
+              <span
+                title={(result.qa.issues ?? []).join("；") || "量化质检全部通过"}
+                className="inline-flex"
+              >
+                <Badge
+                  tone={
+                    result.qa.grade === "pass"
+                      ? "success"
+                      : result.qa.grade === "warn"
+                        ? "warning"
+                        : "danger"
+                  }
+                >
+                  {result.qa.grade === "pass"
+                    ? "质检通过"
+                    : result.qa.grade === "warn"
+                      ? "质检关注"
+                      : "质检异常"}
+                </Badge>
+              </span>
+            )}
+            {result?.equipment?.labels?.slice(0, 4).map((label) => (
+              <Badge key={label} tone="primary">
+                {label}
+              </Badge>
+            ))}
             {result && (
               <Badge tone={result.consistency.passed ? "success" : "warning"}>
                 一致性 {(result.consistency.overall * 100).toFixed(0)}%
@@ -861,6 +893,17 @@ export default function AnimationStudio() {
                         次级运动（发丝摆动）
                       </label>
                     )}
+                    <label
+                      className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-ink-2"
+                      title="V3.5 装备/服装识别：AI 看图认出武器、甲胄、裙装、披风等细节——骨骼链自动贴合姿态（持械攻击摆臂加大/重甲起伏收敛/长裙步幅微收，你的滑杆参数优先），AI 视频驱动把装备并入提示词并在攻击时锁定手中武器。按源图缓存，同一角色终身只识别一次（约 0.002 元）"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={equipmentAware}
+                        onChange={(event) => setEquipmentAware(event.target.checked)}
+                      />
+                      服装识别（动作贴合）
+                    </label>
                   </div>
                   {skeletal &&
                     selected.kind === "base" &&

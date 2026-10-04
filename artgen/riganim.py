@@ -132,7 +132,7 @@ def _absorb_enclosed_background(mask, rgb, bg_color=None):
         return mask
 
 
-def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
+def _region_layer(subject, rect, size, feather=5.0, exclude_above=None, protect_top=0.0, protect_bottom=0.0):
     """Full-canvas transparent layer containing only ``rect`` of ``subject``,
     with a **feathered** mask: adjacent regions blend into each other instead
     of cutting hard seams (P1 生成质量：消除分区旋转的接缝).
@@ -140,6 +140,16 @@ def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
     ``exclude_above``：头部保护区 y 值（分体修复 R2）——该 y 之上的像素
     全部置透明。手臂/前臂区域是横跨半身的矩形，Q 版角色（头占比大）的
     脸会落进手臂矩形，摆臂时把脸"片"走（试玩区实测的脸部横向切片）。
+
+    ``protect_top``/``protect_bottom``：羽化保护带（px）——关节搭接带是
+    **有意的融合区**（父子段角度差由跨带渐变吸收），带内保持纯羽化。
+
+    V3.5 内部实心化（细节还原）：保护带之外，矩形内 ≥1px 且深在主体轮廓
+    内（≥3px 腐蚀）的像素**不吃羽化衰减**（取 max）——持械/长杖/裙摆这类
+    跨区配饰整条落在分区矩形边界羽化带内，会被高斯羽化与透明底混合洗色
+    （实测金色武器 343 纯色 px → 220，1/3 细节被洗掉）。主体外轮廓 3px
+    环仍走羽化保剪影抗锯齿；全 alpha 搭接由绘制顺序（子层后画=子层胜）
+    与 mesh 皮肤化的角度过渡兜底。
     """
 
     layer = Image.new("RGBA", (size, size), CANVAS_BG)
@@ -156,7 +166,21 @@ def _region_layer(subject, rect, size, feather=5.0, exclude_above=None):
     rect_mask = Image.new("L", (size, size), 0)
     ImageDraw.Draw(rect_mask).rectangle(box, fill=255)
     if feather > 0:
-        rect_mask = rect_mask.filter(ImageFilter.GaussianBlur(feather))
+        feathered = rect_mask.filter(ImageFilter.GaussianBlur(feather))
+        # 内部实心化：矩形腐蚀 1px × 主体深内部（腐蚀 3px）→ 取 lighter(max)；
+        # 保护带（搭接区）内撤销实心化，退回纯羽化
+        hard = rect_mask.filter(ImageFilter.MinFilter(3))
+        if protect_top > 0:
+            ImageDraw.Draw(hard).rectangle(
+                (box[0], box[1], box[2], min(box[3], box[1] + int(protect_top))), fill=0
+            )
+        if protect_bottom > 0:
+            ImageDraw.Draw(hard).rectangle(
+                (box[0], max(box[1], box[3] - int(protect_bottom)), box[2], box[3]), fill=0
+            )
+        deep_subject = subject.getchannel("A").filter(ImageFilter.MinFilter(7))
+        solid = ImageChops.multiply(hard, deep_subject)
+        rect_mask = ImageChops.lighter(feathered, solid)
     if exclude_above is not None and exclude_above > 0:
         # 保护区在羽化**之后**硬归零：羽化的上侧扩散会把贴近下巴的脸部
         # 像素以 0.2~0.5 的 alpha 漏进手臂层（实测漏出 ~7px 的刚性偏差），
@@ -469,7 +493,7 @@ def animate_rigged(
 
     regions = {
         "upper": (
-            _region_layer(subject, (x0, y0, x1, hip_y + 16), size, feather=8.0),
+            _region_layer(subject, (x0, y0, x1, hip_y + 16), size, feather=8.0, protect_bottom=28.0),
             points["neck"],
         ),
         "arm_l": (
@@ -542,11 +566,17 @@ def animate_rigged(
         # 双骨链子层：小腿（膝下含脚）与前臂（肘下含手）——跟随父段旋转角
         # 之上再叠加膝弯/肘屈，取代整腿/整臂单刚体旋转的"分段拼接感"
         "shin_l": (
-            _region_layer(subject, (x0, points["knee_l"][1] - 22, leg_split + 2, y1), size, feather=5.5),
+            _region_layer(
+                subject, (x0, points["knee_l"][1] - 22, leg_split + 2, y1), size, feather=5.5,
+                protect_top=SKIN_BAND_SHIN,
+            ),
             points["knee_l"],
         ),
         "shin_r": (
-            _region_layer(subject, (leg_split - 2, points["knee_r"][1] - 22, x1, y1), size, feather=5.5),
+            _region_layer(
+                subject, (leg_split - 2, points["knee_r"][1] - 22, x1, y1), size, feather=5.5,
+                protect_top=SKIN_BAND_SHIN,
+            ),
             points["knee_r"],
         ),
         "forearm_l": (
@@ -556,6 +586,7 @@ def animate_rigged(
                 size,
                 feather=3.0,
                 exclude_above=chin_y,
+                protect_top=SKIN_BAND_FOREARM,
             ),
             points["elbow_l"],
         ),
@@ -566,6 +597,7 @@ def animate_rigged(
                 size,
                 feather=3.0,
                 exclude_above=chin_y,
+                protect_top=SKIN_BAND_FOREARM,
             ),
             points["elbow_r"],
         ),
@@ -588,8 +620,14 @@ def animate_rigged(
         elbow_mid = ((points["elbow_l"][0] + points["elbow_r"][0]) / 2.0, points["elbow_l"][1])
         regions["leg_l"] = (_region_layer(subject, leg_block, size, feather=5.0), hip_mid)
         regions["leg_r"] = (_region_layer(subject, leg_block, size, feather=5.0), hip_mid)
-        regions["shin_l"] = (_region_layer(subject, shin_block, size, feather=5.5), knee_mid)
-        regions["shin_r"] = (_region_layer(subject, shin_block, size, feather=5.5), knee_mid)
+        regions["shin_l"] = (
+            _region_layer(subject, shin_block, size, feather=5.5, protect_top=SKIN_BAND_SHIN),
+            knee_mid,
+        )
+        regions["shin_r"] = (
+            _region_layer(subject, shin_block, size, feather=5.5, protect_top=SKIN_BAND_SHIN),
+            knee_mid,
+        )
         regions["arm_l"] = (
             _region_layer(subject, arm_block, size, feather=4.0, exclude_above=max(chin_y, shoulder_y + 4)),
             shoulder_mid,
@@ -599,11 +637,17 @@ def animate_rigged(
             shoulder_mid,
         )
         regions["forearm_l"] = (
-            _region_layer(subject, forearm_block, size, feather=3.0, exclude_above=chin_y),
+            _region_layer(
+                subject, forearm_block, size, feather=3.0, exclude_above=chin_y,
+                protect_top=SKIN_BAND_FOREARM,
+            ),
             elbow_mid,
         )
         regions["forearm_r"] = (
-            _region_layer(subject, forearm_block, size, feather=3.0, exclude_above=chin_y),
+            _region_layer(
+                subject, forearm_block, size, feather=3.0, exclude_above=chin_y,
+                protect_top=SKIN_BAND_FOREARM,
+            ),
             elbow_mid,
         )
         for _far in ("leg_r", "shin_r", "arm_r", "forearm_r"):

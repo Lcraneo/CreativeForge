@@ -159,7 +159,30 @@ export interface AnimationResult {
     bytes: number;
     bitrate_kbps?: number;
   };
+  /** V3.5 装备/服装识别（看图认出武器/甲胄/裙装/披风/发长/饰物，labels 为中文徽章文案） */
+  equipment?: EquipmentInfo;
+  /** V3.5 流畅度：walk/run 帧混合（伪运动模糊）已应用 */
+  motion_blend?: boolean;
+  /** V3.5 生成后自动质检：三维量化指标分级（pass/warn/fail）+ 可读问题列表 */
+  qa?: { grade: "pass" | "warn" | "fail"; metrics?: Record<string, number>; issues?: string[] };
   created_at: number;
+}
+
+/** V3.5 装备/服装识别结果。labels 为中文标签（前端徽章直接渲染），
+ * summary_* 为拼好的中/英摘要（i2v 润色上下文用）。 */
+export interface EquipmentInfo {
+  weapon?: string | null;
+  weapon_label?: string | null;
+  armor?: string;
+  skirt?: boolean;
+  skirt_length?: string;
+  cape?: boolean;
+  hair?: string;
+  outfit?: string;
+  accessories?: string[];
+  labels?: string[];
+  summary_zh?: string;
+  summary_en?: string;
 }
 
 /** 多段编排段（AI 解读「先…然后…」类描述生成）：action 为该段基元，
@@ -200,6 +223,8 @@ export interface AnimationRequestPayload {
   deform?: "mesh" | "rigid";
   /** V3 次级运动：发层摆动（首次对该源图花约 0.3 元提取发层，之后缓存免费） */
   secondary_motion?: boolean;
+  /** V3.5 装备/服装识别：骨骼链姿态自适应 + i2v 提示词贴合（按源图缓存，约 0.002 元/角色） */
+  equipment_aware?: boolean;
 }
 
 export interface PlanTask {
@@ -333,10 +358,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text }),
     }),
-  interpretActionText: (text: string) =>
+  interpretActionText: (text: string, assetId?: string) =>
     request<import("../types").InterpretedAction>("/api/animation/custom-actions/interpret", {
       method: "POST",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, asset_id: assetId }),
     }),
   playtestPreviews: (assetId?: string | null) =>
     request<import("../types").PlaytestPreviews>(
