@@ -118,7 +118,8 @@ def _():
     from gimport.exporter.one_click_export import OneClickExporter
 
     export = OneClickExporter().export(make_asset(), "unity")
-    assert export["package"] == "FireMageGameAsset.zip"
+    assert export["package"].startswith("FireMage_unity_")
+    assert export["package"].endswith("_GameAsset.zip")
     assert export["contents"] == ["Character", "Animation", "Prefab", "Config"]
     assert export["result"]["validation"]["status"] == "success"
 

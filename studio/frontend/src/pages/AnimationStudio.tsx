@@ -469,7 +469,7 @@ export default function AnimationStudio() {
     try {
       saved = JSON.parse(window.localStorage.getItem(VIDEO_TASK_KEY) || "null");
     } catch {
-      saved = null;
+      /* 损坏的本地缓存视同无任务（saved 保持 null） */
     }
     if (!saved?.id) return;
     const ref = saved;

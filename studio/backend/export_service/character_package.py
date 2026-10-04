@@ -109,6 +109,15 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
     image = asset.get("image")
     if isinstance(image, dict):
         _add_artwork(image.get("file"), "source_ai.png", "source_ai")
+    # front 视图回退：design_views.front 缺失（未派生三视图/原画文件不在
+    # 本机）时用 AI 原画充当正面图——原画本身就是正面视角，缺图会让角色
+    # 包永远 missing 非零
+    if "view_front" in missing and isinstance(image, dict):
+        fallback = _read_generated(image.get("file"))
+        if fallback is not None:
+            artwork_entries.append(("artwork/front.png", fallback))
+            artwork_manifest["view_front"] = "front.png"
+            missing.remove("view_front")
     if asset.get("cutout_png"):
         _add_artwork(asset["cutout_png"], "cutout.png", "cutout")
     restyle = asset.get("restyle")
@@ -196,7 +205,9 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
         efiles=len(engine_entries),
     )
 
-    package_name = "{}_package_{}.zip".format(asset_id, int(time.time() * 1000))
+    package_name = "{}_{}_package_{}.zip".format(
+        asset_id, engine, int(time.time() * 1000)
+    )
     package_path = os.path.join(output_dir, package_name)
     with zipfile.ZipFile(package_path, "w", zipfile.ZIP_DEFLATED) as bundle:
         bundle.writestr("README.md", readme)

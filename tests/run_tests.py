@@ -317,7 +317,8 @@ def _():
 
     export = OneClickExporter().export(make_asset(), "cocos")
 
-    assert export["package"] == "FireMageGameAsset.zip"
+    assert export["package"].startswith("FireMage_cocos_")
+    assert export["package"].endswith("_GameAsset.zip")
     assert export["engine"] == "cocos"
     assert export["contents"] == ["Character", "Animation", "Prefab", "Config"]
     assert export["result"]["validation"]["status"] == "success"

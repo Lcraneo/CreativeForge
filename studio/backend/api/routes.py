@@ -445,7 +445,10 @@ def build_router(runtime):
     def export_asset(request: ExportRequest):
         from studio.backend.export_service.service import ExportService
 
-        asset = runtime.assets.get(request.asset_id)
+        # 历史兜底（_resolve_asset）：内存 store 重启即空，工作台可能正
+        # 展示着历史资产——单资产导出曾因此对一切历史资产 404（同类坑
+        # 已在 latest/animation 修过，此处补齐）
+        asset = _resolve_asset(runtime, request.asset_id)
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
         if request.engine not in ("unity", "cocos", "godot"):
