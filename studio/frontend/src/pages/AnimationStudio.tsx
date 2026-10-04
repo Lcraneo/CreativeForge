@@ -293,6 +293,9 @@ export default function AnimationStudio() {
     stage: "queued",
     progress: 0,
   });
+  // 结果是否自动播放：仅「本轮用户主动触发的生成」为 true——刷新恢复进来的
+  // 历史结果必须静帧呈现（打开界面时人物自发动作 = 恢复的 mp4 带 autoPlay）
+  const [resultAutoplay, setResultAutoplay] = useState(false);
 
   // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
   // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
@@ -376,6 +379,7 @@ export default function AnimationStudio() {
         });
         setPlaying(false);
         setResult(animationResult);
+        setResultAutoplay(true); // 用户主动生成→自动播放预览
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
       } finally {
@@ -422,6 +426,7 @@ export default function AnimationStudio() {
           });
           setPlaying(false);
           setResult(snap.result);
+          setResultAutoplay(true); // 用户本轮触发的任务完成→自动播放
           setError(null);
           if (asset?.id) {
             pushRecent({ asset_id: asset.id, name: asset.name, image_url: asset.image?.url });
@@ -481,6 +486,7 @@ export default function AnimationStudio() {
         } else if (snap.status === "done" && snap.result) {
           window.localStorage.removeItem(VIDEO_TASK_KEY);
           setResult(snap.result);
+          setResultAutoplay(false); // 恢复的历史结果→静帧呈现，不自发播放
         } else {
           window.localStorage.removeItem(VIDEO_TASK_KEY);
         }
@@ -854,13 +860,16 @@ export default function AnimationStudio() {
                     动画预览加载失败。可点击「在线预览」或「下载 GIF」查看。
                   </div>
                 ) : result.urls.video && !videoFailed ? (
-                  /* i2v 直通 mp4：720p/24fps 原速原画质；加载失败回退 GIF */
+                  /* i2v 直通 mp4：720p/24fps 原速原画质；加载失败回退 GIF。
+                      autoPlay 仅限本轮用户主动生成的结果——打开工作台时恢复的
+                      历史结果保持静帧，杜绝非用户触发的自发动作 */
                   <video
                     src={result.urls.video}
-                    autoPlay
+                    autoPlay={resultAutoplay}
                     loop
                     muted
                     playsInline
+                    controls={!resultAutoplay}
                     onError={() => setVideoFailedRaw(true)}
                     className="max-h-[300px] max-w-full object-contain"
                   />
