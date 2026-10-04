@@ -304,6 +304,53 @@ def main() -> int:
             post_calls["n"] == 2,
             f"post calls = {post_calls['n']}",
         )
+
+        # V2 缓存 key 契约：size / prompt_extend / 定稿 override 任一切换
+        # 都必须绕开缓存（否则新设置静默失效、双档互相命中对方缓存——
+        # V2 基准实测教训：ext 组曾整组命中 flash 组缓存）
+        settings_c = dict(base_settings, negative_prompt="低质量", video_size="1920*1080")
+        msvc.generate_video(settings_c, "prompt A", b"img-a", 5.0)
+        check(
+            "generate_video: different video_size bypasses cache (key isolation)",
+            post_calls["n"] == 3,
+            f"post calls = {post_calls['n']}",
+        )
+        settings_d = dict(base_settings, negative_prompt="低质量", video_prompt_extend=True)
+        msvc.generate_video(settings_d, "prompt A", b"img-a", 5.0)
+        check(
+            "generate_video: different prompt_extend bypasses cache (key isolation)",
+            post_calls["n"] == 4,
+            f"post calls = {post_calls['n']}",
+        )
+        video_plus, model_plus = msvc.generate_video(
+            dict(base_settings, negative_prompt="低质量"),
+            "prompt A",
+            b"img-a",
+            5.0,
+            model_override="wan2.2-i2v-plus",
+        )
+        check(
+            "generate_video: final-tier model_override bypasses cache (dual-tier isolation)",
+            post_calls["n"] == 5,
+            f"post calls = {post_calls['n']}",
+        )
+        check(
+            "generate_video: model_override reported as billed model",
+            model_plus == "wan2.2-i2v-plus",
+            str(model_plus),
+        )
+        msvc.generate_video(
+            dict(base_settings, negative_prompt="低质量"),
+            "prompt A",
+            b"img-a",
+            5.0,
+            model_override="wan2.2-i2v-plus",
+        )
+        check(
+            "generate_video: same override hits cache (no re-burn)",
+            post_calls["n"] == 5,
+            f"post calls = {post_calls['n']}",
+        )
     finally:
         msvc.httpx.post = original_post
         msvc.httpx.get = original_get

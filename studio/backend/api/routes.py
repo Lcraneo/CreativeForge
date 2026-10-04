@@ -62,6 +62,8 @@ class AnimationRequest(BaseModel):
     view: str = "front"  # walk/run 的视角：front 正面 / side 侧视横版
     pose_config: dict | None = None  # 动作自定义参数（幅度/滞后/周期等）
     use_video: bool = False  # AI 视频驱动（Windup 式 i2v）：让 AI 原画本身动起来
+    final_quality: bool = False  # V2 双档：定稿档走 video_model_final（plus）出片
+    deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
 
 
 class PreviewFrameRequest(BaseModel):
@@ -690,9 +692,15 @@ def build_router(runtime):
                     size=request.size,
                     asset_id=request.asset_id or (asset.get("id") if asset else None),
                     enhance_context=_enhance_context_for(asset),
+                    final_quality=request.final_quality,
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
+        # V3 网格变形：deform 注入 pose_config 的保留键 skin（riganim 读取），
+        # 不污染用户滑杆参数
+        pose_config = dict(request.pose_config or {})
+        if request.deform in ("mesh", "rigid"):
+            pose_config["skin"] = request.deform
         try:
             return service.create(
                 asset=asset,
@@ -703,7 +711,7 @@ def build_router(runtime):
                 size=request.size,
                 skeletal=request.skeletal,
                 view=request.view,
-                pose_config=request.pose_config,
+                pose_config=pose_config or None,
                 model_settings=runtime.model_settings.effective(),
             )
         except ValueError as error:
@@ -1148,6 +1156,8 @@ def build_router(runtime):
             media = "image/gif"
         elif name.endswith(".png"):
             media = "image/png"
+        elif name.endswith(".mp4"):
+            media = "video/mp4"
         else:
             media = "application/octet-stream"
         return FileResponse(path, media_type=media)
@@ -1476,7 +1486,9 @@ def build_router(runtime):
         # v5：帧粘连修复（分区独占所有权：父段裁到膝/肘 + 裆部立柱只填洞）
         # v6：比例修复（R1 封闭洞回收限主体下半部 + 双脚分离关节点 + 膝线
         # 剖面检测 + 腿带中缝/顶部按真实双脚收窄）——渲染语义再变，旧条带作废
-        PLAYTEST_CACHE_VERSION = 6
+        # v7：matting 精修（sourceanim.refine_edge_alpha 白底 alpha 反解，
+        # 边界带像素色与 alpha 均变化）——非透明源条带旧缓存作废
+        PLAYTEST_CACHE_VERSION = 7
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(

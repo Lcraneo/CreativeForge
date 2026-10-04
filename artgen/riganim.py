@@ -226,6 +226,90 @@ def _apply_yaw(subject, yaw_deg, cx, size):
     return out
 
 
+# ── 网格变形（V3）：膝/肘皮肤化 ─────────────────────────────────────────────
+# 旧刚体路径里，小腿/前臂的世界角 = 父段角 + 屈曲角，屈曲全部集中在关节点
+# 一处——膝上 22px 搭接带就是父段取向与子段取向的硬不连续，靠羽化吸收。
+# 皮肤化把这一处硬折弯摊开成过渡带内的连续弯曲：子层顶部 band_px 内，世界
+# 角从父段角（跨关节连续）平滑插值到完整屈曲角，带外刚体。姿态端点不变
+# （远端角与旧路径相同），改变的只是关节附近的过渡分布。
+RIGANIM_SKIN_DEFAULT = "mesh"  # A/B 回退开关：改回 "rigid" 一键还原 v5/v6 行为
+SKIN_BAND_SHIN = 28.0  # 小腿过渡带 = 膝上搭接 22px + 羽化余量
+SKIN_BAND_FOREARM = 16.0  # 前臂过渡带 = 肘上搭接 6px + 羽化余量
+SKIN_STRIPS = 6
+SKIN_MIN_ANGLE = 0.5  # 近/远角差小于此度数直接走刚体（零屈曲零开销零风险）
+
+
+def _smoothstep(t):
+    t = max(0.0, min(1.0, float(t)))
+    return t * t * (3.0 - 2.0 * t)
+
+
+def _mesh_union(canvases):
+    """条带画布的「max-alpha 独占所有权」合成：每像素取 alpha 最高的条带
+    的颜色与透明度。重叠区不产生半透明双绘（v5/v6 分区独占所有权哲学在
+    子层内的复用——条带间只有亚像素级重采样差，接缝不可见）。"""
+
+    if len(canvases) == 1:
+        return canvases[0]
+    stack = np.stack(
+        [np.asarray(c.getchannel("A"), dtype=np.uint16) for c in canvases], axis=0
+    )
+    winner = stack.argmax(axis=0)
+    out = np.asarray(canvases[0], dtype=np.uint8).copy()
+    for k in range(1, len(canvases)):
+        mask = winner == k
+        if not mask.any():
+            continue
+        out[mask] = np.asarray(canvases[k], dtype=np.uint8)[mask]
+    return Image.fromarray(out, "RGBA")
+
+
+def _mesh_canvas(layer, pivot, angle_near, angle_far, band_px, offset, size, strips=SKIN_STRIPS):
+    """皮肤化子层画布：见 RIGANIM_SKIN_DEFAULT 注释。近/远角差可忽略、
+    过渡带过窄或条带数不足时，退化为与旧路径逐像素同语义的单次刚体旋转。"""
+
+    delta = float(angle_far) - float(angle_near)
+    if abs(delta) < SKIN_MIN_ANGLE or band_px < 4.0 or strips < 2:
+        return _rotated_canvas(layer, pivot, angle_far, offset, size)
+
+    alpha_rows = np.asarray(layer.getchannel("A"), dtype=np.uint8)
+    rows = np.where(alpha_rows.max(axis=1) > 0)[0]
+    if len(rows) == 0:
+        return _rotated_canvas(layer, pivot, angle_far, offset, size)
+    y_top = float(rows[0])
+    y_bot = float(rows[-1])
+    band = min(float(band_px), max(4.0, y_bot - y_top))
+
+    overlap = 2.0
+    edges = [y_top + band * k / strips for k in range(strips + 1)]
+    canvases = []
+    for k in range(strips):
+        lo, hi = edges[k], edges[k + 1]
+        theta = angle_near + delta * _smoothstep(((lo + hi) / 2.0 - y_top) / band)
+        mask_arr = np.zeros_like(alpha_rows, dtype=np.uint8)
+        mask_arr[int(max(0, math.floor(lo - overlap))) : int(min(size, math.ceil(hi + overlap))), :] = 255
+        strip = layer.copy()
+        strip.putalpha(
+            ImageChops.multiply(
+                strip.getchannel("A"),
+                Image.fromarray(mask_arr, "L").filter(ImageFilter.GaussianBlur(1.2)),
+            )
+        )
+        canvases.append(_rotated_canvas(strip, pivot, theta, offset, size))
+    # 远端刚体段：过渡带之下整段按完整屈曲角（与旧刚体路径同角同 pivot）
+    mask_arr = np.zeros_like(alpha_rows, dtype=np.uint8)
+    mask_arr[int(max(0, math.floor(edges[-1] - overlap))) :, :] = 255
+    rigid = layer.copy()
+    rigid.putalpha(
+        ImageChops.multiply(
+            rigid.getchannel("A"),
+            Image.fromarray(mask_arr, "L").filter(ImageFilter.GaussianBlur(1.2)),
+        )
+    )
+    canvases.append(_rotated_canvas(rigid, pivot, angle_far, offset, size))
+    return _mesh_union(canvases)
+
+
 def _falign(frames):
     """Lightweight FAlign-style report for the rig-driven frames."""
     step = max(1, len(frames) // 8)
@@ -276,6 +360,7 @@ def animate_rigged(
     config=None,
     segment_mask=None,
     keep_background=True,
+    skin=None,
 ):
     """-> (frames, reference, rig, falign).
 
@@ -285,10 +370,17 @@ def animate_rigged(
     ``keep_background=False`` renders the character as a transparent cutout
     (no scene background behind the subject) — used by the playtest stage so
     frames composite onto an arbitrary stage and trim to the subject bounds.
+
+    ``skin``：网格变形开关（V3）——"mesh" 膝/肘皮肤化（默认，
+    RIGANIM_SKIN_DEFAULT），"rigid" 完全还原 v5/v6 刚体路径；config 键
+    ``skin`` 可同样指定（pose_config 透传），显式参数优先。
     """
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(60, int(frame_count)))
     action = action if action in ACTIONS else "walk"
+    # 网格变形开关（V3）：显式参数 > config 键 > 模块默认
+    skin_mode = skin or (config or {}).get("skin") or RIGANIM_SKIN_DEFAULT
+    use_mesh = skin_mode == "mesh"
 
     canvas = _fit(Image.open(io.BytesIO(image_bytes)), size)
     mask, transparent, bg = _subject_mask(canvas)
@@ -340,8 +432,16 @@ def animate_rigged(
         base_bg = canvas.copy()
         base_bg.paste(CANVAS_BG, (0, 0), mask)
     else:
+        # V3 matting 精修：白底素材边界带内按合成方程反解真 alpha 与前景色，
+        # 消除"mask 羽化保留旧底色"的边缘发灰/泛白（sourceanim.refine_edge_alpha，
+        # 失败回退旧 putalpha 路径——修复永不阻塞生成）
         subject = canvas.copy()
-        subject.putalpha(mask)
+        try:
+            from artgen.sourceanim import refine_edge_alpha
+
+            subject = refine_edge_alpha(canvas, mask, bg=bg or (255, 255, 255))
+        except Exception:  # noqa: BLE001
+            subject.putalpha(mask)
         if keep_background:
             base_bg = _inpaint_background(canvas, mask)
         else:
@@ -470,6 +570,17 @@ def animate_rigged(
         coverage = Image.fromarray(grown, "L")
         return Image.alpha_composite(subject, blank)
 
+    def _place_mesh_tracked(subject, layer, pivot, angle_near, angle_far, band_px, offset):
+        """皮肤化贴层（coverage 跟踪同 _place_tracked，立柱门控语义不变）。"""
+        nonlocal coverage
+        blank = _mesh_canvas(layer, pivot, angle_near, angle_far, band_px, offset, size)
+        grown = np.maximum(
+            np.asarray(coverage, dtype=np.uint8),
+            np.asarray(blank.getchannel("A"), dtype=np.uint8),
+        )
+        coverage = Image.fromarray(grown, "L")
+        return Image.alpha_composite(subject, blank)
+
     for index in range(frame_count):
         pose = _pose(action, index / frame_count, config)
         dy = (pose["bob"] - pose["jump"]) * scales["bob"]
@@ -495,14 +606,30 @@ def animate_rigged(
         elbow_l = pose.get("elbow_l", 0.0) * scales["limb"]
         elbow_r = pose.get("elbow_r", 0.0) * scales["limb"]
 
-        subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
-        subject_frame = _place_tracked(
-            subject_frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
-        )
-        subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
-        subject_frame = _place_tracked(
-            subject_frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
-        )
+        if use_mesh:
+            # V3 网格变形：小腿/前臂皮肤化——过渡带内世界角从父段角连续
+            # 插值到完整屈曲角（近角=父段世界角，远角=旧刚体角，姿态端点
+            # 不变）；大腿/躯干/上臂保持刚体（其父链取向本就连续）。
+            # 贴层顺序与刚体路径严格一致：腿 → 小腿 → 立柱 → 躯干 → 上臂 → 前臂
+            subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
+            subject_frame = _place_mesh_tracked(
+                subject_frame, regions["shin_l"][0], regions["shin_l"][1],
+                -thigh_l * 14, -thigh_l * 14 + knee_l, SKIN_BAND_SHIN, (sway * 0.3, dy),
+            )
+            subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
+            subject_frame = _place_mesh_tracked(
+                subject_frame, regions["shin_r"][0], regions["shin_r"][1],
+                thigh_r * 14, thigh_r * 14 + knee_r, SKIN_BAND_SHIN, (sway * 0.3, dy),
+            )
+        else:
+            subject_frame = _place_tracked(subject_frame, regions["leg_l"][0], regions["leg_l"][1], -thigh_l * 14, (sway * 0.3, dy))
+            subject_frame = _place_tracked(
+                subject_frame, regions["shin_l"][0], regions["shin_l"][1], -thigh_l * 14 + knee_l, (sway * 0.3, dy)
+            )
+            subject_frame = _place_tracked(subject_frame, regions["leg_r"][0], regions["leg_r"][1], thigh_r * 14, (sway * 0.3, dy))
+            subject_frame = _place_tracked(
+                subject_frame, regions["shin_r"][0], regions["shin_r"][1], thigh_r * 14 + knee_r, (sway * 0.3, dy)
+            )
         # 裆部立柱"只填洞"：门控 = 立柱 alpha × NOT(已绘制覆盖)。两腿摆开
         # 露出的楔形中缝由角色自己的裆部像素补上；运动中的腿永远不会被这层
         # 未旋转的静态列盖住（帧粘连修复的最后一环）。
@@ -514,9 +641,27 @@ def animate_rigged(
         subject_frame = Image.alpha_composite(subject_frame, pillar_canvas)
         subject_frame = _place_over(subject_frame, regions["upper"][0], regions["upper"][1], -lean - tilt, (sway, dy), size)
         subject_frame = _place_over(subject_frame, regions["arm_l"][0], regions["arm_l"][1], arm * 22, (sway * 0.5, dy), size)
-        subject_frame = _place_over(subject_frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy), size)
+        if use_mesh:
+            subject_frame = Image.alpha_composite(
+                subject_frame,
+                _mesh_canvas(
+                    regions["forearm_l"][0], regions["forearm_l"][1],
+                    arm * 22, arm * 22 + elbow_l, SKIN_BAND_FOREARM, (sway * 0.5, dy), size,
+                ),
+            )
+        else:
+            subject_frame = _place_over(subject_frame, regions["forearm_l"][0], regions["forearm_l"][1], arm * 22 + elbow_l, (sway * 0.5, dy), size)
         subject_frame = _place_over(subject_frame, regions["arm_r"][0], regions["arm_r"][1], -arm * 22, (sway * 0.5, dy), size)
-        subject_frame = _place_over(subject_frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy), size)
+        if use_mesh:
+            subject_frame = Image.alpha_composite(
+                subject_frame,
+                _mesh_canvas(
+                    regions["forearm_r"][0], regions["forearm_r"][1],
+                    -arm * 22, -arm * 22 + elbow_r, SKIN_BAND_FOREARM, (sway * 0.5, dy), size,
+                ),
+            )
+        else:
+            subject_frame = _place_over(subject_frame, regions["forearm_r"][0], regions["forearm_r"][1], -arm * 22 + elbow_r, (sway * 0.5, dy), size)
 
         yaw = float(pose.get("turn", 0.0) or 0.0)
         if abs(yaw) > 2.0:

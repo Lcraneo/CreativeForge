@@ -395,6 +395,9 @@ class ModelSettingsStore:
         "chat_model": "",  # 文本 / 对话（提示词增强）
         "edit_model": "",  # 图像编辑（三视图 / 抠图）；留空用服务商默认
         "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
+        # 定稿档模型（V2 双档策略）：草稿走 video_model（flash 档确认动作），
+        # 前端「高清定稿」走这里（plus 档出片，成本 2.8×）
+        "video_model_final": "wan2.2-i2v-plus",
         "use_chat": True,
         "use_image": True,
         "use_video": True,
@@ -570,12 +573,16 @@ def _video_negative_prompt(settings) -> str:
     return ", ".join([user] + extras)
 
 
-def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
+def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_override=None):
     """图生视频 (Windup 式 i2v 路线): source image + motion prompt -> mp4 bytes.
 
     Tries the configured ``video_model`` first, then the known DashScope
     i2v model names (naming changed across model generations). Returns
-    ``(video_bytes, model_name)``."""
+    ``(video_bytes, model_name)``.
+
+    ``model_override``：定稿档（V2 双档策略）——由调用方传入
+    ``video_model_final``，强制走高质量模型；缓存 key 与回退链都以它
+    为首，避免 flash/plus 撞同一份缓存。"""
     api_key = settings.get("api_key")
     if not api_key:
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
@@ -587,33 +594,39 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0):
     # 追加；最终串必须参与视频缓存 key（见下）。
     negative_prompt = _video_negative_prompt(settings)
 
-    # 视频缓存：相同 提示词+模型+源图+负面提示词 直接复用已生成的 mp4
+    # 视频缓存：相同 提示词+模型+源图+负面词+生成参数 直接复用已生成的 mp4
     # （视频是额度大头）。负面提示词必须参与 key：同 prompt 不同 negative
     # 共用旧 key 会让新加的伪影抑制静默失效（命中未抑制的旧缓存），不同
-    # 配置间还会互相覆盖缓存。
+    # 配置间还会互相覆盖缓存。同理 size 与 prompt_extend 也必须入 key：
+    # 双档/分辨率/增强任一切换后命中旧缓存 = 新设置静默失效（V2 基准实测
+    # 教训：ext 组曾因此整组命中 flash_v2 缓存）。模型分量必须是"实际请求"
+    # 的模型（含定稿 override），否则 flash/plus 互相命中对方档位缓存。
+    requested_model = model_override or settings.get("video_model") or settings.get("model")
     video_key = _cache_key(
         prompt,
-        settings.get("video_model") or settings.get("model"),
+        requested_model,
         hashlib.sha1(image_bytes).hexdigest(),
         hashlib.sha1(negative_prompt.encode("utf-8")).hexdigest(),
+        "size={}|ext={}".format(
+            settings.get("video_size") or "1280*720",
+            bool(settings.get("video_prompt_extend", False)),
+        ),
     )
     cached_path = os.path.join(_VIDEO_CACHE_DIR, video_key + ".mp4")
     if os.path.isfile(cached_path):
         with open(cached_path, "rb") as handle:
-            return handle.read(), (settings.get("video_model") or "cached")
+            return handle.read(), requested_model
     # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
     # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
-    # 画质优先：配置的模型 → plus → flash → turbo 回退
-    models = [
-        m
-        for m in (
-            settings.get("video_model"),
-            "wan2.2-i2v-plus",
-            "wan2.2-i2v-flash",
-            "wanx2.1-i2v-turbo",
-        )
-        if m
+    # 画质优先：定稿 override → 配置的模型 → plus → flash → turbo 回退
+    chain = [model_override] if model_override else []
+    chain += [
+        settings.get("video_model"),
+        "wan2.2-i2v-plus",
+        "wan2.2-i2v-flash",
+        "wanx2.1-i2v-turbo",
     ]
+    models = list(dict.fromkeys(m for m in chain if m))
     encoded = base64.b64encode(image_bytes).decode()
     parameters = {
         "size": settings.get("video_size") or "1280*720",

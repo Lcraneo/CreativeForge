@@ -103,6 +103,111 @@ def main() -> int:
     check("gif has netscape loop", b"NETSCAPE2.0" in gif)
     check("gif terminates", gif[-1:] == b"\x3b")
 
+    # ── 全局调色板回归：跨帧统一建板 ─────────────────────────────────────
+    # 旧实现逐帧独立 MEDIANCUT 建板：同一源色在不同帧映射到不同调色板项，
+    # 帧间色彩漂移（隐性闪烁源）。全局板下三色必须逐帧精确还原；Pillow
+    # 会为后续帧写局部色表（对象比较所致），但内容必须与全局板逐字节
+    # 一致——这是"无漂移"在容器层的硬保证。
+    def _gif_frames_info(data):
+        """逐块解析 GIF 流 → (全局色表 bytes, [每帧 {delay_cs, local_pal}])。"""
+        pos = 6
+        lsd = data[pos + 4]
+        pos += 7
+        gct = b""
+        if (lsd >> 7) & 1:
+            n = 3 * (2 ** ((lsd & 0x07) + 1))
+            gct = data[pos : pos + n]
+            pos += n
+        frames = []
+        current = None
+        while pos < len(data):
+            block = data[pos]
+            if block == 0x3B:
+                break
+            if block == 0x21:  # 扩展块（GCE 等）
+                label = data[pos + 1]
+                payload = b""
+                pos += 2
+                while data[pos] != 0:
+                    payload += data[pos + 1 : pos + 1 + data[pos]]
+                    pos += 1 + data[pos]
+                pos += 1
+                if label == 0xF9:
+                    delay_cs = payload[1] | (payload[2] << 8) if len(payload) >= 3 else 0
+                    current = {"delay_cs": delay_cs, "local_pal": b""}
+                    frames.append(current)
+            elif block == 0x2C:  # 图像描述符
+                if current is None:
+                    current = {"delay_cs": 0, "local_pal": b""}
+                    frames.append(current)
+                id_flags = data[pos + 9]
+                pos += 10
+                if id_flags & 0x80:
+                    n = 3 * (2 ** ((id_flags & 0x07) + 1))
+                    current["local_pal"] = data[pos : pos + n]
+                    pos += n
+                pos += 1  # LZW min code size
+                while data[pos] != 0:
+                    pos += 1 + data[pos]
+                pos += 1
+            else:
+                break
+        return gct, frames
+
+    import io as _gif_io
+
+    from PIL import Image as _GifImg, ImageSequence as _GifSeq
+
+    _solid = [
+        bytearray(bytes(_c + (255,)) * (192 * 192))
+        for _c in ((255, 0, 0), (0, 255, 0), (0, 0, 255))
+    ]
+    _pal_gif = encode_gif(_solid, 192, 192, fps=12, loop=0)
+    _gct, _frames_info = _gif_frames_info(_pal_gif)
+    check(
+        "global palette: global color table present",
+        # 色表按规范补 2 的幂：三色测试图 → 4 项 = 12 字节
+        len(_gct) >= 6,
+        str(len(_gct)),
+    )
+    check(
+        "global palette: local color tables byte-identical to global (no drift)",
+        len(_frames_info) == 3
+        and all(
+            not f["local_pal"] or f["local_pal"] == _gct[: len(f["local_pal"])]
+            for f in _frames_info
+        ),
+        str([bool(f["local_pal"]) for f in _frames_info]),
+    )
+    with _GifImg.open(_gif_io.BytesIO(_pal_gif)) as _pal_handle:
+        _decoded = [
+            _frame.convert("RGB").getpixel((96, 96))
+            for _frame in _GifSeq.Iterator(_pal_handle)
+        ]
+    _expected = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
+    check(
+        "global palette: per-frame colors round-trip (no cross-frame drift)",
+        len(_decoded) == 3
+        and all(
+            all(abs(c - e) <= 2 for c, e in zip(got, want))
+            for got, want in zip(_decoded, _expected)
+        ),
+        str(_decoded),
+    )
+    # 任一帧带 alpha 洞 → 全序列保留索引 0 为透明色（逐帧一致）
+    _hole_frame = bytearray(bytes((10, 200, 10, 255)) * (192 * 192))
+    _hole_frame[0:4] = bytes((0, 0, 0, 0))
+    _hole_gif = encode_gif([_solid[0], _hole_frame, _solid[0]], 192, 192, fps=12, loop=0)
+    with _GifImg.open(_gif_io.BytesIO(_hole_gif)) as _hole_handle:
+        _hole_handle.seek(1)
+        _hole_rgba = _hole_handle.convert("RGBA")
+    check(
+        "global palette: transparency survives shared palette",
+        _hole_rgba.getpixel((0, 0))[3] < 128
+        and _hole_rgba.getpixel((96, 96))[3] > 200,
+        str((_hole_rgba.getpixel((0, 0)), _hole_rgba.getpixel((96, 96)))),
+    )
+
     # -- consistency -----------------------------------------------------
     same = similarity_rgba((width, height, rgba), (width, height, rgba))
     check("identical similarity high", same["overall"] >= 0.95, str(same))
@@ -192,6 +297,364 @@ def main() -> int:
     )
     check("unknown asset stays None", _resolve_asset(_Runtime(), "nope") is None)
 
+    # ── V3-② side 三视图真绑定：侧视动画用 design_views.side 真源图 ──────
+    # 依赖工作区数据（星辉剑士 ast61935 的三视图本地图）；文件缺失则整组
+    # 跳过（测试保持离线零额度：rig 绑定/抽帧/合成全本地）。
+    import tempfile as _sb_tempfile
+
+    from studio.backend.animation_service.service import AnimationService as _ASvc
+    from studio.backend.model_service.service import GENERATED_DIR as _GEN_DIR
+
+    _side_name = "edit_1790667946394.png"
+    _front_name = "img_1790667929037.png"
+    if os.path.isfile(os.path.join(_GEN_DIR, _side_name)) and os.path.isfile(
+        os.path.join(_GEN_DIR, _front_name)
+    ):
+        _sb_dir = os.path.join(_sb_tempfile.gettempdir(), "cf_side_bind_test")
+        _sb_asset = {
+            "id": "ast-side-bind-test",
+            "name": "星辉剑士",
+            "type": "character",
+            "image": {"file": _front_name},
+            "design_views": {"side": {"file": _side_name}},
+        }
+        _sb_meta = _ASvc(_sb_dir).create(
+            asset=_sb_asset,
+            action="walk",
+            fps=8,
+            duration=1.0,
+            size=192,
+            skeletal=True,
+            view="side",
+        )
+        check(
+            "side binding: skeletal side view bound to design_views.side",
+            _sb_meta.get("view_bound") == "side",
+            str(_sb_meta.get("view_bound")),
+        )
+        check(
+            "side binding: frames produced from true side art",
+            (_sb_meta.get("frames") or 0) >= 8 and (_sb_meta.get("mp4") is not False),
+            str({k: _sb_meta.get(k) for k in ("frames", "fps", "size")}),
+        )
+        _sb_meta_front = _ASvc(_sb_dir).create(
+            asset=_sb_asset,
+            action="walk",
+            fps=8,
+            duration=1.0,
+            size=192,
+            skeletal=True,
+            view="front",
+        )
+        check(
+            "side binding: front view does NOT claim side binding",
+            "view_bound" not in _sb_meta_front,
+            str(_sb_meta_front.get("view_bound")),
+        )
+    else:
+        check("side binding: workspace art present (else skipped)", True)
+
+    # ── 帧粘连修复（分区独占所有权）回归 ─────────────────────────────────
+    import io as _io
+    from artgen.riganim import _absorb_enclosed_background, animate_rigged
+    from PIL import Image as _TImg, ImageDraw as _TDraw
+    # 症状（试玩区/工作台实测）：膝弯/肘屈时父段层里那份"肢端拷贝"按父段
+    # 角刚体旋转、与子层（小腿/前臂）的弯角渲染同屏叠加——观感即"上一帧
+    # 骨骼姿态残留 + 顶点裂变 + 拖影"；裆部立柱矩形到脚底，把未旋转的
+    # 原姿态腿列盖在每一帧上。修复：父段裁到膝/肘（子层独占肢端）、立柱
+    # 裁到膝且逐帧只贴"已绘制覆盖图"之外的洞。
+    # 夹具探针摆放纪律（缺一即门禁失效）：
+    #   * 小腿/前臂色带只落在**子层独占区**——小腿带 y>knee+10（新大腿层
+    #     已裁到 knee+8）、前臂带 y<knee-22 且抬高到臂侧（新上臂层已裁到
+    #     elbow+6）；旧代码里这些带同时落在父段矩形 → 双份渲染 → 计数膨胀；
+    #   * 膝下两腿之间放橙色柱：旧立柱矩形到脚底会把它**不旋转**地盖回
+    #     （立柱门控/裁剪后新代码不再渲染它）；
+    #   * 用 run 动作标定——58° 膝弯让新旧拷贝的分离距离最大。
+    def _make_two_segment_png():
+        img = _TImg.new("RGB", (128, 128), (250, 250, 250))
+        draw = _TDraw.Draw(img)
+        draw.ellipse((48, 2, 80, 26), fill=(60, 60, 70))  # 头
+        draw.rectangle((50, 24, 78, 60), fill=(90, 130, 170))  # 躯干
+        draw.rectangle((28, 28, 48, 50), fill=(80, 80, 92))  # 左上臂
+        draw.rectangle((80, 28, 100, 50), fill=(80, 80, 92))  # 右上臂
+        draw.rectangle((18, 56, 32, 70), fill=(150, 80, 190))  # 左前臂+手（紫探针）
+        draw.rectangle((96, 56, 110, 70), fill=(150, 80, 190))  # 右前臂+手（紫探针）
+        draw.rectangle((40, 60, 52, 92), fill=(70, 170, 190))  # 左大腿
+        draw.rectangle((76, 60, 88, 92), fill=(70, 170, 190))  # 右大腿
+        draw.rectangle((36, 103, 48, 124), fill=(230, 120, 40))  # 左小腿+脚（橙探针）
+        draw.rectangle((80, 103, 92, 124), fill=(230, 120, 40))  # 右小腿+脚（橙探针）
+        draw.rectangle((56, 66, 72, 94), fill=(190, 210, 90))  # 裆柱探针（髋→膝）
+        draw.rectangle((56, 100, 72, 122), fill=(230, 120, 40))  # 膝下两腿间橙柱
+        buffer = _io.BytesIO()
+        img.save(buffer, "PNG")
+        return buffer.getvalue()
+
+    def _fake_straight_rig():
+        return {
+            "bbox": [14, 2, 114, 126],
+            "size": [128, 128],
+            "source_size": [128, 128],
+            "transparent": False,
+            "confidence": 0.9,
+            "proportion": "normal",
+            "head_ratio": 0.28,
+            "head_height": 0.28,
+            "source_hash": "two-segment-test",
+            "points": {
+                "root": [64, 126],
+                "head": [64, 14],
+                "neck": [64, 26],
+                "shoulder_l": [44, 30],
+                "elbow_l": [34, 52],
+                "hand_l": [30, 72],
+                "shoulder_r": [84, 30],
+                "elbow_r": [94, 52],
+                "hand_r": [98, 72],
+                "hip_l": [48, 62],
+                "knee_l": [46, 93],
+                "foot_l": [42, 126],
+                "hip_r": [80, 62],
+                "knee_r": [82, 93],
+                "foot_r": [86, 126],
+            },
+        }
+
+    def _band_counts(frames, matcher):
+        counts = []
+        for _w, _h, _rgba in frames:
+            _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+            _n = 0
+            for _y in range(_h):
+                for _x in range(_w):
+                    _r, _g, _b, _a = _img.getpixel((_x, _y))
+                    if _a > 128 and matcher(_r, _g, _b):
+                        _n += 1
+            counts.append(_n)
+        return counts
+
+    _seg_frames, _, _, _ = animate_rigged(
+        _make_two_segment_png(),
+        "run",
+        16,
+        128,
+        rig=_fake_straight_rig(),
+        segment_mask=None,
+        keep_background=False,
+    )
+    _is_orange = lambda r, g, b: r > 180 and 70 < g < 170 and b < 90  # noqa: E731
+    _is_purple = lambda r, g, b: 110 < r < 190 and g < 120 and b > 150  # noqa: E731
+    _is_crotch = lambda r, g, b: r > 150 and g > 180 and b < 130  # noqa: E731
+    _orange = _band_counts(_seg_frames, _is_orange)
+    _purple = _band_counts(_seg_frames, _is_purple)
+    _crotch = _band_counts(_seg_frames, _is_crotch)
+    # 不变量一（膝下单次渲染）：小腿色带像素数逐帧不得膨胀——旧代码里父段
+    # （大腿层）按大腿角再渲染一份膝下拷贝、立柱再盖一份不旋转拷贝，run 的
+    # 58° 膝弯让三份拷贝几乎不重叠（计数膨胀 ~1.5x+）
+    _orange_base = max(1, sorted(_orange)[len(_orange) // 2])
+    _orange_growth = max(_orange) / _orange_base
+    check(
+        "ghost fix: shin band rendered once (count growth < 1.25x)",
+        len(_orange) == 16 and _orange_growth < 1.25,
+        f"growth={_orange_growth:.2f} counts={_orange}",
+    )
+    # 不变量二（肘下单次渲染·回归上界）：前臂色带同理。注意肘屈与摆臂
+    # 行程耦合（旧代码里两份拷贝部分重合），本断言是独占所有权裁剪的
+    # 回归上界，判别性由不变量一承担（旧代码实测 1.41 vs 新 1.08）
+    _arm_frames, _, _, _ = animate_rigged(
+        _make_two_segment_png(),
+        "walk",
+        16,
+        128,
+        rig=_fake_straight_rig(),
+        config={"arm": 2.5},
+        segment_mask=None,
+        keep_background=False,
+    )
+    _purple = _band_counts(_arm_frames, _is_purple)
+    _purple_base = max(1, sorted(_purple)[len(_purple) // 2])
+    _purple_growth = max(_purple) / _purple_base
+    check(
+        "ghost fix: forearm band rendered once (count growth < 1.25x)",
+        len(_purple) == 16 and _purple_growth < 1.25,
+        f"growth={_purple_growth:.2f} counts={_purple}",
+    )
+    # 不变量三（立柱裁到膝）：立柱色带不得出现在膝线之下（旧版矩形到脚底，
+    # 把未旋转的原姿态小腿列盖在每一帧上）
+    _knee_y = 93
+    _pillar_leak = 0
+    for _w, _h, _rgba in _seg_frames:
+        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
+        for _y in range(_h):
+            for _x in range(_w):
+                _r, _g, _b, _a = _img.getpixel((_x, _y))
+                if _a > 128 and _is_crotch(_r, _g, _b) and _y > _knee_y + 14:
+                    _pillar_leak += 1
+    check(
+        "ghost fix: crotch pillar trimmed at knee (no pixels below knee line)",
+        _pillar_leak == 0,
+        f"{_pillar_leak} pillar pixels below knee",
+    )
+    # 不变量四（立柱仍履职）：镜像摆腿最大帧里中缝楔形仍被立柱像素填补
+    # ——"只填洞"门控不能把填洞能力也门没了
+    check(
+        "ghost fix: crotch pillar still fills stance gap (present in mirror frames)",
+        min(_crotch[0], _crotch[8]) > 0,
+        f"counts at mirror frames = {_crotch[0]}, {_crotch[8]}",
+    )
+
+    # ── V3 网格变形（膝/肘皮肤化）回归 ───────────────────────────────────
+    # 不变量：①零屈曲/近角==远角时与刚体路径逐像素等价（零风险退化）；
+    # ②低屈曲动作（idle）mesh≈rigid；③姿态端点不变（脚部区域 IoU 高，
+    # 远端角与 pivot 与刚体路径相同）；④A/B 真实有效（膝带有可见差异）；
+    # ⑤config 键 skin 与显式参数等价。
+    import statistics
+
+    import numpy as _np_skin
+
+    from artgen.riganim import (
+        RIGANIM_SKIN_DEFAULT,
+        _mesh_canvas,
+        _rotated_canvas,
+        animate_rigged as _animate_rigged_skin,
+    )
+    from PIL import ImageDraw as _SkinDraw
+
+    check("skin: default mode is mesh", RIGANIM_SKIN_DEFAULT == "mesh", RIGANIM_SKIN_DEFAULT)
+
+    _skin_frames = {}
+    for _mode in ("mesh", "rigid"):
+        _skin_frames[_mode] = _animate_rigged_skin(
+            _make_two_segment_png(), "walk", 16, 128,
+            rig=_fake_straight_rig(), segment_mask=None, keep_background=False,
+            skin=_mode,
+        )[0]
+
+    # 退化等价：angle_near == angle_far 的网格画布 == 刚体画布（逐字节）
+    _probe_layer = _GifImg.new("RGBA", (128, 128), (0, 0, 0, 0))
+    _SkinDraw.Draw(_probe_layer).rectangle((40, 40, 88, 110), fill=(70, 170, 190, 255))
+    _mesh_eq = _mesh_canvas(_probe_layer, (64, 40), 10.0, 10.0, 28.0, (0, 0), 128)
+    _rigid_eq = _rotated_canvas(_probe_layer, (64, 40), 10.0, (0, 0), 128)
+    check(
+        "skin: zero-flexion mesh canvas is byte-identical to rigid",
+        bytes(_mesh_eq.tobytes()) == bytes(_rigid_eq.tobytes()),
+    )
+
+    # 姿态端点不变：脚部区域（膝下）alpha 掩码 IoU 逐帧均值 ≥ 0.85
+    def _region_iou(frame_a, frame_b, y_from):
+        a = _np_skin.asarray(_GifImg.frombytes("RGBA", (frame_a[0], frame_a[1]), bytes(frame_a[2])).getchannel("A")) >= 128
+        b = _np_skin.asarray(_GifImg.frombytes("RGBA", (frame_b[0], frame_b[1]), bytes(frame_b[2])).getchannel("A")) >= 128
+        a, b = a[y_from:, :], b[y_from:, :]
+        inter = (a & b).sum()
+        union = (a | b).sum()
+        return inter / union if union else 1.0
+
+    _knee_y = 93
+    _ious = [
+        _region_iou(_skin_frames["mesh"][i], _skin_frames["rigid"][i], _knee_y + 12)
+        for i in range(16)
+    ]
+    check(
+        "skin: foot region preserved vs rigid (IoU >= 0.85)",
+        statistics.fmean(_ious) >= 0.85,
+        f"mean IoU={statistics.fmean(_ious):.3f} min={min(_ious):.3f}",
+    )
+
+    # A/B 有效性：最大屈曲附近帧的膝带（knee-28..knee+10）必须有可见差异，
+    # 否则说明网格分支是空转
+    _band_diffs = []
+    for i in range(16):
+        a = _np_skin.asarray(_GifImg.frombytes("RGBA", (128, 128), bytes(_skin_frames["mesh"][i][2])).getchannel("A"), dtype=_np_skin.int16)
+        b = _np_skin.asarray(_GifImg.frombytes("RGBA", (128, 128), bytes(_skin_frames["rigid"][i][2])).getchannel("A"), dtype=_np_skin.int16)
+        _band_diffs.append(int(_np_skin.abs(a[max(0, _knee_y - 28):_knee_y + 10] - b[max(0, _knee_y - 28):_knee_y + 10]).sum()))
+    check(
+        "skin: A/B is meaningful (knee band differs at flexion)",
+        max(_band_diffs) > 1000,
+        f"max band alpha-diff={max(_band_diffs)}",
+    )
+
+    # config 键透传与显式参数等价（逐字节）
+    _via_cfg = _animate_rigged_skin(
+        _make_two_segment_png(), "walk", 16, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False,
+        config={"skin": "rigid"},
+    )[0]
+    check(
+        "skin: config key {'skin': 'rigid'} equals explicit skin='rigid'",
+        [bytes(f[2]) for f in _via_cfg] == [bytes(f[2]) for f in _skin_frames["rigid"]],
+    )
+
+    # 低屈曲动作：mesh 与 rigid 整体高度相似（idle 呼吸几乎无膝/肘屈曲）
+    _idle_mesh = _animate_rigged_skin(
+        _make_two_segment_png(), "idle", 8, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False, skin="mesh",
+    )[0]
+    _idle_rigid = _animate_rigged_skin(
+        _make_two_segment_png(), "idle", 8, 128,
+        rig=_fake_straight_rig(), segment_mask=None, keep_background=False, skin="rigid",
+    )[0]
+    _idle_sim = statistics.fmean(
+        similarity_rgba(_idle_mesh[i], _idle_rigid[i])["overall"] for i in range(8)
+    )
+    check(
+        "skin: low-flexion idle mesh ~= rigid (overall >= 0.97)",
+        _idle_sim >= 0.97,
+        f"{_idle_sim:.4f}",
+    )
+
+    # ── V3 matting 精修（白底 alpha 反解）回归 ───────────────────────────
+    from PIL import ImageDraw as _MatDraw, ImageFilter as _MatFilter
+    # 真值 fixture：4× 超采样 AA 椭圆（已知前景色与连续 alpha）预合成到白底
+    # 模拟白底原画。不变量：①反解路径合成到深底的边缘色差显著低于旧
+    # "blur mask + putalpha"（底色残留 t² 泄漏）；②内部 alpha 不侵蚀；
+    # ③反解 alpha 连续（smoothness 满分）。
+    import numpy as _np_mat
+
+    from artgen.sourceanim import edge_smoothness as _edge_smooth
+    from artgen.sourceanim import refine_edge_alpha as _refine
+
+    _S = 4
+    _true_hi = _GifImg.new("RGBA", (256 * _S, 256 * _S), (0, 0, 0, 0))
+    _MatDraw.Draw(_true_hi).ellipse((64 * _S, 64 * _S, 192 * _S, 208 * _S), fill=(40, 70, 150, 255))
+    _true = _true_hi.resize((256, 256), _GifImg.LANCZOS)
+    _canvas = _GifImg.new("RGBA", (256, 256), (255, 255, 255, 255))
+    _canvas.alpha_composite(_true)
+    _source = _canvas.convert("RGB")
+
+    _mask_old = _source.convert("L").point(lambda v: 255 if v < 200 else 0).filter(_MatFilter.GaussianBlur(1.0))
+    _old_subject = _source.copy()
+    _old_subject.putalpha(_mask_old)
+    _new_subject = _refine(_source, _mask_old, bg=(255, 255, 255), band=2.0)
+
+    def _edge_err(subject):
+        comp = _GifImg.new("RGBA", subject.size, (30, 28, 26, 255))
+        comp.alpha_composite(subject)
+        comp_rgb = _np_mat.asarray(comp.convert("RGB"), dtype=_np_mat.float32)
+        ideal = _GifImg.new("RGBA", subject.size, (30, 28, 26, 255))
+        ideal.alpha_composite(_true)
+        ideal_rgb = _np_mat.asarray(ideal.convert("RGB"), dtype=_np_mat.float32)
+        t_a = _np_mat.asarray(_true.getchannel("A"), dtype=_np_mat.float32)
+        band = (t_a > 0) & (t_a < 255)
+        err = _np_mat.abs(comp_rgb - ideal_rgb).sum(axis=-1)
+        return float(err[band].mean())
+
+    _err_old, _err_new = _edge_err(_old_subject), _edge_err(_new_subject)
+    check(
+        "matting: refined edge color error <= 50% of blur-mask path",
+        _err_new <= _err_old * 0.5,
+        f"old={_err_old:.1f} new={_err_new:.1f}",
+    )
+    _inner = _np_mat.asarray(_new_subject.getchannel("A"))[120:160, 120:140]
+    check(
+        "matting: interior alpha untouched (>=250)",
+        int(_inner.min()) >= 250,
+        str(int(_inner.min())),
+    )
+    check(
+        "matting: refined alpha stays smooth",
+        _edge_smooth(_new_subject.getchannel("A")) >= 0.95,
+        str(_edge_smooth(_new_subject.getchannel("A"))),
+    )
+
     # ── AI 视频驱动产物回归（防"生成的动画无法播放"类退化）──────────────
     # 全离线：合成 mp4（前 10 帧静止模拟 i2v 开头，之后方块平移起伏模拟
     # 角色动作）→ _slice_video 抽帧 → compose_animation → GIF 结构校验。
@@ -260,8 +723,162 @@ def main() -> int:
 
         gif_img = _PILImage.open(_io.BytesIO(composed["gif"]))
         gif_frames = sum(1 for _ in _PILImageSeq.Iterator(gif_img))
-        check("gif decodable with expected frame count", gif_frames == len(frames), f"{gif_frames} vs {len(frames)}")
+        # 全局调色板下，相邻"亚调色板微差"帧会坍缩成同一索引图并被 Pillow
+        # 合并（实测：时长完整并入邻居 GCE，循环总时长不变）——允许少量
+        # 坍缩，但流必须完整可解码、总时长必须保留。
+        check(
+            "gif decodable with expected frame count (collapse <= 2)",
+            len(frames) - 2 <= gif_frames <= len(frames),
+            f"{gif_frames} vs {len(frames)}",
+        )
+        _cgct, _cinfo = _gif_frames_info(composed["gif"])
+        _delay_total = sum(f["delay_cs"] for f in _cinfo)
+        _delay_expected = len(frames) * max(2, round(100.0 / 12))
+        check(
+            "gif loop duration preserved despite frame merge",
+            abs(_delay_total - _delay_expected) <= max(2, round(100.0 / 12)),
+            f"{_delay_total}cs vs {_delay_expected}cs",
+        )
         check("gif size matches canvas", gif_img.size == (192, 192))
+
+        # ── mp4 直通交付（V1）：with_info 元数据 + 同窗裁剪 + 规格保持 ──
+        _frames_i, _info_i = service._slice_video(
+            synth_bytes, b"", fps=12, duration=1.0, size=192, min_count=20, with_info=True
+        )
+        check(
+            "slice_video with_info: indices match frames",
+            len(_info_i["indices"]) == len(_frames_i),
+            f"{len(_info_i['indices'])} vs {len(_frames_i)}",
+        )
+        check(
+            "slice_video with_info: source fps detected",
+            abs((_info_i.get("source_fps") or 0.0) - 24.0) < 0.5,
+            str(_info_i.get("source_fps")),
+        )
+        _spec = service._deliver_video_mp4(synth_bytes, _info_i, "delivertest")
+        check("mp4 delivery: file written + spec returned", _spec is not None)
+        if _spec:
+            check(
+                "mp4 delivery: keeps source resolution",
+                _spec.get("width") == 192 and _spec.get("height") == 192,
+                str(_spec),
+            )
+            check(
+                "mp4 delivery: keeps source fps",
+                abs(_spec.get("fps", 0.0) - 24.0) < 0.5,
+                str(_spec),
+            )
+            _span = (_info_i["indices"][-1] - _info_i["indices"][0] + 1) / (
+                _info_i.get("source_fps") or 24.0
+            )
+            check(
+                "mp4 delivery: window covers selected span",
+                _spec.get("duration", 0.0) >= _span * 0.9,
+                f"{_spec.get('duration')}s vs span {_span:.2f}s",
+            )
+        try:
+            os.remove(os.path.join(service.directory, "delivertest.mp4"))
+        except OSError:
+            pass
+
+    # ── 后期链（V3）：mp4 出口 + 边缘质量指标 ────────────────────────────
+    from artgen.sourceanim import edge_halo_px, edge_smoothness
+
+    from PIL import ImageDraw as _EdgeDraw, ImageFilter as _EdgeFilter
+
+    _edge_img = _GifImg.new("RGB", (128, 128), (250, 250, 250))
+    _MatDraw.Draw(_edge_img).ellipse((32, 32, 96, 96), fill=(60, 90, 160))
+    _binary = _edge_img.convert("L").point(lambda v: 255 if v < 200 else 0)
+    _hard_edge = _binary.point(lambda v: 255 if v >= 128 else 0)
+    _soft_edge = _hard_edge.filter(_MatFilter.GaussianBlur(1.0))
+    check(
+        "edge metric: hard edge detected as jagged (smoothness ~0)",
+        edge_smoothness(_hard_edge) <= 0.05,
+        str(edge_smoothness(_hard_edge)),
+    )
+    check(
+        "edge metric: blurred edge detected as smooth (smoothness > 0.9)",
+        edge_smoothness(_soft_edge) >= 0.9,
+        str(edge_smoothness(_soft_edge)),
+    )
+    check(
+        "edge metric: feathered edge stays inside binary (halo = 0)",
+        edge_halo_px(_soft_edge, _hard_edge) == 0,
+        str(edge_halo_px(_soft_edge, _hard_edge)),
+    )
+
+    # mp4 出口契约（V3.1）：程序化链获得 CRF16 H.264 交付物
+    try:
+        import imageio_ffmpeg as _iiffmpeg  # noqa: F401
+
+        HAS_POSTFX_FFMPEG = True
+    except Exception:
+        HAS_POSTFX_FFMPEG = False
+    if HAS_POSTFX_FFMPEG:
+        import imageio.v2 as _v3imageio
+        import os as _v3os
+        import tempfile as _v3tempfile
+
+        from artgen.postfx import encode_mp4 as _encode_mp4
+        from artgen.postfx import interpolate_mci as _interp_mci
+
+        def _probe_mp4(data):
+            fd, path = _v3tempfile.mkstemp(suffix=".mp4")
+            os.close(fd)
+            try:
+                with open(path, "wb") as h:
+                    h.write(data)
+                reader = _v3imageio.get_reader(path)
+                try:
+                    meta = reader.get_meta_data()
+                    total = 0
+                    for _ in reader:
+                        total += 1
+                finally:
+                    reader.close()
+                return meta, total
+            finally:
+                try:
+                    _v3os.remove(path)
+                except OSError:
+                    pass
+
+        _v3frames = render_action_frames(params, "walk", 8, 96)
+        _mp4 = _encode_mp4(_v3frames, 96, 96, fps=12)
+        check("postfx: encode_mp4 produces decodable stream", _mp4 is not None and len(_mp4) > 256)
+        if _mp4:
+            _meta, _total = _probe_mp4(_mp4)
+            check(
+                "postfx: mp4 spec correct (12fps 96x96 8 frames)",
+                abs(float(_meta.get("fps") or 0) - 12.0) < 0.1 and _total == 8,
+                f"{_meta} frames={_total}",
+            )
+        # 奇数尺寸补偶（yuv420p 要求）
+        _mp4_odd = _encode_mp4(_v3frames[:4], 97, 97, fps=12)
+        if _mp4_odd:
+            _ometa, _ = _probe_mp4(_mp4_odd)
+            check(
+                "postfx: odd size padded to even (yuv420p)",
+                tuple(_ometa.get("size") or (0, 0)) == (98, 98),
+                str(_ometa.get("size")),
+            )
+        # 运动补偿补帧：帧数约翻倍（minterpolate 对合成内容允许少量边缘帧损失）
+        if _mp4:
+            _mp4_24 = _interp_mci(_mp4, dst_fps=24)
+            check("postfx: interpolate_mci produces output", _mp4_24 is not None)
+            if _mp4_24:
+                _imeta, _itotal = _probe_mp4(_mp4_24)
+                check(
+                    "postfx: interpolation roughly doubles frames to 24fps",
+                    abs(float(_imeta.get("fps") or 0) - 24.0) < 0.1 and _itotal >= 12,
+                    f"fps={_imeta.get('fps')} frames={_itotal}",
+                )
+
+        check(
+            "compose_animation: mp4 exit present alongside gif",
+            isinstance(composed.get("mp4"), (bytes, type(None)))
+            and (composed.get("mp4") is None or len(composed["mp4"]) > 256),
+        )
 
     # ── 模型调用错误分类（审核/额度/鉴权/网络，全离线）───────────────────
     import httpx as _httpx
@@ -878,151 +1495,6 @@ def main() -> int:
     check(
         "dismember fix R2: interior colored band survives pocket absorption",
         len(_stats) >= 6,
-    )
-
-    # ── 帧粘连修复（分区独占所有权）回归 ─────────────────────────────────
-    # 症状（试玩区/工作台实测）：膝弯/肘屈时父段层里那份"肢端拷贝"按父段
-    # 角刚体旋转、与子层（小腿/前臂）的弯角渲染同屏叠加——观感即"上一帧
-    # 骨骼姿态残留 + 顶点裂变 + 拖影"；裆部立柱矩形到脚底，把未旋转的
-    # 原姿态腿列盖在每一帧上。修复：父段裁到膝/肘（子层独占肢端）、立柱
-    # 裁到膝且逐帧只贴"已绘制覆盖图"之外的洞。
-    # 夹具探针摆放纪律（缺一即门禁失效）：
-    #   * 小腿/前臂色带只落在**子层独占区**——小腿带 y>knee+10（新大腿层
-    #     已裁到 knee+8）、前臂带 y<knee-22 且抬高到臂侧（新上臂层已裁到
-    #     elbow+6）；旧代码里这些带同时落在父段矩形 → 双份渲染 → 计数膨胀；
-    #   * 膝下两腿之间放橙色柱：旧立柱矩形到脚底会把它**不旋转**地盖回
-    #     （立柱门控/裁剪后新代码不再渲染它）；
-    #   * 用 run 动作标定——58° 膝弯让新旧拷贝的分离距离最大。
-    def _make_two_segment_png():
-        img = _TImg.new("RGB", (128, 128), (250, 250, 250))
-        draw = _TDraw.Draw(img)
-        draw.ellipse((48, 2, 80, 26), fill=(60, 60, 70))  # 头
-        draw.rectangle((50, 24, 78, 60), fill=(90, 130, 170))  # 躯干
-        draw.rectangle((28, 28, 48, 50), fill=(80, 80, 92))  # 左上臂
-        draw.rectangle((80, 28, 100, 50), fill=(80, 80, 92))  # 右上臂
-        draw.rectangle((18, 56, 32, 70), fill=(150, 80, 190))  # 左前臂+手（紫探针）
-        draw.rectangle((96, 56, 110, 70), fill=(150, 80, 190))  # 右前臂+手（紫探针）
-        draw.rectangle((40, 60, 52, 92), fill=(70, 170, 190))  # 左大腿
-        draw.rectangle((76, 60, 88, 92), fill=(70, 170, 190))  # 右大腿
-        draw.rectangle((36, 103, 48, 124), fill=(230, 120, 40))  # 左小腿+脚（橙探针）
-        draw.rectangle((80, 103, 92, 124), fill=(230, 120, 40))  # 右小腿+脚（橙探针）
-        draw.rectangle((56, 66, 72, 94), fill=(190, 210, 90))  # 裆柱探针（髋→膝）
-        draw.rectangle((56, 100, 72, 122), fill=(230, 120, 40))  # 膝下两腿间橙柱
-        buffer = _io.BytesIO()
-        img.save(buffer, "PNG")
-        return buffer.getvalue()
-
-    def _fake_straight_rig():
-        return {
-            "bbox": [14, 2, 114, 126],
-            "size": [128, 128],
-            "source_size": [128, 128],
-            "transparent": False,
-            "confidence": 0.9,
-            "proportion": "normal",
-            "head_ratio": 0.28,
-            "head_height": 0.28,
-            "source_hash": "two-segment-test",
-            "points": {
-                "root": [64, 126],
-                "head": [64, 14],
-                "neck": [64, 26],
-                "shoulder_l": [44, 30],
-                "elbow_l": [34, 52],
-                "hand_l": [30, 72],
-                "shoulder_r": [84, 30],
-                "elbow_r": [94, 52],
-                "hand_r": [98, 72],
-                "hip_l": [48, 62],
-                "knee_l": [46, 93],
-                "foot_l": [42, 126],
-                "hip_r": [80, 62],
-                "knee_r": [82, 93],
-                "foot_r": [86, 126],
-            },
-        }
-
-    def _band_counts(frames, matcher):
-        counts = []
-        for _w, _h, _rgba in frames:
-            _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
-            _n = 0
-            for _y in range(_h):
-                for _x in range(_w):
-                    _r, _g, _b, _a = _img.getpixel((_x, _y))
-                    if _a > 128 and matcher(_r, _g, _b):
-                        _n += 1
-            counts.append(_n)
-        return counts
-
-    _seg_frames, _, _, _ = animate_rigged(
-        _make_two_segment_png(),
-        "run",
-        16,
-        128,
-        rig=_fake_straight_rig(),
-        segment_mask=None,
-        keep_background=False,
-    )
-    _is_orange = lambda r, g, b: r > 180 and 70 < g < 170 and b < 90  # noqa: E731
-    _is_purple = lambda r, g, b: 110 < r < 190 and g < 120 and b > 150  # noqa: E731
-    _is_crotch = lambda r, g, b: r > 150 and g > 180 and b < 130  # noqa: E731
-    _orange = _band_counts(_seg_frames, _is_orange)
-    _purple = _band_counts(_seg_frames, _is_purple)
-    _crotch = _band_counts(_seg_frames, _is_crotch)
-    # 不变量一（膝下单次渲染）：小腿色带像素数逐帧不得膨胀——旧代码里父段
-    # （大腿层）按大腿角再渲染一份膝下拷贝、立柱再盖一份不旋转拷贝，run 的
-    # 58° 膝弯让三份拷贝几乎不重叠（计数膨胀 ~1.5x+）
-    _orange_base = max(1, sorted(_orange)[len(_orange) // 2])
-    _orange_growth = max(_orange) / _orange_base
-    check(
-        "ghost fix: shin band rendered once (count growth < 1.25x)",
-        len(_orange) == 16 and _orange_growth < 1.25,
-        f"growth={_orange_growth:.2f} counts={_orange}",
-    )
-    # 不变量二（肘下单次渲染·回归上界）：前臂色带同理。注意肘屈与摆臂
-    # 行程耦合（旧代码里两份拷贝部分重合），本断言是独占所有权裁剪的
-    # 回归上界，判别性由不变量一承担（旧代码实测 1.41 vs 新 1.08）
-    _arm_frames, _, _, _ = animate_rigged(
-        _make_two_segment_png(),
-        "walk",
-        16,
-        128,
-        rig=_fake_straight_rig(),
-        config={"arm": 2.5},
-        segment_mask=None,
-        keep_background=False,
-    )
-    _purple = _band_counts(_arm_frames, _is_purple)
-    _purple_base = max(1, sorted(_purple)[len(_purple) // 2])
-    _purple_growth = max(_purple) / _purple_base
-    check(
-        "ghost fix: forearm band rendered once (count growth < 1.25x)",
-        len(_purple) == 16 and _purple_growth < 1.25,
-        f"growth={_purple_growth:.2f} counts={_purple}",
-    )
-    # 不变量三（立柱裁到膝）：立柱色带不得出现在膝线之下（旧版矩形到脚底，
-    # 把未旋转的原姿态小腿列盖在每一帧上）
-    _knee_y = 93
-    _pillar_leak = 0
-    for _w, _h, _rgba in _seg_frames:
-        _img = _TImg.frombytes("RGBA", (_w, _h), bytes(_rgba))
-        for _y in range(_h):
-            for _x in range(_w):
-                _r, _g, _b, _a = _img.getpixel((_x, _y))
-                if _a > 128 and _is_crotch(_r, _g, _b) and _y > _knee_y + 14:
-                    _pillar_leak += 1
-    check(
-        "ghost fix: crotch pillar trimmed at knee (no pixels below knee line)",
-        _pillar_leak == 0,
-        f"{_pillar_leak} pillar pixels below knee",
-    )
-    # 不变量四（立柱仍履职）：镜像摆腿最大帧里中缝楔形仍被立柱像素填补
-    # ——"只填洞"门控不能把填洞能力也门没了
-    check(
-        "ghost fix: crotch pillar still fills stance gap (present in mirror frames)",
-        min(_crotch[0], _crotch[8]) > 0,
-        f"counts at mirror frames = {_crotch[0]}, {_crotch[8]}",
     )
 
     passed = sum(1 for _, ok, _ in CHECKS if ok)

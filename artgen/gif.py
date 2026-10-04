@@ -176,7 +176,7 @@ def _nearest(palette, color):
     return best
 
 
-def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
+def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255, dither=None):
     """frames: list of RGBA bytearrays/bytes. Returns animated GIF bytes.
 
     Prefers Pillow's encoder (spec-perfect LZW + per-frame disposal); the
@@ -184,6 +184,12 @@ def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
     truncate mid-frame, which rendered as flickering previews. Without
     Pillow, a conservative stdlib encoder is used that clears the table
     before any code-width change could ever be needed.
+
+    Palette strategy: ONE global palette is built from all frames (see
+    _build_global_palette) and applied to every frame — per-frame palettes
+    made identical colors drift between frames. ``dither`` (Image.Dither
+    int) defaults to NONE: dither noise re-rolls per frame with disposal=2
+    and can read as shimmer on flat regions; opt in after visual A/B.
     """
     try:
         from PIL import Image
@@ -191,9 +197,15 @@ def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
         return _encode_gif_stdlib(frames, width, height, fps, loop, max_colors)
 
     duration_ms = max(20, round(1000.0 / max(1, fps)))
+    images = [Image.frombytes("RGBA", (width, height), bytes(frame)) for frame in frames]
+    reserve_transparent = any(
+        im.getchannel("A").getextrema()[0] < 128 for im in images
+    )
+    palette_img = _build_global_palette(images, max_colors, reserve_transparent)
+    dither_mode = Image.Dither.NONE if dither is None else Image.Dither(dither)
     quantized = [
-        _quantize_frame(Image.frombytes("RGBA", (width, height), bytes(frame)), max_colors)
-        for frame in frames
+        _quantize_frame_global(im, palette_img, dither_mode, reserve_transparent)
+        for im in images
     ]
 
     buf = io.BytesIO()
@@ -208,30 +220,46 @@ def encode_gif(frames, width, height, fps=12, loop=0, max_colors=255):
         "disposal": 2,  # restore-to-background: no ghosting between frames
         "optimize": False,
     }
-    transparency = quantized[0].info.get("transparency")
-    if transparency is not None:
-        kwargs["transparency"] = transparency
+    if reserve_transparent:
+        kwargs["transparency"] = 0
     quantized[0].save(buf, "GIF", **kwargs)
     return buf.getvalue()
 
 
-def _quantize_frame(im, max_colors):
-    """RGBA -> P-mode frame. When any pixel is transparent, palette index 0 is
-    reserved for it and declared via info["transparency"] (Pillow's FASTOCTREE
-    quantizer does not mark transparency itself)."""
+def _build_global_palette(images, max_colors, reserve_transparent):
+    """Cross-frame global palette: nearest-downsample every frame (NEAREST
+    keeps source colors, averaging would invent new ones), pool the samples
+    and median-cut once. Per-frame palettes quantize each frame against a
+    different color set, so identical source colors drift between frames —
+    visible as inter-frame color shimmer on flat regions."""
     from PIL import Image
 
-    alpha = im.getchannel("A")
-    transparent = alpha.point(lambda a: 255 if a < 128 else 0)
-    has_holes = transparent.getextrema()[1] > 0
-    colors = max(2, min(256, max_colors)) - (1 if has_holes else 0)
-    p = im.convert("RGB").quantize(colors=colors, method=Image.MEDIANCUT, dither=Image.NONE)
-    if not has_holes:
+    side = max(16, min(128, int((8192 / max(1, len(images))) ** 0.5)))
+    samples = []
+    for im in images:
+        samples.extend(im.convert("RGB").resize((side, side), Image.NEAREST).getdata())
+    if not samples:
+        samples = [(0, 0, 0)]
+    colors = max(2, min(256, max_colors)) - (1 if reserve_transparent else 0)
+    strip = Image.new("RGB", (len(samples), 1))
+    strip.putdata(samples)
+    return strip.quantize(colors=colors, method=Image.MEDIANCUT)
+
+
+def _quantize_frame_global(im, palette_img, dither, reserve_transparent):
+    """Map one RGBA frame onto the shared palette. When the sequence has any
+    transparency, palette index 0 is reserved for it (declared via
+    info["transparency"]); opaque colors therefore live at index >= 1."""
+    from PIL import Image
+
+    p = im.convert("RGB").quantize(palette=palette_img, dither=dither)
+    if not reserve_transparent:
         return p
     shifted = p.point(lambda i: min(255, i + 1))
+    alpha = im.getchannel("A")
     opaque = alpha.point(lambda a: 0 if a < 128 else 255)
     out = Image.composite(shifted, Image.new("P", im.size, 0), opaque)
-    palette = (p.getpalette() or [])[: 255 * 3]
+    palette = (palette_img.getpalette() or [])[: 255 * 3]
     out.putpalette([0, 0, 0] + palette + [0] * (768 - 3 - len(palette)))
     out.info["transparency"] = 0
     return out

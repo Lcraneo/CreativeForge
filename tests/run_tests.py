@@ -794,6 +794,34 @@ def _():
     assert not offenders, "frozen legacy imports in: {}".format(offenders[:5])
 
 
+@check("video-quality", "synthetic pipeline meets baseline gates (V1 spec + quality metrics)")
+def _():
+    """V4 门禁固化：视频转换管线（i2v mp4 → 抽帧选帧 → 合成循环动画）
+    的交付规格与质量指标必须不低于 benchmark/video_baseline.json。
+
+    基线是确定性合成视频跑出的（零额度、零网络）；采样参数变更需重录
+    基线（video_quality.py 头部指纹注释的既有规程）。任一 TOLERANCES
+    硬门失败（含 delivery_size / source_fps / mp4_width / mp4_fps /
+    mp4_duration 五项交付规格门）即回归。"""
+
+    import json
+
+    import benchmark.video_quality as vq
+    from studio.backend.animation_service.service import (
+        VIDEO_SAMPLE_DURATION,
+        VIDEO_SAMPLE_MIN_COUNT,
+    )
+
+    metrics = vq.run_pipeline(VIDEO_SAMPLE_MIN_COUNT, VIDEO_SAMPLE_DURATION)
+    with open(vq.BASELINE_PATH, encoding="utf-8") as handle:
+        baseline = json.load(handle)["baseline"]
+    rows, failures, _loop_ratio = vq.compare(baseline, {"metrics": metrics})
+    assert not failures, "video quality regression: {}".format("、".join(failures))
+    assert baseline.get("metrics", {}).get("mp4_width"), (
+        "baseline lacks mp4 delivery spec — re-record baseline (benchmark/video_quality.py)"
+    )
+
+
 def main():
     failures = []
     current_group = None

@@ -37,26 +37,38 @@ FRAMING_CLAUSE = (
     "fastest point of the motion as in a held pose."
 )
 
-# 动作提示词（i2v 模板）：**视角无关**——旧版硬编码 "seen from the side"，
-# 而用户原画多为正面站姿，模型被迫把角色扭成侧面，是肢体缺失的主要诱因之一。
-# 现在要求保持输入图的朝向不变，只描述肢体动作本身。
+# 动作提示词（i2v 模板 v2，词表工程）：**视角无关**原则不变。v2 相比 v1
+# 的升级点（V2 词表 A/B 实测驱动）：①关节级编排（足跟触地/体重滚动/膝屈曲
+# /对侧摆臂/髋肩反向旋转）给 i2v 明确的运动学目标，减少"整体漂移式"假动作；
+# ②明确节奏与次数（"two full stride cycles"/"exactly one strike"）压住模型
+# 自由发挥导致的倍速漂移与重复挥击；③次级运动显式化（发/布料/饰品迟一拍
+# 跟随）补剪纸感的"无物理"短板；④循环收尾句（首尾同姿态）配合抽帧循环
+# 接缝优化，降低回跳感。身份/构图/相机约束仍由 FRAMING_CLAUSE 代码级追加，
+# 这里不重复，把词预算花在运动本身。
 MOTION_PROMPTS = {
     "walk": (
-        "The character walks in place, keeping exactly the same facing direction, "
-        "viewpoint and pose orientation as the input image: the legs alternate lifting "
-        "and stepping naturally, the arms swing gently in counter-phase, the hips and "
-        "torso sway subtly with each step, the upper body stays upright and calm, "
-        "the character's design, outfit, colors and proportions stay exactly the same "
-        "as the input image, the camera stays locked, the motion loops seamlessly."
+        "The character walks in place, facing exactly the same direction as in the "
+        "input image. Two full stride cycles: each leg lifts with a soft knee bend, "
+        "the heel reaches forward and plants, weight rolls over the foot, then pushes "
+        "off. The arms swing relaxed in counter-phase to the legs; hips and shoulders "
+        "counter-rotate slightly; the torso dips at weight acceptance and rises at "
+        "push-off. Hair, cloth and loose accessories settle naturally a beat after "
+        "each step. The motion starts and ends in the same neutral standing pose."
     ),
     "run": (
-        "The character runs in place, keeping exactly the same facing direction and "
-        "viewpoint as the input image: quick energetic strides, the arms pumping in "
-        "counter-phase, hair and clothes bouncing with the motion, "
-        "the character's design, outfit, colors and proportions stay exactly the same "
-        "as the input image, the camera stays locked, the motion loops seamlessly."
+        "The character runs in place, facing exactly the same direction as in the "
+        "input image. Three quick stride cycles with brief airborne moments: knees "
+        "drive up, heels kick back toward the hips, feet land under the body. The "
+        "arms pump bent at the elbow in counter-phase; the torso leans slightly "
+        "forward and bounces with each stride; hair and cloth bounce and trail with "
+        "the impacts. The motion starts and ends in the same ready stance."
     ),
     "attack": (
+        # MOS 盲评（benchmark/mos_kit，n=1，2026-10-04）：v2 攻击句（强调
+        # "fast committed strike"+髋肩旋转）让 attack 一致性/真实感全线崩盘
+        # （flash_v2/plus/1080p 三组整体均 2 分），而 v1 旧措辞拿 4 分——
+        # 攻击性描述诱发 i2v 大幅运动伪影。attack 回滚 v1 措辞，其余四个
+        # 动作保留 v2（v2 walk 是全场唯一 5 分）。
         "The character performs one single committed attack in place, keeping exactly "
         "the same facing direction and viewpoint as the input image: a brief coil back, "
         "then a decisive strike with the leading arm extending naturally, then settle "
@@ -65,18 +77,20 @@ MOTION_PROMPTS = {
         "as the input image, the camera stays locked."
     ),
     "jump": (
-        "The character jumps straight up in place, keeping exactly the same facing "
-        "direction and viewpoint as the input image: a small crouch, a vertical hop "
-        "with the legs tucking slightly, then landing back into the starting stance, "
-        "the character's design, outfit, colors and proportions stay exactly the same "
-        "as the input image, the camera stays locked."
+        "The character performs one vertical jump in place, facing exactly the same "
+        "direction as in the input image. A quick counter-movement crouch with the "
+        "arms swinging back, an explosive vertical take-off with the legs extending "
+        "and tucking slightly mid-air, hair and cloth rising with the ascent, then a "
+        "soft bent-knee landing recovering into the original standing pose. Exactly "
+        "one jump, starting and ending in the same stance."
     ),
     "idle": (
-        "The character breathes gently in place, keeping exactly the same facing "
-        "direction and viewpoint as the input image: the torso slowly rises and falls, "
-        "subtle head and shoulder movement, everything else stays still, "
-        "the character's design, outfit, colors and proportions stay exactly the same "
-        "as the input image, the camera stays locked, the motion loops seamlessly."
+        "The character stands relaxed and breathes in place, facing exactly the same "
+        "direction as in the input image. Slow breathing cycles: the chest and "
+        "shoulders rise gently on the inhale and settle on the exhale; subtle weight "
+        "shifts and micro-adjustments of the head and arms; hair and cloth sway very "
+        "slightly. No steps, no large motion. The motion loops seamlessly between "
+        "the first and the last frame."
     ),
 }
 
@@ -248,12 +262,15 @@ class VideoGenerationError(RuntimeError):
         self.kind = kind
 
 
-def generate_video_with_policy(settings, prompt, source_bytes, timeout_seconds=420.0):
+def generate_video_with_policy(
+    settings, prompt, source_bytes, timeout_seconds=420.0, model_override=None
+):
     """视频驱动生成入口：mp4 缓存 + 网络类失败自动退避重试 + 错误分类。
 
     成功返回 ``(video_bytes, model)``；最终失败抛 VideoGenerationError，
     message 为面向用户的中文描述，kind 供批次徽章/前端提示分类展示。
-    审核拦截与 Key 池切换由 generate_video 内部处理（安全改写重试轮）。"""
+    审核拦截与 Key 池切换由 generate_video 内部处理（安全改写重试轮）。
+    ``model_override``：定稿档模型（V2 双档策略），直通 generate_video。"""
 
     from studio.backend.model_service.service import (
         classify_error,
@@ -265,7 +282,11 @@ def generate_video_with_policy(settings, prompt, source_bytes, timeout_seconds=4
     for attempt in range(2):
         try:
             return generate_video(
-                settings, prompt, source_bytes, timeout_seconds=timeout_seconds
+                settings,
+                prompt,
+                source_bytes,
+                timeout_seconds=timeout_seconds,
+                model_override=model_override,
             )
         except Exception as exc:  # noqa: BLE001 - 分类后决定重试或上抛
             last_exc = exc
@@ -459,7 +480,10 @@ class AnimationService:
                     entry["stage"] = "composing"
                 from artgen import compose_animation
 
-                result = compose_animation(frames_rgba=frames_rgba, fps=12, size=384)
+                # 批次补齐走试玩条带，无需 mp4 出口（省每条 1~3s 编码）
+                result = compose_animation(
+                    frames_rgba=frames_rgba, fps=12, size=384, with_mp4=False
+                )
                 animation_id = uuid.uuid4().hex[:12]  # 模块级已导入；修复批次作用域引用未导入别名导致的 NameError
                 meta = self._persist(result, animation_id, "video")
                 meta["video_model"] = video_model
@@ -538,6 +562,7 @@ class AnimationService:
         params = None
         source_bytes = None
         source_kind = "builtin"
+        side_bound = False  # V3-②：侧视动画是否绑定到了真三视图 side 源图
 
         if skeletal:
             # 全身骨骼模式：绑定「当前角色的真实源图」做角色专属骨骼动画。
@@ -553,6 +578,13 @@ class AnimationService:
                 source_bytes = image_bytes
             elif asset is not None:
                 source_bytes = self._asset_render(asset)
+                if view == "side":
+                    # V3-②：侧视动画优先用三视图 side 真源图（本地存在时），
+                    # 替代"正视原画凑侧视"的旧做法
+                    side_bytes = self._asset_view_render(asset, "side")
+                    if side_bytes:
+                        source_bytes = side_bytes
+                        side_bound = True
                 if source_bytes is None:
                     from artgen import render_asset_view
 
@@ -566,6 +598,12 @@ class AnimationService:
             source_kind = "asset"
             params = asset_params(asset)
             source_bytes = self._asset_render(asset)
+            if view == "side":
+                # V3-②：同骨骼分支——侧视动画用三视图 side 真源图
+                side_bytes = self._asset_view_render(asset, "side")
+                if side_bytes:
+                    source_bytes = side_bytes
+                    side_bound = True
             if source_bytes is None:
                 # 无 AI 原画/本地文件（如重启后的历史资产）：退回资产正面立绘
                 # （与前端展示的 /api/assets/{id}/image.png 同一渲染），保证关键帧
@@ -606,6 +644,14 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, source_kind)
         meta["skeletal"] = source_kind == "skeletal"
+        if side_bound:
+            # V3-②：本次侧视动画绑定的是三视图 side 真源图（供前端徽标/测试断言）
+            meta["view_bound"] = "side"
+        # V3 网格变形：记录实际生效的皮肤模式（A/B 开关的落盘证据）
+        if source_kind == "skeletal":
+            from artgen.riganim import RIGANIM_SKIN_DEFAULT
+
+            meta["skin_mode"] = (pose_config or {}).get("skin") or RIGANIM_SKIN_DEFAULT
         # 记录归属资产（资产包导出/队列中心按 asset_id 收集动画）。
         # _persist 内部已写盘，追加字段后必须重写一次，否则磁盘上没有。
         if asset is not None and asset.get("id"):
@@ -644,6 +690,33 @@ class AnimationService:
         animation_id = uuid.uuid4().hex[:12]
         return self._persist(result, animation_id, "sequence")
 
+    def _asset_view_render(self, asset: dict[str, Any], view: str):
+        """三视图源图（design_views.<view>）的本地 bytes；无记录或本地文件
+        缺失返回 None（调用方回退正面原画）。
+
+        V3-②：side 视图真绑定——AI 三视图的 side.png 此前只用于展示与
+        导出（export_service），侧视动画一直在用正视原画凑数；本方法把它
+        接进动画管线。仅认本地文件，远端签名失效一律回退，绝不阻塞生成。"""
+
+        if not isinstance(asset, dict):
+            return None
+        views = asset.get("design_views")
+        if not isinstance(views, dict):
+            return None
+        meta = views.get(view)
+        if not isinstance(meta, dict):
+            return None
+        from studio.backend.model_service.service import safe_generated_path
+
+        path = safe_generated_path(meta.get("file"))
+        if not path or not os.path.isfile(path):
+            return None
+        try:
+            with open(path, "rb") as handle:
+                return handle.read()
+        except OSError:
+            return None
+
     def _persist(
         self, result: dict[str, Any], animation_id: str, source_kind: str
     ) -> dict[str, Any]:
@@ -659,6 +732,26 @@ class AnimationService:
             name = f"{animation_id}_f{index:02d}.png"
             self._write(name, png)
             frame_urls.append(f"/api/animation/{name}")
+
+        urls = {
+            "gif": f"/api/animation/{gif_name}",
+            "sheet": f"/api/animation/{sheet_name}",
+            "thumb": f"/api/animation/{thumb_name}",
+        }
+        # mp4 出口（V3 后期链）：程序化链与 i2v 链同规格交付；缺省无此键
+        video_spec = None
+        if result.get("mp4"):
+            self._write(f"{animation_id}.mp4", result["mp4"])
+            urls["video"] = f"/api/animation/{animation_id}.mp4"
+            video_spec = {
+                "width": result["size"],
+                "height": result["size"],
+                "fps": result.get("mp4_fps") or result["fps"],
+                "duration": round(
+                    result["frame_count"] / max(1, result.get("mp4_fps") or result["fps"]), 3
+                ),
+                "bytes": len(result["mp4"]),
+            }
 
         meta = {
             "id": animation_id,
@@ -677,13 +770,11 @@ class AnimationService:
             "sheet_size": result["sheet_size"],
             "frames": len(result["frames"]),
             "frame_urls": frame_urls,
-            "urls": {
-                "gif": f"/api/animation/{gif_name}",
-                "sheet": f"/api/animation/{sheet_name}",
-                "thumb": f"/api/animation/{thumb_name}",
-            },
+            "urls": urls,
             "created_at": time.time(),
         }
+        if video_spec:
+            meta["video_spec"] = video_spec
         self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         return meta
 
@@ -699,13 +790,18 @@ class AnimationService:
         size: int = 384,
         asset_id: str | None = None,
         enhance_context: str | None = None,
+        final_quality: bool = False,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
         → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。失败抛
         VideoGenerationError（带分类与中文描述），路由原样透传给前端。
 
         ``enhance_context``：角色名/简介等上下文，供动作描述 AI 增强参考
-        （video_ai_enhance 开启时）。"""
+        （video_ai_enhance 开启时）。
+
+        ``final_quality``：V2 双档策略的定稿档——用 settings
+        ``video_model_final``（默认 wan2.2-i2v-plus）出片；草稿档走
+        ``video_model``（默认 flash），成本 1/2.8。meta 记 quality_tier。"""
 
         action = action if action in ACTIONS else "walk"
 
@@ -725,16 +821,22 @@ class AnimationService:
             settings, action, base_prompt, context=enhance_context
         )
         prompt = enhanced_prompt + " " + FRAMING_CLAUSE
+        # 双档策略：定稿档强制走 video_model_final（缓存 key 含实际模型，
+        # 与草稿档互不命中）；草稿档保持现有回退链
+        model_override = None
+        if final_quality:
+            model_override = (settings or {}).get("video_model_final") or None
         video_bytes, video_model = generate_video_with_policy(
-            settings, prompt, work_bytes, timeout_seconds=420.0
+            settings, prompt, work_bytes, timeout_seconds=420.0, model_override=model_override
         )
-        frames_rgba = self._slice_video(
+        frames_rgba, slice_info = self._slice_video(
             video_bytes,
             source_bytes,
             fps,
             max(float(duration or 1.0), VIDEO_SAMPLE_DURATION),
             size,
             min_count=VIDEO_SAMPLE_MIN_COUNT,
+            with_info=True,
         )
 
         # 弱背景稳定（仅 idle）：i2v 背景会随生成轻微漂移。用 AI 分割 mask
@@ -756,24 +858,34 @@ class AnimationService:
 
         from artgen import compose_animation
 
-        result = compose_animation(frames_rgba=frames_rgba, fps=fps, size=size)
+        # with_mp4=False：i2v 链的 mp4 由 _deliver_video_mp4 直通裁剪源视频
+        # （960²~1440² 原画质），384px 帧重编码没有意义
+        result = compose_animation(frames_rgba=frames_rgba, fps=fps, size=size, with_mp4=False)
         animation_id = uuid.uuid4().hex[:12]
         meta = self._persist(result, animation_id, "video")
         meta["video_model"] = video_model
+        meta["quality_tier"] = "final" if final_quality else "draft"
+        # mp4 直通交付（V1）：与 GIF 同窗的原速、原分辨率 H.264。失败只
+        # 降级（无 urls.video），不影响已落盘的 GIF 产物。
+        video_spec = self._deliver_video_mp4(video_bytes, slice_info, animation_id)
+        if video_spec:
+            meta["urls"]["video"] = f"/api/animation/{animation_id}.mp4"
+            meta["video_spec"] = video_spec
         # 记录归属资产与真实动作（compose 会把 action 覆盖为 "sequence"），
         # 试玩舞台按「资产 + 动作」匹配 AI 动画帧。
-        # 注意：_persist 内部已写盘，此处追加字段后必须重写一次，否则丢失。
         if asset_id:
             meta["asset_id"] = asset_id
         meta["requested_action"] = action
         if enhanced_prompt != base_prompt:
             meta["prompt_enhanced"] = True
             meta["motion_prompt"] = prompt[:400]
-        self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         if crop_info:
             meta["source_cropped"] = crop_info
         if subject_locked:
             meta["subject_locked"] = True
+        # 所有追加字段就位后统一落盘一次。旧代码在写入之后才追加
+        # source_cropped/subject_locked，这两个字段从未落过盘。
+        self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
         return meta
 
     def _crop_to_subject(self, source_bytes: bytes, settings: dict[str, Any]):
@@ -854,6 +966,7 @@ class AnimationService:
         duration: float,
         size: int,
         min_count: int | None = None,
+        with_info: bool = False,
     ):
         """mp4 bytes -> evenly sampled, stabilized (w,h,RGBA) frames.
 
@@ -862,7 +975,12 @@ class AnimationService:
 
         选帧策略（R3）：元数据可用时先保留 ~3× 预算的候选帧（封顶 64），
         再按累计运动量等分精选（_select_by_motion）；元数据缺失时退回
-        均匀重采样。"""
+        均匀重采样。
+
+        ``with_info=True`` 时返回 ``(frames, info)``：info 携带源视频帧率、
+        选中帧的源索引与循环接缝偏移——mp4 直通交付（_deliver_video_mp4）
+        靠它把 GIF 同窗的片段从源视频精确裁出来。默认 False，返回值与
+        既有调用方/测试兼容。"""
 
         import imageio.v2 as imageio
         from PIL import Image
@@ -884,15 +1002,22 @@ class AnimationService:
                 raise RuntimeError(
                     "视频数据无法解码：{}".format(str(error)[:120])
                 ) from error
+            source_fps = 0.0
+            try:
+                # 源帧率供 mp4 直通换算时间窗；元数据缺失时由调用方兜底
+                source_fps = float(reader.get_meta_data().get("fps") or 0.0)
+            except Exception:  # noqa: BLE001 - metadata unavailable
+                source_fps = 0.0
             try:
                 total = int(reader.count_frames())
             except Exception:  # noqa: BLE001 - metadata unavailable
                 total = 0
-            count = max(2, min(60, round(fps * duration)))
+            count = max(2, min(90, round(fps * duration)))
             if min_count:
                 # i2v 的 5 秒视频压到 12 帧会丢掉大部分动作信息；至少抽
-                # min_count 帧让动作周期完整、播放更顺滑
-                count = max(count, min(int(min_count), 60))
+                # min_count 帧让动作周期完整、播放更顺滑。上限 90 放行
+                # 24fps 整循环（原 60 封顶会把 24fps×>2.5s 挡在门外）
+                count = max(count, min(int(min_count), 90))
 
             if total >= 4:
                 lo = max(1, int(total * 0.02))
@@ -968,16 +1093,19 @@ class AnimationService:
             )[:count]
 
         frames_rgba = []
+        found_indices = []
         for frame_index in indices:
             canvas = kept.get(frame_index)
             if canvas is None:
                 continue
+            found_indices.append(frame_index)
             frames_rgba.append((canvas.width, canvas.height, bytearray(canvas.tobytes())))
         if len(frames_rgba) < 2:
             raise RuntimeError("生成的视频有效帧不足，无法抽帧")
 
         # 循环接缝优化：GIF 首尾相接，把相邻帧差最大的那一对切到循环边界，
         # 循环回跳感最小。O(n) 的 48×48 灰度差，代价可忽略。
+        cut = 0
         if len(frames_rgba) > 2:
             from PIL import Image as PILImage
 
@@ -999,7 +1127,127 @@ class AnimationService:
             cut = pairs.index(max(pairs)) + 1
             if 0 < cut < len(frames_rgba):
                 frames_rgba = frames_rgba[cut:] + frames_rgba[:cut]
+        if with_info:
+            info = {
+                "source_fps": source_fps or None,
+                "total": total,
+                "indices": found_indices,
+                "cut": cut,
+            }
+            return frames_rgba, info
         return frames_rgba
+
+    def _deliver_video_mp4(self, video_bytes: bytes, info: dict, animation_id: str):
+        """i2v 源 mp4 直通交付：按抽帧选中的时间窗从**源视频**精确裁出
+        原速、原分辨率的 mp4（GIF 只保留了 384px/12fps 的子采样）。裁剪窗
+        与 GIF 同源（同一批选中索引），编码对齐 onetake 渲染规范
+        （H.264 CRF16 high profile +faststart）。
+
+        纯增益路径：任何失败只降级返回 None（GIF 产物不受影响），绝不
+        让整次动画生成失败。返回 spec dict（分辨率/帧率/时长/码率）或
+        None。"""
+
+        if not info or len(info.get("indices") or []) < 2 or not video_bytes:
+            return None
+        fps_src = float(info.get("source_fps") or 0.0)
+        if fps_src <= 0:
+            fps_src = 24.0  # DashScope wan 系 i2v 标称帧率；元数据缺失时兜底
+        indices = info["indices"]
+        t0 = indices[0] / fps_src
+        duration = (indices[-1] + 1) / fps_src - t0
+        if duration < 0.3:
+            return None
+
+        import subprocess
+
+        try:
+            import imageio_ffmpeg
+
+            ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:  # noqa: BLE001 - 无 ffmpeg 环境直接降级
+            return None
+
+        tmp = os.path.join(self.directory, "tmp_src_{}.mp4".format(animation_id))
+        out_path = os.path.join(self.directory, "{}.mp4".format(animation_id))
+        with open(tmp, "wb") as handle:
+            handle.write(video_bytes)
+        try:
+            command = [
+                ffmpeg,
+                "-v", "error",
+                "-y",
+                # -ss 在 -i 前（输入定位）+ 重编码 = 帧级精确裁剪
+                "-ss", "{:.3f}".format(t0),
+                "-t", "{:.3f}".format(duration),
+                "-i", tmp,
+                "-an",  # i2v 无音轨；显式去除避免容器诡异物
+                "-c:v", "libx264",
+                "-preset", "medium",
+                "-crf", "16",
+                "-pix_fmt", "yuv420p",
+                "-profile:v", "high",
+                "-movflags", "+faststart",
+                out_path,
+            ]
+            creationflags = (
+                getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
+            )
+            proc = subprocess.run(
+                command,
+                timeout=180,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                creationflags=creationflags,
+            )
+            if (
+                proc.returncode != 0
+                or not os.path.isfile(out_path)
+                or os.path.getsize(out_path) < 1024
+            ):
+                try:
+                    os.remove(out_path)
+                except OSError:
+                    pass
+                return None
+        except Exception:  # noqa: BLE001 - 降级路径：GIF 已交付，mp4 失败不致命
+            try:
+                os.remove(out_path)
+            except OSError:
+                pass
+            return None
+        finally:
+            try:
+                os.remove(tmp)
+            except PermissionError:
+                # Windows 竞态：子进程句柄未释放 → 后台收割（同 _slice_video）
+                import threading
+
+                threading.Thread(
+                    target=_reap_file, args=(tmp,), daemon=True, name="cf-tmp-reaper"
+                ).start()
+            except OSError:
+                pass
+
+        spec = {"duration": round(duration, 3), "bytes": os.path.getsize(out_path)}
+        try:
+            import imageio.v2 as imageio
+
+            reader = imageio.get_reader(out_path)
+            try:
+                meta = reader.get_meta_data()
+                spec["fps"] = round(float(meta.get("fps") or fps_src), 3)
+                size = meta.get("size")
+                if size:
+                    spec["width"], spec["height"] = int(size[0]), int(size[1])
+            finally:
+                reader.close()
+        except Exception:  # noqa: BLE001 - 规格探测失败不影响交付
+            spec["fps"] = round(fps_src, 3)
+        if spec.get("width"):
+            spec["bitrate_kbps"] = int(
+                spec["bytes"] * 8 / max(0.001, spec["duration"]) / 1000
+            )
+        return spec
 
     def _asset_render(self, asset: dict[str, Any]):
         """Local source image bytes for the asset (generated dir / AI 原画), or None."""

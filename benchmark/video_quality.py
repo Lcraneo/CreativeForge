@@ -178,7 +178,8 @@ def measure(frames_rgba, source_rgb, fps):
 
 
 def run_pipeline(min_count, duration, fps=12, size=384):
-    """合成视频 → AnimationService._slice_video → compose_animation → 指标。"""
+    """合成视频 → AnimationService._slice_video → compose_animation → 指标。
+    顺带冒烟 mp4 直通交付（_deliver_video_mp4）并把交付规格纳入报告。"""
 
     import tempfile
 
@@ -199,14 +200,36 @@ def run_pipeline(min_count, duration, fps=12, size=384):
         source_rgb = Image.fromarray(next(iter(reader))).convert("RGB")
         reader.close()
         started = time.time()
-        frames = service._slice_video(
-            video_bytes, b"", fps=fps, duration=duration, size=size, min_count=min_count
+        frames, info = service._slice_video(
+            video_bytes,
+            b"",
+            fps=fps,
+            duration=duration,
+            size=size,
+            min_count=min_count,
+            with_info=True,
         )
         elapsed = time.time() - started
         result = compose_animation(frames_rgba=frames, fps=fps, size=size)
         metrics = measure(frames, source_rgb, fps)
         metrics["pipeline_seconds"] = round(elapsed, 3)
         metrics["gif_bytes"] = len(result["gif"])
+        # 交付规格本身是被测对象：GIF 画布尺寸 + 抽帧读到的源帧率
+        metrics["delivery_size"] = frames[0][0] if frames else 0
+        metrics["source_fps"] = round(float(info.get("source_fps") or 0.0), 3)
+        # mp4 直通冒烟：同窗裁剪必须保住源分辨率/帧率（降级则缺省 0，
+        # 由容差 ratio_min 拦截）
+        spec = service._deliver_video_mp4(video_bytes, info, "benchcheck")
+        if spec:
+            metrics["mp4_width"] = spec.get("width", 0)
+            metrics["mp4_fps"] = spec.get("fps", 0.0)
+            metrics["mp4_duration"] = spec.get("duration", 0.0)
+            # 码率受编码器版本影响大：只记录不设门
+            metrics["mp4_bitrate_kbps"] = spec.get("bitrate_kbps", 0)
+        else:
+            metrics["mp4_width"] = 0
+            metrics["mp4_fps"] = 0.0
+            metrics["mp4_duration"] = 0.0
     return metrics
 
 
@@ -218,6 +241,13 @@ TOLERANCES = {
     "dynamic_range_spread": ("abs_min", 3.0),
     "motion_total": ("ratio_min", 0.90),
     "motion_cv": ("ratio_max", 1.05),
+    # 交付规格门：GIF 画布被静默缩小、抽帧元数据丢帧率、mp4 直通丢
+    # 分辨率/帧率/窗口时长，任一发生都算回归
+    "delivery_size": ("ratio_min", 0.95),
+    "source_fps": ("ratio_min", 0.90),
+    "mp4_width": ("ratio_min", 0.90),
+    "mp4_fps": ("ratio_min", 0.90),
+    "mp4_duration": ("ratio_min", 0.80),
 }
 GOAL_LOOP_RATIO = 1.5  # 目标：循环时长 +50%（1.67s → 2.5s）
 

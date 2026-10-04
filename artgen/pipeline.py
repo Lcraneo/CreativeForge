@@ -42,6 +42,8 @@ def compose_animation(
     size=384,
     loop=True,
     consistency_floor=0.6,
+    with_mp4=True,
+    mp4_dst_fps=None,
 ):
     """Compose an animation from user-supplied sequence frames (the standard
     sprite workflow): each frame is decoded and contain-fitted onto a shared
@@ -62,7 +64,7 @@ def compose_animation(
         if not frame_bytes:
             raise ValueError("no frames supplied")
         frames_rgba = []
-        for data in frame_bytes[:60]:
+        for data in frame_bytes[:90]:
             frame = Image.open(io.BytesIO(data)).convert("RGBA")
             canvas = _fit(frame, size)
             frames_rgba.append((size, size, bytearray(canvas.tobytes())))
@@ -92,6 +94,15 @@ def compose_animation(
     sheet_w, sheet_h, sheet_rgba = pack_sheet(frames_rgba)
     sheet = encode_rgba(sheet_w, sheet_h, sheet_rgba)
 
+    # mp4 出口（V3 后期链）：与 GIF 同帧交付 CRF16 H.264，可选运动补偿
+    # 补帧到 dst_fps。无 ffmpeg 时为 None，GIF 兜底不受影响。
+    mp4 = None
+    mp4_fps = fps
+    if with_mp4:
+        from artgen.postfx import finalize_mp4
+
+        mp4, mp4_fps = finalize_mp4(frames_rgba, size, size, fps, dst_fps=mp4_dst_fps)
+
     return {
         "action": "sequence",
         "fps": fps,
@@ -107,6 +118,8 @@ def compose_animation(
         "sheet": sheet,
         "sheet_size": [sheet_w, sheet_h],
         "frames": [encode_rgba(size, size, rgba) for _, _, rgba in frames_rgba],
+        "mp4": mp4,
+        "mp4_fps": mp4_fps,
     }
 
 
@@ -145,8 +158,11 @@ def create_animation(
 
     fps = max(1, min(60, int(fps)))
     duration = max(0.1, min(10.0, float(duration)))
-    frame_count = int(frames) if frames else max(2, min(48, round(fps * duration)))
-    frame_count = max(2, min(48, frame_count))
+    # 上限 90：放行 24fps×~3.5s 的整循环（旧 48 封顶把 24fps 循环挡在门外）。
+    # 内存口径：90 帧×384² RGBA ≈ 53MB 原始 + PIL 编码峰值，抽帧链本就流式，
+    # 显式请求大帧数才触达。
+    frame_count = int(frames) if frames else max(2, min(90, round(fps * duration)))
+    frame_count = max(2, min(90, frame_count))
     size = max(64, min(1024, int(size)))
 
     # 1) frames: rig-driven (character-bound) > source-driven > side gait > vector
@@ -207,6 +223,13 @@ def create_animation(
     sheet_w, sheet_h, sheet_rgba = pack_sheet(frames_rgba)
     sheet = encode_rgba(sheet_w, sheet_h, sheet_rgba)
 
+    # mp4 出口（V3 后期链）：同 compose_animation
+    mp4 = None
+    mp4_fps = fps
+    from artgen.postfx import finalize_mp4
+
+    mp4, mp4_fps = finalize_mp4(frames_rgba, size, size, fps)
+
     return {
         "action": action,
         "fps": fps,
@@ -224,4 +247,6 @@ def create_animation(
         "sheet": sheet,
         "sheet_size": [sheet_w, sheet_h],
         "frames": [encode_rgba(size, size, rgba) for _, _, rgba in frames_rgba],
+        "mp4": mp4,
+        "mp4_fps": mp4_fps,
     }

@@ -1,27 +1,34 @@
 {
   "baseline": {
     "config": {
-      "min_count": 20,
-      "duration": 1.0,
+      "min_count": 30,
+      "duration": 1.25,
       "fps": 12,
       "size": 384
     },
     "metrics": {
-      "frames": 20,
+      "frames": 30,
       "fps": 12,
-      "loop_seconds": 1.667,
-      "sharpness": 13.656,
-      "temporal_consistency": 0.9927,
-      "color_fidelity": 0.9719,
+      "loop_seconds": 2.5,
+      "sharpness": 13.716,
+      "temporal_consistency": 0.9928,
+      "color_fidelity": 0.9676,
       "dynamic_range_spread": 233.0,
       "clip_high": 0.00609,
       "clip_low": 0.0,
-      "motion_mean": 0.936,
-      "motion_cv": 0.5247,
-      "pipeline_seconds": 0.257,
-      "gif_bytes": 852533
+      "motion_total": 18.56,
+      "motion_mean": 0.64,
+      "motion_cv": 0.301,
+      "pipeline_seconds": 0.273,
+      "gif_bytes": 749111,
+      "delivery_size": 384,
+      "source_fps": 24.0,
+      "mp4_width": 384,
+      "mp4_fps": 24.0,
+      "mp4_duration": 4.792,
+      "mp4_bitrate_kbps": 34
     },
-    "recorded_at": "2026-10-01 17:59:21"
+    "recorded_at": "2026-10-03 20:54:35"
   },
   "goal_loop_ratio": 1.5,
   "tolerances": {
@@ -41,13 +48,33 @@
       "abs_min",
       3.0
     ],
-    "motion_mean": [
+    "motion_total": [
       "ratio_min",
       0.9
     ],
     "motion_cv": [
       "ratio_max",
       1.05
+    ],
+    "delivery_size": [
+      "ratio_min",
+      0.95
+    ],
+    "source_fps": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_width": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_fps": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_duration": [
+      "ratio_min",
+      0.8
     ]
   }
 }

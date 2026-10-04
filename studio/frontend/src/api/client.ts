@@ -149,7 +149,16 @@ export interface AnimationResult {
   sheet_size: number[];
   frames: number;
   frame_urls?: string[];
-  urls: { gif: string; sheet: string; thumb: string };
+  urls: { gif: string; sheet: string; thumb: string; video?: string };
+  /** i2v 直通 mp4 的交付规格（分辨率/帧率/时长/码率）；GIF 兜底路径无此字段 */
+  video_spec?: {
+    width: number;
+    height: number;
+    fps: number;
+    duration: number;
+    bytes: number;
+    bitrate_kbps?: number;
+  };
   created_at: number;
 }
 
@@ -185,6 +194,10 @@ export interface AnimationRequestPayload {
   view?: string;
   pose_config?: PoseConfig;
   use_video?: boolean;
+  /** V2 双档：定稿档走 video_model_final（plus）出片，成本约 2.8× */
+  final_quality?: boolean;
+  /** V3 网格变形：膝/肘皮肤化开关；缺省跟随后端默认（mesh） */
+  deform?: "mesh" | "rigid";
 }
 
 export interface PlanTask {

@@ -121,6 +121,8 @@ export default function AnimationStudio() {
 
   const [mode, setMode] = useState<"smart" | "sequence" | "cloud">("smart");
   const [skeletal, setSkeletal] = useState(true);
+  // V3 网格变形：膝/肘皮肤化开关（仅骨骼模式生效；关闭=刚体分区 v5/v6 行为）
+  const [meshSkin, setMeshSkin] = useState(true);
   const rigCheck = useQuery({
     queryKey: ["rig-check", asset?.id],
     queryFn: () => api.rigCheck(asset?.id ?? undefined),
@@ -128,6 +130,8 @@ export default function AnimationStudio() {
     staleTime: 60000,
   });
   const [useVideo, setUseVideo] = useState(false);
+  // V2 双档：定稿档（plus）开关——草稿确认动作后勾选出定稿片
+  const [finalQuality, setFinalQuality] = useState(false);
   const [view, setView] = useState("side");
   // ── 动作选择(基础/自定义彻底分离)────────────────────────────
   // 基础动作(内置 5 种)与自定义动作(用户保存)是两个独立来源,
@@ -148,6 +152,8 @@ export default function AnimationStudio() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState(false);
   const [mainError, setMainError] = useState(false);
+  // mp4 直通预览失败时回退 GIF（浏览器解码器差异/文件缺失兜底）
+  const [videoFailed, setVideoFailed] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // -- 动作编辑器状态 -----------------------------------------------------
@@ -254,7 +260,9 @@ export default function AnimationStudio() {
           skeletal,
           view: plan.view,
           pose_config: plan.pose_config,
+          deform: skeletal ? (meshSkin ? "mesh" : "rigid") : undefined,
           use_video: useVideo,
+          final_quality: useVideo ? finalQuality : false,
         };
         if (upload) {
           payload.image = upload.dataUrl.split(",")[1];
@@ -282,13 +290,14 @@ export default function AnimationStudio() {
         setBusySource(null);
       }
     },
-    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, useVideo],
+    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, useVideo, finalQuality],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
   // 用户往下滚动到逐帧网格/播放时不再有首次解码尖峰
   useEffect(() => {
     if (!result) return;
+    setVideoFailed(false);
     void preloadImages(
       [result.urls.gif, result.urls.sheet, ...(result.frame_urls ?? [])],
       0,
@@ -547,6 +556,15 @@ export default function AnimationStudio() {
                   >
                     下载 GIF
                   </a>
+                  {result.urls.video && (
+                    <a
+                      className="text-[12px] text-ink-3 underline decoration-line"
+                      href={result.urls.video}
+                      download
+                    >
+                      下载 MP4
+                    </a>
+                  )}
                 </div>
               ) : undefined
             }
@@ -563,6 +581,17 @@ export default function AnimationStudio() {
                   <div className="px-6 text-center text-sm text-danger">
                     动画预览加载失败。可点击「在线预览」或「下载 GIF」查看。
                   </div>
+                ) : result.urls.video && !videoFailed ? (
+                  /* i2v 直通 mp4：720p/24fps 原速原画质；加载失败回退 GIF */
+                  <video
+                    src={result.urls.video}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    onError={() => setVideoFailed(true)}
+                    className="max-h-[300px] max-w-full object-contain"
+                  />
                 ) : (
                   <img
                     src={result.urls.gif}
@@ -606,6 +635,13 @@ export default function AnimationStudio() {
               {result && (
                 <span>
                   输出 {result.size}px · {result.duration}s · 循环
+                  {result.urls.video
+                    ? ` · MP4 ${result.video_spec?.width ?? "?"}×${
+                        result.video_spec?.height ?? "?"
+                      }@${
+                        result.video_spec ? Math.round(result.video_spec.fps) : "?"
+                      }`
+                    : ""}
                 </span>
               )}
             </div>
@@ -772,6 +808,32 @@ export default function AnimationStudio() {
                         AI 视频驱动
                       </button>
                     </div>
+                    {useVideo && (
+                      <label
+                        className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-ink-2"
+                        title="定稿档用更高质量的 i2v 模型（wan2.2-i2v-plus）出片，成本约 2.8×；草稿档确认动作后再开"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={finalQuality}
+                          onChange={(event) => setFinalQuality(event.target.checked)}
+                        />
+                        高清定稿（plus 档）
+                      </label>
+                    )}
+                    {skeletal && (
+                      <label
+                        className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-ink-2"
+                        title="V3 网格变形：膝/肘屈曲由关节点硬折弯变为过渡带内连续弯曲（皮肤化），姿态端点不变。关闭即回到刚体分区（v5/v6 行为）"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={meshSkin}
+                          onChange={(event) => setMeshSkin(event.target.checked)}
+                        />
+                        网格变形（膝/肘皮肤化）
+                      </label>
+                    )}
                   </div>
                   {skeletal &&
                     selected.kind === "base" &&
