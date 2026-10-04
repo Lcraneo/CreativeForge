@@ -399,6 +399,12 @@ def _pose_single(action, phase, cfg):
             lean=float(cfg.get("lean", 0.0)),
             sway=math.sin(t) * 1.6,  # 站立重心缓慢左右转移（次级动作）
         )
+        # 弯腰包络（方案3，opt-in）：cfg bow>0 时每个循环内完成一次
+        # 「弯下→直起」——sin(π·phase) 在相位 0/1 归零保证循环接缝 C0，
+        # 深度=bow 度数（点头 15~30 / 欠身 30~60 / 深鞠躬 60~90）。riganim
+        # 把 lean 消费为上身绕髋旋转（真俯身）；矢量 chibi 路径 lean 只是
+        # 水平位移，包络退化为前倾平移。缺省 0：现有效果字节级不变。
+        state["lean"] += float(cfg.get("bow", 0.0)) * math.sin(math.pi * phase)
     return state
 
 

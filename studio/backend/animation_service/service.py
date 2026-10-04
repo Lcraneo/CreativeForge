@@ -333,6 +333,12 @@ _SEGMENT_CACHE_TTL = 600.0
 _ACTION_BATCHES: dict[str, dict] = {}
 _ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会误删运行中批次
 
+# 单次视频生成任务（生成任务化）：与批次同款「模块级内存态 + TTL」——
+# POST /api/animation/tasks 立即返回 task_id 供轮询，前端刷新后凭
+# localStorage 里的 task_id 续接（running 续轮询 / done 直接取结果）
+_VIDEO_TASKS: dict[str, dict] = {}
+_VIDEO_TASKS_TTL = 3600.0
+
 # ── 视频采样配置指纹（benchmark/video_quality.py 依赖；改动需重录基线）──
 # R1 基线：min_count=20 / duration=1.0（20 帧 @12fps ≈ 1.67s 循环）。
 # R2 优化：i2v 源视频 5s/24fps≈120 帧里只取 20 帧，时间采样率仅 17%；
@@ -350,6 +356,16 @@ def _prune_action_batches() -> None:
         created = (_ACTION_BATCHES.get(batch_id) or {}).get("created_at", 0)
         if now - created > _ACTION_BATCHES_TTL:
             _ACTION_BATCHES.pop(batch_id, None)
+
+
+def _prune_video_tasks() -> None:
+    """清理超过 TTL 的单次生成任务（同批次语义）。"""
+
+    now = time.time()
+    for task_id in list(_VIDEO_TASKS):
+        created = (_VIDEO_TASKS.get(task_id) or {}).get("created_at", 0)
+        if now - created > _VIDEO_TASKS_TTL:
+            _VIDEO_TASKS.pop(task_id, None)
 
 
 def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0):
@@ -475,6 +491,7 @@ class AnimationService:
         self.directory = directory
         os.makedirs(self.directory, exist_ok=True)
         self.action_batches = _ACTION_BATCHES
+        self.video_tasks = _VIDEO_TASKS
 
     # -- 一键补齐全套动作（串行队列，跳过已生成） --------------------------
 
@@ -673,6 +690,113 @@ class AnimationService:
         _prune_action_batches()
         batch = self.action_batches.get(batch_id)
         return dict(batch) if batch else None
+
+    # -- 单次视频生成任务化（阶段进度 + 刷新恢复） -------------------------
+
+    def start_video_task(
+        self,
+        source_bytes: bytes,
+        settings: dict[str, Any],
+        *,
+        action: str,
+        fps: int,
+        duration: float,
+        size: int,
+        asset_id: str | None,
+        enhance_context: str | None,
+        final_quality: bool,
+        equipment_aware: bool,
+        action_description: str,
+    ) -> dict:
+        """单次 AI 视频生成入队（生成任务化）：立即返回初始快照，后台线程
+        跑 create_video（progress_cb 汇报 prompt/video/sampling/composing
+        阶段），前端轮询 ``video_task_snapshot``。与批次同款「模块级内存态
+        + TTL」语义——路由每请求 new 实例也不丢状态。同步端点 /api/animation
+        原样保留，本方法只服务新端点。"""
+
+        import threading
+        import uuid as _uuid
+
+        _prune_video_tasks()
+        task_id = _uuid.uuid4().hex[:12]
+        _VIDEO_TASKS[task_id] = {
+            "id": task_id,
+            "status": "running",
+            "stage": "prompt",
+            "created_at": time.time(),
+            "started_at": time.time(),
+            "asset_id": asset_id,
+            "requested_action": action,
+        }
+        thread = threading.Thread(
+            target=self._run_video_task,
+            args=(task_id, source_bytes, settings),
+            kwargs=dict(
+                action=action,
+                fps=fps,
+                duration=duration,
+                size=size,
+                asset_id=asset_id,
+                enhance_context=enhance_context,
+                final_quality=final_quality,
+                equipment_aware=equipment_aware,
+                action_description=action_description,
+            ),
+            name="cf-video-task-{}".format(task_id),
+            daemon=True,
+        )
+        thread.start()
+        return self.video_task_snapshot(task_id)
+
+    def _run_video_task(self, task_id, source_bytes, settings, **kwargs):
+        task = _VIDEO_TASKS.get(task_id) or {}
+
+        def _report(stage: str) -> None:
+            task["stage"] = stage
+            # 各阶段独立计时：video 阶段的进度爬升按「进入该阶段的时长」算
+            task["started_at"] = time.time()
+
+        try:
+            meta = self.create_video(source_bytes, settings, progress_cb=_report, **kwargs)
+            task["status"] = "done"
+            task["stage"] = "done"
+            task["result"] = meta
+        except VideoGenerationError as error:
+            # 分类失败：审核拦截/额度不足/Key 无效…前端按 error_kind 出徽章
+            task["status"] = "failed"
+            task["error"] = str(error)[:160]
+            task["error_kind"] = error.kind
+        except Exception as error:  # noqa: BLE001
+            task["status"] = "failed"
+            task["error"] = str(error)[:160]
+
+    def video_task_snapshot(self, task_id: str) -> dict | None:
+        """任务快照：progress 由阶段 + 该阶段已等待时间推算（video 阶段
+        10→75 随 90s 线性爬升），前端无需自行插值。result 仅终态携带。"""
+
+        _prune_video_tasks()
+        task = _VIDEO_TASKS.get(task_id)
+        if not task:
+            return None
+        snap = {key: value for key, value in task.items() if key != "result"}
+        stage = task.get("stage", "prompt")
+        elapsed = time.time() - float(task.get("started_at") or 0)
+        if task.get("status") != "running":
+            progress = 100.0
+        elif stage == "prompt":
+            progress = 5.0
+        elif stage == "video":
+            progress = min(75.0, 10.0 + elapsed / 90.0 * 65.0)
+        elif stage == "sampling":
+            progress = 80.0
+        elif stage == "composing":
+            progress = 88.0
+        else:
+            progress = 95.0
+        snap["progress"] = round(progress, 1)
+        if task.get("status") == "done":
+            snap["result"] = task.get("result")
+        return snap
 
     # -- public API -----------------------------------------------------
 
@@ -1086,6 +1210,7 @@ class AnimationService:
         final_quality: bool = False,
         equipment_aware: bool = True,
         action_description: str | None = None,
+        progress_cb=None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
         → 均匀抽帧 →（仅 idle）弱背景稳定 → 序列合成。失败抛
@@ -1107,9 +1232,15 @@ class AnimationService:
         ``equipment_aware``：V3.5 装备/服装识别——看图认出武器/服装后
         并入润色上下文；attack+持械时代码级追加「武器保持在手」子句
         （快速挥击中武器被挥丢/换手是实测失败模式）。按源图哈希持久
-        缓存，同一张原画终身只识别一次。"""
+        缓存，同一张原画终身只识别一次。
+
+        ``progress_cb``：可选阶段回调（生成任务化用）——在 prompt/video/
+        sampling/composing 四个阶段边界触发，缺省 None 时零开销、行为
+        与未接任务化前完全一致。"""
 
         action = action if action in ACTIONS else "walk"
+        if progress_cb:
+            progress_cb("prompt")  # 装备识别/裁边/润色都计入准备阶段
 
         # V3.5 装备/服装识别（持久缓存，失败静默跳过）
         equipment = None
@@ -1171,9 +1302,13 @@ class AnimationService:
         model_override = None
         if final_quality:
             model_override = (settings or {}).get("video_model_final") or None
+        if progress_cb:
+            progress_cb("video")  # i2v 生成是 60~90s 的大头（进度按已等待时间爬升）
         video_bytes, video_model = generate_video_with_policy(
             settings, prompt, work_bytes, timeout_seconds=420.0, model_override=model_override
         )
+        if progress_cb:
+            progress_cb("sampling")
         frames_rgba, slice_info = self._slice_video(
             video_bytes,
             source_bytes,
@@ -1201,6 +1336,8 @@ class AnimationService:
                 except Exception:  # noqa: BLE001
                     subject_locked = False
 
+        if progress_cb:
+            progress_cb("composing")
         from artgen import compose_animation
 
         # with_mp4=False：i2v 链的 mp4 由 _deliver_video_mp4 直通裁剪源视频

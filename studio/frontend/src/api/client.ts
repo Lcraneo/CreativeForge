@@ -251,6 +251,20 @@ export interface AnimationRequestPayload {
   action_description?: string;
 }
 
+/** 生成任务快照（任务化轮询）：running 带 stage/progress；终态带 result
+ * （done）或 error/error_kind（failed，与批次同款失败分类） */
+export interface VideoTaskSnapshot {
+  id: string;
+  status: "running" | "done" | "failed";
+  stage: "queued" | "prompt" | "video" | "sampling" | "composing" | "done";
+  progress: number;
+  asset_id?: string;
+  requested_action?: string;
+  result?: AnimationResult;
+  error?: string;
+  error_kind?: string;
+}
+
 export interface PlanTask {
   id: string;
   capability: string;
@@ -464,6 +478,17 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+
+  // 生成任务化（体验优化）：AI 视频链入队立即返回，轮询阶段进度；
+  // 刷新后凭 localStorage 里的 task_id 续接
+  startVideoTask: (payload: AnimationRequestPayload) =>
+    request<{ task_id: string; snapshot: VideoTaskSnapshot }>("/api/animation/tasks", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+
+  getVideoTask: (taskId: string) =>
+    request<VideoTaskSnapshot>(`/api/animation/tasks/${encodeURIComponent(taskId)}`),
 
   createAnimationSequence: (payload: { frames: string[]; fps?: number; size?: number }) =>
     request<AnimationResult>("/api/animation/sequence", {

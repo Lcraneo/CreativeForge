@@ -121,6 +121,23 @@ export default function Layout() {
 
   const taskTone = status === "failed" ? "danger" : status === "pass" ? "success" : "primary";
 
+  // 构建过期自检：后端 /health 报 dist 落后于 src 时页脚角标提示强刷
+  // （dev server 5173 下 dist 不参与渲染，角标无意义故跳过）
+  const [buildStale, setBuildStale] = useState(false);
+  useEffect(() => {
+    if (window.location.port === "5173") return;
+    let alive = true;
+    fetch("/api/health")
+      .then((r) => r.json())
+      .then((d: { frontend_stale?: boolean }) => {
+        if (alive) setBuildStale(Boolean(d.frontend_stale));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden bg-canvas text-ink">
       {/* Sidebar (desktop) */}
@@ -325,6 +342,12 @@ export default function Layout() {
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <Toaster />
+      {buildStale && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-xs rounded-lg border border-warning/50 bg-surface-1 px-3.5 py-2.5 text-[11.5px] leading-relaxed text-ink shadow-lg">
+          <span className="font-medium text-warning">前端构建已过期</span>
+          —— 源码比 dist 新，当前页面可能不是最新版本。请重新构建后强刷（Ctrl+F5）。
+        </div>
+      )}
     </div>
   );
 }

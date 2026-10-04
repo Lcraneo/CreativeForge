@@ -16,6 +16,39 @@ ANIMATION_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "animation"
 )
 
+# ── 前端构建过期自检 ────────────────────────────────────────────────
+# dist/index.html 落后于 src 最新 mtime → /health.frontend_stale=true →
+# 前端页脚角标提示「请重新构建并强刷」。60s TTL 缓存避免每次健康检查全量
+# 扫描；mtime 用文件级（Windows 上改文件内容不动目录 mtime）。
+_FRONTEND_ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "frontend",
+)
+_FRONTEND_STALE_CACHE: tuple[float, bool] = (0.0, False)
+
+
+def _frontend_build_stale() -> bool:
+    global _FRONTEND_STALE_CACHE
+    now = time.time()
+    cached_at, stale = _FRONTEND_STALE_CACHE
+    if now - cached_at < 60.0:
+        return stale
+    try:
+        dist_mtime = os.path.getmtime(os.path.join(_FRONTEND_ROOT, "dist", "index.html"))
+        newest_src = 0.0
+        for folder in ("src", "public"):
+            folder_path = os.path.join(_FRONTEND_ROOT, folder)
+            if not os.path.isdir(folder_path):
+                continue
+            for root, _dirs, files in os.walk(folder_path):
+                for name in files:
+                    newest_src = max(newest_src, os.path.getmtime(os.path.join(root, name)))
+        stale = newest_src > 0 and dist_mtime < newest_src
+    except OSError:
+        stale = False
+    _FRONTEND_STALE_CACHE = (now, stale)
+    return stale
+
 
 def _resolve_asset(runtime, asset_id: str | None) -> dict | None:
     """Find an asset in the in-memory store, then in persistent history.
@@ -732,6 +765,68 @@ def build_router(runtime):
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error))
 
+    @router.post("/animation/tasks", status_code=202)
+    def start_animation_task(request: AnimationRequest):
+        """生成任务化（体验优化）：与 POST /api/animation 同请求体，但立即
+        返回 task_id 供前端轮询（阶段进度 + 刷新后凭 localStorage 续接）。
+        仅 AI 视频链（60~90s 大头）有必要任务化；同步端点原样保留，骨骼/
+        序列帧路径不受影响。前置校验与同步分支同语义（404/409 即刻返回）。"""
+
+        from studio.backend.animation_service.service import AnimationService
+
+        service = AnimationService(ANIMATION_DIR)
+        image_bytes = None
+        if request.image:
+            try:
+                image_bytes = base64.b64decode(request.image.split(",")[-1])
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=422, detail="image 不是合法的 base64")
+
+        asset = _resolve_asset(runtime, request.asset_id)
+        if asset is None and image_bytes is None:
+            raise HTTPException(
+                status_code=404,
+                detail="没有可用资源：请先在工作台生成资产，或上传一张源图",
+            )
+        source = image_bytes or service._asset_render(asset)
+        if not source:
+            raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
+        settings = runtime.model_settings.effective()
+        if not (settings.get("enabled") and settings.get("api_key")):
+            raise HTTPException(
+                status_code=409, detail="AI 视频驱动需要先在模型设置中启用自定义模型"
+            )
+        if not settings.get("use_video", True):
+            raise HTTPException(
+                status_code=409, detail="视频生成已在「模型设置」中关闭（视频能力开关）"
+            )
+        snapshot = service.start_video_task(
+            source_bytes=source,
+            settings=settings,
+            action=request.action,
+            fps=request.fps,
+            duration=request.duration,
+            size=request.size,
+            asset_id=request.asset_id or (asset.get("id") if asset else None),
+            enhance_context=_enhance_context_for(asset),
+            final_quality=request.final_quality,
+            equipment_aware=request.equipment_aware,
+            action_description=(request.action_description or "").strip()[:500],
+        )
+        return {"task_id": snapshot["id"], "snapshot": snapshot}
+
+    @router.get("/animation/tasks/{task_id}")
+    def animation_task_status(task_id: str):
+        """视频生成任务状态轮询：running 带 stage/progress；终态带 result
+        （成功）或 error/error_kind（失败，与批次同款分类）。"""
+
+        from studio.backend.animation_service.service import AnimationService
+
+        snapshot = AnimationService(ANIMATION_DIR).video_task_snapshot(task_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail="任务不存在或已过期")
+        return snapshot
+
     @router.post("/animation/preview-frame")
     def preview_animation_frame(request: PreviewFrameRequest):
         """渲染动作循环内的单帧 PNG（动作编辑器的时间轴/滑杆实时预览）。"""
@@ -1001,7 +1096,8 @@ def build_router(runtime):
             "\"idle/walk/run/attack/jump 之一\", \"view\": \"front 或 side"
             "（side=侧视横版步态，仅 walk/run 建议）\", \"pose_config\": {\"bob\": 起伏0~2, "
             "\"stride\": 步幅0~2, \"arm\": 摆臂0~2, \"lift\": 抬脚0~2, \"lean\": 前倾-15~30, "
-            "\"lag\": 手臂滞后0~1.2, \"cycles\": 周期0.25~3, \"turn\": 转身幅度0~180}}\n"
+            "\"lag\": 手臂滞后0~1.2, \"cycles\": 周期0.25~3, \"turn\": 转身幅度0~180, "
+            "\"bow\": 弯腰幅度0~90（每循环一次弯下→直起，鞠躬/点头/欠身用）}}\n"
             "B. 多段编排（描述含先后顺序时必须用，如出现「先/然后/接着/最后/再」等"
             "顺序词就禁止用单一循环硬套）：pose_config 增加 "
             "\"phases\": [{\"action\": \"idle/walk/run/attack/jump\", \"weight\": 时长比重1~4, "
@@ -1013,10 +1109,11 @@ def build_router(runtime):
             "3. 舞蹈类用 idle 基底 + 调大 bob/arm + 适度 lift/turn，不要用 jump 承载舞蹈；\n"
             "4. 「站立/起立」用 idle 段表达（引擎无起立原语）；\n"
             "5. 数值必须落在范围内；\n"
-            "6. 词表外动作判定：一次性礼仪/手势动作（鞠躬/作揖/点头/摇头/挥手/"
-            "敬礼/鼓掌/叉腰/抱臂等）骨骼引擎无法真实表达——pose_config 仍按"
-            "最近似参数给出（通常 idle + lean 前倾），同时在 JSON 顶层额外返回 "
-            "\"suggest_video\": true；常规动作一律返回 \"suggest_video\": false。"
+            "6. 礼仪/手势动作：鞠躬/作揖/点头/欠身用 bow 弯腰参数表达（点头 "
+            "15~30、欠身/浅礼 30~60、深鞠躬 60~90，基底 idle、cycles=1）；"
+            "挥手/敬礼/叉腰等无对应参数的动作仍按最近似给出（通常 idle + "
+            "arm/lean），并在 JSON 顶层额外返回 \"suggest_video\": true"
+            "（AI 视频链效果更真实）；常规动作一律返回 \"suggest_video\": false。"
             + equipment_note
             + "\n\n用户描述：" + text
         )
@@ -1056,6 +1153,7 @@ def build_router(runtime):
             "lag": clamp(raw_pose.get("lag"), 0, 1.2, 0.45),
             "cycles": clamp(raw_pose.get("cycles"), 0.25, 3, 1),
             "turn": clamp(raw_pose.get("turn"), 0, 180, 0),
+            "bow": clamp(raw_pose.get("bow"), 0, 90, 0),
         }
         # 多段编排（可选）：校验段合法性；「站立后转身跳跃舞蹈」这类顺序
         # 请求由解读模型映射为 phases，引擎按权重切片跑各段完整原语循环
@@ -2044,7 +2142,12 @@ def build_router(runtime):
 
     @router.get("/health")
     def health():
-        return {"status": "ok", "service": "creativeforge-studio"}
+        return {
+            "status": "ok",
+            "service": "creativeforge-studio",
+            # 构建过期自检：dist 落后于 src 时前端显示「请重新构建并强刷」角标
+            "frontend_stale": _frontend_build_stale(),
+        }
 
     # ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ────────────────────
     # 凭证本地加密存储、界面脱敏展示、禁止明文回显与明文写入日志。

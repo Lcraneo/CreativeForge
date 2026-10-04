@@ -49,6 +49,9 @@ const POSE_PARAMS: Array<{
   { key: "lag", label: "手臂滞后 (重叠)", min: 0, max: 1.2, step: 0.05 },
   { key: "cycles", label: "循环周期数", min: 0.25, max: 3, step: 0.25 },
   { key: "turn", label: "转身幅度 (°)", min: 0, max: 180, step: 5 },
+  // 弯腰包络（方案3，opt-in）：每循环一次「弯下→直起」，riganim 消费为
+  // 上身俯身旋转——鞠躬/点头/欠身类礼仪动作的骨骼链表达
+  { key: "bow", label: "弯腰幅度 (°)", min: 0, max: 90, step: 5 },
 ];
 
 const DEFAULT_POSE_CONFIG: PoseConfig = {
@@ -60,6 +63,7 @@ const DEFAULT_POSE_CONFIG: PoseConfig = {
   lag: 0.45,
   cycles: 1,
   turn: 0,
+  bow: 0,
 };
 
 /** 后端 epoch 秒 → 本地「MM-DD HH:mm」；缺省给 —（卡片与详情弹窗的时间元数据） */
@@ -72,6 +76,18 @@ const fmtTime = (value?: number) =>
         minute: "2-digit",
       })
     : "—";
+
+/** 视频任务阶段中文标签（生成任务化的进度条文案） */
+const TASK_STAGE_LABELS: Record<string, string> = {
+  queued: "排队中",
+  prompt: "准备提示词与源图",
+  video: "AI 视频生成中（约 60~90 秒）",
+  sampling: "抽帧与循环接缝处理",
+  composing: "合成动画",
+  done: "完成",
+};
+/** 刷新恢复：进行中视频任务的 localStorage 键（id + 来源 kind） */
+const VIDEO_TASK_KEY = "cf:animation-video-task";
 
 interface SeqFrame {
   name: string;
@@ -271,6 +287,12 @@ export default function AnimationStudio() {
   // 解读出的词表外动作（鞠躬/挥手等一次性手势）：常驻提示条 + 一键切换
   // AI 视频驱动——骨骼链只能给近似姿态，用户该在出片前就知道走哪条链
   const [suggestVideoAction, setSuggestVideoAction] = useState<string | null>(null);
+  // 生成任务化：AI 视频链（60~90s）走异步任务轮询——阶段进度条 + 刷新恢复
+  const [videoTaskId, setVideoTaskId] = useState<string | null>(null);
+  const [videoTaskStage, setVideoTaskStage] = useState<{ stage: string; progress: number }>({
+    stage: "queued",
+    progress: 0,
+  });
 
   // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
   // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
@@ -319,6 +341,27 @@ export default function AnimationStudio() {
           payload.action_description =
             presets.find((preset) => preset.name === source.name)?.description ?? "";
         }
+        // 生成任务化：AI 视频链（60~90s 大头）走异步任务——立即拿 task_id
+        // 轮询阶段进度，刷新后凭 localStorage 续接；骨骼/序列帧秒级完成维持同步
+        if (useVideo) {
+          try {
+            const started = await api.startVideoTask(payload);
+            window.localStorage.setItem(
+              VIDEO_TASK_KEY,
+              JSON.stringify({ id: started.task_id, kind: source.kind }),
+            );
+            setVideoTaskStage({
+              stage: started.snapshot?.stage ?? "queued",
+              progress: started.snapshot?.progress ?? 0,
+            });
+            setVideoTaskId(started.task_id);
+          } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+            setBusy(false);
+            setBusySource(null);
+          }
+          return;
+        }
         const animationResult = await api.createAnimation(payload);
         // 自动记录当前人物到历史（下次直接载入）
         if (asset?.id) {
@@ -353,6 +396,100 @@ export default function AnimationStudio() {
       0,
     );
   }, [result]);
+
+  // 视频任务轮询：阶段进度 → 终态收尾（done 与同步成功同款：清相位帧/
+  // 停播放/记最近人物；failed 报错清态）。轮询单次失败不终止（网络抖动，
+  // 下个周期重试）；asset?.id 变化重挂轮询对同一 task_id 无害
+  useEffect(() => {
+    if (!videoTaskId) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const snap = await api.getVideoTask(videoTaskId);
+        if (!alive) return;
+        if (snap.status === "running") {
+          setVideoTaskStage({ stage: snap.stage, progress: snap.progress });
+          return;
+        }
+        window.localStorage.removeItem(VIDEO_TASK_KEY);
+        setVideoTaskId(null);
+        setBusy(false);
+        setBusySource(null);
+        if (snap.status === "done" && snap.result) {
+          setFrameUrl((oldUrl) => {
+            if (oldUrl) URL.revokeObjectURL(oldUrl);
+            return null;
+          });
+          setPlaying(false);
+          setResult(snap.result);
+          setError(null);
+          if (asset?.id) {
+            pushRecent({ asset_id: asset.id, name: asset.name, image_url: asset.image?.url });
+          }
+          toast({
+            tone: "success",
+            title: "AI 视频生成完成",
+            description: snap.result.qa
+              ? snap.result.qa.grade === "pass"
+                ? "自动质检通过，循环接缝已处理"
+                : snap.result.qa.grade === "warn"
+                  ? "质检关注：详情见结果徽章"
+                  : "质检异常：建议更换描述或重试"
+              : "循环接缝已自动处理",
+          });
+        } else {
+          setError(snap.error || "AI 视频生成失败");
+        }
+      } catch {
+        /* 单次轮询失败不终止——下个周期重试 */
+      }
+    };
+    void poll();
+    const timer = setInterval(poll, 2000);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+    };
+  }, [videoTaskId, asset?.id]);
+
+  // 刷新恢复：上次未收尾的视频任务凭 localStorage 续接——running 恢复
+  // busy 态并续轮询、done 直接展示结果、failed/失效静默清除
+  useEffect(() => {
+    let saved: { id: string; kind: "base" | "custom" } | null = null;
+    try {
+      saved = JSON.parse(window.localStorage.getItem(VIDEO_TASK_KEY) || "null");
+    } catch {
+      saved = null;
+    }
+    if (!saved?.id) return;
+    const ref = saved;
+    let alive = true;
+    api
+      .getVideoTask(ref.id)
+      .then((snap) => {
+        if (!alive) return;
+        if (snap.status === "running") {
+          setBusy(true);
+          setBusySource(ref.kind);
+          setVideoTaskStage({ stage: snap.stage, progress: snap.progress });
+          setVideoTaskId(ref.id);
+          toast({
+            tone: "info",
+            title: "检测到进行中的生成任务",
+            description: "已恢复进度显示，完成后自动展示结果",
+          });
+        } else if (snap.status === "done" && snap.result) {
+          window.localStorage.removeItem(VIDEO_TASK_KEY);
+          setResult(snap.result);
+        } else {
+          window.localStorage.removeItem(VIDEO_TASK_KEY);
+        }
+      })
+      .catch(() => window.localStorage.removeItem(VIDEO_TASK_KEY));
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
   useEffect(() => {
@@ -780,6 +917,22 @@ export default function AnimationStudio() {
                 </span>
               )}
             </div>
+            {videoTaskId && (
+              <div className="mt-2.5">
+                <div className="mb-1 flex items-center justify-between text-[11px] text-ink-3">
+                  <span>{TASK_STAGE_LABELS[videoTaskStage.stage] ?? videoTaskStage.stage}</span>
+                  <span className="font-mono">{Math.round(videoTaskStage.progress)}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-700"
+                    style={{
+                      width: `${Math.max(4, Math.min(100, videoTaskStage.progress))}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </Card>
 
           <Card

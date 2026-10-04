@@ -2269,6 +2269,27 @@ def main() -> int:
         str(sorted(_MP.keys())),
     )
 
+    # ── 骨骼包络（方案3）：idle 弯腰 opt-in 回归 ─────────────────────────
+    # ①bow=0 → lean 恒等于 cfg 值（现有效果字节级不变）；②bow=60 → 相位
+    # 0/1 归零（循环接缝 C0）、中段精确触达 cfg.lean+60（riganim 消费为
+    # 上身俯身旋转）
+    from artgen.anim import _pose as _bow_pose
+
+    _bow_off = [_bow_pose("idle", p / 8.0, {"lean": 5.0, "bow": 0})["lean"] for p in range(8)]
+    check(
+        "bow envelope: bow=0 keeps idle lean constant (byte-identical default)",
+        all(abs(v - 5.0) < 1e-9 for v in _bow_off),
+        str(_bow_off),
+    )
+    _bow_lo = _bow_pose("idle", 0.0, {"lean": 0.0, "bow": 60.0})["lean"]
+    _bow_hi = _bow_pose("idle", 0.5, {"lean": 0.0, "bow": 60.0})["lean"]
+    _bow_end = _bow_pose("idle", 1.0 - 1e-9, {"lean": 0.0, "bow": 60.0})["lean"]
+    check(
+        "bow envelope: phase 0/1 close loop, mid-phase reaches bow depth",
+        abs(_bow_lo) < 1e-6 and abs(_bow_end) < 1e-6 and abs(_bow_hi - 60.0) < 1e-6,
+        f"lo={_bow_lo} mid={_bow_hi} end={_bow_end}",
+    )
+
     passed = sum(1 for _, ok, _ in CHECKS if ok)
     total = len(CHECKS)
     print(f"\n{passed}/{total} checks passed")
