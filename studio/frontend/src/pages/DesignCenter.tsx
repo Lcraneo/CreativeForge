@@ -6,7 +6,8 @@ import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import { api } from "../api/client";
-import type { DesignViewImage } from "../types";
+import { AssetLoadState } from "../components/AssetLoadState";
+import type { CreativeAsset } from "../types";
 
 const VIEWS = [
   { id: "front", label: "正面 Front" },
@@ -24,13 +25,18 @@ const VIEW_CAPTION: Record<ViewId, string> = {
 
 export default function DesignCenter() {
   const asset = useAssetLoader();
+  if (!asset) return <AssetLoadState />;
+  return <DesignEditor key={asset.id} asset={asset} />;
+}
+
+function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const navigate = useNavigate();
   const [pose, setPose] = useState<ViewId>("front");
   const [generating, setGenerating] = useState(false);
   const [restyleStyle, setRestyleStyle] = useState("anime");
   const [restyleBusy, setRestyleBusy] = useState(false);
   const [cutoutBusy, setCutoutBusy] = useState(false);
-  const setAsset = useAssetStore((state) => state.set);
+  const patchAsset = useAssetStore((state) => state.patch);
 
   if (!asset?.character) {
     return (
@@ -75,7 +81,7 @@ export default function DesignCenter() {
     setGenerating(true);
     try {
       const next = await api.generateDesignViews(asset.id);
-      setAsset({ ...asset, design_views: next });
+      patchAsset(asset.id, { design_views: next });
       toast({
         tone: "success",
         title: "AI 三视图已生成",
@@ -93,7 +99,7 @@ export default function DesignCenter() {
     setRestyleBusy(true);
     try {
       const payload = await api.restyleAsset(asset.id, restyleStyle);
-      setAsset({ ...asset, restyle: payload });
+      patchAsset(asset.id, { restyle: payload });
       toast({
         tone: "success",
         title: "风格迁移完成",
@@ -111,7 +117,7 @@ export default function DesignCenter() {
     setCutoutBusy(true);
     try {
       const payload = await api.cutoutAsset(asset.id);
-      setAsset({ ...asset, cutout_png: payload.cutout_png });
+      patchAsset(asset.id, { cutout_png: payload.cutout_png });
       toast({
         tone: "success",
         title: "透明底立绘已生成",

@@ -10,6 +10,8 @@ from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
+from studio.backend.benchmark_service import DEFAULT_PATH, BenchmarkCache, source_version
+
 EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "exports")
 _PREVIEW_FRAME_CACHE = {}  # (source_hash, action, config, size) -> [png bytes]
 ANIMATION_DIR = os.path.join(
@@ -298,6 +300,7 @@ def _enhance_context_for(asset) -> str | None:
 
 
 def build_router(runtime):
+    benchmark_cache = BenchmarkCache(DEFAULT_PATH, version=source_version())
     router = APIRouter(prefix="/api")
 
     @router.post("/tasks", status_code=202)
@@ -471,11 +474,8 @@ def build_router(runtime):
         return FileResponse(path, media_type="application/zip", filename=package_name)
 
     @router.get("/benchmark")
-    def benchmark_report():
-        from benchmark.evaluation import EvaluationReport
-
-        report = EvaluationReport().run()
-        return report
+    def benchmark_report(refresh: bool = False):
+        return benchmark_cache.get(refresh=refresh)
 
     @router.get("/history")
     def list_history(

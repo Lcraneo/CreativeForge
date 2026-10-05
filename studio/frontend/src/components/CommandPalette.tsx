@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Icon, type IconName } from "./icons";
+import { NAV_GROUPS } from "../lib/navigation";
+import { useAssetNavigation } from "../lib/assetNavigation";
 import { cx } from "./ui";
 import { MOTION, EASE_STANDARD } from "../lib/motion";
 
@@ -23,6 +25,8 @@ export function CommandPalette({
   onOpenChange: (open: boolean) => void;
 }) {
   const navigate = useNavigate();
+  const href = useAssetNavigation();
+  const dialogRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -42,98 +46,33 @@ export function CommandPalette({
     if (open) {
       setQuery("");
       setActive(0);
-      requestAnimationFrame(() => inputRef.current?.focus());
+      const previous = document.activeElement as HTMLElement | null;
+      const frame = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => {
+        cancelAnimationFrame(frame);
+        previous?.focus();
+      };
     }
   }, [open]);
 
   const commands = useMemo<Command[]>(() => {
     const go = (path: string) => {
-      navigate(path);
+      navigate(href(path));
       onOpenChange(false);
     };
-    return [
-      {
-        id: "workspace",
-        label: "工作台",
-        group: "生产",
-        icon: "spark",
-        keywords: "goal generate 生成",
-        run: () => go("/"),
-      },
-      {
-        id: "agents",
-        label: "智能体指挥中心",
-        group: "生产",
-        icon: "layers",
-        keywords: "task graph 任务图",
-        run: () => go("/agents"),
-      },
-      {
-        id: "history",
-        label: "历史记录",
-        group: "生产",
-        icon: "clock",
-        keywords: "records 历史",
-        run: () => go("/history"),
-      },
-      {
-        id: "asset",
-        label: "资产检查器",
-        group: "资产",
-        icon: "cube",
-        keywords: "inspector asset 资产",
-        run: () => go("/asset"),
-      },
-      {
-        id: "design",
-        label: "角色设计三视图",
-        group: "资产",
-        icon: "image",
-        keywords: "turnaround 三视图 design",
-        run: () => go("/design"),
-      },
-      {
-        id: "animation",
-        label: "动画工作台",
-        group: "资产",
-        icon: "film",
-        keywords: "falign animation 动画",
-        run: () => go("/animation"),
-      },
-      {
-        id: "export",
-        label: "导出中心",
-        group: "交付 · 洞察",
-        icon: "package",
-        keywords: "gimport export 导出 unity cocos godot",
-        run: () => go("/export"),
-      },
-      {
-        id: "benchmark",
-        label: "基准中心",
-        group: "交付 · 洞察",
-        icon: "gauge",
-        keywords: "benchmark 基准评测",
-        run: () => go("/benchmark"),
-      },
-      {
-        id: "technology",
-        label: "技术中心",
-        group: "交付 · 洞察",
-        icon: "book",
-        keywords: "technology 技术",
-        run: () => go("/technology"),
-      },
-      {
-        id: "settings",
-        label: "模型设置",
-        group: "交付 · 洞察",
-        icon: "terminal",
-        keywords: "model settings api key 模型",
-        run: () => go("/settings"),
-      },
-    ];
-  }, [navigate, onOpenChange]);
+    return NAV_GROUPS.flatMap((group) =>
+      group.items
+        .flatMap((item) => [item, ...(item.children ?? [])])
+        .map((item) => ({
+          id: item.to,
+          label: item.label,
+          group: group.label,
+          icon: item.icon,
+          keywords: `${item.to} ${item.to === "/export" ? "unity cocos godot" : ""}`,
+          run: () => go(item.to),
+        })),
+    );
+  }, [navigate, href, onOpenChange]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -146,6 +85,21 @@ export function CommandPalette({
   if (!open) return null;
 
   function onKeyDown(event: React.KeyboardEvent) {
+    if (event.key === "Tab") {
+      const controls = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLElement>("input, button") ?? [],
+      );
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+      return;
+    }
     if (event.key === "Escape") {
       onOpenChange(false);
       return;
@@ -158,7 +112,8 @@ export function CommandPalette({
       event.preventDefault();
       setActive((index) => Math.max(0, index - 1));
     }
-    if (event.key === "Enter" && filtered[active]) {
+    if (event.key === "Enter" && event.target === inputRef.current && filtered[active]) {
+      event.preventDefault();
       filtered[active].run();
     }
   }
@@ -168,6 +123,7 @@ export function CommandPalette({
       className="fixed inset-0 z-50 bg-ink/25 backdrop-blur-[2px]"
       onClick={() => onOpenChange(false)}
       onKeyDown={onKeyDown}
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
       aria-label="命令面板"
@@ -188,6 +144,7 @@ export function CommandPalette({
               setQuery(event.target.value);
               setActive(0);
             }}
+            aria-label="搜索页面与操作"
             placeholder="搜索页面与操作…"
             className="h-12 w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
           />
@@ -195,7 +152,7 @@ export function CommandPalette({
             ESC
           </kbd>
         </div>
-        <div className="cf-scroll max-h-[340px] overflow-y-auto p-1.5">
+        <div className="cf-scroll max-h-[min(340px,60dvh)] overflow-y-auto p-1.5">
           {filtered.length === 0 && (
             <p className="px-3 py-6 text-center text-[13px] text-ink-3">没有匹配的结果</p>
           )}

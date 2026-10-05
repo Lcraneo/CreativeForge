@@ -37,6 +37,21 @@ describe("auth token", () => {
 });
 
 describe("request 错误通道", () => {
+  it("encodes asset IDs, forwards cancellation and keeps handled errors silent", async () => {
+    const controller = new AbortController();
+    fetchMock.mockResolvedValue(new Response("missing", { status: 404 }));
+    await expect(api.getAsset("hero/火", { signal: controller.signal, silent: true }))
+      .rejects.toMatchObject({ status: 404 });
+    expect(fetchMock).toHaveBeenCalledWith("/api/assets/hero%2F%E7%81%AB", expect.objectContaining({ signal: controller.signal }));
+    expect(useToastStore.getState().items).toHaveLength(0);
+  });
+  it("导出错误由页面提示，API 层不重复弹 toast", async () => {
+    fetchMock.mockResolvedValue(new Response("export failed", { status: 500 }));
+    await expect(api.exportAsset("a", "unity")).rejects.toThrow();
+    await expect(api.exportCharacterPackage("a", "unity")).rejects.toThrow();
+    expect(useToastStore.getState().items).toHaveLength(0);
+  });
+
   it("成功响应原样解析 JSON", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ status: "ok" }), { status: 200 }));
     await expect(api.health()).resolves.toEqual({ status: "ok" });

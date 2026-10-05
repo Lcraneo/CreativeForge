@@ -1,4 +1,7 @@
+import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
+import type { CreativeAsset } from "../types";
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, type ShowcaseJob } from "../api/client";
 import { Badge, Button, Card, EmptyState, PageHeader, cx } from "../components/ui";
@@ -47,7 +50,11 @@ export function jobStageLabel(job: Pick<ShowcaseJob, "status" | "stage"> | null)
 }
 
 export default function ShowcaseStudio() {
-  const [selected, setSelected] = useState<{ id: string; name: string } | null>(null);
+  return <SelectedAssetBoundary>{(asset) => <ShowcaseContent key={asset?.id ?? "unselected"} selected={asset} />}</SelectedAssetBoundary>;
+}
+
+function ShowcaseContent({ selected }: { selected: CreativeAsset | null }) {
+  const [, setSearchParams] = useSearchParams();
   const [jobId, setJobId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -229,8 +236,11 @@ export default function ShowcaseStudio() {
                 <button
                   key={record.id}
                   onClick={() => {
-                    setSelected({ id: record.asset_id!, name: record.name || record.goal });
-                    setJobId(null);
+                    setSearchParams((previous) => {
+                      const next = new URLSearchParams(previous);
+                      next.set("asset", record.asset_id!);
+                      return next;
+                    });
                   }}
                   className={cx(
                     "flex items-center gap-3 rounded-xl border p-2 text-left transition-all",

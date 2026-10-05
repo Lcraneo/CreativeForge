@@ -1,21 +1,22 @@
+import { Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAssetLoader } from "../stores/assetStore";
+import { assetHref, useAssetLoader } from "../stores/assetStore";
 import {
   Badge,
   Button,
   Card,
-  EmptyState,
   KV,
   PageHeader,
   ScoreBar,
   ScoreRing,
 } from "../components/ui";
+import { AssetLoadState } from "../components/AssetLoadState";
 import { AnimPreview } from "../components/AnimPreview";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
-import AssetViewer from "../three/AssetViewer";
+const AssetViewer = lazy(() => import("../three/AssetViewer"));
 
 const FALLBACK_PALETTE = [
   "#07090d",
@@ -40,24 +41,7 @@ export default function AssetInspector() {
   const asset = useAssetLoader();
   const navigate = useNavigate();
 
-  if (!asset) {
-    return (
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
-        <Card>
-          <EmptyState
-            icon="cube"
-            title="还没有资产"
-            description="先在工作台生成一个资产，这里会展示 CreativeAsset 五段协议：Identity → Pixel → Animation → Engine → Quality。"
-            action={
-              <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
-                去生成资产
-              </Button>
-            }
-          />
-        </Card>
-      </div>
-    );
-  }
+  if (!asset) return <AssetLoadState />;
 
   const quality = asset.quality;
   const report = quality?.report;
@@ -98,10 +82,10 @@ export default function AssetInspector() {
             >
               重新生成
             </Button>
-            <Button variant="secondary" icon="layers" onClick={() => navigate("/design")}>
+            <Button variant="secondary" icon="layers" onClick={() => navigate(assetHref("/design", asset.id))}>
               设计三视图
             </Button>
-            <Button variant="primary" icon="package" onClick={() => navigate("/export")}>
+            <Button variant="primary" icon="package" onClick={() => navigate(assetHref("/export", asset.id))}>
               导出工程包
             </Button>
           </>
@@ -163,9 +147,17 @@ export default function AssetInspector() {
           ) : (
             <>
               <div className="h-[230px] overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(240px_160px_at_50%_20%,rgba(26,24,20,.06),transparent_70%),#f1efe9]">
-                <AssetViewer
-                  textureUrl={`/api/assets/${encodeURIComponent(asset.id)}/image.png`}
-                />
+                <Suspense
+                  fallback={
+                    <div className="grid h-full place-items-center text-xs text-ink-3" role="status">
+                      加载 3D 查看器…
+                    </div>
+                  }
+                >
+                  <AssetViewer
+                    textureUrl={`/api/assets/${encodeURIComponent(asset.id)}/image.png`}
+                  />
+                </Suspense>
               </div>
               <div className="mt-2.5 flex items-center gap-1.5 text-[11px] text-ink-3">
                 <Icon name="refresh" className="h-3.5 w-3.5" />

@@ -6,7 +6,7 @@ import "@xyflow/react/dist/style.css";
 import { motion } from "framer-motion";
 import { useAgentStore, type NodeStatus } from "../stores/agentStore";
 import { nodeIdForTask, useWorkflowStore } from "../stores/workflowStore";
-import { useAssetStore } from "../stores/assetStore";
+import { assetHref, useAssetStore } from "../stores/assetStore";
 import { streamTask } from "../websocket/taskStream";
 import { api } from "../api/client";
 import {
@@ -83,9 +83,9 @@ function RecentRuns() {
     if (!record.asset_id) return;
     try {
       setAsset(record.asset ?? (await api.getAsset(record.asset_id)));
-      navigate("/asset");
+      navigate(assetHref("/asset", record.asset_id));
     } catch {
-      navigate("/asset");
+      navigate(assetHref("/asset", record.asset_id));
     }
   }
 
@@ -360,7 +360,7 @@ export default function AgentDashboard() {
               {status === "running" ? `运行中 ${progress}%` : status.toUpperCase()}
             </Badge>
             {status === "pass" && (
-              <Button variant="primary" size="sm" icon="cube" onClick={() => navigate("/asset")}>
+              <Button variant="primary" size="sm" icon="cube" onClick={() => navigate(assetHref("/asset", asset?.id))}>
                 查看资产
               </Button>
             )}

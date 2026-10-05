@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import { Badge, Button, Card, EmptyState, PageHeader, Segmented, Stat, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
+import { assetHref } from "../stores/assetStore";
 import type { BatchStatus } from "../types";
 
 const COUNT_OPTIONS = [
@@ -338,7 +339,7 @@ export default function BatchCenter() {
                   variant="secondary"
                   size="sm"
                   icon="cube"
-                  onClick={() => navigate("/asset")}
+                  onClick={() => navigate(assetHref("/asset", selected[0]))}
                 >
                   查看当前资产
                 </Button>

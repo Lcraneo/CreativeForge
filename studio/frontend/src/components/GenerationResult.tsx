@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import { Badge, Button, Card } from "./ui";
 import { toast } from "../stores/toastStore";
-import { useAssetStore } from "../stores/assetStore";
+import { assetHref, useAssetStore } from "../stores/assetStore";
 import type { CreativeAsset } from "../types";
 
 interface Props {
@@ -87,14 +87,14 @@ export function GenerationResult({ asset }: Props) {
             <p className="mt-2 line-clamp-2 text-[12.5px] text-ink-3">{asset.source.prompt}</p>
           )}
           <div className="mt-3 flex flex-wrap gap-3">
-            <Button variant="primary" size="sm" icon="cube" onClick={() => navigate("/asset")}>
+            <Button variant="primary" size="sm" icon="cube" onClick={() => navigate(assetHref("/asset", asset.id))}>
               查看资产
             </Button>
             <Button
               variant="secondary"
               size="sm"
               icon="film"
-              onClick={() => navigate("/animation")}
+              onClick={() => navigate(assetHref("/animation", asset.id))}
             >
               动画工作台
             </Button>

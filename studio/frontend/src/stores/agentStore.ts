@@ -63,12 +63,7 @@ export const useAgentStore = create<AgentState>((set) => ({
 
   finish: (status) =>
     set({
-      status:
-        status === "pass" || status === "success"
-          ? "pass"
-          : status === "failed"
-            ? "failed"
-            : "pass",
+      status: status === "pass" || status === "success" ? "pass" : "failed",
     }),
 
   reset: () =>

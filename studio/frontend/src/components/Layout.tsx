@@ -5,64 +5,20 @@ import { EASE_STANDARD, MOTION } from "../lib/motion";
 import { api } from "../api/client";
 import { useAgentStore } from "../stores/agentStore";
 import { useAssetStore } from "../stores/assetStore";
+import { NAV_GROUPS, type NavItem } from "../lib/navigation";
+import { useAssetNavigation } from "../lib/assetNavigation";
+import { MobileNavigation } from "./MobileNavigation";
 import { CommandPalette } from "./CommandPalette";
 import { Toaster } from "./Toaster";
-import { Icon, type IconName } from "./icons";
+import { Icon } from "./icons";
 import { Badge, StatusDot, cx } from "./ui";
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: IconName;
-  kbd?: string;
-  /** 子级导航：侧栏可展开/收起（历史记录从属于智能体指挥中心） */
-  children?: NavItem[];
-}
-
 const AGENTS_NAV_KEY = "cf-nav-agents-open";
-
-const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
-  {
-    label: "生产",
-    items: [
-      { to: "/", label: "工作台", icon: "panel", kbd: "1" },
-      {
-        to: "/agents",
-        label: "智能体",
-        icon: "layers",
-        kbd: "2",
-        children: [{ to: "/history", label: "历史记录", icon: "clock" }],
-      },
-      { to: "/batch", label: "批量生产线", icon: "package" },
-      { to: "/playtest", label: "试玩舞台", icon: "film" },
-      { to: "/showcase", label: "发布展示间", icon: "spark" },
-    ],
-  },
-  {
-    label: "资产",
-    items: [
-      { to: "/asset", label: "资产检查", icon: "cube", kbd: "3" },
-      { to: "/design", label: "设计三视图", icon: "layers" },
-      { to: "/versions", label: "版本控制", icon: "clock" },
-      { to: "/animation", label: "动画工作台", icon: "film" },
-    ],
-  },
-  {
-    label: "交付 · 洞察",
-    items: [
-      { to: "/export", label: "导出中心", icon: "package" },
-      { to: "/benchmark", label: "基准中心", icon: "gauge" },
-      { to: "/technology", label: "技术中心", icon: "book" },
-      { to: "/settings", label: "模型设置", icon: "terminal" },
-    ],
-  },
-];
 
 const MOBILE_TABS: NavItem[] = [
   { to: "/", label: "工作台", icon: "spark" },
   { to: "/agents", label: "智能体", icon: "layers" },
   { to: "/asset", label: "资产", icon: "cube" },
-  { to: "/history", label: "历史", icon: "clock" },
   { to: "/export", label: "导出", icon: "package" },
 ];
 
@@ -72,6 +28,7 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/agents": { group: "生产", label: "智能体指挥中心" },
   "/history": { group: "智能体指挥中心", label: "历史记录" },
   "/batch": { group: "生产", label: "批量生产线" },
+  "/showcase": { group: "生产", label: "发布展示间" },
   "/playtest": { group: "生产", label: "试玩舞台" },
   "/versions": { group: "资产", label: "版本控制中心" },
   "/asset": { group: "资产", label: "资产检查器" },
@@ -88,6 +45,8 @@ export default function Layout() {
     () => localStorage.getItem("cf-rail") === "1" || window.innerWidth < 1024,
   );
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const href = useAssetNavigation();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -96,6 +55,7 @@ export default function Layout() {
   const progress = useAgentStore((state) => state.progress);
   const goal = useAgentStore((state) => state.goal);
   const asset = useAssetStore((state) => state.asset);
+  const contextId = new URLSearchParams(location.search).get("asset") || asset?.id;
 
   // 智能体子导航展开态（跨会话保留）；深链到子级页面时派生为展开，
   // 不经 effect 写 state（避免级联渲染）
@@ -121,7 +81,7 @@ export default function Layout() {
         .map((item) => [item.kbd as string, item.to]),
     );
     function onKey(event: KeyboardEvent) {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || paletteOpen || mobileOpen) return;
       const target = event.target as HTMLElement | null;
       if (
         target &&
@@ -133,11 +93,11 @@ export default function Layout() {
         return;
       }
       const to = shortcuts.get(event.key);
-      if (to) navigate(to);
+      if (to) navigate(href(to));
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate]);
+  }, [navigate, href, paletteOpen, mobileOpen]);
 
   const crumb = BREADCRUMBS[location.pathname] ?? { group: "CreativeForge", label: "工作台" };
 
@@ -159,7 +119,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas text-ink">
+    <div className="flex h-dvh overflow-hidden bg-canvas text-ink">
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
@@ -198,7 +158,7 @@ export default function Layout() {
                 item.children ? (
                   <div key={item.to} className="relative">
                     <NavLink
-                      to={item.to}
+                      to={href(item.to)}
                       title={rail ? item.label : undefined}
                       className={({ isActive }) =>
                         cx(
@@ -239,7 +199,7 @@ export default function Layout() {
                         {item.children.map((child) => (
                           <NavLink
                             key={child.to}
-                            to={child.to}
+                            to={href(child.to)}
                             title={child.label}
                             className={({ isActive }) =>
                               cx(
@@ -288,7 +248,7 @@ export default function Layout() {
                               {item.children.map((child) => (
                                 <NavLink
                                   key={child.to}
-                                  to={child.to}
+                                  to={href(child.to)}
                                   className={({ isActive }) =>
                                     cx(
                                       "relative ml-[15px] flex items-center gap-2 rounded-md py-1.5 pl-6 pr-2 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
@@ -328,7 +288,7 @@ export default function Layout() {
                 ) : (
                   <NavLink
                     key={item.to}
-                    to={item.to}
+                    to={href(item.to)}
                     end={item.to === "/"}
                     title={rail ? item.label : undefined}
                     className={({ isActive }) =>
@@ -410,7 +370,7 @@ export default function Layout() {
           </div>
 
           <NavLink
-            to={taskId ? "/agents" : "/"}
+            to={href(taskId ? "/agents" : "/")}
             className="mx-auto hidden max-w-md items-center gap-2 rounded-full border border-line-subtle bg-surface-1 px-3 py-1 text-xs text-ink-2 transition-colors hover:border-line hover:text-ink sm:flex"
           >
             <StatusDot
@@ -438,10 +398,10 @@ export default function Layout() {
             )}
           </NavLink>
 
-          {asset && (
-            <NavLink to="/asset" className="hidden lg:block">
+          {contextId && (
+            <NavLink to={href("/asset")} className="hidden lg:block">
               <Badge tone="primary" icon="cube">
-                {asset.id}
+                {contextId}
               </Badge>
             </NavLink>
           )}
@@ -467,20 +427,20 @@ export default function Layout() {
           </button>
         </header>
 
-        <main className="cf-scroll flex-1 overflow-y-auto pb-20 md:pb-0">
+        <main className="cf-scroll min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
           <Outlet />
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line-subtle bg-[rgba(245,243,239,.95)] backdrop-blur-md md:hidden">
+        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 pb-[env(safe-area-inset-bottom)] border-t border-line-subtle bg-[rgba(245,243,239,.95)] backdrop-blur-md md:hidden">
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}
-              to={tab.to}
+              to={href(tab.to)}
               end={tab.to === "/"}
               className={({ isActive }) =>
                 cx(
-                  "flex flex-col items-center gap-1 pb-3 pt-2 text-[10px] transition-colors",
+                  "flex min-h-11 flex-col items-center gap-1 pb-3 pt-2 text-[10px] transition-colors",
                   isActive ? "text-primary" : "text-ink-4",
                 )
               }
@@ -489,8 +449,13 @@ export default function Layout() {
               {tab.label}
             </NavLink>
           ))}
+          <button type="button" aria-label="更多功能" aria-haspopup="dialog" aria-expanded={mobileOpen}
+            onClick={() => setMobileOpen(true)} className="flex min-h-11 flex-col items-center gap-1 pb-3 pt-2 text-[10px] text-ink-2">
+            <Icon name="panel" className="h-4 w-4" />更多
+          </button>
         </nav>
       </div>
+      <MobileNavigation open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       <Toaster />

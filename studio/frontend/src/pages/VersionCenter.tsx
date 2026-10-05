@@ -14,7 +14,7 @@ import {
 } from "../components/ui";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
-import { useAssetStore } from "../stores/assetStore";
+import { assetHref, useAssetStore } from "../stores/assetStore";
 import type { VersionView } from "../types";
 
 function timeLabel(seconds?: number) {
@@ -431,7 +431,7 @@ export default function VersionCenter() {
       </div>
 
       <div className="flex justify-end">
-        <Button variant="ghost" size="sm" icon="cube" onClick={() => navigate("/asset")}>
+        <Button variant="ghost" size="sm" icon="cube" onClick={() => navigate(assetHref("/asset", useAssetStore.getState().asset?.id))}>
           打开当前资产
         </Button>
       </div>

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import type { CreativeAsset } from "../types";
+import { AssetLoadState } from "../components/AssetLoadState";
 import { ModelApiPanel } from "../components/ModelApiPanel";
-import { useAssetLoader, useAssetStore } from "../stores/assetStore";
+import { assetHref, useAssetLoader, useAssetStore } from "../stores/assetStore";
 import { hideAll, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
 import {
   api,
+  ApiError,
   type AnimationResult,
   type CustomActionDetail,
   type CustomActionPreset,
@@ -96,7 +100,16 @@ interface SeqFrame {
 
 export default function AnimationStudio() {
   const asset = useAssetLoader();
-  const setAsset = useAssetStore((state) => state.set);
+  const [params] = useSearchParams();
+  const loading = useAssetStore((state) => state.loading);
+  const error = useAssetStore((state) => state.error);
+  if (!asset && (params.get("asset") || loading || error)) return <AssetLoadState />;
+  return <AnimationWorkbench key={asset?.id ?? "upload"} asset={asset} />;
+}
+
+function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
+  const navigate = useNavigate();
+  const videoTaskStorageKey = `${VIDEO_TASK_KEY}:${asset?.id ?? "upload"}`;
   // 历史人物（P1 体验）：数据源为后端生成历史（每个生成过的人物一行），
   // localStorage 只记录「隐藏清单」与「最近使用排序」——后端数据不受影响
   const historyQuery = useQuery({
@@ -129,25 +142,12 @@ export default function AnimationStudio() {
     });
     return out;
   }, [historyQuery.data, hiddenIds]);
-  const [showPeople, setShowPeople] = useState(false);
 
   // 载入历史人物（事件处理器；命名避开 use 前缀——非 Hook，react-hooks 规则按
   // 名字识别会误报"回调内调用 Hook"）
   function loadPerson(entry: PersonEntry) {
-    api
-      .getAsset(entry.asset_id)
-      .then((loaded) => {
-        setAsset(loaded);
-        pushRecent({
-          asset_id: loaded.id,
-          name: loaded.name,
-          image_url: loaded.image?.url ?? entry.image_url,
-        });
-        toast({ tone: "success", title: `已载入「${entry.name}」`, description: "生成与动作编辑将使用该人物" });
-      })
-      .catch((cause) =>
-        toast({ tone: "danger", title: "载入失败", description: String(cause).slice(0, 140) }),
-      );
+    navigate(assetHref("/animation", entry.asset_id));
+    pushRecent({ asset_id: entry.asset_id, name: entry.name, image_url: entry.image_url });
   }
 
   const [mode, setMode] = useState<"smart" | "sequence" | "cloud">("smart");
@@ -305,7 +305,7 @@ export default function AnimationStudio() {
   // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
   // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
   const assetImage =
-    (asset?.id ? `/api/assets/${asset.id}/image.png?view=front&size=512` : undefined) ||
+    (asset?.id ? `/api/assets/${encodeURIComponent(asset.id)}/image.png?view=front&size=512` : undefined) ||
     (asset as { image?: { url?: string } } | null)?.image?.url ||
     (asset?.source as { ai_image?: { url?: string } } | undefined)?.ai_image?.url;
 
@@ -355,7 +355,7 @@ export default function AnimationStudio() {
           try {
             const started = await api.startVideoTask(payload);
             window.localStorage.setItem(
-              VIDEO_TASK_KEY,
+              videoTaskStorageKey,
               JSON.stringify({ id: started.task_id, kind: source.kind }),
             );
             setVideoTaskStage({
@@ -392,7 +392,7 @@ export default function AnimationStudio() {
         setBusySource(null);
       }
     },
-    [busy, presets, view, fps, duration, size, upload, asset?.id, skeletal, meshSkin, hairMotion, equipmentAware, useVideo, finalQuality],
+    [busy, presets, view, fps, duration, size, upload, videoTaskStorageKey, asset, skeletal, meshSkin, hairMotion, equipmentAware, useVideo, finalQuality],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
@@ -420,7 +420,7 @@ export default function AnimationStudio() {
           setVideoTaskStage({ stage: snap.stage, progress: snap.progress });
           return;
         }
-        window.localStorage.removeItem(VIDEO_TASK_KEY);
+        window.localStorage.removeItem(videoTaskStorageKey);
         setVideoTaskId(null);
         setBusy(false);
         setBusySource(null);
@@ -460,14 +460,17 @@ export default function AnimationStudio() {
       alive = false;
       clearInterval(timer);
     };
-  }, [videoTaskId, asset?.id]);
+  }, [videoTaskId, asset?.id, asset?.name, asset?.image?.url, videoTaskStorageKey]);
 
   // 刷新恢复：上次未收尾的视频任务凭 localStorage 续接——running 恢复
   // busy 态并续轮询、done 直接展示结果、failed/失效静默清除
   useEffect(() => {
     let saved: { id: string; kind: "base" | "custom" } | null = null;
+    let restoreKey = videoTaskStorageKey;
     try {
-      saved = JSON.parse(window.localStorage.getItem(VIDEO_TASK_KEY) || "null");
+      const scoped = window.localStorage.getItem(videoTaskStorageKey);
+      restoreKey = scoped ? videoTaskStorageKey : VIDEO_TASK_KEY;
+      saved = JSON.parse(scoped || window.localStorage.getItem(VIDEO_TASK_KEY) || "null");
     } catch {
       /* 损坏的本地缓存视同无任务（saved 保持 null） */
     }
@@ -478,6 +481,12 @@ export default function AnimationStudio() {
       .getVideoTask(ref.id)
       .then((snap) => {
         if (!alive) return;
+        // Legacy unscoped records can migrate only after backend identity verification.
+        if ((snap.asset_id ?? null) !== (asset?.id ?? null)) return;
+        if (restoreKey === VIDEO_TASK_KEY) {
+          window.localStorage.setItem(videoTaskStorageKey, JSON.stringify(ref));
+          window.localStorage.removeItem(VIDEO_TASK_KEY);
+        }
         if (snap.status === "running") {
           setBusy(true);
           setBusySource(ref.kind);
@@ -489,24 +498,28 @@ export default function AnimationStudio() {
             description: "已恢复进度显示，完成后自动展示结果",
           });
         } else if (snap.status === "done" && snap.result) {
-          window.localStorage.removeItem(VIDEO_TASK_KEY);
+          window.localStorage.removeItem(videoTaskStorageKey);
           setResult(snap.result);
           setResultAutoplay(false); // 恢复的历史结果→静帧呈现，不自发播放
         } else {
-          window.localStorage.removeItem(VIDEO_TASK_KEY);
+          window.localStorage.removeItem(videoTaskStorageKey);
         }
       })
-      .catch(() => window.localStorage.removeItem(VIDEO_TASK_KEY));
+      .catch((cause: unknown) => {
+        if (alive && cause instanceof ApiError && cause.status === 404) {
+          window.localStorage.removeItem(restoreKey);
+        }
+      });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [videoTaskStorageKey, asset?.id]);
 
   // -- 编辑器：相位预览（防抖）、播放循环、预设列表 ------------------------
   useEffect(() => {
     // 仅在用户与编辑器交互后渲染姿态预览：拖时间轴/调滑杆/选动作/解读
     // 套用/点播放会置 editorTouched。打开页面保持原图静止（见 editorTouched 注释）
-    if (mode !== "smart" || !editorTouched) return;
+    if (mode !== "smart" || !editorTouched || (!asset?.id && !upload)) return;
     let alive = true;
     const timer = setTimeout(() => {
       api

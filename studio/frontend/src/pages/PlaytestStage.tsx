@@ -1,9 +1,12 @@
+import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
+import type { CreativeAsset } from "../types";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import Konva from "konva";
 import { Image as KonvaImage, Layer, Rect, Stage, Text as KonvaText, Rect as KonvaRect } from "react-konva";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { Badge, Button, Card, EmptyState, PageHeader, cx } from "../components/ui";
+import { Badge, Button, Card, PageHeader, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
@@ -50,9 +53,12 @@ interface OverrideAction {
 }
 
 export default function PlaytestStage() {
-  // 人物显式选择（用户要求：不再自动跟随「当前资产」，由用户在此挑选）
-  const [selected, setSelected] = useState<{ id: string; name: string; image_url?: string } | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(true);
+  return <SelectedAssetBoundary>{(asset) => <PlaytestContent key={asset?.id ?? "unselected"} selected={asset} />}</SelectedAssetBoundary>;
+}
+
+function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
+  const [, setSearchParams] = useSearchParams();
+  const [pickerOpen, setPickerOpen] = useState(!selected);
   const selectedAssetId = selected?.id ?? null;
   const history = useQuery({
     queryKey: ["playtest-people"],
@@ -65,6 +71,7 @@ export default function PlaytestStage() {
       ),
     [history.data],
   );
+
   const [action, setAction] = useState("idle");
   const [frameIndex, setFrameIndex] = useState(0);
   const [position, setPosition] = useState(320);
@@ -676,7 +683,7 @@ export default function PlaytestStage() {
             <Icon name="clock" className="h-3 w-3" />
             {rigged
               ? "动作帧由当前角色原画实时变形渲染；更高质量版本可在动画工作台生成。"
-              : "暂无当前资产：先在工作台生成角色，试玩舞台会自动绑定它的原画。"}
+              : "尚未选择人物：请从近期生成记录挑选角色，或从历史记录打开资产链接。"}
           </p>
         </Card>
       </div>
@@ -695,12 +702,10 @@ export default function PlaytestStage() {
                 <button
                   key={record.id}
                   onClick={() => {
-                    setStripImages({});
-                    setFrameIndex(0);
-                    setSelected({
-                      id: record.asset_id!,
-                      name: record.name || record.goal,
-                      image_url: record.image?.url ?? undefined,
+                    setSearchParams((previous) => {
+                      const next = new URLSearchParams(previous);
+                      next.set("asset", record.asset_id!);
+                      return next;
                     });
                     setPickerOpen(false);
                   }}

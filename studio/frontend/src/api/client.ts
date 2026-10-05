@@ -272,6 +272,13 @@ interface RequestInitInternal extends RequestInit {
   silent?: boolean;
 }
 
+export class ApiError extends Error {
+  constructor(public readonly status: number, detail: string) {
+    super(`${status}: ${detail}`);
+    this.name = "ApiError";
+  }
+}
+
 async function request<T>(path: string, init?: RequestInitInternal): Promise<T> {
   const { silent, ...rest } = init ?? {};
   const response = await fetch(path, {
@@ -280,7 +287,7 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
   });
   if (!response.ok) {
     const detail = await response.text().catch(() => response.statusText);
-    const error = new Error(`${response.status}: ${detail}`);
+    const error = new ApiError(response.status, detail);
     // 统一错误提示：同一消息 2.5s 内只弹一次；页面层自己的 catch 依旧生效
     const now = Date.now();
     if (!silent && (error.message !== lastToastKey || now - lastToastAt > 2500)) {
@@ -298,8 +305,7 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
 }
 
 export const api = {
-  health: () =>
-    request<{ status: string; frontend_stale?: boolean }>("/api/health"),
+  health: () => request<{ status: string; frontend_stale?: boolean }>("/api/health"),
 
   /* ── P1-A 版本控制 ── */
   versionGroups: () => request<{ groups: VersionGroup[] }>("/api/versions/groups"),
@@ -404,6 +410,7 @@ export const api = {
     }),
   exportCharacterPackage: (assetId: string, engine: string) =>
     request<CharacterPackageResult>("/api/export/character-package", {
+      silent: true, // 导出页保留错误并提供操作反馈，避免重复 toast
       method: "POST",
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
@@ -422,9 +429,11 @@ export const api = {
 
   listTasks: () => request<{ tasks: TaskSummary[] }>("/api/tasks"),
 
-  getTaskDetail: (taskId: string) => request<TaskDetail>(`/api/tasks/${taskId}`),
+  getTaskDetail: (taskId: string, options?: { signal?: AbortSignal; silent?: boolean }) =>
+    request<TaskDetail>(`/api/tasks/${taskId}`, options),
 
-  getAsset: (assetId: string) => request<CreativeAsset>(`/api/assets/${assetId}`),
+  getAsset: (assetId: string, options?: { signal?: AbortSignal; silent?: boolean }) =>
+    request<CreativeAsset>(`/api/assets/${encodeURIComponent(assetId)}`, options),
 
   generateDesignViews: (assetId: string) =>
     request<CreativeAsset["design_views"]>("/api/design/views", {
@@ -432,9 +441,9 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId }),
     }),
 
-  latestAsset: () =>
-    // 探活请求：404（后端重启后尚无资产）由 assetStore 的历史回退处理，不弹全局错误
-    request<CreativeAsset>("/api/assets/latest", { silent: true }),
+  latestAsset: (options?: { signal?: AbortSignal }) =>
+    // 后端已经解析持久化历史；404 表示暂无资产，其余错误由页面提供重试。
+    request<CreativeAsset>("/api/assets/latest", { ...options, silent: true }),
 
   createAnimation: (payload: AnimationRequestPayload) =>
     request<AnimationResult>("/api/animation", {
@@ -496,9 +505,7 @@ export const api = {
     }),
 
   getCustomAction: (name: string) =>
-    request<CustomActionDetail>(
-      `/api/animation/custom-actions/${encodeURIComponent(name)}`,
-    ),
+    request<CustomActionDetail>(`/api/animation/custom-actions/${encodeURIComponent(name)}`),
 
   deleteCustomAction: (name: string) =>
     request<{ status: string }>(`/api/animation/custom-actions/${encodeURIComponent(name)}`, {
@@ -513,11 +520,13 @@ export const api = {
 
   exportAsset: (assetId: string, engine: string) =>
     request<ExportResult>("/api/export", {
+      silent: true,
       method: "POST",
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
   benchmark: () => request<BenchmarkReport>("/api/benchmark"),
+  refreshBenchmark: () => request<BenchmarkReport>("/api/benchmark?refresh=1"),
 
   listHistory: (params: { engine?: string; q?: string; limit?: number } = {}) => {
     const search = new URLSearchParams();
@@ -564,7 +573,8 @@ export const api = {
 
   modelUsage: () => request<ModelUsage>("/api/settings/model/usage"),
 
-  clearModelUsage: () => request<{ status: string }>("/api/settings/model/usage", { method: "DELETE" }),
+  clearModelUsage: () =>
+    request<{ status: string }>("/api/settings/model/usage", { method: "DELETE" }),
 
   // ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ─────────────────────
   // 凭证本地加密存储、界面脱敏；新增/编辑时提交明文，后端落盘加密。

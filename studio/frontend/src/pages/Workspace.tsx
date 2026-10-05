@@ -148,14 +148,6 @@ const DEFAULT_STEPS = [
   "QA 质量验证",
 ];
 
-function Sparkline({ points, stroke }: { points: string; stroke: string }) {
-  return (
-    <svg viewBox="0 0 120 28" className="mt-1.5 h-7 w-full" aria-hidden="true">
-      <path d={points} fill="none" stroke={stroke} strokeWidth="1.6" />
-    </svg>
-  );
-}
-
 export default function Workspace() {
   const [goal, setGoal] = useState(EXAMPLES[0]);
   const [engine, setEngine] = useState("unity");
@@ -180,7 +172,8 @@ export default function Workspace() {
   const benchmark = useQuery({
     queryKey: ["benchmark"],
     queryFn: api.benchmark,
-    staleTime: Infinity,
+    staleTime: 10 * 60 * 1000,
+    retry: false,
   });
   const modelSettings = useQuery({
     queryKey: ["model-settings"],
@@ -463,88 +456,96 @@ export default function Workspace() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-        <Card bodyClassName="p-4">
-          {kpis ? (
-            <div className="flex flex-col">
-              <span className="text-xs text-ink-3">CF Score 综合评分</span>
-              <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-ember">
-                {(kpis.cf_score.overall * 100).toFixed(1)}
-                <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-              </span>
-              <Sparkline
-                points="M0 22 15 20 30 21 45 15 60 16 75 10 90 11 105 5 120 6"
-                stroke="#a9812f"
-              />
-              <span className="text-[11px] text-ink-3">
-                权重 pixel .30 / anim .30 / engine .25 / agent .15
-              </span>
-            </div>
-          ) : (
-            <Skeleton className="h-24" />
-          )}
-        </Card>
-        <Card bodyClassName="p-4">
-          {kpis ? (
-            <div className="flex flex-col">
-              <span className="text-xs text-ink-3">PReCon 像素一致性</span>
-              <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-precon">
-                {Math.round(kpis.precon.method_pixel_score * 100)}
-                <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-              </span>
-              <Sparkline
-                points="M0 23 15 21 30 18 45 19 60 14 75 12 90 9 105 8 120 6"
-                stroke="#0e8ea8"
-              />
-              <span className="text-[11px] text-ink-3">
-                baseline {Math.round(kpis.precon.baseline_pixel_score * 100)}% · +
-                {(kpis.precon.improvement * 100).toFixed(1)}%
-              </span>
-            </div>
-          ) : (
-            <Skeleton className="h-24" />
-          )}
-        </Card>
-        <Card bodyClassName="p-4">
-          {kpis ? (
-            <div className="flex flex-col">
-              <span className="text-xs text-ink-3">FAlign 根漂移</span>
-              <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-falign">
-                {kpis.falign.method_root_drift.toFixed(2)}
-                <small className="ml-0.5 text-base font-semibold text-ink-3">px/f</small>
-              </span>
-              <Sparkline
-                points="M0 4 15 6 30 12 45 16 60 20 75 24 90 25 105 26 120 26"
-                stroke="#7c5cc4"
-              />
-              <span className="text-[11px] text-ink-3">
-                baseline {kpis.falign.baseline_root_drift.toFixed(2)} → 纠偏 100%
-              </span>
-            </div>
-          ) : (
-            <Skeleton className="h-24" />
-          )}
-        </Card>
-        <Card bodyClassName="p-4">
-          {kpis ? (
-            <div className="flex flex-col">
-              <span className="text-xs text-ink-3">GImport 导入成功率</span>
-              <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-gimport">
-                {Math.round(kpis.gimport.import_success_rate * 100)}
-                <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-              </span>
-              <Sparkline points="M0 26 20 26 40 26 60 26 80 26 100 26 120 26" stroke="#3e7d5a" />
-              <span className="text-[11px] text-ink-3">
-                {kpis.gimport.manual_reduction.traditional_steps} 步 →{" "}
-                {kpis.gimport.manual_reduction.gimport_steps} 步 ·{" "}
-                {Math.round(kpis.gimport.time_comparison.speedup)}× 提速
-              </span>
-            </div>
-          ) : (
-            <Skeleton className="h-24" />
-          )}
-        </Card>
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-3">
+        <span>
+          {kpis
+            ? `基准数据集：${kpis.dataset.size} 个样本 · ${new Date(kpis.generated_at).toLocaleString()}`
+            : benchmark.isError
+              ? "基准报告暂不可用，仍可继续生成资产。"
+              : "正在加载基准报告，首次评测需要一些时间…"}
+        </span>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => (benchmark.isError ? void benchmark.refetch() : navigate("/benchmark"))}
+        >
+          {benchmark.isError ? "重试加载" : "查看评测详情"}
+        </Button>
+        {kpis && (
+          <span className="w-full">
+            以下为样本评测结果，不代表当前角色质量；GImport 指标为内部结构校验。
+          </span>
+        )}
       </div>
+      {!benchmark.isError && (
+        <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
+          <Card bodyClassName="p-4">
+            {kpis ? (
+              <div className="flex flex-col">
+                <span className="text-xs text-ink-3">CF Score 综合评分</span>
+                <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-ember">
+                  {(kpis.cf_score.overall * 100).toFixed(1)}
+                  <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
+                </span>
+                <span className="text-[11px] text-ink-3">
+                  权重 pixel .30 / anim .30 / engine .25 / agent .15
+                </span>
+              </div>
+            ) : (
+              <Skeleton className="h-24" />
+            )}
+          </Card>
+          <Card bodyClassName="p-4">
+            {kpis ? (
+              <div className="flex flex-col">
+                <span className="text-xs text-ink-3">PReCon 像素一致性</span>
+                <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-precon">
+                  {Math.round(kpis.precon.method_pixel_score * 100)}
+                  <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
+                </span>
+                <span className="text-[11px] text-ink-3">
+                  baseline {Math.round(kpis.precon.baseline_pixel_score * 100)}% · +
+                  {(kpis.precon.improvement * 100).toFixed(1)}%
+                </span>
+              </div>
+            ) : (
+              <Skeleton className="h-24" />
+            )}
+          </Card>
+          <Card bodyClassName="p-4">
+            {kpis ? (
+              <div className="flex flex-col">
+                <span className="text-xs text-ink-3">FAlign 根漂移</span>
+                <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-falign">
+                  {kpis.falign.method_root_drift.toFixed(2)}
+                  <small className="ml-0.5 text-base font-semibold text-ink-3">px/f</small>
+                </span>
+                <span className="text-[11px] text-ink-3">
+                  基线 {kpis.falign.baseline_root_drift.toFixed(2)} px/f
+                </span>
+              </div>
+            ) : (
+              <Skeleton className="h-24" />
+            )}
+          </Card>
+          <Card bodyClassName="p-4">
+            {kpis ? (
+              <div className="flex flex-col">
+                <span className="text-xs text-ink-3">GImport 结构校验通过率</span>
+                <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-gimport">
+                  {Math.round(kpis.gimport.import_success_rate * 100)}
+                  <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
+                </span>
+                <span className="text-[11px] text-ink-3">
+                  管线实测 {kpis.gimport.average_pipeline_seconds.toFixed(2)} 秒 · 不含编辑器导入
+                </span>
+              </div>
+            ) : (
+              <Skeleton className="h-24" />
+            )}
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {[
@@ -553,21 +554,21 @@ export default function Workspace() {
             name: "PReCon 像素重建",
             tone: "precon" as const,
             icon: "grid" as const,
-            text: "网格推断 · 语义 16 色调色板 · 轮廓修复 · 一致性 90%",
+            text: "网格推断 · 调色板重建 · 轮廓修复 · 像素一致性检查",
           },
           {
             domain: "falign" as const,
             name: "FAlign 切帧对齐",
             tone: "falign" as const,
             icon: "film" as const,
-            text: "锚点检测 · 运动相位对齐 · 根运动纠偏 0.00 px/frame",
+            text: "锚点检测 · 运动相位对齐 · 根运动纠偏 · 时序检查",
           },
           {
             domain: "gimport" as const,
             name: "GImport 引擎导入",
             tone: "gimport" as const,
             icon: "package" as const,
-            text: "图集 · 动画剪辑 · Prefab · 运行时校验 · 一键导出 zip",
+            text: "图集 · 动画与预制体配置 · 包结构校验 · 一键导出 ZIP",
           },
         ].map((tech) => (
           <Card key={tech.name} domain={tech.domain} bodyClassName="p-4">

@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { api } from "../api/client";
 import {
   Badge,
+  Button,
   Card,
   EmptyState,
   KV,
@@ -95,10 +96,16 @@ function CompareHeader({
 }
 
 export default function BenchmarkCenter() {
+  const queryClient = useQueryClient();
   const report = useQuery({
     queryKey: ["benchmark"],
     queryFn: api.benchmark,
-    staleTime: Infinity,
+    staleTime: 10 * 60 * 1000,
+    retry: false,
+  });
+  const refresh = useMutation({
+    mutationFn: api.refreshBenchmark,
+    onSuccess: (data) => queryClient.setQueryData(["benchmark"], data),
   });
 
   if (report.isLoading) {
@@ -107,7 +114,7 @@ export default function BenchmarkCenter() {
         <PageHeader
           overline="Benchmark Center"
           title="基准中心"
-          description="正在运行真实管线评测…"
+          description="正在加载基准报告，首次评测需要运行真实管线…"
         />
         <div className="grid grid-cols-12 gap-5">
           <Skeleton className="col-span-12 h-80 xl:col-span-4" />
@@ -126,9 +133,13 @@ export default function BenchmarkCenter() {
             title="评测失败"
             description={String(report.error)}
             action={
-              <Badge tone="danger" icon="refresh">
-                请确认后端 /api/benchmark 可用
-              </Badge>
+              <Button
+                icon="refresh"
+                loading={report.isFetching}
+                onClick={() => void report.refetch()}
+              >
+                重试加载
+              </Button>
             }
           />
         </Card>
@@ -143,9 +154,17 @@ export default function BenchmarkCenter() {
       <PageHeader
         overline="Benchmark Center"
         title="基准中心"
-        description={`数据集 ${data.dataset.size} 资产 · ${data.dataset.categories.length} 类别 · ${data.dataset.animated} 动画 · 实时运行 PReCon / FAlign / GImport / Agent 真实管线`}
+        description={`数据集 ${data.dataset.size} 资产 · ${data.dataset.categories.length} 类别 · ${data.dataset.animated} 动画 · 报告缓存 10 分钟，样本结果不代表当前资产质量`}
         actions={
           <>
+            <Button
+              icon="refresh"
+              size="sm"
+              loading={refresh.isPending || report.isFetching}
+              onClick={() => refresh.mutate()}
+            >
+              {refresh.isPending ? "重新评测中…" : "重新评测"}
+            </Button>
             <Badge tone="neutral" icon="clock">
               生成于 {new Date(data.generated_at).toLocaleString()}
             </Badge>
@@ -155,6 +174,12 @@ export default function BenchmarkCenter() {
           </>
         }
       />
+
+      {refresh.isError && (
+        <p role="alert" className="text-sm text-danger">
+          重新评测失败，仍显示上次成功报告。可稍后重试。
+        </p>
+      )}
 
       <div className="grid grid-cols-12 gap-5">
         <Card
@@ -262,27 +287,33 @@ export default function BenchmarkCenter() {
         <Card
           className="col-span-12 md:col-span-6 xl:col-span-4"
           domain="gimport"
-          title="GImport · 一键导入"
+          title="GImport · 导出结构校验"
           icon="package"
-          right={<Badge tone="gimport">100%</Badge>}
+          right={<Badge tone="gimport">样本评测</Badge>}
         >
           <Stat
-            label="导入成功率"
+            label="内部结构校验通过率"
             value={`${Math.round(data.gimport.import_success_rate * 100)}%`}
             tone="text-gimport"
           />
           <div className="mt-3">
             <KV
-              label="流程耗时"
+              label="管线实测耗时"
               value={`1 步 · ${data.gimport.average_pipeline_seconds.toFixed(2)}s`}
             />
             <KV
-              label="传统流程"
+              label="传统流程参考"
               value={`${data.gimport.manual_reduction.traditional_steps} 步 · ${data.gimport.time_comparison.traditional_minutes} 分钟`}
             />
-            <KV label="加速比" value={`${Math.round(data.gimport.time_comparison.speedup)}×`} />
-            <KV label="覆盖引擎" value="Unity / Cocos / Godot" />
+            <KV
+              label="参考预算加速比"
+              value={`${Math.round(data.gimport.time_comparison.speedup)}×`}
+            />
+            <KV label="配置适配目标" value="Unity / Cocos / Godot" />
           </div>
+          <p className="mt-3 text-xs text-ink-3">
+            参考加速比按传统流程与导出预算计算；以上校验不包含目标编辑器中的实际导入和播放。
+          </p>
           <div className="mt-3 flex gap-1.5">
             <Badge tone="neutral">unity</Badge>
             <Badge tone="neutral">cocos</Badge>

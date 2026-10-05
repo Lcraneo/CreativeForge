@@ -1,21 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAssetLoader } from "../stores/assetStore";
-import { useExportStore } from "../stores/exportStore";
+import { exportScope, useExportStore } from "../stores/exportStore";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
 import {
   Badge,
   Button,
   Card,
-  EmptyState,
   KV,
   PageHeader,
   Segmented,
   Stepper,
 } from "../components/ui";
+import { AssetLoadState } from "../components/AssetLoadState";
 import { Icon } from "../components/icons";
-import type { ExportResult } from "../types";
 
 const ENGINES = [
   { id: "unity", label: "Unity", icon: "cube" as const },
@@ -27,74 +25,57 @@ type EngineId = (typeof ENGINES)[number]["id"];
 
 export default function ExportCenter() {
   const asset = useAssetLoader();
-  const navigate = useNavigate();
-  const { exports, busy, error, add, setBusy, setError } = useExportStore();
+  const { exports, characterPackages, pending, errors, add, addCharacterPackage, begin, finish } =
+    useExportStore();
   const [engine, setEngine] = useState<EngineId>("unity");
-  const [packing, setPacking] = useState(false);
-  const [characterPackage, setCharacterPackage] = useState<
-    import("../types").CharacterPackageResult | null
-  >(null);
+  const engineScope = exportScope(asset?.id ?? "", engine, "engine");
+  const characterScope = exportScope(asset?.id ?? "", engine, "character");
+  const busy = Boolean(pending[engineScope]);
+  const packing = Boolean(pending[characterScope]);
+  const currentExports = exports.filter(
+    (item) => item.asset_id === asset?.id && item.engine === engine,
+  );
+  const latest = currentExports[0];
+  const characterPackage = characterPackages.find(
+    (item) => item.asset_id === asset?.id && item.engine === engine,
+  );
 
   async function runCharacterPackage() {
-    if (!asset || packing) return;
-    setPacking(true);
-    setError(null);
+    if (!asset || !begin(characterScope)) return;
     try {
       const result = await api.exportCharacterPackage(asset.id, engine);
-      setCharacterPackage(result);
+      addCharacterPackage(result);
+      finish(characterScope);
       toast({
         tone: "success",
         title: `资产包已生成 ${result.package}`,
         description: `三视图 ${result.artwork_count} 张 · 动作 ${result.animations.length} 个 · 引擎文件 ${result.engine_files} 个`,
       });
     } catch (cause) {
-      setError(String(cause));
+      finish(characterScope, String(cause));
       toast({ tone: "danger", title: "资产包导出失败", description: String(cause).slice(0, 180) });
-    } finally {
-      setPacking(false);
     }
   }
 
   async function runExport() {
-    if (!asset || busy) return;
-    setBusy(true);
-    setError(null);
+    if (!asset || !begin(engineScope)) return;
     try {
       const result = await api.exportAsset(asset.id, engine);
       add(result);
+      finish(engineScope);
       toast({
         tone: "success",
         title: `已导出 ${result.package}`,
-        description: `${result.engine} · ${(result.size_bytes / 1024).toFixed(1)} KB · 校验 ${result.validation.status}`,
+        description: `${result.engine} · ${(result.size_bytes / 1024).toFixed(1)} KB · 包结构校验 ${result.validation.status}`,
       });
     } catch (cause) {
-      setError(String(cause));
+      finish(engineScope, String(cause));
       toast({ tone: "danger", title: "导出失败", description: String(cause) });
-    } finally {
-      setBusy(false);
     }
   }
 
-  if (!asset) {
-    return (
-      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
-        <Card>
-          <EmptyState
-            icon="package"
-            title="还没有可导出的资产"
-            description="先在工作台生成一个资产，GImport 会将其编译为可导入引擎的工程包。"
-            action={
-              <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
-                去生成资产
-              </Button>
-            }
-          />
-        </Card>
-      </div>
-    );
-  }
+  if (!asset) return <AssetLoadState />;
 
-  const latest: ExportResult | undefined = exports[0];
   const stage = (done: boolean) => (done ? "done" : "pending") as "done" | "pending";
 
   return (
@@ -102,7 +83,7 @@ export default function ExportCenter() {
       <PageHeader
         overline="Export Center"
         title="导出中心"
-        description="GImport 一键导出：CreativeAsset → Manifest → Atlas → Animation → Prefab → 引擎工程包"
+        description="打包当前角色的资源与引擎配置；包结构校验后，仍需在目标编辑器中验证导入与播放。"
         actions={<Segmented options={ENGINES} value={engine} onChange={setEngine} />}
       />
 
@@ -114,18 +95,29 @@ export default function ExportCenter() {
             iconClassName="text-gimport"
             right={
               <Badge tone={latest ? "gimport" : "neutral"}>
-                {latest ? "4 / 4 完成" : "等待导出"}
+                {busy ? "正在打包" : latest ? "打包完成" : "等待导出"}
               </Badge>
             }
           >
             <Stepper
               steps={[
-                { id: "asset", label: "Asset", state: "done" },
-                { id: "manifest", label: "Manifest", state: stage(Boolean(latest)) },
-                { id: "atlas", label: "Atlas", state: stage(Boolean(latest)) },
-                { id: "animation", label: "Animation", state: stage(Boolean(latest)) },
-                { id: "prefab", label: "Prefab", state: stage(Boolean(latest)) },
-                { id: "package", label: "Package", state: latest ? "running" : "pending" },
+                { id: "asset", label: "资产已选择", state: "done" },
+                {
+                  id: "package",
+                  label: "资源打包",
+                  state: busy ? "running" : stage(Boolean(latest)),
+                },
+                {
+                  id: "validation",
+                  label: "包结构校验",
+                  state: busy
+                    ? "pending"
+                    : latest
+                      ? latest.validation.status === "success"
+                        ? "done"
+                        : "failed"
+                      : "pending",
+                },
               ]}
             />
             <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -136,7 +128,7 @@ export default function ExportCenter() {
                 loading={busy}
                 onClick={runExport}
               >
-                {busy ? "导出中…" : `导出 ${ENGINES.find((e) => e.id === engine)?.label} 工程包`}
+                {busy ? "导出中…" : `导出 ${ENGINES.find((e) => e.id === engine)?.label} 配置包`}
               </Button>
               <Button
                 variant="secondary"
@@ -160,7 +152,7 @@ export default function ExportCenter() {
               <span className="text-[11.5px] text-ink-3">
                 {latest
                   ? `${(latest.size_bytes / 1024).toFixed(1)} KB · ${latest.files.length} files · zip`
-                  : "选择引擎后点击导出，产出真实 zip 工程包"}
+                  : "选择引擎后点击导出，生成 ZIP 资源与配置包"}
               </span>
             </div>
             {characterPackage && (
@@ -189,12 +181,23 @@ export default function ExportCenter() {
                     </Badge>
                   ))}
                   {characterPackage.missing.length > 0 && (
-                    <Badge tone="warning">缺 {characterPackage.missing.length} 项（见包内 manifest）</Badge>
+                    <Badge tone="warning">
+                      缺 {characterPackage.missing.length} 项（见包内 manifest）
+                    </Badge>
                   )}
                 </div>
               </div>
             )}
-            {error && <p className="mt-3 text-xs text-danger">{error}</p>}
+            {errors[engineScope] && (
+              <p role="alert" className="mt-3 text-sm text-danger">
+                配置包导出失败：{errors[engineScope]}
+              </p>
+            )}
+            {errors[characterScope] && (
+              <p role="alert" className="mt-3 text-sm text-danger">
+                角色资产包导出失败：{errors[characterScope]}
+              </p>
+            )}
           </Card>
 
           {latest && (
@@ -233,9 +236,13 @@ export default function ExportCenter() {
 
           {latest && (
             <Card
-              title="运行时校验"
+              title="包结构校验"
               icon="check"
-              right={<Badge tone="success">score {latest.validation.score}</Badge>}
+              right={
+                <Badge tone={latest.validation.status === "success" ? "success" : "danger"}>
+                  score {latest.validation.score}
+                </Badge>
+              }
             >
               {latest.validation.checks.map((check) => (
                 <div
@@ -255,13 +262,13 @@ export default function ExportCenter() {
             </Card>
           )}
 
-          <Card title="导出历史" icon="clock">
-            {exports.length === 0 ? (
-              <p className="text-xs text-ink-3">还没有导出记录。</p>
+          <Card title="当前资产 · 当前引擎导出历史" icon="clock">
+            {currentExports.length === 0 ? (
+              <p className="text-xs text-ink-3">当前资产在此引擎下还没有导出记录。</p>
             ) : (
               <ol className="relative space-y-4 pl-1">
                 <span className="absolute bottom-2 left-[10px] top-2 w-0.5 rounded-sm bg-line-subtle" />
-                {exports.slice(0, 5).map((item, index) => (
+                {currentExports.slice(0, 5).map((item, index) => (
                   <li key={`${item.package}-${index}`} className="relative flex gap-3.5">
                     <span className="relative z-10 mt-1 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2 border-success bg-canvas text-success">
                       <Icon name="check" className="h-3 w-3" />

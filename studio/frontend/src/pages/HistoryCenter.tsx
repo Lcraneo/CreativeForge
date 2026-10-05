@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { useAssetStore } from "../stores/assetStore";
+import { assetHref, useAssetStore } from "../stores/assetStore";
 import { toast } from "../stores/toastStore";
 import {
   Badge,
@@ -129,7 +129,7 @@ export default function HistoryCenter() {
     try {
       const asset = record.asset ?? (await api.getAsset(record.asset_id));
       setAsset(asset);
-      navigate("/asset");
+      navigate(assetHref("/asset", record.asset_id));
     } catch (cause) {
       toast({ tone: "danger", title: "资产加载失败", description: String(cause) });
     }
