@@ -11,7 +11,6 @@ import {
   Button,
   Card,
   Chip,
-  EmptyState,
   Input,
   Select,
   Skeleton,
@@ -20,8 +19,7 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
-import type { TaskSummary, GenerationOverrides } from "../types";
-import type { Tone } from "../components/ui";
+import type { GenerationOverrides } from "../types";
 
 const EXAMPLES = [
   "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
@@ -150,16 +148,6 @@ const DEFAULT_STEPS = [
   "QA 质量验证",
 ];
 
-function statusTone(status: string): Tone {
-  return status === "pass" || status === "success"
-    ? "success"
-    : status === "failed"
-      ? "danger"
-      : status === "running"
-        ? "primary"
-        : "neutral";
-}
-
 function Sparkline({ points, stroke }: { points: string; stroke: string }) {
   return (
     <svg viewBox="0 0 120 28" className="mt-1.5 h-7 w-full" aria-hidden="true">
@@ -189,9 +177,6 @@ export default function Workspace() {
   const progress = useAgentStore((state) => state.progress);
   const setAsset = useAssetStore((state) => state.set);
 
-  const tasks = useQuery({ queryKey: ["tasks"], queryFn: api.listTasks });
-  // 持久化历史：内存任务表重启即空，历史记录补齐"最近任务"（合并去重）
-  const historyTasks = useQuery({ queryKey: ["workspace-history"], queryFn: () => api.listHistory({ limit: 15 }) });
   const benchmark = useQuery({
     queryKey: ["benchmark"],
     queryFn: api.benchmark,
@@ -294,39 +279,6 @@ export default function Workspace() {
       setEnhancing(false);
     }
   }
-
-  async function openTask(task: TaskSummary) {
-    if (task.status === "running") {
-      navigate("/agents");
-      return;
-    }
-    if (task.asset_id && task.status === "pass") {
-      try {
-        const asset = await api.getAsset(task.asset_id);
-        setAsset(asset);
-        navigate("/asset");
-      } catch {
-        navigate("/asset");
-      }
-    }
-  }
-
-  // 合并"最近任务"：内存任务（含进行中）+ 持久化历史（重启后仍可见）
-  const mergedTasks = useMemo(() => {
-    const live = tasks.data?.tasks ?? [];
-    const seen = new Set(live.map((t) => t.task_id));
-    const fromHistory = (historyTasks.data?.records ?? [])
-      .filter((r) => r.task_id && !seen.has(r.task_id))
-      .map((r) => ({
-        task_id: r.task_id,
-        goal: r.goal,
-        status: r.status,
-        asset_id: r.asset_id,
-        event_count: r.qa_rounds ?? 0,
-        created_at: r.created_at,
-      }));
-    return [...live, ...fromHistory];
-  }, [tasks.data, historyTasks.data]);
 
   const kpis = benchmark.data;
 
@@ -593,79 +545,6 @@ export default function Workspace() {
           )}
         </Card>
       </div>
-
-      <Card
-        title="最近任务"
-        icon="terminal"
-        right={
-          <Button variant="ghost" size="sm" icon="chevron" onClick={() => navigate("/agents")}>
-            指挥中心
-          </Button>
-        }
-        bodyClassName="p-0"
-      >
-        {tasks.isLoading ? (
-          <div className="space-y-2 p-5">
-            <Skeleton className="h-9" />
-            <Skeleton className="h-9" />
-          </div>
-        ) : mergedTasks.length === 0 ? (
-          <EmptyState
-            icon="cube"
-            title="还没有生产记录"
-            description="描述你的第一个游戏创意，智能体团队将自主规划并产出引擎就绪资产。"
-            action={
-              <Button variant="primary" size="sm" icon="spark" onClick={generate}>
-                生成第一个资产
-              </Button>
-            }
-          />
-        ) : (
-          <table className="w-full border-collapse text-[13px]">
-            <thead>
-              <tr className="bg-surface-2 text-left text-[10.5px] uppercase tracking-[0.08em] text-ink-4">
-                <th className="px-4 py-2.5 font-semibold">任务</th>
-                <th className="px-4 py-2.5 font-semibold">目标</th>
-                <th className="px-4 py-2.5 font-semibold">状态</th>
-                <th className="px-4 py-2.5 font-semibold">资产</th>
-                <th className="px-4 py-2.5 text-right font-semibold">事件</th>
-              </tr>
-            </thead>
-            <tbody>
-              {mergedTasks.map((task) => (
-                <tr
-                  key={task.task_id}
-                  onClick={() => openTask(task)}
-                  className="cursor-pointer border-b border-ink/[.08] text-ink-2 transition-colors last:border-0 hover:bg-surface-2/60"
-                >
-                  <td className="px-4 py-3 font-mono text-xs text-ink-3">{task.task_id}</td>
-                  <td className="max-w-[420px] truncate px-4 py-3 text-ink">{task.goal}</td>
-                  <td className="px-4 py-3">
-                    <Badge tone={statusTone(task.status)}>
-                      <StatusDot
-                        tone={
-                          task.status === "running"
-                            ? "running"
-                            : task.status === "pass"
-                              ? "success"
-                              : task.status === "failed"
-                                ? "failed"
-                                : "idle"
-                        }
-                      />
-                      {task.status}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs">{task.asset_id ?? "—"}</td>
-                  <td className="tabular px-4 py-3 text-right font-mono text-xs text-ink-3">
-                    {task.event_count}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </Card>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         {[

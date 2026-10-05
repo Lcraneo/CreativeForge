@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { EASE_STANDARD, MOTION } from "../lib/motion";
 import { api } from "../api/client";
 import { useAgentStore } from "../stores/agentStore";
 import { useAssetStore } from "../stores/assetStore";
@@ -13,15 +15,24 @@ interface NavItem {
   label: string;
   icon: IconName;
   kbd?: string;
+  /** 子级导航：侧栏可展开/收起（历史记录从属于智能体指挥中心） */
+  children?: NavItem[];
 }
+
+const AGENTS_NAV_KEY = "cf-nav-agents-open";
 
 const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "生产",
     items: [
       { to: "/", label: "工作台", icon: "panel", kbd: "1" },
-      { to: "/agents", label: "智能体", icon: "layers", kbd: "2" },
-      { to: "/history", label: "历史记录", icon: "clock" },
+      {
+        to: "/agents",
+        label: "智能体",
+        icon: "layers",
+        kbd: "2",
+        children: [{ to: "/history", label: "历史记录", icon: "clock" }],
+      },
       { to: "/batch", label: "批量生产线", icon: "package" },
       { to: "/playtest", label: "试玩舞台", icon: "film" },
       { to: "/showcase", label: "发布展示间", icon: "spark" },
@@ -59,7 +70,7 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/": { group: "生产", label: "工作台" },
   "/workspace": { group: "生产", label: "工作台" },
   "/agents": { group: "生产", label: "智能体指挥中心" },
-  "/history": { group: "生产", label: "历史记录" },
+  "/history": { group: "智能体指挥中心", label: "历史记录" },
   "/batch": { group: "生产", label: "批量生产线" },
   "/playtest": { group: "生产", label: "试玩舞台" },
   "/versions": { group: "资产", label: "版本控制中心" },
@@ -85,6 +96,20 @@ export default function Layout() {
   const progress = useAgentStore((state) => state.progress);
   const goal = useAgentStore((state) => state.goal);
   const asset = useAssetStore((state) => state.asset);
+
+  // 智能体子导航展开态（跨会话保留）；深链到子级页面时派生为展开，
+  // 不经 effect 写 state（避免级联渲染）
+  const [agentsOpen, setAgentsOpen] = useState(
+    () => localStorage.getItem(AGENTS_NAV_KEY) !== "0",
+  );
+  const agentsExpanded = agentsOpen || location.pathname === "/history";
+
+  function toggleAgentsOpen() {
+    setAgentsOpen((value) => {
+      localStorage.setItem(AGENTS_NAV_KEY, value ? "0" : "1");
+      return !value;
+    });
+  }
 
   useEffect(() => localStorage.setItem("cf-rail", rail ? "1" : "0"), [rail]);
 
@@ -115,8 +140,6 @@ export default function Layout() {
   }, [navigate]);
 
   const crumb = BREADCRUMBS[location.pathname] ?? { group: "CreativeForge", label: "工作台" };
-
-  const taskTone = status === "failed" ? "danger" : status === "pass" ? "success" : "primary";
 
   // 构建过期自检：后端 /health 报 dist 落后于 src 时页脚角标提示强刷
   // （dev server 5173 下 dist 不参与渲染，角标无意义故跳过）
@@ -171,45 +194,177 @@ export default function Layout() {
                   {group.label}
                 </div>
               )}
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  title={rail ? item.label : undefined}
-                  className={({ isActive }) =>
-                    cx(
-                      "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
-                      rail ? "justify-center px-0" : "px-2.5",
-                      isActive
-                        ? "bg-primary-tint font-semibold text-ink"
-                        : "text-ink-2 hover:bg-surface-2 hover:text-ink",
-                    )
-                  }
-                >
-                  {({ isActive }) => (
-                    <>
-                      {isActive && (
-                        <span className="absolute -left-3 top-2 bottom-2 w-0.5 rounded-sm bg-primary" />
-                      )}
-                      <Icon
-                        name={item.icon}
-                        className={cx("h-4 w-4 shrink-0", isActive && "text-primary")}
-                      />
-                      {!rail && (
+              {group.items.map((item) =>
+                item.children ? (
+                  <div key={item.to} className="relative">
+                    <NavLink
+                      to={item.to}
+                      title={rail ? item.label : undefined}
+                      className={({ isActive }) =>
+                        cx(
+                          "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
+                          rail ? "justify-center px-0" : "px-2.5 pr-7",
+                          isActive
+                            ? "bg-primary-tint font-semibold text-ink"
+                            : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
                         <>
-                          <span className="truncate">{item.label}</span>
-                          {item.kbd && (
-                            <kbd className="ml-auto rounded-xs border border-line-subtle px-1.5 font-mono text-[10px] text-ink-4">
-                              {item.kbd}
-                            </kbd>
+                          {isActive && (
+                            <span className="absolute -left-3 top-2 bottom-2 w-0.5 rounded-sm bg-primary" />
+                          )}
+                          <Icon
+                            name={item.icon}
+                            className={cx("h-4 w-4 shrink-0", isActive && "text-primary")}
+                          />
+                          {!rail && (
+                            <>
+                              <span className="truncate">{item.label}</span>
+                              {item.kbd && (
+                                <kbd className="ml-auto rounded-xs border border-line-subtle px-1.5 font-mono text-[10px] text-ink-4">
+                                  {item.kbd}
+                                </kbd>
+                              )}
+                            </>
                           )}
                         </>
                       )}
-                    </>
-                  )}
-                </NavLink>
-              ))}
+                    </NavLink>
+                    {rail ? (
+                      /* 折叠态：子级以图标链接常驻（缩进半格，tooltip 提示），
+                         保证窄窗口/折叠侧栏下层级仍然可见可点 */
+                      <div className="mt-1 flex flex-col items-center gap-1">
+                        {item.children.map((child) => (
+                          <NavLink
+                            key={child.to}
+                            to={child.to}
+                            title={child.label}
+                            className={({ isActive }) =>
+                              cx(
+                                "grid h-8 w-8 place-items-center rounded-md transition-colors duration-(--motion-fast) ease-standard",
+                                isActive
+                                  ? "bg-primary-tint text-primary"
+                                  : "text-ink-4 hover:bg-surface-2 hover:text-ink",
+                              )
+                            }
+                          >
+                            <Icon name={child.icon} className="h-4 w-4" />
+                          </NavLink>
+                        ))}
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          aria-label={agentsExpanded ? "收起智能体子导航" : "展开智能体子导航"}
+                          aria-expanded={agentsExpanded}
+                          onClick={toggleAgentsOpen}
+                          className="absolute right-1.5 top-[13px] grid h-6 w-6 place-items-center rounded-md text-ink-4 transition-colors hover:bg-surface-2 hover:text-ink"
+                        >
+                          <Icon
+                            name="chevron"
+                            className={cx(
+                              "h-3.5 w-3.5 transition-transform duration-(--motion-fast) ease-standard",
+                              agentsExpanded && "rotate-90",
+                            )}
+                          />
+                        </button>
+                        <AnimatePresence initial={false}>
+                          {agentsExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: MOTION.fast, ease: EASE_STANDARD }}
+                            className="overflow-hidden"
+                          >
+                            <div className="relative mt-0.5 pb-0.5">
+                              <span
+                                className="absolute bottom-2 left-[15px] top-0 w-px bg-line-subtle"
+                                aria-hidden="true"
+                              />
+                              {item.children.map((child) => (
+                                <NavLink
+                                  key={child.to}
+                                  to={child.to}
+                                  className={({ isActive }) =>
+                                    cx(
+                                      "relative ml-[15px] flex items-center gap-2 rounded-md py-1.5 pl-6 pr-2 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
+                                      isActive
+                                        ? "bg-primary-tint font-semibold text-ink"
+                                        : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                                    )
+                                  }
+                                >
+                                  {({ isActive }) => (
+                                    <>
+                                      <span
+                                        className={cx(
+                                          "absolute top-1 bottom-1 w-0.5 rounded-sm",
+                                          isActive ? "-left-px bg-primary" : "bg-transparent",
+                                        )}
+                                      />
+                                      <Icon
+                                        name={child.icon}
+                                        className={cx(
+                                          "h-3.5 w-3.5 shrink-0",
+                                          isActive ? "text-primary" : "text-ink-3",
+                                        )}
+                                      />
+                                      <span className="truncate">{child.label}</span>
+                                    </>
+                                  )}
+                                </NavLink>
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                        </AnimatePresence>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === "/"}
+                    title={rail ? item.label : undefined}
+                    className={({ isActive }) =>
+                      cx(
+                        "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
+                        rail ? "justify-center px-0" : "px-2.5",
+                        isActive
+                          ? "bg-primary-tint font-semibold text-ink"
+                          : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                      )
+                    }
+                  >
+                    {({ isActive }) => (
+                      <>
+                        {isActive && (
+                          <span className="absolute -left-3 top-2 bottom-2 w-0.5 rounded-sm bg-primary" />
+                        )}
+                        <Icon
+                          name={item.icon}
+                          className={cx("h-4 w-4 shrink-0", isActive && "text-primary")}
+                        />
+                        {!rail && (
+                          <>
+                            <span className="truncate">{item.label}</span>
+                            {item.kbd && (
+                              <kbd className="ml-auto rounded-xs border border-line-subtle px-1.5 font-mono text-[10px] text-ink-4">
+                                {item.kbd}
+                              </kbd>
+                            )}
+                          </>
+                        )}
+                      </>
+                    )}
+                  </NavLink>
+                ),
+              )}
             </div>
           ))}
         </nav>
