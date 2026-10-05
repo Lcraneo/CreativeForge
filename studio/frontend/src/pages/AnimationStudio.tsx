@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import type { CreativeAsset } from "../types";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import type { ActionMatrixCell, CreativeAsset } from "../types";
 import { AssetLoadState } from "../components/AssetLoadState";
 import { ModelApiPanel } from "../components/ModelApiPanel";
 import { assetHref, useAssetLoader, useAssetStore } from "../stores/assetStore";
@@ -142,6 +142,89 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
     });
     return out;
   }, [historyQuery.data, hiddenIds]);
+
+  // 动作×视角矩阵：每个 (动作, 视角) 的最新交付状态；批次运行中每 3s 轮询，
+  // 终态后停止。仅补缺失=当前视角没有交付的动作；仅重试失败=质检异常动作
+  // 强制重新生成（后端 force_actions 绕过「已有即跳过」）。
+  const queryClient = useQueryClient();
+  const matrixQuery = useQuery({
+    queryKey: ["animation-matrix", asset?.id],
+    queryFn: () => api.animationMatrix(asset?.id),
+    enabled: Boolean(asset?.id),
+    refetchInterval: (query) => ((query.state.data?.batches?.length ?? 0) > 0 ? 3000 : false),
+  });
+  const matrixCellMap = useMemo(() => {
+    const map = new Map<string, ActionMatrixCell>();
+    for (const cell of matrixQuery.data?.cells ?? []) map.set(`${cell.action}|${cell.view}`, cell);
+    return map;
+  }, [matrixQuery.data]);
+  const matrixRunningMap = useMemo(() => {
+    const map = new Map<string, { status: string; stage?: string | null }>();
+    for (const batch of matrixQuery.data?.batches ?? [])
+      for (const task of batch.tasks)
+        if (task.status === "pending" || task.status === "generating")
+          map.set(`${task.action}|${task.view}`, { status: task.status, stage: task.stage });
+    return map;
+  }, [matrixQuery.data]);
+  const legacyUnknownCount = useMemo(
+    () =>
+      (matrixQuery.data?.cells ?? []).filter((cell) => !["side", "front"].includes(cell.view))
+        .length,
+    [matrixQuery.data],
+  );
+  const [matrixBusy, setMatrixBusy] = useState(false);
+
+  function matrixCellState(action: string, viewKey: string) {
+    const running = matrixRunningMap.get(`${action}|${viewKey}`);
+    if (running)
+      return {
+        state: running.status === "generating" ? "generating" : "queued",
+        hint: running.stage ?? undefined,
+      } as const;
+    const cell = matrixCellMap.get(`${action}|${viewKey}`);
+    if (!cell) return { state: "missing", hint: undefined } as const;
+    if (cell.state === "qa-warn" || cell.state === "qa-fail")
+      return { state: cell.state, hint: `质检 ${cell.qa_grade ?? ""}`.trim() } as const;
+    return {
+      state: "success",
+      hint: cell.source === "video" ? "AI 视频驱动" : cell.source ?? undefined,
+    } as const;
+  }
+
+  async function runMatrixFill(kind?: "retry") {
+    if (!asset?.id || matrixBusy) return;
+    const targets = ACTIONS.filter((action) => {
+      const key = `${action}|${view}`;
+      if (matrixRunningMap.has(key)) return false;
+      const cell = matrixCellMap.get(key);
+      if (kind === "retry") return cell?.state === "qa-warn" || cell?.state === "qa-fail";
+      return !cell;
+    });
+    if (targets.length === 0) {
+      toast({
+        tone: "info",
+        title: kind === "retry" ? "没有质检异常的动作" : "当前视角的动作已齐全",
+      });
+      return;
+    }
+    setMatrixBusy(true);
+    try {
+      await api.startActionBatch(asset.id, targets, {
+        view,
+        forceActions: kind === "retry" ? targets : undefined,
+      });
+      toast({
+        tone: "success",
+        title: `已入队 ${targets.length} 个动作（${view === "side" ? "侧视横版" : "正面"}）`,
+        description: kind === "retry" ? "质检异常动作将强制重新生成" : "已交付的结果自动跳过",
+      });
+      await queryClient.invalidateQueries({ queryKey: ["animation-matrix", asset.id] });
+    } catch (cause) {
+      toast({ tone: "danger", title: "批量生成失败", description: String(cause).slice(0, 160) });
+    } finally {
+      setMatrixBusy(false);
+    }
+  }
 
   // 载入历史人物（事件处理器；命名避开 use 前缀——非 Hook，react-hooks 规则按
   // 名字识别会误报"回调内调用 Hook"）
@@ -1106,6 +1189,109 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                     </div>
                   )}
                 </div>
+                {asset && (
+                  <Card
+                    title="动作 × 视角"
+                    icon="grid"
+                    right={
+                      <Badge tone={matrixRunningMap.size > 0 ? "primary" : "neutral"}>
+                        {matrixRunningMap.size > 0
+                          ? `生成中 ${matrixRunningMap.size} 项`
+                          : `已交付 ${matrixQuery.data?.cells.length ?? 0} 项`}
+                      </Badge>
+                    }
+                  >
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse text-[12.5px]">
+                        <thead>
+                          <tr className="text-left text-[10.5px] uppercase tracking-[0.08em] text-ink-4">
+                            <th className="px-2 py-1.5 font-semibold">动作</th>
+                            <th className="px-2 py-1.5 font-semibold">侧视横版</th>
+                            <th className="px-2 py-1.5 font-semibold">正面</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {ACTIONS.map((action) => (
+                            <tr key={action} className="border-t border-ink/[.06]">
+                              <td className="px-2 py-2 font-medium text-ink-2">
+                                {ACTION_LABELS[action] ?? action}
+                              </td>
+                              {["side", "front"].map((viewKey) => {
+                                const state = matrixCellState(action, viewKey);
+                                const chip = (() => {
+                                  switch (state.state) {
+                                    case "success":
+                                      return (
+                                        <Badge tone="success">
+                                          <Icon name="check" className="mr-1 inline h-3 w-3" />
+                                          已交付
+                                        </Badge>
+                                      );
+                                    case "qa-warn":
+                                      return (
+                                        <span title={state.hint}>
+                                          <Badge tone="warning">⚠ 质检警告</Badge>
+                                        </span>
+                                      );
+                                    case "qa-fail":
+                                      return (
+                                        <span title={state.hint}>
+                                          <Badge tone="danger">✗ 质检异常</Badge>
+                                        </span>
+                                      );
+                                    case "queued":
+                                      return <Badge tone="primary">◔ 排队</Badge>;
+                                    case "generating":
+                                      return (
+                                        <Badge tone="primary">
+                                          {state.hint === "video" ? "生成中·视频" : "生成中"}
+                                        </Badge>
+                                      );
+                                    default:
+                                      return <span className="text-[11.5px] text-ink-4">缺失</span>;
+                                  }
+                                })();
+                                return (
+                                  <td key={viewKey} className="px-2 py-2">
+                                    {chip}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {legacyUnknownCount > 0 && (
+                      <p className="mt-2 text-[11px] text-ink-4">
+                        另有 {legacyUnknownCount} 条早期记录未记录视角，不计入矩阵；重新生成后会自动归位。
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span className="text-[11px] text-ink-4">
+                        操作视角：{view === "side" ? "侧视横版" : "正面"}（下方「生成视角」可切换；侧视需已生成侧视源图）
+                      </span>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="spark"
+                        loading={matrixBusy}
+                        onClick={() => void runMatrixFill()}
+                      >
+                        仅补缺失
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="refresh"
+                        loading={matrixBusy}
+                        onClick={() => void runMatrixFill("retry")}
+                      >
+                        仅重试失败
+                      </Button>
+                    </div>
+                  </Card>
+                )}
                 {useVideo && (
                   <div className="rounded-lg border border-line-subtle bg-surface-2/40 px-3 py-2 text-[11.5px] text-ink-3">
                     AI 视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。

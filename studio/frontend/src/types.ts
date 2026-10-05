@@ -703,3 +703,39 @@ export interface PlaytestPreviews {
   source?: "rigged" | "procedural" | string;
   character?: PlaytestCharacter | null;
 }
+
+/** 动作×视角矩阵：单个 (动作, 视角) 的最新 AI 动画交付 */
+export interface ActionMatrixCell {
+  action: string;
+  view: string;
+  state: "success" | "qa-warn" | "qa-fail";
+  animation_id: string;
+  qa_grade?: string | null;
+  source?: string | null;
+  created_at?: number | null;
+  thumb_url?: string | null;
+}
+
+export interface ActionMatrixBatchTask {
+  action: string;
+  view: string;
+  status: string;
+  stage?: string | null;
+  note?: string | null;
+}
+
+export interface ActionMatrixBatch {
+  id: string;
+  status: string;
+  view: string;
+  total: number;
+  tasks: ActionMatrixBatchTask[];
+}
+
+export interface ActionMatrix {
+  asset_id: string | null;
+  actions: string[];
+  views: string[];
+  cells: ActionMatrixCell[];
+  batches: ActionMatrixBatch[];
+}

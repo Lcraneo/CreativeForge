@@ -712,6 +712,7 @@ def build_router(runtime):
                     final_quality=request.final_quality,
                     equipment_aware=request.equipment_aware,
                     action_description=(request.action_description or "").strip()[:500],
+                    view=request.view,
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -912,7 +913,9 @@ def build_router(runtime):
     @router.post("/animation/batch-actions")
     def start_action_batch(request: dict):
         """一键补齐全套动作：为资产串行生成缺失动作的 AI 动画（视频驱动），
-        已生成的自动跳过。返回 batch_id 供轮询。"""
+        已生成的自动跳过；``force_actions``（质检异常重试）强制重新生成。
+        ``view`` 决定本批视角与源图：side 用设计三视图的侧视图，front 用
+        AI 原画。返回 batch_id 供轮询。"""
 
         from studio.backend.animation_service.service import AnimationService
 
@@ -922,11 +925,14 @@ def build_router(runtime):
         settings = runtime.model_settings.effective()
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="AI 动画生成需要先启用自定义模型")
-        source = AnimationService(ANIMATION_DIR)._asset_render(asset)
+        view = request.get("view") or "front"
+        source = AnimationService(ANIMATION_DIR)._asset_render(asset, view=view)
         if not source:
             art_meta = [asset.get("image"), (asset.get("source") or {}).get("ai_image")]
             detail = "该资产没有可用的 AI 原画"
-            if any(
+            if view == "side":
+                detail = "该资产还没有侧视源图——先在「设计三视图」生成侧视图，再补侧视动作"
+            elif any(
                 isinstance(m, dict) and (m.get("file") or m.get("url") or m.get("path"))
                 for m in art_meta
             ):
@@ -935,11 +941,26 @@ def build_router(runtime):
 
         service = AnimationService(ANIMATION_DIR)
         batch_id = service.start_action_batch(
-            asset.get("id"), source, settings,
+            asset.get("id"),
+            source,
+            settings,
             actions=request.get("actions"),
             enhance_context=_enhance_context_for(asset),
+            view=view,
+            force_actions=request.get("force_actions"),
         )
         return {"batch_id": batch_id, "snapshot": service.action_batch_snapshot(batch_id)}
+
+    @router.get("/animation/matrix")
+    def animation_matrix(asset_id: str | None = None):
+        """动作×视角矩阵：每个 (动作, 视角) 的最新交付状态（成功/质检异常/
+        缺失）与运行中批次，供「仅补缺失 / 仅重试失败」。"""
+
+        from studio.backend.animation_service.service import AnimationService
+
+        asset = _resolve_asset(runtime, asset_id) if asset_id else None
+        resolved_id = (asset or {}).get("id") or asset_id
+        return AnimationService(ANIMATION_DIR).action_matrix(resolved_id)
 
     @router.get("/animation/batch-actions/{batch_id}")
     def action_batch_status(batch_id: str):

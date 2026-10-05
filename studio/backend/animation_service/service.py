@@ -531,6 +531,97 @@ class AnimationService:
                 done.add(action)
         return done
 
+    def action_matrix(self, asset_id: str | None) -> dict:
+        """动作×视角矩阵：该资产每个 (动作, 视角) 的最新交付状态。
+
+        state 取值：success（质检通过或未跑质检）/ qa-warn / qa-fail（质检
+        异常，可强制重试）。历史 meta 无 view 字段时按 unknown 归档——
+        新生成的产物都会记录 view，矩阵随使用逐步补全。运行中的补齐批次
+        单独返回，前端把 pending/generating 渲染为排队/生成中。"""
+
+        import glob as _glob
+
+        cells: dict[tuple[str, str], dict] = {}
+        if asset_id:
+            for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
+                try:
+                    with open(meta_path, "r", encoding="utf-8") as handle:
+                        meta = json.load(handle)
+                except (ValueError, OSError):
+                    continue
+                if meta.get("asset_id") != asset_id:
+                    continue
+                action = meta.get("requested_action") or meta.get("action")
+                if not action:
+                    continue
+                frame_urls = meta.get("frame_urls") or []
+                local = sum(
+                    1
+                    for url in frame_urls
+                    if os.path.isfile(os.path.join(self.directory, os.path.basename(url)))
+                )
+                if local < 2:
+                    continue
+                view = meta.get("view") or meta.get("view_bound") or "unknown"
+                grade = (meta.get("qa") or {}).get("grade")
+                state = (
+                    "qa-fail"
+                    if grade == "fail"
+                    else ("qa-warn" if grade == "warn" else "success")
+                )
+                try:
+                    updated = meta.get("created_at") or os.path.getmtime(meta_path)
+                except OSError:
+                    updated = None
+                cell = {
+                    "action": action,
+                    "view": view,
+                    "state": state,
+                    "animation_id": meta.get("id")
+                    or os.path.basename(meta_path).rsplit(".json", 1)[0],
+                    "qa_grade": grade,
+                    "source": meta.get("source"),
+                    "created_at": updated,
+                    "thumb_url": (meta.get("urls") or {}).get("thumb")
+                    or (frame_urls[0] if frame_urls else None),
+                }
+                key = (action, view)
+                prev = cells.get(key)
+                if prev is None or (cell["created_at"] or 0) >= (prev["created_at"] or 0):
+                    cells[key] = cell
+
+        batches = []
+        for batch in self.action_batches.values():
+            if batch.get("asset_id") != asset_id or batch.get("status") != "running":
+                continue
+            batch_view = batch.get("view", "front")
+            batches.append(
+                {
+                    "id": batch.get("id"),
+                    "status": batch.get("status"),
+                    "view": batch_view,
+                    "total": batch.get("total", 0),
+                    "tasks": [
+                        {
+                            "action": task.get("action"),
+                            "view": task.get("view", batch_view),
+                            "status": task.get("status"),
+                            "stage": task.get("stage"),
+                            "note": task.get("note"),
+                        }
+                        for task in batch.get("tasks", [])
+                    ],
+                }
+            )
+
+        return {
+            "asset_id": asset_id,
+            "actions": list(ACTIONS),
+            "views": ["side", "front"],
+            "cells": list(cells.values()),
+            "batches": batches,
+        }
+
     def start_action_batch(
         self,
         asset_id: str,
@@ -538,9 +629,13 @@ class AnimationService:
         settings: dict[str, Any],
         actions: list[str] | None = None,
         enhance_context: str | None = None,
+        view: str = "front",
+        force_actions: list[str] | None = None,
     ) -> str:
         """为资产串行补齐缺失动作的 AI 动画（视频驱动）。已生成的动作自动
-        跳过；批次状态存内存供前端轮询。``enhance_context`` 传给动作描述
+        跳过；``force_actions``（质检异常重试）绕过跳过逻辑强制重新生成。
+        ``view`` 记录本批次的视角（源图即该视角），写入批次任务与产物 meta。
+        批次状态存内存供前端轮询。``enhance_context`` 传给动作描述
         AI 增强（角色名/简介上下文）。"""
 
         import threading
@@ -549,36 +644,55 @@ class AnimationService:
         _prune_action_batches()
 
         wanted = [a for a in (actions or ["idle", "walk", "run", "attack", "jump"]) if a in ACTIONS]
+        forced = {a for a in (force_actions or []) if a in ACTIONS}
         done = self.existing_ai_actions(asset_id)
-        pending = [a for a in wanted if a not in done]
+        pending = [a for a in wanted if a not in done or a in forced]
 
         batch_id = _uuid.uuid4().hex[:8]
+        tasks = []
+        for a in wanted:
+            if a in pending:
+                tasks.append(
+                    {
+                        "action": a,
+                        "status": "pending",
+                        "view": view,
+                        "note": "重试质检异常" if a in forced and a in done else None,
+                    }
+                )
+            else:
+                tasks.append(
+                    {"action": a, "status": "skipped", "view": view, "note": "已有 AI 动画"}
+                )
         self.action_batches[batch_id] = {
             "id": batch_id,
             "asset_id": asset_id,
             "status": "running" if pending else "done",
+            "view": view,
             "total": len(pending),
             "created_at": time.time(),
-            "tasks": [
-                {"action": a, "status": "skipped", "note": "已有 AI 动画"}
-                for a in wanted
-                if a not in pending
-            ] + [
-                {"action": a, "status": "pending"}
-                for a in pending
-            ],
+            "tasks": tasks,
         }
         if pending:
             thread = threading.Thread(
                 target=self._run_action_batch,
-                args=(batch_id, asset_id, source_bytes, settings, pending, enhance_context),
+                args=(batch_id, asset_id, source_bytes, settings, pending, enhance_context, view),
                 name="cf-action-batch-{}".format(batch_id),
                 daemon=True,
             )
             thread.start()
         return batch_id
 
-    def _run_action_batch(self, batch_id, asset_id, source_bytes, settings, pending, enhance_context=None):
+    def _run_action_batch(
+        self,
+        batch_id,
+        asset_id,
+        source_bytes,
+        settings,
+        pending,
+        enhance_context=None,
+        view: str = "front",
+    ):
         import random as _random
 
         from studio.backend.animation_service.equipment import (
@@ -647,6 +761,7 @@ class AnimationService:
                 meta["video_model"] = video_model
                 meta["asset_id"] = asset_id
                 meta["requested_action"] = action
+                meta["view"] = view  # 动作×视角矩阵：批次产物同样记录视角
                 # V3.5 生成后自动质检（批次链）：同单条链路语义
                 try:
                     from studio.backend.animation_service.motion_qa import post_validate
@@ -1210,6 +1325,7 @@ class AnimationService:
         final_quality: bool = False,
         equipment_aware: bool = True,
         action_description: str | None = None,
+        view: str = "front",
         progress_cb=None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
@@ -1371,10 +1487,12 @@ class AnimationService:
             meta["urls"]["video"] = f"/api/animation/{animation_id}.mp4"
             meta["video_spec"] = video_spec
         # 记录归属资产与真实动作（compose 会把 action 覆盖为 "sequence"），
-        # 试玩舞台按「资产 + 动作」匹配 AI 动画帧。
+        # 试玩舞台按「资产 + 动作」匹配 AI 动画帧。view 供动作×视角矩阵与
+        # 补缺失/重试判定（历史记录无 view 字段时矩阵按 unknown 归档）。
         if asset_id:
             meta["asset_id"] = asset_id
         meta["requested_action"] = action
+        meta["view"] = view
         if enhanced_prompt != base_prompt:
             meta["prompt_enhanced"] = True
             meta["motion_prompt"] = prompt[:400]
@@ -1780,16 +1898,24 @@ class AnimationService:
             )
         return spec
 
-    def _asset_render(self, asset: dict[str, Any]):
-        """Local source image bytes for the asset (generated dir / AI 原画), or None."""
+    def _asset_render(self, asset: dict[str, Any], view: str = "front"):
+        """Local source image bytes for the asset (generated dir / AI 原画), or None.
+
+        view="side" 时优先解析设计三视图的侧视图（AI 生成），供侧视横版
+        动画批次使用；没有侧视图时返回 None，由调用方给出可操作的提示。"""
         from studio.backend.model_service.service import GENERATED_DIR
 
         base = GENERATED_DIR
         candidates: list[str] = []
-        metas = [asset.get("image")]
+        metas: list[Any] = [asset.get("image")]
         source = asset.get("source")
         if isinstance(source, dict):
             metas.append(source.get("ai_image"))
+        if view == "side":
+            design_views = asset.get("design_views")
+            if isinstance(design_views, dict):
+                # 侧视源图置顶：同链路解析（path/file/url + 远端落地）
+                metas.insert(0, design_views.get("side"))
         for meta in metas:
             if not isinstance(meta, dict):
                 continue

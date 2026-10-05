@@ -357,13 +357,27 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ target }),
     }),
-  startActionBatch: (assetId: string, actions?: string[]) =>
+  startActionBatch: (
+    assetId: string,
+    actions?: string[],
+    opts?: { view?: string; forceActions?: string[] },
+  ) =>
     request<{ batch_id: string; snapshot: ActionBatchSnapshot }>("/api/animation/batch-actions", {
       method: "POST",
-      body: JSON.stringify({ asset_id: assetId, actions }),
+      body: JSON.stringify({
+        asset_id: assetId,
+        actions,
+        view: opts?.view,
+        force_actions: opts?.forceActions,
+      }),
     }),
   actionBatchStatus: (batchId: string) =>
     request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`),
+  /** 动作×视角矩阵：每个 (动作, 视角) 的最新交付状态与运行中批次 */
+  animationMatrix: (assetId?: string | null) =>
+    request<import("../types").ActionMatrix>(
+      `/api/animation/matrix${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
+    ),
   rigCheck: (assetId?: string | null) =>
     request<{
       proportion: string;
