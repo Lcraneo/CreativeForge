@@ -7,7 +7,6 @@ import { toast } from "../stores/toastStore";
  * studio_token 属于凭证，刻意不进导出文件。 */
 const PREFERENCE_KEYS = [
   { key: "cf-rail", label: "侧栏折叠状态" },
-  { key: "cf-onboarded", label: "新手引导已读" },
   { key: "creativeforge.toon-settings", label: "三渲二卡通渲染参数" },
 ] as const;
 

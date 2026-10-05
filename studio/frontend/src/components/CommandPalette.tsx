@@ -93,14 +93,6 @@ export function CommandPalette({
         run: () => go("/design"),
       },
       {
-        id: "pixel",
-        label: "像素工作台",
-        group: "资产",
-        icon: "grid",
-        keywords: "precon pixel 像素",
-        run: () => go("/pixel"),
-      },
-      {
         id: "animation",
         label: "动画工作台",
         group: "资产",

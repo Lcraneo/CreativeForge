@@ -263,15 +263,6 @@ export interface ProviderPreset {
   note?: string;
 }
 
-/** 风格提示词模板（确定性风格条款，幂等拼接到提示词尾部） */
-export interface StyleTemplate {
-  id: string;
-  label: string;
-  clause: string;
-  negative?: string;
-  note?: string;
-}
-
 export interface PromptEnhance {
   prompt: string;
   model: string;
@@ -702,12 +693,4 @@ export interface PlaytestPreviews {
   fps?: number;
   source?: "rigged" | "procedural" | string;
   character?: PlaytestCharacter | null;
-}
-
-export interface PixelEditResult {
-  status: string;
-  asset_id: string | null;
-  size: number;
-  edited_png: string | null;
-  image_url: string;
 }

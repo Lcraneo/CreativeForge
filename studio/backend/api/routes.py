@@ -115,11 +115,6 @@ class PreviewFrameRequest(BaseModel):
     image: str | None = None  # 可选上传源图（base64），优先于 asset_id
 
 
-class PlanRequest(BaseModel):
-    goal: str
-    asset_id: str | None = None
-
-
 class EnhanceRequest(BaseModel):
     goal: str
     overrides: dict | None = None
@@ -166,11 +161,6 @@ class BatchRequest(BaseModel):
 
 class RollbackRequest(BaseModel):
     record_ids: list[str]
-
-
-class PixelEditRequest(BaseModel):
-    pixels: list  # [[hex|null]] 方形颜色矩阵
-    palette: list[str] | None = None
 
 
 class ReviewRequest(BaseModel):
@@ -325,16 +315,6 @@ def build_router(runtime):
             "status": "running",
             "stream_url": "/ws/tasks/{}/stream".format(task_id),
         }
-
-    @router.post("/plan")
-    def plan_task(request: PlanRequest):
-        """Dynamic Creative Planner: goal -> capability plan (before running)."""
-        from studio.backend.plan_service import build_plan
-
-        goal = request.goal.strip()
-        if not goal:
-            raise HTTPException(status_code=422, detail="goal is required")
-        return build_plan(goal, request.asset_id)
 
     @router.get("/tasks")
     def list_tasks():
@@ -643,17 +623,6 @@ def build_router(runtime):
         if path is None:
             raise HTTPException(status_code=404, detail="unknown image")
         return FileResponse(path)
-
-    @router.get("/design/style-templates")
-    def list_style_templates():
-        """风格提示词模板库：确定性风格条款（前端幂等拼接到提示词尾部，
-        与对话增强互补的质量下限保障）。返回有序列表。"""
-
-        from studio.backend.model_service.style_templates import STYLE_TEMPLATES
-
-        return {
-            "templates": [dict(id=key, **tpl) for key, tpl in STYLE_TEMPLATES.items()]
-        }
 
     @router.post("/design/views")
     def generate_design_views(request: dict):
@@ -1536,14 +1505,6 @@ def build_router(runtime):
         runtime.history.patch_asset(saved.get("id"), {"cutout_png": url})
         return {"status": "ok", "cutout_png": url, "asset_id": saved.get("id")}
 
-    @router.get("/plan/capabilities")
-    def plan_capabilities():
-        """能力自省（扩展性）：规划器可调度能力清单。"""
-
-        from studio.backend.plan_service import capabilities
-
-        return capabilities()
-
     # ------------------------------------------------------------------
     # OneTake 发布展示视频（External Creative Capability）
     # ------------------------------------------------------------------
@@ -2028,96 +1989,6 @@ def build_router(runtime):
         result = ExportService(EXPORTS_DIR).export_batch(assets, request.engine)
         result.pop("path", None)
         return result
-
-    # ------------------------------------------------------------------
-    # P2 像素工作台：编辑保存 + 编辑版渲染图
-    # ------------------------------------------------------------------
-
-    @router.put("/assets/{asset_id}/pixel")
-    def save_pixel_edit(asset_id: str, request: PixelEditRequest):
-        """保存像素编辑：更新 CreativeAsset 的 pixel.pixels / 调色板，
-        服务端把编辑矩阵渲染为 PNG 落盘（edited_png），资产与历史同步。"""
-
-        import re as _re
-
-        from studio.backend.model_service.service import GENERATED_DIR
-
-        asset = _resolve_asset(runtime, asset_id)
-        if asset is None:
-            raise HTTPException(status_code=404, detail="unknown asset")
-
-        pixels = request.pixels
-        size = len(pixels)
-        if size == 0 or size > 128 or any(len(row) != size for row in pixels):
-            raise HTTPException(status_code=422, detail="pixels 必须是 1..128 的方形矩阵")
-        hex_pattern = _re.compile(r"^#[0-9a-fA-F]{6}$")
-        cleaned = []
-        for row in pixels:
-            out_row = []
-            for cell in row:
-                if cell is None:
-                    out_row.append(None)
-                elif isinstance(cell, str) and hex_pattern.match(cell):
-                    out_row.append(cell.lower())
-                else:
-                    raise HTTPException(status_code=422, detail="颜色格式必须是 #RRGGBB 或 null")
-            cleaned.append(out_row)
-
-        pixel = asset.setdefault("pixel", {})
-        pixel["pixels"] = cleaned
-        palette_colors = None
-        if request.palette:
-            palette_colors = []
-            for color in request.palette:
-                if (
-                    isinstance(color, str)
-                    and hex_pattern.match(color)
-                    and color.lower() not in palette_colors
-                ):
-                    palette_colors.append(color.lower())
-            palette_block = pixel.setdefault("palette", {})
-            palette_block["colors"] = palette_colors
-            palette_block["max_colors"] = max(
-                palette_block.get("max_colors", 0), len(palette_colors)
-            )
-
-        # 编辑矩阵 -> PNG（每格 8px，透明底），供资产页/导出直接消费
-        try:
-            from io import BytesIO
-
-            from PIL import Image as PILImage
-
-            scale = 8
-            image = PILImage.new("RGBA", (size * scale, size * scale), (0, 0, 0, 0))
-            load = image.load()
-            for y, row in enumerate(cleaned):
-                for x, color in enumerate(row):
-                    if not color:
-                        continue
-                    rgb = (int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16))
-                    for dy in range(scale):
-                        for dx in range(scale):
-                            load[x * scale + dx, y * scale + dy] = rgb + (255,)
-            buffer = BytesIO()
-            image.save(buffer, "PNG")
-            name = "{}_edited_{:.0f}.png".format(asset_id, time.time() * 1000)
-            with open(os.path.join(GENERATED_DIR, name), "wb") as handle:
-                handle.write(buffer.getvalue())
-            pixel["edited_png"] = "/api/generated/" + name
-            pixel["edited_at"] = time.time()
-        except Exception:  # noqa: BLE001 - PNG render is best-effort
-            pass
-
-        saved = dict(asset)
-        runtime.assets.save(saved)
-        runtime.history.patch_asset(asset_id, {"pixel": pixel})
-        return {
-            "status": "ok",
-            "asset_id": saved.get("id"),
-            "size": size,
-            "edited_png": pixel.get("edited_png"),
-            "image_url": "/api/assets/{}/image.png?v={:.0f}".format(saved.get("id"), time.time()),
-        }
 
     @router.post("/open-folder")
     def open_folder(request: OpenFolderRequest):

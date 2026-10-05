@@ -12,8 +12,6 @@ const ExportCenter = lazy(() => import("./pages/ExportCenter"));
 const HistoryCenter = lazy(() => import("./pages/HistoryCenter"));
 const DesignCenter = lazy(() => import("./pages/DesignCenter"));
 const SettingsCenter = lazy(() => import("./pages/SettingsCenter"));
-const PixelStudio = lazy(() => import("./pages/PixelStudio"));
-const CreativeStudio = lazy(() => import("./pages/CreativeStudio"));
 const BatchCenter = lazy(() => import("./pages/BatchCenter"));
 const PlaytestStage = lazy(() => import("./pages/PlaytestStage"));
 const ShowcaseStudio = lazy(() => import("./pages/ShowcaseStudio"));
@@ -45,8 +43,7 @@ export default function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<CreativeStudio />} />
-            <Route path="creative" element={<CreativeStudio />} />
+            <Route index element={<Workspace />} />
             <Route path="workspace" element={<Workspace />} />
             <Route path="agents" element={<AgentDashboard />} />
             <Route path="history" element={<HistoryCenter />} />
@@ -55,7 +52,6 @@ export default function App() {
             <Route path="asset" element={<AssetInspector />} />
             <Route path="design" element={<DesignCenter />} />
             <Route path="settings" element={<SettingsCenter />} />
-            <Route path="pixel" element={<PixelStudio />} />
             <Route path="animation" element={<AnimationStudio />} />
             <Route path="playtest" element={<PlaytestStage />} />
             <Route path="showcase" element={<ShowcaseStudio />} />

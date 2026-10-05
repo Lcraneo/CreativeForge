@@ -21,7 +21,7 @@ import type { ModelSettings, ProviderPreset } from "../types";
 
 /**
  * 统一的 API 配置面板（P1 任务 2）：
- * - 嵌入各工作台（scope=image → 创作工作台；scope=video → 动画工作台）
+ * - 嵌入各工作台（scope=image → 工作台；scope=video → 动画工作台）
  * - 与「模型广场」（SettingsCenter）共享同一份 ["model-settings"] 数据源，
  *   保存后写回全局缓存并失效查询 → 双向同步、天然一致，无冲突可能
  * - 统一 UI/UX：字段、校验、保存/测试交互与模型广场完全一致

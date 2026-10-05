@@ -25,12 +25,7 @@ async def main():
         r = await c.get("/asset")
         check("前端路由硬刷新兜底 200", r.status_code == 200)
 
-        # ── 2. 规划/任务 ──
-        r = await c.post("/api/plan", json={"goal": ""})
-        check("空 goal 规划被拒(422/400)", r.status_code in (400, 422), str(r.status_code))
-        r = await c.post("/api/plan", json={"goal": "做一个像素风骑士，带攻击动画"})
-        d = r.json()
-        check("规划返回任务图", r.status_code == 200 and isinstance(d.get("tasks"), list) and len(d["tasks"]) > 0)
+        # ── 2. 任务 ──
         r = await c.get("/api/tasks")
         check("任务列表 200", r.status_code == 200 and isinstance(r.json(), list))
 
@@ -47,9 +42,6 @@ async def main():
         check("三视图拼图 200/png 或 404 可解释", r.status_code in (200, 404))
         r = await c.get("/api/assets/ast_nonexist")
         check("未知资产详情 404", r.status_code == 404)
-        for bad, label in (({"pixels": []}, "空矩阵"), ({"pixels": [[1, 2], [3]]}, "非方阵"), ({"pixels": [["zzz"]]}, "非法hex")):
-            r = await c.put(f"/api/assets/{aid}/pixel", json=bad)
-            check(f"pixel 非法输入·{label} 被拒", r.status_code in (400, 422), str(r.status_code))
 
         # ── 4. 历史/版本 ──
         r = await c.get("/api/history?limit=5")
@@ -149,8 +141,6 @@ async def main():
         check("队列快照 200", r.status_code == 200)
         r = await c.get("/api/playtest/previews")
         check("试玩预览列表 200", r.status_code == 200)
-        r = await c.get("/api/design/style-templates")
-        check("风格模板 200", r.status_code == 200)
         r = await c.get("/api/generated/definitely-missing.png")
         check("生成文件未知名 404", r.status_code == 404)
         r = await c.get("/api/storage/configs")

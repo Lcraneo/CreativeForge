@@ -16,7 +16,6 @@ import type {
   BatchExportResult,
   BatchStatus,
   CharacterPackageResult,
-  PixelEditResult,
   RollbackRecord,
   TaskEvent,
   TaskSummary,
@@ -265,30 +264,6 @@ export interface VideoTaskSnapshot {
   error_kind?: string;
 }
 
-export interface PlanTask {
-  id: string;
-  capability: string;
-  agent: string;
-  action: string;
-  engine?: string;
-}
-
-export interface PlanResult {
-  goal: string;
-  asset_id?: string | null;
-  mode: string;
-  intent: {
-    engine: string;
-    style: string;
-    animation: boolean;
-    static: boolean;
-    pixel: boolean;
-    modify: boolean;
-    engine_import: boolean;
-  };
-  tasks: PlanTask[];
-}
-
 let lastToastKey = "";
 let lastToastAt = 0;
 
@@ -433,23 +408,10 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
-  /* ── P2 像素编辑 ── */
-  savePixelEdit: (assetId: string, pixels: Array<Array<string | null>>, palette?: string[]) =>
-    request<PixelEditResult>(`/api/assets/${assetId}/pixel`, {
-      method: "PUT",
-      body: JSON.stringify({ pixels, palette }),
-    }),
-
   createTask: (goal: string, overrides?: GenerationOverrides, turbo?: boolean) =>
     request<{ task_id: string; status: string; stream_url: string }>("/api/tasks", {
       method: "POST",
       body: JSON.stringify({ goal, overrides, turbo }),
-    }),
-
-  plan: (goal: string, assetId?: string) =>
-    request<PlanResult>("/api/plan", {
-      method: "POST",
-      body: JSON.stringify({ goal, asset_id: assetId }),
     }),
 
   enhancePrompt: (goal: string, overrides?: GenerationOverrides) =>
@@ -582,11 +544,6 @@ export const api = {
   getModelPresets: () =>
     request<{ presets: Record<string, import("../types").ProviderPreset> }>(
       "/api/settings/model/presets",
-    ),
-
-  listStyleTemplates: () =>
-    request<{ templates: import("../types").StyleTemplate[] }>(
-      "/api/design/style-templates",
     ),
 
   saveModelSettings: (

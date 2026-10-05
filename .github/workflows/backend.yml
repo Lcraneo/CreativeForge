@@ -36,7 +36,6 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          python studio/backend/tests/test_dynamic_plan_api.py | tee studio_plan_tests.log
           python studio/backend/tests/test_playtest_demo_api.py | tee studio_playtest_tests.log
 
       - name: Release gates L1-L5

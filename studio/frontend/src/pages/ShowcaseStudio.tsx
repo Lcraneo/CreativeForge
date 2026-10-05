@@ -221,7 +221,7 @@ export default function ShowcaseStudio() {
             <p className="p-3 text-xs text-ink-3">读取近期生成记录…</p>
           ) : people.length === 0 ? (
             <p className="p-3 text-xs text-ink-3">
-              还没有可用角色——先去创作工作台生成角色并补齐动作，再来生成发布片。
+              还没有可用角色——先去工作台生成角色并补齐动作，再来生成发布片。
             </p>
           ) : (
             <div className="flex flex-col gap-2">

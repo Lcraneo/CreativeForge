@@ -676,7 +676,7 @@ export default function PlaytestStage() {
             <Icon name="clock" className="h-3 w-3" />
             {rigged
               ? "动作帧由当前角色原画实时变形渲染；更高质量版本可在动画工作台生成。"
-              : "暂无当前资产：先在创作工作台生成角色，试玩舞台会自动绑定它的原画。"}
+              : "暂无当前资产：先在工作台生成角色，试玩舞台会自动绑定它的原画。"}
           </p>
         </Card>
       </div>
@@ -687,7 +687,7 @@ export default function PlaytestStage() {
             <p className="p-3 text-xs text-ink-3">读取近期生成记录…</p>
           ) : people.length === 0 ? (
             <p className="p-3 text-xs text-ink-3">
-              还没有可用的人物——先去创作工作台生成一个角色，再回到这里挑选。
+              还没有可用的人物——先去工作台生成一个角色，再回到这里挑选。
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">

@@ -135,7 +135,7 @@ export default function VersionCenter() {
           bodyClassName="p-0"
         >
           {groupList.length === 0 ? (
-            <p className="p-4 text-xs text-ink-3">还没有历史版本，先去创作工作台生成资产。</p>
+            <p className="p-4 text-xs text-ink-3">还没有历史版本，先去工作台生成资产。</p>
           ) : (
             <div className="max-h-[560px] overflow-y-auto">
               {groupList.map((group) => (

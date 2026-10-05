@@ -19,8 +19,7 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "生产",
     items: [
-      { to: "/", label: "创作工作台", icon: "spark", kbd: "1" },
-      { to: "/workspace", label: "经典工作台", icon: "panel" },
+      { to: "/", label: "工作台", icon: "panel", kbd: "1" },
       { to: "/agents", label: "智能体", icon: "layers", kbd: "2" },
       { to: "/history", label: "历史记录", icon: "clock" },
       { to: "/batch", label: "批量生产线", icon: "package" },
@@ -33,7 +32,6 @@ const NAV_GROUPS: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { to: "/asset", label: "资产检查", icon: "cube", kbd: "3" },
       { to: "/design", label: "设计三视图", icon: "layers" },
-      { to: "/pixel", label: "像素工作台", icon: "grid" },
       { to: "/versions", label: "版本控制", icon: "clock" },
       { to: "/animation", label: "动画工作台", icon: "film" },
     ],
@@ -58,9 +56,8 @@ const MOBILE_TABS: NavItem[] = [
 ];
 
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
-  "/": { group: "生产", label: "创作工作台" },
-  "/creative": { group: "生产", label: "创作工作台" },
-  "/workspace": { group: "生产", label: "经典工作台" },
+  "/": { group: "生产", label: "工作台" },
+  "/workspace": { group: "生产", label: "工作台" },
   "/agents": { group: "生产", label: "智能体指挥中心" },
   "/history": { group: "生产", label: "历史记录" },
   "/batch": { group: "生产", label: "批量生产线" },
@@ -68,7 +65,6 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/versions": { group: "资产", label: "版本控制中心" },
   "/asset": { group: "资产", label: "资产检查器" },
   "/design": { group: "资产", label: "角色设计三视图" },
-  "/pixel": { group: "资产", label: "像素工作台" },
   "/animation": { group: "资产", label: "动画工作台" },
   "/export": { group: "交付", label: "导出中心" },
   "/benchmark": { group: "洞察", label: "基准中心" },

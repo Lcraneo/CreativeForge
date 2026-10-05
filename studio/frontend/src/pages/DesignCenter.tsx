@@ -147,9 +147,6 @@ export default function DesignCenter() {
                 {views?.side ? "重新生成三视图" : "生成 AI 三视图"}
               </Button>
             )}
-            <Button variant="secondary" icon="grid" onClick={() => navigate("/pixel")}>
-              像素工作台
-            </Button>
           </>
         }
       />
