@@ -212,6 +212,7 @@ class ModelSettingsRequest(BaseModel):
     video_size: str | None = None
     video_prompt_extend: bool | None = None
     video_ai_enhance: bool | None = None  # 动作描述 AI 增强（对话模型润色 i2v 提示词）
+    image_fallback_policy: str | None = None  # 生图失败策略：strict（默认，报错终止）/ degrade（降级离线示意）
     timeout: int | None = None
     api_key_pool_add: list[str] | None = None  # 备用 Key 追加（每项一把）
     api_key_pool: list[str] | None = None  # 整池覆盖（清空传 []）

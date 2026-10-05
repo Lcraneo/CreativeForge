@@ -848,6 +848,82 @@ def _():
     assert not failures, "motion quality regression: {}".format("、".join(failures))
 
 
+@check("model-service", "image soften pass neutralizes IP names for moderation retry")
+def _():
+    """生图审核二轮重试的前置：_soften_prompt 必须把知名 IP 角色名（哆啦A梦
+    等平台风控头号诱因）改写为视觉特征描述、攻击性词汇中性化，并追加合规
+    尾缀；对无 IP 文本同样安全（只加尾缀不误伤）。改写失败 = 「哆啦A梦」
+    类输入在审核拦截后无自愈能力（runtime._call_external 会退回离线示意）。"""
+
+    from studio.backend.model_service.service import _soften_prompt
+
+    softened = _soften_prompt("蓝胖子哆啦A梦，圆滚滚身体，大眼睛，attack pose with sword")
+    assert "哆啦A梦" not in softened, "IP name survived soften: {}".format(softened[:80])
+    assert "圆滚滚机器猫" in softened, "IP replaced without visual traits preserved"
+    assert "attack" not in softened and "sword" not in softened, "attack verbs survived soften"
+    assert "Family-friendly" in softened, "compliance suffix missing"
+    plain = _soften_prompt("一只普通的橘猫，站在草地上")
+    assert "橘猫" in plain and "普通的" in plain, "soften must not mangle safe text"
+    assert plain.endswith("no realistic harm.") or "Family-friendly" in plain
+
+
+@check("model-service", "hard IP names are proactively neutralized (no suffix)")
+def _():
+    """D 主动 IP 中性化：现代版权角色（哆啦A梦/皮卡丘等平台必拦项）在送
+    模型前就被替换为视觉特征且**不追加**合规尾缀（保持提示词干净）；古典
+    人物（孙悟空）不在主动档——保留原文，由审核拦截后的安全改写轮兜底。"""
+
+    from studio.backend.model_service.service import _soften_prompt, neutralize_hard_ip
+
+    out = neutralize_hard_ip("哆啦A梦站在草地上")
+    assert "哆啦A梦" not in out and "机器猫" in out, "hard IP not neutralized"
+    assert "Family-friendly" not in out, "proactive pass must not append compliance suffix"
+    untouched = neutralize_hard_ip("孙悟空与一只橘猫")
+    assert "孙悟空" in untouched, "classical figure must stay verbatim in proactive pass"
+    softened = _soften_prompt("孙悟空与皮卡丘同框")
+    assert "皮卡丘" not in softened and "电气鼠" in softened, "soft round misses hard IP"
+    assert "孙悟空" not in softened and "猴王" in softened, "soft round misses soft IP"
+
+
+@check("model-service", "image failure guidance explains reason and defaults to strict")
+def _():
+    """生图失败策略契约：默认 strict（自救轮后仍失败→任务失败返回指引，
+    绝不静默降级离线示意）；指引信息必须包含具体原因、已尝试动作与可操作
+    的下一步（改描述/历史重试/开降级开关），按错误分类给出对应建议。"""
+
+    from studio.backend.model_service.service import ModelSettingsStore, image_failure_guidance
+
+    assert ModelSettingsStore._DEFAULTS.get("image_fallback_policy") == "strict", (
+        "default policy must be strict — silent degrade is exactly the bug being fixed"
+    )
+    moderation = image_failure_guidance(
+        {"kind": "moderation", "detail": "内容审核未通过（源图或提示词触发平台风控）"}
+    )
+    for keyword in ("AI 生图失败", "改写", "历史记录", "自动降级", "外观特征"):
+        assert keyword in moderation, "moderation guidance missing: {}".format(keyword)
+    quota = image_failure_guidance({"kind": "quota", "detail": "额度不足"})
+    assert "Key" in quota and "重试" in quota, "quota guidance missing actionable steps"
+    auth = image_failure_guidance({"kind": "auth", "detail": "鉴权失败"})
+    assert "模型设置" in auth, "auth guidance should point to settings"
+
+
+@check("agent", "image prompt hygiene strips engine clauses and expands bare goals")
+def _():
+    """C 提示词整备：goal 里的「并导入Unity」类工程子句不得进入画图提示词
+    （引擎是结构化字段，不是画面语义）；超短目标（<8 字符）自动补构图
+    扩写，让「法师」这类裸词也有可用的呈现方向；正常长度目标不受影响。"""
+
+    from agent.generation.external import build_image_prompt
+
+    stripped = build_image_prompt("生成一个法师，并导入Unity", None, None, style="pixel")
+    assert "导入" not in stripped and "Unity" not in stripped, "engine clause leaked into prompt"
+    assert "像素风游戏素材" in stripped, "style tail missing"
+    bare = build_image_prompt("法师", None, None, style=None)
+    assert "全身立绘" in bare, "bare goal not expanded"
+    rich = build_image_prompt("穿深蓝长袍的白发老法师，手持星纹法杖，立于浮空符文阵上", None, None, style=None)
+    assert "全身立绘" not in rich, "rich goal must not be expanded"
+
+
 def main():
     failures = []
     current_group = None

@@ -36,6 +36,7 @@ interface FormState {
   video_size: string;
   video_prompt_extend: boolean;
   video_ai_enhance: boolean;
+  image_fallback_policy: "strict" | "degrade";
   timeout: number;
 }
 
@@ -59,6 +60,7 @@ function toForm(settings: ModelSettings): FormState {
     video_size: settings.video_size ?? "1280*720",
     video_prompt_extend: settings.video_prompt_extend ?? false,
     video_ai_enhance: settings.video_ai_enhance ?? true,
+    image_fallback_policy: settings.image_fallback_policy ?? "strict",
     timeout: settings.timeout,
   };
 }
@@ -699,6 +701,23 @@ export default function SettingsCenter() {
                         />
                       </label>
                     </div>
+                    <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle px-3 py-2 md:col-span-2">
+                      <span className="min-w-0">
+                        <span className="block text-[12px] text-ink-2">
+                          失败自动降级为离线示意（IP/审核拦截等生图失败时）
+                        </span>
+                        <span className="mt-0.5 block text-[10.5px] text-ink-4">
+                          关闭（推荐）：生图失败即报错终止，返回具体原因与下一步建议；开启：失败仍产出离线示意资产，
+                          资产与历史记录会带「AI 生图失败 · 离线示意」标记。IP 角色名两种策略下都会先自动改写重试。
+                        </span>
+                      </span>
+                      <Switch
+                        checked={form.image_fallback_policy === "degrade"}
+                        onChange={(auto) =>
+                          setForm({ ...form, image_fallback_policy: auto ? "degrade" : "strict" })
+                        }
+                      />
+                    </label>
                   </div>
                 }
               />

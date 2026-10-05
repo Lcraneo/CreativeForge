@@ -135,6 +135,22 @@ export default function HistoryCenter() {
     }
   }
 
+  // A 失败透明化：AI 生图失败（审核拦截/额度等）的档案一键重试——
+  // 直接以原目标创建新任务并跳转智能体指挥中心跟进
+  async function retryGeneration(goal: string) {
+    try {
+      const { task_id } = await api.createTask(goal);
+      toast({
+        tone: "success",
+        title: `重试任务 ${task_id} 已创建`,
+        description: "正在按原目标重新生成，到「智能体」跟进进度",
+      });
+      navigate("/agents");
+    } catch (cause) {
+      toast({ tone: "danger", title: "重试失败", description: String(cause).slice(0, 160) });
+    }
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
@@ -274,6 +290,14 @@ export default function HistoryCenter() {
                             : ""}
                           {record.frames ? ` · ${record.frames}f` : ""}
                         </div>
+                        {record.model_image_error && (
+                          <span
+                            className="mt-1 inline-block"
+                            title={`AI 生图失败：${record.model_image_error.detail}`}
+                          >
+                            <Badge tone="warning">AI 生图失败 · 离线示意</Badge>
+                          </span>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={statusTone(record.status)}>
@@ -392,6 +416,27 @@ export default function HistoryCenter() {
                         }
                       />
                     ))}
+                  </div>
+                )}
+
+                {detail.model_image_error && (
+                  <div className="rounded-lg border border-warning/50 bg-warning/[.06] p-3">
+                    <div className="text-[12px] font-semibold text-warning">
+                      AI 生图失败：{detail.model_image_error.detail}
+                    </div>
+                    <p className="mt-1 text-[11.5px] leading-[18px] text-ink-3">
+                      当前产物是离线确定性示意，可能与目标主题不符。可原样重试（后端会对
+                      审核拦截自动改写提示词再生成），或回工作台改写描述。
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="refresh"
+                      className="mt-2"
+                      onClick={() => retryGeneration(detail.goal)}
+                    >
+                      重试生成
+                    </Button>
                   </div>
                 )}
 

@@ -9,6 +9,7 @@ for the character artwork first; any failure transparently falls back to the
 built-in deterministic pipeline (``MODEL_FALLBACK`` event).
 """
 
+import logging
 import random
 import threading
 import time
@@ -17,6 +18,16 @@ import uuid
 from agent.generation.external import build_image_prompt
 from agent.generation.spec import apply_overrides, parse_prompt
 from agents.supervisor.supervisor import SupervisorAgent
+
+logger = logging.getLogger("creativeforge.agent_runtime")
+if not logger.handlers:
+    # uvicorn 默认日志配置不接管自定义 logger（INFO 会被 lastResort 吞掉），
+    # 自带 handler 保证 IP 改写/降级决策/失败原因完整落 stdout 日志
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s :: %(message)s"))
+    logger.addHandler(_handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
 from studio.backend.asset_service.service import AssetStore, TaskStore
 from studio.backend.history_service.service import DEFAULT_HISTORY_PATH, HistoryStore
 from studio.backend.model_service.service import (
@@ -146,7 +157,32 @@ class AgentRuntime:
     def _run(self, task_id, goal, overrides=None, turbo=False, asset=None):
         started = time.time()
         spec = apply_overrides(parse_prompt(goal), overrides)
-        enhanced, image = self._call_external(task_id, goal, overrides, spec)
+        enhanced, image, image_error = self._call_external(task_id, goal, overrides, spec)
+
+        # 生图失败策略（image_fallback_policy）：
+        #   strict（默认）——自救轮（IP 预替换 + 审核安全改写）之后仍失败，
+        #     任务立即失败并返回「原因 + 已尝试动作 + 下一步建议」，绝不静默
+        #     产出与主题无关的离线示意；
+        #   degrade——仅在用户于「模型设置」显式开启自动降级时，才继续离线
+        #     管线（产物带 model_fallback 标记，前端三处徽章可见）。
+        if image_error:
+            policy = self.model_settings.effective().get("image_fallback_policy") or "strict"
+            logger.warning(
+                "image generation failed task=%s kind=%s detail=%s policy=%s goal=%r",
+                task_id,
+                image_error.get("kind"),
+                image_error.get("detail"),
+                policy,
+                goal,
+            )
+            if policy != "degrade":
+                from studio.backend.model_service.service import image_failure_guidance
+
+                message = image_failure_guidance(image_error)
+                error = RuntimeError(message)
+                self.tasks.fail(task_id, error)
+                self._record(task_id, goal, None, error, started, image_error)
+                return
 
         if image:
             # hand the AI artwork to the pipeline: PReCon reconstructs from it
@@ -187,6 +223,10 @@ class AgentRuntime:
                 asset["prompt_enhance"] = enhanced
             if image:
                 asset["image"] = image
+        if asset and image_error:
+            # A 失败透明化：生图失败原因随资产落库，前端据此刻
+            # 「AI 生图失败，已用离线示意替代」徽章（含一键重试）
+            asset["model_fallback"] = image_error
 
         if asset and views_thread is not None:
             views, failures = views_getter()
@@ -234,7 +274,7 @@ class AgentRuntime:
             )
 
         self.tasks.finish(task_id, result)
-        self._record(task_id, goal, result, None, started)
+        self._record(task_id, goal, result, None, started, image_error)
 
     def _start_views_worker(self, task_id, image):
         """在后台线程预生成三视图（与主管线并行）。返回 (thread, getter)，
@@ -308,8 +348,11 @@ class AgentRuntime:
         return thread, getter
 
     def _call_external(self, task_id, goal, overrides, spec=None):
-        """Runs the configured model API: chat prompt enhancement first, then
-        optional image generation. Every failure degrades gracefully."""
+        """Runs the configured model API: optional image generation. Every
+        failure degrades gracefully — and the REASON travels with the task
+        (event stream + return value) instead of being swallowed, so the
+        product can show「AI 生图失败，已用离线示意替代」instead of silently
+        shipping an unrelated seeded sprite."""
         spec = spec or {}
         settings = self.model_settings.effective()
         if not (settings.get("enabled") and settings.get("base_url") and settings.get("api_key")):
@@ -323,7 +366,7 @@ class AgentRuntime:
                         "detail": "自定义模型未配置完整：需要 Base URL 与 API Key（设置 → 模型设置）",
                     },
                 )
-            return None, None
+            return None, None, None
 
         # 提示词增强改为「用户手动触发」：对话框上的「增强提示词」按钮会调用
         # POST /api/prompt/enhance，用户在发送前自行确认增强后的提示词。
@@ -331,6 +374,7 @@ class AgentRuntime:
         enhanced = None
 
         image = None
+        image_error = None
         if settings.get("use_image") and settings.get("model"):
             self.tasks.append_event(
                 task_id,
@@ -348,6 +392,29 @@ class AgentRuntime:
                     enhanced.get("prompt") if enhanced else None,
                     style=spec.get("style"),
                 )
+                # D 主动 IP 中性化：现代版权角色名（哆啦A梦/皮卡丘等）平台基本
+                # 必拦，送模型前直接替换为视觉特征——不浪费一轮拦截，主题不丢。
+                # 古典人物（孙悟空等）保留原文，审核拦截后由安全改写轮兜底。
+                from studio.backend.model_service.service import neutralize_hard_ip
+
+                neutralized = neutralize_hard_ip(prompt)
+                if neutralized != prompt:
+                    prompt = neutralized
+                    logger.info(
+                        "image prompt pre-translated (hard IP) task=%s prompt=%r",
+                        task_id,
+                        prompt,
+                    )
+                    self.tasks.append_event(
+                        task_id,
+                        {
+                            "type": "MODEL_FALLBACK",
+                            "stage": "image",
+                            "kind": "ip-pretranslated",
+                            "detail": "提示词含知名 IP 角色名，已预先替换为视觉特征描述（避免内容审核拦截）",
+                            "prompt_used": prompt,
+                        },
+                    )
                 image = ImageProvider(settings).generate(prompt)
                 self.tasks.append_event(
                     task_id,
@@ -358,20 +425,51 @@ class AgentRuntime:
                         "model": image.get("model"),
                     },
                 )
+                if image.get("softened"):
+                    # 审核拦截后的安全改写轮成功——告知用户提示词被改写过，
+                    # 改写结果可在事件流追溯（prompt_used）
+                    logger.info(
+                        "image prompt soften retry succeeded task=%s prompt=%r",
+                        task_id,
+                        image.get("prompt_used"),
+                    )
+                    self.tasks.append_event(
+                        task_id,
+                        {
+                            "type": "MODEL_FALLBACK",
+                            "stage": "image",
+                            "kind": "moderation-softened",
+                            "detail": "原始提示词触发内容审核，已自动中性化改写后生成成功",
+                            "prompt_used": image.get("prompt_used"),
+                        },
+                    )
             except Exception as error:
+                from studio.backend.model_service.service import classify_error, describe_error
+
+                image_error = {
+                    "kind": classify_error(error),
+                    "detail": describe_error(error),
+                }
+                logger.warning(
+                    "image generation error task=%s kind=%s raw=%s",
+                    task_id,
+                    image_error["kind"],
+                    str(error)[:200],
+                )
                 self.tasks.append_event(
                     task_id,
                     {
                         "type": "MODEL_FALLBACK",
                         "stage": "image",
-                        "detail": str(error),
+                        "kind": image_error["kind"],
+                        "detail": image_error["detail"],
                     },
                 )
                 image = None
 
-        return enhanced, image
+        return enhanced, image, image_error
 
-    def _record(self, task_id, goal, result, error, started):
+    def _record(self, task_id, goal, result, error, started, image_error=None):
         """Appends one history record (prompt + character + asset snapshot)."""
         asset = (result or {}).get("asset") if result else None
         character = (asset or {}).get("character") or {}
@@ -412,6 +510,7 @@ class AgentRuntime:
                 "palette": palette.get("colors") or [],
                 "image": (asset or {}).get("image"),
                 "enhanced_prompt": ((asset or {}).get("prompt_enhance") or {}).get("prompt"),
+                "model_image_error": image_error,
                 "asset": asset,
             }
         )

@@ -207,6 +207,9 @@ export interface CreativeAsset {
   review?: ReviewInfo;
   prompt_enhance?: PromptEnhance;
   memory?: Record<string, unknown>;
+  /** A 失败透明化：AI 生图失败（内容审核/额度/网络等）后的降级原因，
+   *  此时 pixel 资产为离线示意产物；前端据此展示失败徽章 */
+  model_fallback?: { kind: string; detail: string } | null;
 }
 
 export interface GeneratedImage {
@@ -242,6 +245,9 @@ export interface ModelSettings {
   video_prompt_extend?: boolean;
   /** 动作描述 AI 增强：对话模型润色 i2v 提示词（失败自动回退原模板） */
   video_ai_enhance?: boolean;
+  /** 生图失败策略：strict=任务失败并返回原因与建议（默认，不静默降级）；
+   *  degrade=自动降级为离线示意资产（带 model_fallback 标记） */
+  image_fallback_policy?: "strict" | "degrade";
   timeout: number;
   style?: string;
   has_key?: boolean;
@@ -436,6 +442,9 @@ export interface HistorySummary {
   palette: string[];
   image?: GeneratedImage | null;
   enhanced_prompt?: string | null;
+  /** A 失败透明化：AI 生图失败（如内容审核拦截）时记录分类+人话原因，
+   * 产物为离线示意；前端据此展示「AI 生图失败」徽章与重试入口 */
+  model_image_error?: { kind: string; detail: string } | null;
   asset?: CreativeAsset | null;
 }
 

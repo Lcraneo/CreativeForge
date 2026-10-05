@@ -34065,7 +34065,7 @@
     "palette": [],
     "image": {
       "file": "img_1791122449307.png",
-      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+      "url": "/api/generated/img_1791122449307.png",
       "model": "wanx2.1-t2i-turbo",
       "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
       "width": 1024,
@@ -34100,7 +34100,7 @@
         },
         "ai_image": {
           "file": "img_1791122449307.png",
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+          "url": "/api/generated/img_1791122449307.png",
           "model": "wanx2.1-t2i-turbo",
           "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
           "width": 1024,
@@ -34298,7 +34298,7 @@
       },
       "image": {
         "file": "img_1791122449307.png",
-        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+        "url": "/api/generated/img_1791122449307.png",
         "model": "wanx2.1-t2i-turbo",
         "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791122449307.png",
         "width": 1024,
@@ -34306,7 +34306,7 @@
       },
       "design_views": {
         "front": {
-          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/b7/20261004/77c9ad12/f85df51a-bd1a-41b9-bc69-72727344bac9-1.png?Expires=1791208847&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=ET%2FsUx48rhIcca6JzlsVM6zlGN8%3D",
+          "url": "/api/generated/img_1791122449307.png",
           "model": "wanx2.1-t2i-turbo"
         },
         "side": {
@@ -34324,5 +34324,2758 @@
       }
     },
     "id": "T0001-25"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791168657.2231052,
+    "finished_at": 1791168659.6273475,
+    "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒质感，大眼睛带笑意，胸前挂四次元口袋，穿红领结，站姿活泼，背景简约纯白，卡通风格，色彩明亮柔和，细节清晰可爱。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast04946",
+    "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 2.381,
+    "character": {
+      "id": "ast04946",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+      "type": "character",
+      "role": "npc",
+      "seed": 405504946,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7e2619",
+        "base": "#e66027",
+        "highlight": "#fbcf3e",
+        "accent": "#fce688",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast04946",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 405504946,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7e2619",
+          "base": "#e66027",
+          "highlight": "#fbcf3e",
+          "accent": "#fce688",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast04946",
+        "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+        "type": "character",
+        "role": "npc",
+        "seed": 405504946,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7e2619",
+          "base": "#e66027",
+          "highlight": "#fbcf3e",
+          "accent": "#fce688",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast04946",
+          "type": "character",
+          "resources": {
+            "texture": "ast04946.png",
+            "animation": "ast04946.anim",
+            "prefab": "ast04946.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast04946.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast04946.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast04946.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast04946.png",
+          "Animation": "Assets/Animation/ast04946.anim",
+          "Prefab": "Assets/Prefab/ast04946.prefab",
+          "Controller": "Assets/Controller/ast04946.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒质感，大眼睛带笑意，胸前挂四次元口袋，穿红领结，站姿活泼，背景简约纯白，卡通风格，色彩明亮柔和，细节清晰可爱。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0001-26"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1791168695.915239,
+    "finished_at": 1791168762.2766094,
+    "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "mage001",
+    "name": "FireMage",
+    "type": "character",
+    "role": "boss",
+    "action": "attack",
+    "frames": 12,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 66.361,
+    "character": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "seed": 77001,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7a1f12",
+        "base": "#ff6a2b",
+        "highlight": "#ffd23f",
+        "accent": "#ffe98a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#122743",
+      "#1e253f",
+      "#242d40",
+      "#142743",
+      "#733522",
+      "#ae5c2c",
+      "#874526",
+      "#553530",
+      "#865234",
+      "#4f2322",
+      "#132844",
+      "#293f5c",
+      "#2a3447",
+      "#465d7b",
+      "#3f5470",
+      "#624e4c"
+    ],
+    "image": {
+      "file": "img_1791168706389.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/31/20261005/77c9ad12/9880d9bc-fe5c-4dd8-b440-ae34b2a2e9a9-1.png?Expires=1791255103&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=IzARRzP2NeGaCYcCubJduZO1GdM%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791168706389.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "mage001",
+      "name": "FireMage",
+      "type": "character",
+      "role": "boss",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 77001,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791168706389.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/31/20261005/77c9ad12/9880d9bc-fe5c-4dd8-b440-ae34b2a2e9a9-1.png?Expires=1791255103&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=IzARRzP2NeGaCYcCubJduZO1GdM%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791168706389.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "mage001",
+        "name": "FireMage",
+        "type": "character",
+        "role": "boss",
+        "seed": 77001,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7a1f12",
+          "base": "#ff6a2b",
+          "highlight": "#ffd23f",
+          "accent": "#ffe98a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "attack",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 1,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 2,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 3,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 4,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 5,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 6,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 7,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 8,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 9,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 10,
+            "action": "attack",
+            "image": null
+          },
+          {
+            "id": 11,
+            "action": "attack",
+            "image": null
+          }
+        ],
+        "fps": 12,
+        "loop": true,
+        "anchor": [
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          },
+          {
+            "root": {
+              "x": 32,
+              "y": 60
+            },
+            "feet": {
+              "x": 32,
+              "y": 64
+            },
+            "center": {
+              "x": 32,
+              "y": 40
+            },
+            "head": {
+              "x": 32,
+              "y": 8
+            }
+          }
+        ],
+        "phase": {
+          "action": "attack",
+          "phase": [
+            0.0,
+            0.0909,
+            0.1818,
+            0.2727,
+            0.3636,
+            0.4545,
+            0.5455,
+            0.6364,
+            0.7273,
+            0.8182,
+            0.9091,
+            1.0
+          ],
+          "aligned": true
+        },
+        "motion": {
+          "root_dx": 0,
+          "root_dy": 0,
+          "drift_corrected": true,
+          "real_motion": false,
+          "root_track": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ],
+          "corrections": [
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            },
+            {
+              "dx": 0,
+              "dy": 0
+            }
+          ]
+        },
+        "render": {
+          "action": "attack",
+          "frame_count": 12,
+          "duration": 1.0,
+          "size": 384,
+          "consistency": {
+            "palette": 0.9536,
+            "color": 0.997,
+            "line": 0.9891,
+            "hash": 0.7839,
+            "overall": 0.9461,
+            "passed": true,
+            "floor": 0.6,
+            "frames_checked": 6
+          },
+          "source": "current-character-source"
+        }
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "animation": {
+          "anchor_score": 1.0,
+          "motion_score": 1.0,
+          "temporal_score": 0.96,
+          "overall": 0.9867
+        },
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312,
+            "animation": 0.9867,
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#122743",
+            "#1e253f",
+            "#242d40",
+            "#142743",
+            "#733522",
+            "#ae5c2c",
+            "#874526",
+            "#553530",
+            "#865234",
+            "#4f2322",
+            "#132844",
+            "#293f5c",
+            "#2a3447",
+            "#465d7b",
+            "#3f5470",
+            "#624e4c"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7a1f12",
+            "base": "#ff6a2b",
+            "highlight": "#ffd23f",
+            "accent": "#ffe98a",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#122743",
+            "#1e253f",
+            "#242d40",
+            "#1e253f",
+            "#1e253f",
+            "#122743",
+            "#142743",
+            "#122743"
+          ],
+          [
+            "#122743",
+            "#733522",
+            "#ae5c2c",
+            "#874526",
+            "#874526",
+            "#122743",
+            "#122743",
+            "#122743"
+          ],
+          [
+            "#122743",
+            "#553530",
+            "#ae5c2c",
+            "#ae5c2c",
+            "#ae5c2c",
+            "#865234",
+            "#122743",
+            "#122743"
+          ],
+          [
+            "#142743",
+            "#865234",
+            "#874526",
+            "#874526",
+            "#ae5c2c",
+            "#4f2322",
+            "#4f2322",
+            "#122743"
+          ],
+          [
+            "#242d40",
+            "#865234",
+            "#4f2322",
+            "#874526",
+            "#874526",
+            "#242d40",
+            "#733522",
+            "#242d40"
+          ],
+          [
+            "#132844",
+            "#132844",
+            "#553530",
+            "#733522",
+            "#553530",
+            "#865234",
+            "#132844",
+            "#132844"
+          ],
+          [
+            "#293f5c",
+            "#293f5c",
+            "#4f2322",
+            "#2a3447",
+            "#2a3447",
+            "#733522",
+            "#293f5c",
+            "#293f5c"
+          ],
+          [
+            "#465d7b",
+            "#3f5470",
+            "#624e4c",
+            "#3f5470",
+            "#3f5470",
+            "#624e4c",
+            "#3f5470",
+            "#465d7b"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "mage001",
+          "type": "character",
+          "resources": {
+            "texture": "mage001.png",
+            "animation": "mage001.anim",
+            "prefab": "mage001.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "mage001.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "mage001.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "mage001.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 12
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/mage001.png",
+          "Animation": "Assets/Animation/mage001.anim",
+          "Prefab": "Assets/Prefab/mage001.prefab",
+          "Controller": "Assets/Controller/mage001.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791168706389.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/31/20261005/77c9ad12/9880d9bc-fe5c-4dd8-b440-ae34b2a2e9a9-1.png?Expires=1791255103&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=IzARRzP2NeGaCYcCubJduZO1GdM%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791168706389.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/31/20261005/77c9ad12/9880d9bc-fe5c-4dd8-b440-ae34b2a2e9a9-1.png?Expires=1791255103&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=IzARRzP2NeGaCYcCubJduZO1GdM%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1791168725577.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/f9/20261005/901e463f/aa73f619-9c6c-41ac-8c14-353d34666c9a2128806935.png?Expires=1791255124&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=qTZ9ta06UwhmZxUDksuIfJgScRc%3D",
+          "model": "wanx2.1-imageedit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1791168761112.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/7b/20261005/901e463f/3dc56df8-82ad-4607-882a-1398458dec96405129590.png?Expires=1791255158&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=wtcwATgLJPnSk0UyGIEqMVWQ0z8%3D",
+          "model": "wanx2.1-imageedit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0002-13"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1791168765.1827853,
+    "finished_at": 1791168767.0638332,
+    "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒质感，大眼睛带笑意，胸前挂四次元口袋，穿红领结，站姿活泼，背景简约纯白，卡通风格，色彩明亮柔和，细节清晰可爱。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast04946",
+    "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 1.88,
+    "character": {
+      "id": "ast04946",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+      "type": "character",
+      "role": "npc",
+      "seed": 405504946,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7e2619",
+        "base": "#e66027",
+        "highlight": "#fbcf3e",
+        "accent": "#fce688",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": null,
+    "enhanced_prompt": null,
+    "asset": {
+      "id": "ast04946",
+      "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 405504946,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7e2619",
+          "base": "#e66027",
+          "highlight": "#fbcf3e",
+          "accent": "#fce688",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "character": {
+        "id": "ast04946",
+        "name": "蓝胖子哆啦a梦_圆滚滚身体_白色毛绒质感_大眼睛",
+        "type": "character",
+        "role": "npc",
+        "seed": 405504946,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7e2619",
+          "base": "#e66027",
+          "highlight": "#fbcf3e",
+          "accent": "#fce688",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast04946",
+          "type": "character",
+          "resources": {
+            "texture": "ast04946.png",
+            "animation": "ast04946.anim",
+            "prefab": "ast04946.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast04946.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast04946.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast04946.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast04946.png",
+          "Animation": "Assets/Animation/ast04946.anim",
+          "Prefab": "Assets/Prefab/ast04946.prefab",
+          "Controller": "Assets/Controller/ast04946.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "蓝胖子哆啦A梦，圆滚滚身体，白色毛绒质感，大眼睛带笑意，胸前挂四次元口袋，穿红领结，站姿活泼，背景简约纯白，卡通风格，色彩明亮柔和，细节清晰可爱。，并导入Unity",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      }
+    },
+    "id": "T0003-10"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791170627.4270039,
+    "finished_at": 1791170637.210579,
+    "goal": "哆啦A梦",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast48225",
+    "name": "哆啦a梦",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {},
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.784,
+    "character": {
+      "id": "ast48225",
+      "name": "哆啦a梦",
+      "type": "character",
+      "role": "npc",
+      "seed": 363848225,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#6f1c10",
+        "base": "#e15e26",
+        "highlight": "#ffd342",
+        "accent": "#f8e286",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791170636727.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/3f/20261005/77c9ad12/d4546d19-ac29-497f-b691-94965e22442f-1.png?Expires=1791257035&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=pZ%2BlcKnI2jVb16GkfmulBYWwR%2FM%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "softened": true,
+      "prompt_used": "蓝白色圆滚滚机器猫，大圆眼睛，脖子挂铃铛, 像素风游戏素材，干净的1像素描边，有限调色板，纯色背景 Family-friendly stylized cartoon performance, purely athletic and non-violent, no blood, no gore, no realistic harm.",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791170636727.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast48225",
+      "name": "哆啦a梦",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 363848225,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#e15e26",
+          "highlight": "#ffd342",
+          "accent": "#f8e286",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791170636727.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/3f/20261005/77c9ad12/d4546d19-ac29-497f-b691-94965e22442f-1.png?Expires=1791257035&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=pZ%2BlcKnI2jVb16GkfmulBYWwR%2FM%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "softened": true,
+          "prompt_used": "蓝白色圆滚滚机器猫，大圆眼睛，脖子挂铃铛, 像素风游戏素材，干净的1像素描边，有限调色板，纯色背景 Family-friendly stylized cartoon performance, purely athletic and non-violent, no blood, no gore, no realistic harm.",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791170636727.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast48225",
+        "name": "哆啦a梦",
+        "type": "character",
+        "role": "npc",
+        "seed": 363848225,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#6f1c10",
+          "base": "#e15e26",
+          "highlight": "#ffd342",
+          "accent": "#f8e286",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "report": {
+          "scores": {},
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "哆啦A梦",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791170636727.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/3f/20261005/77c9ad12/d4546d19-ac29-497f-b691-94965e22442f-1.png?Expires=1791257035&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=pZ%2BlcKnI2jVb16GkfmulBYWwR%2FM%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "softened": true,
+        "prompt_used": "蓝白色圆滚滚机器猫，大圆眼睛，脖子挂铃铛, 像素风游戏素材，干净的1像素描边，有限调色板，纯色背景 Family-friendly stylized cartoon performance, purely athletic and non-violent, no blood, no gore, no realistic harm.",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791170636727.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-27"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791171670.9935775,
+    "finished_at": 1791171679.3140872,
+    "goal": "哆啦A梦，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast25729",
+    "name": "哆啦a梦_并导入unity",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 8.321,
+    "character": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "seed": 241025729,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#771e12",
+        "base": "#e25e26",
+        "highlight": "#e5bd39",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791171678833.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e2/20261005/77c9ad12/d90bfa44-f048-42f1-b4a5-998443dadf80-1.png?Expires=1791258077&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=HUBYtUcE6ONRef%2B%2BGprtuAkASfQ%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 241025729,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791171678833.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e2/20261005/77c9ad12/d90bfa44-f048-42f1-b4a5-998443dadf80-1.png?Expires=1791258077&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=HUBYtUcE6ONRef%2B%2BGprtuAkASfQ%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast25729",
+        "name": "哆啦a梦_并导入unity",
+        "type": "character",
+        "role": "npc",
+        "seed": 241025729,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast25729",
+          "type": "character",
+          "resources": {
+            "texture": "ast25729.png",
+            "animation": "ast25729.anim",
+            "prefab": "ast25729.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast25729.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast25729.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast25729.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast25729.png",
+          "Animation": "Assets/Animation/ast25729.anim",
+          "Prefab": "Assets/Prefab/ast25729.prefab",
+          "Controller": "Assets/Controller/ast25729.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "哆啦A梦，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791171678833.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/e2/20261005/77c9ad12/d90bfa44-f048-42f1-b4a5-998443dadf80-1.png?Expires=1791258077&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=HUBYtUcE6ONRef%2B%2BGprtuAkASfQ%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-28"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791172473.8519511,
+    "finished_at": 1791172473.8737361,
+    "goal": "哆啦A梦，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast25729",
+    "name": "哆啦a梦_并导入unity",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.021,
+    "character": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "seed": 241025729,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#771e12",
+        "base": "#e25e26",
+        "highlight": "#e5bd39",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791171678833.png",
+      "url": "/api/generated/img_1791171678833.png",
+      "model": "wanx2.1-t2i-turbo",
+      "cached": true,
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 241025729,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791171678833.png",
+          "url": "/api/generated/img_1791171678833.png",
+          "model": "wanx2.1-t2i-turbo",
+          "cached": true,
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast25729",
+        "name": "哆啦a梦_并导入unity",
+        "type": "character",
+        "role": "npc",
+        "seed": 241025729,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast25729",
+          "type": "character",
+          "resources": {
+            "texture": "ast25729.png",
+            "animation": "ast25729.anim",
+            "prefab": "ast25729.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast25729.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast25729.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast25729.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast25729.png",
+          "Animation": "Assets/Animation/ast25729.anim",
+          "Prefab": "Assets/Prefab/ast25729.prefab",
+          "Controller": "Assets/Controller/ast25729.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "哆啦A梦，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791171678833.png",
+        "url": "/api/generated/img_1791171678833.png",
+        "model": "wanx2.1-t2i-turbo",
+        "cached": true,
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-29"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791172652.1258414,
+    "finished_at": 1791172652.1470935,
+    "goal": "哆啦A梦，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast25729",
+    "name": "哆啦a梦_并导入unity",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.021,
+    "character": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "seed": 241025729,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#771e12",
+        "base": "#e25e26",
+        "highlight": "#e5bd39",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791171678833.png",
+      "url": "/api/generated/img_1791171678833.png",
+      "model": "wanx2.1-t2i-turbo",
+      "cached": true,
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 241025729,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791171678833.png",
+          "url": "/api/generated/img_1791171678833.png",
+          "model": "wanx2.1-t2i-turbo",
+          "cached": true,
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast25729",
+        "name": "哆啦a梦_并导入unity",
+        "type": "character",
+        "role": "npc",
+        "seed": 241025729,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast25729",
+          "type": "character",
+          "resources": {
+            "texture": "ast25729.png",
+            "animation": "ast25729.anim",
+            "prefab": "ast25729.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast25729.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast25729.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast25729.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast25729.png",
+          "Animation": "Assets/Animation/ast25729.anim",
+          "Prefab": "Assets/Prefab/ast25729.prefab",
+          "Controller": "Assets/Controller/ast25729.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "哆啦A梦，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791171678833.png",
+        "url": "/api/generated/img_1791171678833.png",
+        "model": "wanx2.1-t2i-turbo",
+        "cached": true,
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-30"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791172813.272709,
+    "finished_at": 1791172813.2976325,
+    "goal": "哆啦A梦，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast25729",
+    "name": "哆啦a梦_并导入unity",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": 8,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.025,
+    "character": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "seed": 241025729,
+      "static": false,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#771e12",
+        "base": "#e25e26",
+        "highlight": "#e5bd39",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791171678833.png",
+      "url": "/api/generated/img_1791171678833.png",
+      "model": "wanx2.1-t2i-turbo",
+      "cached": true,
+      "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast25729",
+      "name": "哆啦a梦_并导入unity",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 241025729,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791171678833.png",
+          "url": "/api/generated/img_1791171678833.png",
+          "model": "wanx2.1-t2i-turbo",
+          "cached": true,
+          "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast25729",
+        "name": "哆啦a梦_并导入unity",
+        "type": "character",
+        "role": "npc",
+        "seed": 241025729,
+        "static": false,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#771e12",
+          "base": "#e25e26",
+          "highlight": "#e5bd39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast25729",
+          "type": "character",
+          "resources": {
+            "texture": "ast25729.png",
+            "animation": "ast25729.anim",
+            "prefab": "ast25729.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast25729.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast25729.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast25729.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast25729.png",
+          "Animation": "Assets/Animation/ast25729.anim",
+          "Prefab": "Assets/Prefab/ast25729.prefab",
+          "Controller": "Assets/Controller/ast25729.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "哆啦A梦，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791171678833.png",
+        "url": "/api/generated/img_1791171678833.png",
+        "model": "wanx2.1-t2i-turbo",
+        "cached": true,
+        "path": "D:\\project01\\CreativeForge\\studio\\backend\\generated\\img_1791171678833.png",
+        "width": 1024,
+        "height": 1024
+      }
+    },
+    "id": "T0001-31"
   }
 ]

@@ -285,6 +285,38 @@ def describe_error(exc) -> str:
     return "{}：{}".format(label, raw[:140])
 
 
+def image_failure_guidance(image_error) -> str:
+    """strict 策略下生图失败的任务失败信息：具体原因 + 已尝试的自救动作
+    + 下一步建议（按错误分类给出可操作指引）。"""
+
+    kind = (image_error or {}).get("kind", "fatal")
+    detail = (image_error or {}).get("detail") or "未知原因"
+    if kind == "moderation":
+        tried = "系统已自动把知名 IP 角色名/敏感词改写为视觉特征后重试，仍未通过平台审核"
+        steps = (
+            "建议：① 调整目标描述——去掉品牌/IP 名称或敏感表述，改用外观特征词"
+            "（例：「哆啦A梦」→「蓝白色圆滚滚机器猫，脖子挂铃铛」）；"
+            "② 生成记录可在「历史记录」一键重试；"
+            "③ 如希望失败时仍产出离线示意资产，请在「模型设置 → 图像」开启「失败自动降级」。"
+        )
+    elif kind == "quota":
+        tried = "已用尽 Key 池内全部备用 Key，额度/限流仍未恢复"
+        steps = (
+            "建议：① 在「模型设置」追加备用 API Key 或等待限流窗口过去；"
+            "② 稍后在「历史记录」一键重试。"
+        )
+    elif kind == "auth":
+        tried = "Key 池内所有 Key 鉴权均失败"
+        steps = "建议：到「模型设置」检查 API Key 是否有效/过期，重新保存后再重试。"
+    elif kind == "network":
+        tried = "已尝试 Key 池内全部 Key，网络仍不可达"
+        steps = "建议：检查本机网络与服务商地址可达性，恢复后在「历史记录」一键重试。"
+    else:
+        tried = "生图请求未成功"
+        steps = "建议：到「智能体」事件流查看详细错误，调整目标后在「历史记录」一键重试。"
+    return "AI 生图失败（{}）：{}。{}".format(detail, tried, steps)
+
+
 # 安全改写：审核轮用的词表替换（正则词边界，大小写不敏感）+ 合规尾缀。
 # i2v 提示词里的攻击性词汇（attack/strike/punch…）是审核拦截的常见诱因。
 _SOFTEN_REPLACEMENTS = (
@@ -301,20 +333,60 @@ _SOFTEN_REPLACEMENTS = (
     (r"\bblood\w*\b|\bgore\b", "dramatic shading"),
     (r"\bweapon\w*\b", "prop"),
 )
+
+# 知名 IP 角色名 → 视觉特征描述（版权名是平台审核拦截的头号诱因，如
+# 「哆啦A梦」直接命中 DashScope 风控）。改写原则：去掉 IP 名字、保留
+# 视觉特征——过审的同时主题不丢。CJK 无词边界，用普通交替模式。
+# 两档语义：
+#   HARD——现代版权角色，平台基本必拦，送模型前**主动**替换（不浪费一轮
+#          拦截，见 neutralize_hard_ip）；
+#   SOFT ——古典/民间人物（孙悟空等），通常可过审，保留原文；只在审核
+#          拦截后的安全改写轮一并替换。
+_HARD_IP_REPLACEMENTS = (
+    (r"哆啦A梦|多啦A梦|哆啦哆啦|叮当猫|[Dd]oraemon", "蓝白色圆滚滚机器猫，大圆眼睛，脖子挂铃铛"),
+    (r"皮卡丘|[Pp]ikachu", "黄色电气鼠，闪电形尾巴，红色脸颊"),
+    (r"樱桃小丸子", "红色贝雷帽的圆脸小学生女孩"),
+    (r"蜡笔小新", "粗眉毛的调皮小男孩"),
+    (r"Hello ?Kitty|凯蒂猫", "白色圆脸小猫，红色蝴蝶结，没有嘴巴"),
+    (r"米老鼠|米奇|[Mm]ickey ?[Mm]ouse", "黑色大耳朵的小老鼠，红色短裤白手套"),
+    (r"海绵宝宝|[Ss]ponge[Bb]ob", "黄色方形海绵，棕色短裤，红领带"),
+)
+_SOFT_IP_REPLACEMENTS = (
+    (r"孙悟空", "金色毛发猴王，虎皮裙，金箍棒"),
+)
+_IP_REPLACEMENTS = _HARD_IP_REPLACEMENTS + _SOFT_IP_REPLACEMENTS
 _SOFTEN_SUFFIX = (
     " Family-friendly stylized cartoon performance, purely athletic and non-violent, "
     "no blood, no gore, no realistic harm."
 )
 
 
+def neutralize_hard_ip(prompt: str) -> str:
+    """送模型前的主动 IP 中性化：只替换 HARD 档现代版权角色名，不追加
+    合规尾缀（保持用户提示词干净）。返回改写后的文本；调用方对比原文
+    判断是否命中并透出事件。"""
+
+    import re as _re
+
+    softened = prompt
+    for pattern, replacement in _HARD_IP_REPLACEMENTS:
+        softened = _re.sub(pattern, replacement, softened)
+    return softened
+
+
 def _soften_prompt(prompt: str) -> str:
-    """把提示词里的高风险词替换成中性表达并追加合规尾缀（审核重试轮）。"""
+    """把提示词里的高风险词替换成中性表达并追加合规尾缀（审核重试轮）。
+
+    攻击性词汇与知名 IP 角色名（HARD+SOFT 全档）都替换为中性/视觉化
+    表达；尾缀总是追加，因此有拦截词时结果必然有变化。"""
 
     import re as _re
 
     softened = prompt
     for pattern, replacement in _SOFTEN_REPLACEMENTS:
         softened = _re.sub(pattern, replacement, softened, flags=_re.IGNORECASE)
+    for pattern, replacement in _IP_REPLACEMENTS:
+        softened = _re.sub(pattern, replacement, softened)
     if _SOFTEN_SUFFIX.strip() not in softened:
         softened = softened.rstrip() + _SOFTEN_SUFFIX
     return softened
@@ -417,6 +489,10 @@ class ModelSettingsStore:
         "timeout": 60,
         "style": "pixel",
         "api_key_pool": [],  # 备用 Key 池：额度类错误自动切换下一把
+        # 生图失败策略（IP/审核拦截等，自救轮之后仍失败时生效）：
+        #   strict  = 任务失败并返回原因与建议（默认——不静默产出无关的离线示意）
+        #   degrade = 自动降级为离线示意资产（带 model_fallback 标记与徽章）
+        "image_fallback_policy": "strict",
     }
 
     def __init__(self, path=None):
@@ -992,16 +1068,39 @@ class ImageProvider:
 
         from studio.backend.model_service.usage import record_usage
 
-        # Key 池：额度/鉴权/网络类错误切下一把 Key（生图是最烧额度的路径，
-        # 必须与视频/对话/图像编辑同一套池语义）
+        # 两轮策略（与视频链路 generate_video 同款）：第 1 轮原始提示词；
+        # 若被内容审核拦截（版权 IP/敏感词是常见诱因，如「哆啦A梦」），
+        # 第 2 轮用 _soften_prompt 中性化改写（IP 名→视觉特征 + 合规尾缀）
+        # 整体重试——审核失败换 Key/换模型无意义，改写重试才是正解。
+        moderation_error = None
         last_error = None
-        for key in _keys_for(self.settings):
-            scoped = {**self.settings, "api_key": key}
-            try:
-                if ImageProvider(scoped)._is_dashscope():
-                    result = ImageProvider(scoped)._generate_dashscope(prompt)
-                else:
-                    result = ImageProvider(scoped)._generate_openai_compat(prompt)
+        prompt_now = prompt
+        for safe_round in (False, True):
+            if safe_round:
+                if moderation_error is None:
+                    break
+                prompt_now = _soften_prompt(prompt)
+            else:
+                prompt_now = prompt
+            for key in _keys_for(self.settings):
+                scoped = {**self.settings, "api_key": key}
+                try:
+                    if ImageProvider(scoped)._is_dashscope():
+                        result = ImageProvider(scoped)._generate_dashscope(prompt_now)
+                    else:
+                        result = ImageProvider(scoped)._generate_openai_compat(prompt_now)
+                except Exception as exc:  # noqa: BLE001
+                    note_key_outcome(key, False, classify_error(exc))
+                    kind = classify_error(exc)
+                    if kind == "moderation":
+                        # 记录根因并跳出 Key 池，进入安全改写轮
+                        if not safe_round:
+                            moderation_error = moderation_error or exc
+                        break
+                    if kind in ("quota", "auth", "network"):
+                        last_error = exc
+                        continue
+                    raise
                 record_usage("image", result.get("model") or scoped.get("model"))
                 note_key_outcome(key, True)
                 if result.get("file"):
@@ -1009,14 +1108,13 @@ class ImageProvider:
                     if os.path.isfile(path):
                         _image_cache[cache_key] = {"path": path, "model": result.get("model")}
                         _save_image_cache()
+                if prompt_now != prompt:
+                    # 供上层透出「已自动改写提示词」事件，避免用户察觉不到改写
+                    result["softened"] = True
+                    result["prompt_used"] = prompt_now
                 return result
-            except Exception as exc:  # noqa: BLE001
-                note_key_outcome(key, False, classify_error(exc))
-                if classify_error(exc) in ("quota", "auth", "network"):
-                    last_error = exc
-                    continue
-                raise
-        raise last_error or RuntimeError("image generation failed")
+        # 审核拦截优先呈现（安全改写轮仍失败时它是真正的根因）
+        raise moderation_error or last_error or RuntimeError("image generation failed")
 
     def _generate_openai_compat(self, prompt):
         base_url = (self.settings.get("base_url") or "").rstrip("/")

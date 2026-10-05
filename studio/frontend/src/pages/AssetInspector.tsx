@@ -108,6 +108,35 @@ export default function AssetInspector() {
         }
       />
 
+      {/* E 来源透明化：AI 生图失败的降级资产，明确标注离线示意属性 */}
+      {asset.model_fallback && (
+        <div className="rounded-xl border border-warning/50 bg-warning/[.07] px-4 py-3">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+            <span className="font-semibold text-warning">离线示意资产</span>
+            <span className="text-ink-2">
+              AI 生图失败（{asset.model_fallback.detail}），当前像素产物由离线确定性管线生成，
+              可能与原始目标主题不符。
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="refresh"
+              className="ml-auto"
+              onClick={() => {
+                navigate("/");
+                toast({
+                  tone: "info",
+                  title: "回到工作台重新生成",
+                  description: "原目标可在历史记录中一键重试",
+                });
+              }}
+            >
+              重新生成
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-12 gap-5">
         <Card className="col-span-12 lg:col-span-4" title="Identity / 身份" icon="cube">
           <div className="mb-3">

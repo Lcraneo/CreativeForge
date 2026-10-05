@@ -69,7 +69,20 @@ export function GenerationResult({ asset }: Props) {
             {engine && <Badge tone="neutral">{engine}</Badge>}
             {review?.approved === true && <Badge tone="success">人工审核通过</Badge>}
             {review?.approved === false && <Badge tone="warning">待重做</Badge>}
+            {asset.model_fallback && (
+              <span
+                title={`AI 生图失败：${asset.model_fallback.detail}`}
+                className="inline-block"
+              >
+                <Badge tone="warning">AI 生图失败 · 离线示意</Badge>
+              </span>
+            )}
           </div>
+          {asset.model_fallback && (
+            <p className="mt-2 text-[11.5px] leading-[18px] text-warning">
+              AI 生图失败（{asset.model_fallback.detail}），当前展示的是离线确定性示意，可能与目标主题不符；可在历史记录中一键重试。
+            </p>
+          )}
           {asset.source?.prompt && (
             <p className="mt-2 line-clamp-2 text-[12.5px] text-ink-3">{asset.source.prompt}</p>
           )}
