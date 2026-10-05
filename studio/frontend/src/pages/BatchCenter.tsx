@@ -229,7 +229,10 @@ export default function BatchCenter() {
                     {progress.done}/{progress.total}
                   </span>
                   <span className="font-mono text-[10.5px] text-ink-4">{queueTime(item.created_at)}</span>
-                  <Badge tone={isRunning ? "primary" : "success"}>{isRunning ? "进行中" : "完成"}</Badge>
+                  {/* interrupted = 后端重启中断（任务已落盘，终态非失败） */}
+                  <Badge tone={isRunning ? "primary" : item.status === "interrupted" ? "warning" : "success"}>
+                    {isRunning ? "进行中" : item.status === "interrupted" ? "已中断" : "完成"}
+                  </Badge>
                 </li>
               );
             })}

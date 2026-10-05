@@ -6,17 +6,20 @@ import os
 import re
 import time
 
-from fastapi import APIRouter, File, Form, HTTPException, Response, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 from studio.backend.benchmark_service import DEFAULT_PATH, BenchmarkCache, source_version
+from studio.backend.idempotency import IdempotencyStore
 
 EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "exports")
 _PREVIEW_FRAME_CACHE = {}  # (source_hash, action, config, size) -> [png bytes]
 ANIMATION_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "animation"
 )
+# 生成类 POST 的幂等键（防双击/重发重复扣费）：键 TTL 与视频任务 TTL 同量级
+_ANIM_TASK_IDEMPOTENCY = IdempotencyStore(ttl=3600.0)
 
 # ── 前端构建过期自检 ────────────────────────────────────────────────
 # dist/index.html 落后于 src 最新 mtime → /health.frontend_stale=true →
@@ -745,13 +748,21 @@ def build_router(runtime):
             raise HTTPException(status_code=400, detail=str(error)[:200])
 
     @router.post("/animation/tasks", status_code=202)
-    def start_animation_task(request: AnimationRequest):
+    def start_animation_task(request: AnimationRequest, http_request: Request):
         """生成任务化（体验优化）：与 POST /api/animation 同请求体，但立即
         返回 task_id 供前端轮询（阶段进度 + 刷新后凭 localStorage 续接）。
         仅 AI 视频链（60~90s 大头）有必要任务化；同步端点原样保留，骨骼/
-        序列帧路径不受影响。前置校验与同步分支同语义（404/409 即刻返回）。"""
+        序列帧路径不受影响。前置校验与同步分支同语义（404/409 即刻返回）。
+
+        幂等：客户端每次用户提交生成 ``Idempotency-Key`` 请求头——同键且
+        已存任务仍在运行时直接返回已存快照，不重复入队、不重复扣费。"""
 
         from studio.backend.animation_service.service import AnimationService
+
+        idem_key = (http_request.headers.get("idempotency-key") or "").strip()[:80]
+        stored = _ANIM_TASK_IDEMPOTENCY.get(idem_key) if idem_key else None
+        if isinstance(stored, dict) and (stored.get("snapshot") or {}).get("status") == "running":
+            return stored
 
         service = AnimationService(ANIMATION_DIR)
         image_bytes = None
@@ -792,7 +803,10 @@ def build_router(runtime):
             equipment_aware=request.equipment_aware,
             action_description=(request.action_description or "").strip()[:500],
         )
-        return {"task_id": snapshot["id"], "snapshot": snapshot}
+        payload = {"task_id": snapshot["id"], "snapshot": snapshot}
+        if idem_key:
+            _ANIM_TASK_IDEMPOTENCY.put(idem_key, payload)
+        return payload
 
     @router.get("/animation/tasks/{task_id}")
     def animation_task_status(task_id: str):
@@ -1959,8 +1973,9 @@ def build_router(runtime):
     def queue_snapshot():
         """队列中心：资产批次 + 动作批次聚合快照。
 
-        两个批次存储都在内存（重启即清空），这里合并为单一视图供前端
-        轮询；各取最近 20 条，running 计数驱动前端轮询频率。"""
+        资产批次在内存（重启即清空）；动画批次/生成任务已落盘（重启后
+        running 任务标记 interrupted 终态，见 task_store）。这里合并为
+        单一视图供前端轮询；各取最近 20 条，running 计数驱动前端轮询频率。"""
 
         asset_batches = []
         batches = getattr(runtime, "batches", {})

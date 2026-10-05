@@ -381,6 +381,21 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
     stage: "queued",
     progress: 0,
   });
+  // 窄屏参数抽屉（<1280px）：右侧参数/模型面板转为抽屉，桌面端恒为侧栏
+  const [panelOpen, setPanelOpen] = useState(false);
+  useEffect(() => {
+    if (!panelOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPanelOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [panelOpen]);
   // 结果是否自动播放：仅「本轮用户主动触发的生成」为 true——刷新恢复进来的
   // 历史结果必须静帧呈现（打开界面时人物自发动作 = 恢复的 mp4 带 autoPlay）
   const [resultAutoplay, setResultAutoplay] = useState(false);
@@ -436,7 +451,13 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
         // 轮询阶段进度，刷新后凭 localStorage 续接；骨骼/序列帧秒级完成维持同步
         if (useVideo) {
           try {
-            const started = await api.startVideoTask(payload);
+            // 幂等键：一次用户提交一个键——双击/重发竞态时后端复用运行中
+            // 任务直接返回同一 task_id，不重复入队、不重复扣费
+            const idempotencyKey =
+              typeof crypto !== "undefined" && "randomUUID" in crypto
+                ? crypto.randomUUID()
+                : `idem-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+            const started = await api.startVideoTask(payload, { idempotencyKey });
             window.localStorage.setItem(
               videoTaskStorageKey,
               JSON.stringify({ id: started.task_id, kind: source.kind }),
@@ -584,6 +605,14 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           window.localStorage.removeItem(videoTaskStorageKey);
           setResult(snap.result);
           setResultAutoplay(false); // 恢复的历史结果→静帧呈现，不自发播放
+        } else if (snap.status === "interrupted") {
+          // 任务已落盘但后端重启：明确告知中断，不再静默清除
+          window.localStorage.removeItem(videoTaskStorageKey);
+          toast({
+            tone: "warning",
+            title: "上次生成因后端重启中断",
+            description: "任务已不会继续，请重新发起生成",
+          });
         } else {
           window.localStorage.removeItem(videoTaskStorageKey);
         }
@@ -2210,7 +2239,40 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           )}
         </div>
 
-        <div className="col-span-12 flex flex-col gap-5 xl:col-span-4">
+        {/* 窄屏（<1280px）：参数面板入口；桌面端侧栏恒显示，此按钮隐藏 */}
+        <div className="col-span-12 xl:hidden">
+          <Button variant="secondary" icon="panel" className="w-full" onClick={() => setPanelOpen(true)}>
+            参数与模型设置
+          </Button>
+        </div>
+        {panelOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/60 xl:hidden"
+            onClick={() => setPanelOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+        {/* 同一容器双形态：<1280px 为右侧抽屉（位移切换，无重复渲染），≥1280px 为静态侧栏 */}
+        <div
+          className={cx(
+            "flex flex-col gap-5 xl:col-span-4",
+            "max-xl:fixed max-xl:inset-y-0 max-xl:right-0 max-xl:z-50 max-xl:w-[88vw] max-xl:max-w-md",
+            "max-xl:overflow-y-auto max-xl:bg-canvas max-xl:p-4 max-xl:shadow-2xl",
+            "max-xl:transition-transform max-xl:duration-(--motion-base) max-xl:ease-standard",
+            panelOpen ? "max-xl:translate-x-0" : "max-xl:translate-x-full",
+          )}
+        >
+          <div className="flex items-center justify-between xl:hidden">
+            <span className="text-[13px] font-semibold text-ink">参数与模型设置</span>
+            <button
+              type="button"
+              onClick={() => setPanelOpen(false)}
+              className="grid h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-3"
+              aria-label="关闭参数面板"
+            >
+              <Icon name="x" className="h-4 w-4" />
+            </button>
+          </div>
           <Card title="风格识别 Style Analysis" icon="layers" iconClassName="text-falign">
             {result ? (
               <div className="space-y-3.5">

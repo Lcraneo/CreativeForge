@@ -251,11 +251,12 @@ export interface AnimationRequestPayload {
 }
 
 /** 生成任务快照（任务化轮询）：running 带 stage/progress；终态带 result
- * （done）或 error/error_kind（failed，与批次同款失败分类） */
+ * （done）或 error/error_kind（failed，与批次同款失败分类）；interrupted =
+ * 后端重启导致任务中断（终态，落盘任务恢复标记） */
 export interface VideoTaskSnapshot {
   id: string;
-  status: "running" | "done" | "failed";
-  stage: "queued" | "prompt" | "video" | "sampling" | "composing" | "done";
+  status: "running" | "done" | "failed" | "interrupted";
+  stage: "queued" | "prompt" | "video" | "sampling" | "composing" | "done" | "interrupted";
   progress: number;
   asset_id?: string;
   requested_action?: string;
@@ -270,6 +271,9 @@ let lastToastAt = 0;
 interface RequestInitInternal extends RequestInit {
   /** 静默模式：预期可能 404 的探活请求不弹全局错误 toast，由调用方自行处理 */
   silent?: boolean;
+  /** 超时分级：普通读取/状态轮询限时；不传 = 不限时（长任务创建、同步
+   * 生成等慢端点）。超时以 408 ApiError 抛出，与调用方 signal 组合生效 */
+  timeoutMs?: number;
 }
 
 export class ApiError extends Error {
@@ -280,11 +284,39 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInitInternal): Promise<T> {
-  const { silent, ...rest } = init ?? {};
-  const response = await fetch(path, {
-    ...rest,
-    headers: { "Content-Type": "application/json", ...authHeaders(), ...rest?.headers },
-  });
+  const { silent, timeoutMs, ...rest } = init ?? {};
+  // 手动组合调用方 signal 与超时（AbortSignal.any 尚未 everywhere）：任一
+  // 触发都中止 fetch；超时转为 408 ApiError，主动取消保持 AbortError
+  let signal = rest.signal ?? null;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+  if (timeoutMs) {
+    const controller = new AbortController();
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else signal.addEventListener("abort", () => controller.abort(), { once: true });
+    }
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+    signal = controller.signal;
+  }
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...rest,
+      signal: signal ?? undefined,
+      headers: { "Content-Type": "application/json", ...authHeaders(), ...rest?.headers },
+    });
+  } catch (cause) {
+    if (timer !== undefined) clearTimeout(timer);
+    if (timedOut && !(cause instanceof Error && cause.name === "AbortError" && rest.signal?.aborted)) {
+      throw new ApiError(408, "请求超时，请检查网络后重试");
+    }
+    throw cause;
+  }
+  if (timer !== undefined) clearTimeout(timer);
   if (!response.ok) {
     const detail = await response.text().catch(() => response.statusText);
     const error = new ApiError(response.status, detail);
@@ -372,11 +404,14 @@ export const api = {
       }),
     }),
   actionBatchStatus: (batchId: string) =>
-    request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`),
+    request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`, {
+      timeoutMs: 15_000,
+    }),
   /** 动作×视角矩阵：每个 (动作, 视角) 的最新交付状态与运行中批次 */
   animationMatrix: (assetId?: string | null) =>
     request<import("../types").ActionMatrix>(
       `/api/animation/matrix${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
+      { timeoutMs: 15_000 },
     ),
   rigCheck: (assetId?: string | null) =>
     request<{
@@ -386,7 +421,10 @@ export const api = {
       confidence: number;
       recommendation: string;
       message: string;
-    }>(`/api/animation/rig-check${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`),
+    }>(
+      `/api/animation/rig-check${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
+      { timeoutMs: 15_000 },
+    ),
   enhanceActionText: (text: string) =>
     request<{ text: string }>("/api/animation/custom-actions/enhance", {
       method: "POST",
@@ -441,13 +479,16 @@ export const api = {
       body: JSON.stringify({ goal, overrides }),
     }),
 
-  listTasks: () => request<{ tasks: TaskSummary[] }>("/api/tasks"),
+  listTasks: () => request<{ tasks: TaskSummary[] }>("/api/tasks", { timeoutMs: 15_000 }),
 
   getTaskDetail: (taskId: string, options?: { signal?: AbortSignal; silent?: boolean }) =>
-    request<TaskDetail>(`/api/tasks/${taskId}`, options),
+    request<TaskDetail>(`/api/tasks/${taskId}`, { timeoutMs: 10_000, ...options }),
 
   getAsset: (assetId: string, options?: { signal?: AbortSignal; silent?: boolean }) =>
-    request<CreativeAsset>(`/api/assets/${encodeURIComponent(assetId)}`, options),
+    request<CreativeAsset>(`/api/assets/${encodeURIComponent(assetId)}`, {
+      timeoutMs: 15_000,
+      ...options,
+    }),
 
   generateDesignViews: (assetId: string) =>
     request<CreativeAsset["design_views"]>("/api/design/views", {
@@ -457,7 +498,7 @@ export const api = {
 
   latestAsset: (options?: { signal?: AbortSignal }) =>
     // 后端已经解析持久化历史；404 表示暂无资产，其余错误由页面提供重试。
-    request<CreativeAsset>("/api/assets/latest", { ...options, silent: true }),
+    request<CreativeAsset>("/api/assets/latest", { timeoutMs: 15_000, ...options, silent: true }),
 
   createAnimation: (payload: AnimationRequestPayload) =>
     request<AnimationResult>("/api/animation", {
@@ -466,15 +507,21 @@ export const api = {
     }),
 
   // 生成任务化（体验优化）：AI 视频链入队立即返回，轮询阶段进度；
-  // 刷新后凭 localStorage 里的 task_id 续接
-  startVideoTask: (payload: AnimationRequestPayload) =>
+  // 刷新后凭 localStorage 里的 task_id 续接。idempotencyKey 由调用方在
+  // 「一次用户提交」内生成——同键且任务仍在运行时后端复用，不重复扣费
+  startVideoTask: (payload: AnimationRequestPayload, opts?: { idempotencyKey?: string }) =>
     request<{ task_id: string; snapshot: VideoTaskSnapshot }>("/api/animation/tasks", {
       method: "POST",
       body: JSON.stringify(payload),
+      headers: opts?.idempotencyKey
+        ? { "Idempotency-Key": opts.idempotencyKey }
+        : undefined,
     }),
 
   getVideoTask: (taskId: string) =>
-    request<VideoTaskSnapshot>(`/api/animation/tasks/${encodeURIComponent(taskId)}`),
+    request<VideoTaskSnapshot>(`/api/animation/tasks/${encodeURIComponent(taskId)}`, {
+      timeoutMs: 15_000,
+    }),
 
   createAnimationSequence: (payload: { frames: string[]; fps?: number; size?: number }) =>
     request<AnimationResult>("/api/animation/sequence", {
@@ -539,8 +586,12 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
-  benchmark: () => request<BenchmarkReport>("/api/benchmark"),
-  refreshBenchmark: () => request<BenchmarkReport>("/api/benchmark?refresh=1"),
+  /** 基准报告：响应含 cache.cached_at / cache.refreshing（后台刷新中）；
+   * 冷启动无缓存时后端同步评测（可能 10s+），超时放宽 */
+  benchmark: () => request<BenchmarkReport>("/api/benchmark", { timeoutMs: 120_000 }),
+  /** 手动刷新：后端立即返回旧报告（cache.refreshing=true）并后台重算 */
+  refreshBenchmark: () =>
+    request<BenchmarkReport>("/api/benchmark?refresh=1", { timeoutMs: 30_000 }),
 
   listHistory: (params: { engine?: string; q?: string; limit?: number } = {}) => {
     const search = new URLSearchParams();

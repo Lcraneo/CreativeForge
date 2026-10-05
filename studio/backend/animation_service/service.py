@@ -339,6 +339,18 @@ _ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会�
 _VIDEO_TASKS: dict[str, dict] = {}
 _VIDEO_TASKS_TTL = 3600.0
 
+# 任务落盘：重启后 running 任务标记 interrupted（终态），已完成任务保留
+# 结果快照供前端续接；每次状态迁移后由 _persist_tasks() 覆盖写
+from studio.backend.animation_service.task_store import restore as _restore_tasks
+
+_RESTORED_TASK_COUNT = _restore_tasks(_VIDEO_TASKS, _ACTION_BATCHES, max_age=_VIDEO_TASKS_TTL)
+
+
+def _persist_tasks() -> None:
+    from studio.backend.animation_service import task_store
+
+    task_store.save(_VIDEO_TASKS, _ACTION_BATCHES)
+
 # ── 视频采样配置指纹（benchmark/video_quality.py 依赖；改动需重录基线）──
 # R1 基线：min_count=20 / duration=1.0（20 帧 @12fps ≈ 1.67s 循环）。
 # R2 优化：i2v 源视频 5s/24fps≈120 帧里只取 20 帧，时间采样率仅 17%；
@@ -352,20 +364,28 @@ def _prune_action_batches() -> None:
     """清理超过 TTL 的历史批次（内存态只增不删会缓慢泄漏）。"""
 
     now = time.time()
+    removed = False
     for batch_id in list(_ACTION_BATCHES):
         created = (_ACTION_BATCHES.get(batch_id) or {}).get("created_at", 0)
         if now - created > _ACTION_BATCHES_TTL:
             _ACTION_BATCHES.pop(batch_id, None)
+            removed = True
+    if removed:
+        _persist_tasks()
 
 
 def _prune_video_tasks() -> None:
     """清理超过 TTL 的单次生成任务（同批次语义）。"""
 
     now = time.time()
+    removed = False
     for task_id in list(_VIDEO_TASKS):
         created = (_VIDEO_TASKS.get(task_id) or {}).get("created_at", 0)
         if now - created > _VIDEO_TASKS_TTL:
             _VIDEO_TASKS.pop(task_id, None)
+            removed = True
+    if removed:
+        _persist_tasks()
 
 
 def _generate_video_cached(settings, prompt, source_bytes, timeout_seconds=420.0):
@@ -681,6 +701,7 @@ class AnimationService:
                 daemon=True,
             )
             thread.start()
+        _persist_tasks()
         return batch_id
 
     def _run_action_batch(
@@ -725,6 +746,7 @@ class AnimationService:
                 entry["status"] = "generating"
                 entry["stage"] = "prompt"
                 entry["started_at"] = time.time()
+                _persist_tasks()
             try:
                 base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
                 enhanced_prompt = ai_enhance_motion_prompt(
@@ -786,20 +808,24 @@ class AnimationService:
                     entry["stage"] = "done"
                     entry["progress"] = 100
                     entry["animation_id"] = animation_id
+                    _persist_tasks()
             except VideoGenerationError as error:
                 # 分类失败：审核拦截/额度不足/Key 无效…前端按 error_kind 出徽章
                 if entry:
                     entry["status"] = "failed"
                     entry["error"] = str(error)[:160]
                     entry["error_kind"] = error.kind
+                    _persist_tasks()
             except Exception as error:  # noqa: BLE001 - 单动作失败不拖垮批次
                 if entry:
                     entry["status"] = "failed"
                     entry["error"] = str(error)[:160]
+                    _persist_tasks()
         # 收尾分级：全部动作失败标 failed（前端可提示异常），部分失败仍算 done
         failed = sum(1 for t in batch.get("tasks", []) if t.get("status") == "failed")
         batch["failed_count"] = failed
         batch["status"] = "failed" if failed and failed == len(pending) else "done"
+        _persist_tasks()
 
     def action_batch_snapshot(self, batch_id: str) -> dict | None:
         _prune_action_batches()
@@ -843,6 +869,7 @@ class AnimationService:
             "asset_id": asset_id,
             "requested_action": action,
         }
+        _persist_tasks()
         thread = threading.Thread(
             target=self._run_video_task,
             args=(task_id, source_bytes, settings),
@@ -884,6 +911,7 @@ class AnimationService:
         except Exception as error:  # noqa: BLE001
             task["status"] = "failed"
             task["error"] = str(error)[:160]
+        _persist_tasks()
 
     def video_task_snapshot(self, task_id: str) -> dict | None:
         """任务快照：progress 由阶段 + 该阶段已等待时间推算（video 阶段

@@ -42,9 +42,12 @@ def run_benchmark():
 class BenchmarkCache:
     """Cache successful reports for 10 minutes, coalescing concurrent requests.
 
-    Cold reads and explicit refreshes run the real evaluator. Failed refreshes
-    never replace the last successful report. Each application process owns
-    one instance; this is not a distributed cache.
+    Cold reads run the real evaluator synchronously (the first visitor must
+    get real data). Explicit refreshes never block: the caller immediately
+    gets the existing report flagged ``cache.refreshing`` while a background
+    thread recomputes; repeated refresh clicks coalesce into one run. Failed
+    refreshes never replace the last successful report. Each application
+    process owns one instance; this is not a distributed cache.
     """
 
     def __init__(self, path, *, version, runner=run_benchmark, ttl=600, clock=time.time):
@@ -55,6 +58,7 @@ class BenchmarkCache:
         self.clock = clock
         self._lock = threading.Lock()
         self._generation = 0
+        self._refreshing = False
         saved = read_json_recover(self.path)
         valid = (
             isinstance(saved, dict)
@@ -66,21 +70,63 @@ class BenchmarkCache:
         )
         self._entry = saved if valid else None
 
+    @property
+    def refreshing(self) -> bool:
+        """True while a background refresh is in flight (test/polling hook)."""
+        with self._lock:
+            return self._refreshing
+
+    def _payload(self, entry, *, refreshing: bool) -> dict:
+        """Report copy with cache metadata; the stored entry stays clean."""
+        payload = copy.deepcopy(entry["report"])
+        payload["cache"] = {"cached_at": entry["cached_at"], "refreshing": refreshing}
+        return payload
+
+    def _store(self, entry) -> None:
+        try:
+            atomic_write_json(self.path, entry)
+        except OSError:
+            logger.warning(
+                "Could not persist benchmark report; keeping memory cache", exc_info=True
+            )
+        self._entry = entry
+        self._generation += 1
+
+    def _spawn_refresh_locked(self) -> None:
+        """Start one background recompute; further refresh calls coalesce."""
+        if self._refreshing:
+            return
+        self._refreshing = True
+        threading.Thread(
+            target=self._refresh_worker, daemon=True, name="cf-benchmark-refresh"
+        ).start()
+
+    def _refresh_worker(self) -> None:
+        try:
+            report = self.runner()
+            self._store({"version": self.version, "cached_at": self.clock(), "report": report})
+        except Exception:  # noqa: BLE001 - 后台失败只保留旧报告，不影响在线服务
+            logger.warning("Benchmark background refresh failed; keeping previous report",
+                           exc_info=True)
+        finally:
+            with self._lock:
+                self._refreshing = False
+
     def get(self, *, refresh=False):
         generation = self._generation
         with self._lock:
             if self._entry:
                 age = self.clock() - self._entry["cached_at"]
-                if (not refresh and 0 <= age < self.ttl) or self._generation != generation:
-                    return copy.deepcopy(self._entry["report"])
+                if not refresh and (0 <= age < self.ttl or self._generation != generation):
+                    return self._payload(self._entry, refreshing=self._refreshing)
+                if refresh:
+                    # 手动刷新：旧报告立即返回，真实评测转后台（合并重复点击）
+                    self._spawn_refresh_locked()
+                    return self._payload(self._entry, refreshing=True)
+                if self._refreshing:
+                    # 过期读撞上后台刷新：给旧报告，避免重复计算
+                    return self._payload(self._entry, refreshing=True)
             report = self.runner()
             entry = {"version": self.version, "cached_at": self.clock(), "report": report}
-            try:
-                atomic_write_json(self.path, entry)
-            except OSError:
-                logger.warning(
-                    "Could not persist benchmark report; keeping memory cache", exc_info=True
-                )
-            self._entry = entry
-            self._generation += 1
-            return copy.deepcopy(report)
+            self._store(entry)
+            return self._payload(entry, refreshing=False)

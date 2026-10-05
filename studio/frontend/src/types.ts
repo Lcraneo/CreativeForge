@@ -338,6 +338,8 @@ export interface ExportResult {
 
 export interface BenchmarkReport {
   generated_at: string;
+  /** 响应附带的缓存元数据：refreshing=true 表示后台评测进行中（旧报告即时返回） */
+  cache?: { cached_at: number; refreshing: boolean };
   dataset: { size: number; categories: string[]; animated: number };
   precon: {
     baseline_pixel_score: number;
@@ -639,13 +641,14 @@ export interface RestyleInfo {
 
 export interface ActionBatchTask {
   action: string;
-  status: "pending" | "generating" | "done" | "failed" | "skipped";
-  stage?: "prompt" | "video" | "sampling" | "composing" | "done";
+  /** interrupted = 后端重启导致任务中断（终态，见后端 task_store） */
+  status: "pending" | "generating" | "done" | "failed" | "skipped" | "interrupted";
+  stage?: "prompt" | "video" | "sampling" | "composing" | "done" | "interrupted";
   started_at?: number;
   progress?: number;
   note?: string;
   error?: string;
-  /** 失败分类：moderation/quota/auth/network/fatal（后端 classify_error） */
+  /** 失败分类：moderation/quota/auth/network/fatal/interrupted */
   error_kind?: string;
   animation_id?: string;
 }
@@ -653,15 +656,16 @@ export interface ActionBatchTask {
 export interface ActionBatchSnapshot {
   id: string;
   asset_id: string;
-  /** failed = 全部动作生成失败（部分失败仍为 done，failed_count 记失败数） */
-  status: "running" | "done" | "failed";
+  /** failed = 全部动作生成失败（部分失败仍为 done，failed_count 记失败数）；
+   * interrupted = 后端重启中断（终态，任务已落盘可追溯） */
+  status: "running" | "done" | "failed" | "interrupted";
   total: number;
   failed_count?: number;
   tasks: ActionBatchTask[];
   created_at?: number;
 }
 
-/** 队列中心：资产批次 + 动作批次聚合快照（内存态，重启即清空） */
+/** 队列中心：资产批次（内存态）+ 动画批次（已落盘，重启后 running 标记 interrupted） */
 export interface QueueSnapshot {
   running: number;
   asset_batches: Array<BatchStatus & { kind?: "assets" }>;

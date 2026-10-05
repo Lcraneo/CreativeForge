@@ -102,6 +102,8 @@ export default function BenchmarkCenter() {
     queryFn: api.benchmark,
     staleTime: 10 * 60 * 1000,
     retry: false,
+    // 手动刷新转入后台评测：轮询至 refreshing 清除（后端完成后自动更新）
+    refetchInterval: (query) => (query.state.data?.cache?.refreshing ? 4000 : false),
   });
   const refresh = useMutation({
     mutationFn: api.refreshBenchmark,
@@ -163,7 +165,7 @@ export default function BenchmarkCenter() {
               loading={refresh.isPending || report.isFetching}
               onClick={() => refresh.mutate()}
             >
-              {refresh.isPending ? "重新评测中…" : "重新评测"}
+              {refresh.isPending || data.cache?.refreshing ? "后台评测中…" : "重新评测"}
             </Button>
             <Badge tone="neutral" icon="clock">
               生成于 {new Date(data.generated_at).toLocaleString()}
@@ -175,6 +177,16 @@ export default function BenchmarkCenter() {
         }
       />
 
+      {data.cache?.refreshing && (
+        <p className="flex items-center gap-1.5 text-xs text-ink-3" role="status">
+          <Icon name="clock" className="h-3.5 w-3.5" />
+          评测后台进行中（约 13 秒），当前展示{" "}
+          {data.cache.cached_at
+            ? new Date(data.cache.cached_at * 1000).toLocaleTimeString()
+            : "上一轮"}
+          {" "}的报告，完成后自动更新——页面可正常操作，无需等待。
+        </p>
+      )}
       {refresh.isError && (
         <p role="alert" className="text-sm text-danger">
           重新评测失败，仍显示上次成功报告。可稍后重试。
