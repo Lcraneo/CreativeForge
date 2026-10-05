@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ModelApiPanel } from "../components/ModelApiPanel";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
-import { clearHidden, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
+import { hideAll, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
 import {
   api,
   type AnimationResult,
@@ -993,22 +993,53 @@ export default function AnimationStudio() {
             {mode === "smart" && (
               <div className="flex flex-col gap-4">
                 <div className="rounded-lg border border-line-subtle bg-surface-2/30 p-3">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2 flex items-center justify-between gap-3">
                     <span className="text-[11px] uppercase tracking-widest text-ink-4">
                       历史人物 · 点击载入到当前工作区
                     </span>
-                    {people.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setHiddenIds(clearHidden());
-                          toast({ tone: "info", title: "历史人物记录已清空" });
-                        }}
-                        className="text-[10.5px] text-ink-4 underline-offset-2 hover:text-danger hover:underline"
-                        title="仅从本列表隐藏，生成历史不受影响"
+                    <div className="flex shrink-0 items-center gap-3">
+                      {/* 上传源图入口与历史人物同区：都是"给工作区换人物"的来源 */}
+                      <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => onFile(e.target.files?.[0])}
+                      />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="image"
+                        onClick={() => fileRef.current?.click()}
                       >
-                        全部隐藏
-                      </button>
-                    )}
+                        上传源图
+                      </Button>
+                      {people.length > 0 && (
+                        <button
+                          onClick={() => {
+                            // 隐藏当前历史接口返回的全部人物（不止可见的 12 个），
+                            // 否则隐藏后下一批会立刻补位，列表看起来"没有反应"
+                            const ids = [
+                              ...new Set(
+                                (historyQuery.data?.records ?? [])
+                                  .map((record) => record.asset_id)
+                                  .filter((id): id is string => Boolean(id)),
+                              ),
+                            ];
+                            setHiddenIds(hideAll(ids));
+                            toast({
+                              tone: "info",
+                              title: `已隐藏 ${ids.length} 个历史人物`,
+                              description: "仅从本列表隐藏，生成历史不受影响",
+                            });
+                          }}
+                          className="text-[10.5px] text-ink-4 underline-offset-2 hover:text-danger hover:underline"
+                          title="仅从本列表隐藏，生成历史不受影响"
+                        >
+                          全部隐藏
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {people.length === 0 ? (
                     <p className="text-[11.5px] text-ink-4">
@@ -1349,23 +1380,6 @@ export default function AnimationStudio() {
                       ))}
                     </select>
                   </label>
-                  <div className="ml-auto flex items-center gap-3">
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => onFile(e.target.files?.[0])}
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon="image"
-                      onClick={() => fileRef.current?.click()}
-                    >
-                      上传源图
-                    </Button>
-                  </div>
                 </div>
                 {upload && (
                   <button

@@ -44,9 +44,15 @@ export function hidePerson(assetId: string): string[] {
   return items;
 }
 
-export function clearHidden(): string[] {
-  writeKey(HIDDEN_KEY, []);
-  return [];
+/** 隐藏全部传入人物（与已有隐藏清单合并，返回新清单）——
+ * 传当前历史接口返回的全部 asset_id，确保列表清空而不是只隐藏可见的前 12 个。 */
+export function hideAll(assetIds: string[]): string[] {
+  const items = readKey(HIDDEN_KEY);
+  for (const assetId of assetIds) {
+    if (assetId && !items.includes(assetId)) items.push(assetId);
+  }
+  writeKey(HIDDEN_KEY, items);
+  return items;
 }
 
 /** 最近使用排序记录（跨会话）：载入/生成过的人物置顶。 */
