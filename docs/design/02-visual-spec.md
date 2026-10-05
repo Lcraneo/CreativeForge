@@ -1,7 +1,8 @@
 # 02 · 视觉系统规范 — Warm Paper 暖纸编辑风
 
-> 适用范围：CreativeForge 两个前端 —— Studio（`studio/frontend`）与 MVP（`frontend`）。
-> 令牌单一事实来源：`studio/frontend/src/index.css` 与 `frontend/src/index.css` 的 `@theme` 块。
+> 适用范围：CreativeForge 唯一正式前端 Studio（`studio/frontend`）。
+> （原 MVP 前端 `frontend/` 已于 2026-10-05 删除，见 `docs/legacy-inventory.md`。）
+> 令牌单一事实来源：`studio/frontend/src/index.css` 的 `@theme` 块。
 > 本文取代早期 "Forge UI 2.0 · Obsidian Arc" 暗色规范（2026-09-26 起全面切换为暖纸编辑风）。
 
 ---
@@ -31,7 +32,7 @@
 | `line` | `#d3cfc5` | 常规描边、输入框边 |
 | `line-strong` | `#b9b3a5` | 强描边、基线对比条 |
 
-MVP 侧对应：`paper #f5f3ef`、`panel #edebe5`、`line #e3e0d8`、`line-2 #d3cfc5`。两套名字同一palette。
+（历史备注：MVP 前端删除前曾用 `paper #f5f3ef`、`panel #edebe5`、`line #e3e0d8`、`line-2 #d3cfc5`，两套名字同一 palette。）
 
 ### 2.2 文字
 

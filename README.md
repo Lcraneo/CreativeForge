@@ -27,9 +27,7 @@
                           游戏引擎就绪资产（Unity / Cocos / Godot）
 ```
 
-- **产品层** — `studio/`：React 18 + TypeScript + Vite 前端（智能体任务图 / 资产检查器 / 像素工作台 / 动画工作台 / 基准中心 / 导出中心）+ FastAPI 后端（REST + WebSocket 事件流）
-- **MVP 前端** — `frontend/`：Phase 21 三页产品（Creation Studio / Agent Timeline / Asset Viewer），直连 `backend/` 真实服务，覆盖一句话生成 → DAG 时间线 → 资产检查 → 引擎 zip 导出闭环
-- **服务层** — `backend/`：Phase 11-23 真实后端（FastAPI → Agent Runtime → 动态 DAG 编排 → 引擎链 → CreativeAsset → PostgreSQL），支持身份保持修改、风格/技能修改短链路（StyleAgent / GameLogicAgent + SimulationAgent）、置信度自评估 + 自愈、断点续跑、质量门 + 人工审核、导出中心（真实 zip 下载）、MCP 工具生态、项目协作（角色守卫资产生命周期）与多租户、模型训练闭环（身份数据集 → 对比训练 → 模型注册表 → GPU 分层推理）、游戏创作智能层（知识图谱 + RAG / CreativeSkill 蓝图 / 三平面模拟 / Game Creation Benchmark）
+- **产品层** — `studio/`：React 18 + TypeScript + Vite 前端（工作台 / 智能体任务图 / 资产检查器 / 动画工作台 / 基准中心 / 导出中心）+ FastAPI 后端（REST + WebSocket 事件流）
 - **智能层** — `agents/` + `agent/`：Supervisor 规划调度专家智能体，带 QA 修复轮、检查点与失败恢复
 - **技术层** — `precon/` `falign/` `gimport/`：三项自研引擎
 - **标准层** — `schemas/` + `packages/creative-core/`：CreativeAsset v1.0 统一资产协议（冻结契约）
@@ -83,27 +81,6 @@ npm --prefix studio/frontend run dev     # http://127.0.0.1:5173
 
 # Docker 一键起
 docker compose up -d
-```
-
-Phase 11-15 真实后端（独立服务，Agent 管线 + PostgreSQL）：
-
-```bash
-cd backend
-pip install -r requirements.txt
-copy .env.example .env                        # 默认 SQLite 即可跑通
-python -m uvicorn app.main:app --port 8765    # http://127.0.0.1:8765/docs
-
-# PostgreSQL 形态（db + backend 两容器）
-cd backend && docker compose up -d
-
-# 模型训练闭环（Phase 20）：资产库 → 身份数据集 → 对比训练 → 注册表 → 部署
-# Swagger: POST /api/v1/models/train, POST /api/v1/models/dna/embed, ...
-
-# MVP 前端（Phase 21）：三页产品，直连 8765 后端
-cd frontend
-npm install
-npm run dev                                  # http://127.0.0.1:5173（代理 /api → 8765）
-npm run build && npm run preview             # 生产构建预览 http://localhost:4173
 ```
 
 命令行直跑：
@@ -161,12 +138,6 @@ python -m benchmark.run_benchmark          # 写入 benchmark/results/
 python tests/run_tests.py                  # 36 项契约检查（Phase 3-7）
 python tests/release/run_release_tests.py  # 12 项发布验证（四层）
 python tests/dump_examples.py              # 用真实运行刷新 examples/*.json
-python backend/tests/run_backend_tests.py  # 40 项后端 E2E（Phase 11-15）
-python backend/tests/run_runtime_tests.py  # 36 项 Agent Runtime E2E（Phase 16-19）
-python backend/tests/run_training_tests.py # 30 项模型训练 E2E（Phase 20）
-python backend/tests/run_phase21_tests.py  # 19 项 zip 导出 / 产品 E2E（Phase 21）
-python backend/tests/run_phase22_tests.py  # 34 项动态 Planner / MCP / 协作 E2E（Phase 22）
-python backend/tests/run_phase23_tests.py  # 25 项知识图谱 / Game Logic / 模拟 E2E（Phase 23）
 ```
 
 ### 项目结构
@@ -178,9 +149,6 @@ CreativeForge/
 ├── precon/ falign/ gimport/              # 自研引擎层
 ├── agent/ agents/                        # 智能体层（单 Agent + 多 Agent）
 ├── studio/frontend studio/backend        # 产品层（Phase 8）
-├── frontend/                             # MVP 前端（Phase 21）：三页产品，直连 backend
-├── backend/                              # 真实后端（Phase 11-23）：FastAPI + PostgreSQL
-│   └── app/{core,models,agent,tools,adapters,engines,runtime,services,api}
 ├── benchmark/                            # 验证层（Phase 9）
 ├── examples/competition_demo/            # 固定演示（Phase 10）
 ├── tests/ tests/release/                 # 测试体系

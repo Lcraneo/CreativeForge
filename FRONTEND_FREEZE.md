@@ -1,4 +1,8 @@
-# FRONTEND_FREEZE — 旧前端冻结说明
+# FRONTEND_FREEZE — 旧前端冻结说明（已终结：2026-10-05 删除完成）
+
+> **状态更新**：本文所述的"先冻结，后删除"流程已走完——`frontend/`（MVP 三页）与
+> `backend/`（旧 MVP 后端）已于 2026-10-05 整体删除，处置记录见
+> `docs/legacy-inventory.md`。下文保留为历史决策记录。
 
 本仓库存在两套 Web 产品：
 

@@ -1,6 +1,7 @@
 # 遗留系统处置看板（Q4 4.2）
 
-> 冻结 → 迁移 → 删除 三里程碑。创建于 2026-09-30，删除完成后归档本文件。
+> 冻结 → 迁移 → 删除 三里程碑。创建于 2026-09-30。**M3 已于 2026-10-05 执行完毕，
+> `backend/` 与 `frontend/` 已整体删除，本文件转为归档记录。**
 
 ## 现状快照
 
@@ -30,11 +31,16 @@
 - `models/` + `schemas/`：pydantic 模型，studio 以 pydantic + types.ts 双端契约替代
 
 ### M3 删除（需要显式决定）
-前提 checklist：
-- [ ] M2 复查完成，确认无独占功能（尤其 `app/engines/` 与 `tools/`）
-- [ ] `git ls-files backend/ frontend/` 清单归档（本文件即记录起点）
-- [ ] `git rm -r backend frontend` + pyproject 移除排除项 + 本文件归档
-预期收益：仓库 py 体量减半（333 → ~154），clone/索引/lint 提速。
+
+前提 checklist（2026-10-05 执行前逐项确认）：
+- [x] M2 复查完成，确认无独占功能（尤其 `app/engines/` 与 `tools/`）——复查结论：
+      `engines` 与 artgen/adapters/studio 大面积重叠；训练闭环/知识图谱 RAG/三平面模拟/
+      CharacterDNA/MCP/多租户为休眠能力，按 M2 原则不迁移，复活时从 git 历史找回重写
+- [x] `git ls-files backend/ frontend/` 清单归档（本文件即记录起点）
+- [x] `git rm -r backend frontend` + pyproject 移除排除项 + 本文件归档（含 README/
+      CONTRIBUTING/FRONTEND_FREEZE 同步）
+预期收益：仓库 py 体量减半（333 → ~154），clone/索引/lint 提速。✅ 已兑现
+（删除 5318 个跟踪文件，其中 frontend/ 含 node_modules 5132 个）。
 
 ## 度量
 

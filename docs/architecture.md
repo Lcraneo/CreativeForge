@@ -220,7 +220,7 @@ backend (FastAPI)
   background thread and streams lifecycle events into the task store
 - `studio/backend/export_service/service.py` — CreativeAsset -> real zip
   (Character / Animation / Prefab / Config), served for download
-- entry: `python -m studio.backend.main` (also serves `frontend/dist`)
+- entry: `python -m studio.backend.main` (also serves `studio/frontend/dist`)
 
 ## Layer 9 — Benchmark System (Phase 9)
 
@@ -371,6 +371,10 @@ metadata / graph), and `runtime/tiers.py` `GpuQueue` is the single-worker
 stand-in for the GPU worker pool.
 
 ## Layer 15 — Product MVP (Phase 21)
+
+> **已删除（2026-10-05）**：本层的 `frontend/`（MVP 三页）与配套旧后端 `backend/`
+> 已按 `docs/legacy-inventory.md` M3 计划整体删除，studio 是唯一正式产品面。
+> 下文保留为 phase 设计记录。
 
 `frontend/` — the three MVP pages from the phase spec, React 18 + Vite +
 Tailwind 4, talking to the backend through `/api` (dev/preview proxy to

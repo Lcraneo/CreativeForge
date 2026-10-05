@@ -769,10 +769,11 @@ def _():
     assert asset["quality"]["report"]["status"] == "PASS"
 
 
-@check("architecture", "legacy systems stay frozen (no imports from backend/ or frontend/)")
+@check("architecture", "legacy systems stay deleted (no imports from backend/ or frontend/)")
 def _():
-    """Q4 4.2 遗留冻结：backend/（Phase 11-23 旧后端）与 frontend/（MVP）已冻结，
-    活跃代码不得新增对它们的依赖——迁移完成后整体删除（docs/legacy-inventory.md）。"""
+    """Q4 4.2 遗留处置：backend/（Phase 11-23 旧后端）与 frontend/（MVP）已冻结并
+    于 2026-10-05 整体删除（docs/legacy-inventory.md）。门禁保留，防止从 git 历史
+    找回代码时把对已删系统的 import 重新带回活跃目录。"""
     import os
     import re
 
