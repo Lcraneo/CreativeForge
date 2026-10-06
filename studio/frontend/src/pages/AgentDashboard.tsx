@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Background, Controls, ReactFlow, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { motion } from "framer-motion";
 import { useAgentStore, type NodeStatus } from "../stores/agentStore";
 import { nodeIdForTask, useWorkflowStore } from "../stores/workflowStore";
 import { assetHref, useAssetStore } from "../stores/assetStore";
@@ -22,8 +21,9 @@ import {
 } from "../components/ui";
 import { Icon } from "../components/icons";
 import { GenerationResult } from "../components/GenerationResult";
+import { LiveStream } from "../components/live/LiveStream";
+import { useTaskFeed } from "../hooks/useTaskFeed";
 import type { CreativeAsset, Plan, TaskEvent, HistorySummary } from "../types";
-import { MOTION } from "../lib/motion";
 
 const KIND_LABEL: Record<string, string> = {
   supervisor: "规划",
@@ -203,20 +203,6 @@ function layout(nodes: { id: string }[]) {
   return positions;
 }
 
-const EVENT_TONE: Record<string, string> = {
-  AGENT_START: "text-primary",
-  AGENT_DONE: "text-success",
-  TASK_FAILED: "text-danger",
-  ASSET_UPDATE: "text-precon",
-  QUALITY_REPORT: "text-warning",
-  TASK_COMPLETE: "text-success",
-  PROGRESS: "text-falign",
-  MODEL_START: "text-primary",
-  MODEL_ENHANCE: "text-precon",
-  MODEL_IMAGE: "text-success",
-  MODEL_FALLBACK: "text-danger",
-};
-
 export default function AgentDashboard() {
   const { taskId, goal, status, events, agentStatuses, progress } = useAgentStore();
   const { nodes, edges, plan, currentNode } = useWorkflowStore();
@@ -227,11 +213,16 @@ export default function AgentDashboard() {
   const applyWorkflowEvent = useWorkflowStore((state) => state.applyEvent);
   const navigate = useNavigate();
   const refreshedAsset = useRef<string | null>(null);
+  // 实时流连接状态：非致命提示（自动降级轮询中）+ 手动重连代数
+  const [streamNotice, setStreamNotice] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!taskId) return;
+    setStreamNotice(null);
     const stop = streamTask(taskId, {
       onEvent: (event) => {
+        setStreamNotice(null);
         applyAgentEvent(event);
         applyWorkflowEvent(event);
         if (event.type === "ASSET_UPDATE" && event.id) {
@@ -242,9 +233,11 @@ export default function AgentDashboard() {
         }
       },
       onEnd: (final) => finishAgent(final),
+      onError: (message) => setStreamNotice(message),
     });
     return stop;
-  }, [taskId, applyAgentEvent, applyWorkflowEvent, finishAgent, setAsset]);
+    // retryKey 变化 = 主动断开重连
+  }, [taskId, retryKey, applyAgentEvent, applyWorkflowEvent, finishAgent, setAsset]);
 
   // 任务完成时拉一次最终资产快照：ASSET_UPDATE 的并发取数可能拿到
   // 不含 design_views 的中间版本，这里保证结果面板拿到完整数据。
@@ -409,6 +402,8 @@ export default function AgentDashboard() {
             qualityEvent={qualityEvent}
             progress={progress}
             status={status}
+            streamNotice={streamNotice}
+            onRetryStream={() => setRetryKey((key) => key + 1)}
           />
         </Card>
 
@@ -488,14 +483,19 @@ function RightPanel({
   qualityEvent,
   progress,
   status,
+  streamNotice,
+  onRetryStream,
 }: {
   events: TaskEvent[];
   qualityEvent: TaskEvent | undefined;
   progress: number;
   status: string;
+  streamNotice: string | null;
+  onRetryStream: () => void;
 }) {
   const [tab, setTab] = useState("events");
-  const recent = events.slice(-7).reverse();
+  const feed = useTaskFeed(events);
+  const recent = feed.items.slice(-7).reverse();
 
   return (
     <div>
@@ -510,81 +510,74 @@ function RightPanel({
           onChange={setTab}
         />
       </div>
-      <div className="cf-scroll max-h-[430px] overflow-y-auto p-[18px]">
+      <div className="p-[18px]">
         {tab === "events" && (
-          <div className="font-mono text-[11.5px] leading-[19px]" aria-live="polite">
-            {events.length === 0 && <p className="text-ink-4">等待事件…</p>}
-            {events.map((event, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -6 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: MOTION.base }}
-                className="flex items-baseline gap-2.5"
-              >
-                <span className="shrink-0 text-ink-4">
-                  {new Date((event.at ?? 0) * 1000).toLocaleTimeString([], {
-                    minute: "2-digit",
-                    second: "2-digit",
-                  })}
-                </span>
-                <span
-                  className={cx("shrink-0 font-medium", EVENT_TONE[event.type] ?? "text-ink-2")}
-                >
-                  {event.type}
-                </span>
-                <span className="truncate text-ink-3">
-                  {event.agent ?? event.task ?? event.detail ?? ""}
-                </span>
-              </motion.div>
-            ))}
-          </div>
+          <LiveStream
+            items={feed.items}
+            notice={streamNotice}
+            onRetry={onRetryStream}
+            height={392}
+            rowHeight={40}
+          />
         )}
 
         {tab === "timeline" && (
-          <ol className="relative space-y-4 pl-1">
-            <span className="absolute bottom-2 left-[10px] top-2 w-0.5 rounded-sm bg-line-subtle" />
-            {recent.length === 0 && <p className="text-xs text-ink-4">等待 Agent 状态变化…</p>}
-            {recent.map((event, index) => (
-              <li key={index} className="relative flex gap-3.5">
-                <span className="relative z-10 mt-1 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2 border-primary bg-canvas text-primary">
-                  <Icon name="activity" className="h-3 w-3" />
-                </span>
-                <div className="min-w-0">
-                  <div className="text-[12.5px] font-medium">{event.type}</div>
-                  <div className="truncate text-[11.5px] text-ink-3">
-                    {event.agent ?? event.task ?? "Agent System"} ·{" "}
-                    {new Date((event.at ?? 0) * 1000).toLocaleTimeString([], {
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <div className="cf-scroll max-h-[430px] overflow-y-auto">
+            {recent.length === 0 ? (
+              <EmptyState
+                icon="activity"
+                title="等待 Agent 状态变化"
+                description="节点启动与完成会在这里排成时间线。"
+              />
+            ) : (
+              <ol className="relative space-y-4 pl-1">
+                <span className="absolute bottom-2 left-[10px] top-2 w-0.5 rounded-sm bg-line-subtle" />
+                {recent.map((item) => (
+                  <li key={item.id} className="relative flex gap-3.5">
+                    <span className="relative z-10 mt-1 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2 border-primary bg-canvas text-primary">
+                      <Icon name="activity" className="h-3 w-3" />
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-[12.5px] font-medium">{item.title}</div>
+                      <div className="truncate text-[11.5px] text-ink-3">
+                        {item.agent ?? "Agent System"} ·{" "}
+                        {item.at
+                          ? new Date(item.at * 1000).toLocaleTimeString([], {
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })
+                          : "--:--"}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         )}
 
         {tab === "quality" && (
-          <div className="space-y-3.5">
-            {qualityEvent?.scores ? (
-              Object.entries(qualityEvent.scores).map(([section, score]) => (
-                <ScoreBar
-                  key={section}
-                  label={section}
-                  value={score}
-                  threshold={section === "pixel" ? 0.8 : section === "animation" ? 0.85 : 0.9}
-                />
-              ))
-            ) : (
-              <p className="text-xs text-ink-3">
-                {status === "failed" ? "任务失败，请重试" : "QA 尚未产出报告…"}
-              </p>
-            )}
-            <div className="border-t border-line-subtle pt-3">
-              <div className="flex items-center justify-between text-xs text-ink-3">
-                <span>整体进度</span>
-                <span className="tabular font-mono text-ink">{progress}%</span>
+          <div className="cf-scroll max-h-[430px] overflow-y-auto">
+            <div className="space-y-3.5">
+              {qualityEvent?.scores ? (
+                Object.entries(qualityEvent.scores).map(([section, score]) => (
+                  <ScoreBar
+                    key={section}
+                    label={section}
+                    value={score}
+                    threshold={section === "pixel" ? 0.8 : section === "animation" ? 0.85 : 0.9}
+                  />
+                ))
+              ) : (
+                <p className="text-xs text-ink-3">
+                  {status === "failed" ? "任务失败，请重试" : "QA 尚未产出报告…"}
+                </p>
+              )}
+              <div className="border-t border-line-subtle pt-3">
+                <div className="flex items-center justify-between text-xs text-ink-3">
+                  <span>整体进度</span>
+                  <span className="tabular font-mono text-ink">{progress}%</span>
+                </div>
               </div>
             </div>
           </div>

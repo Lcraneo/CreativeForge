@@ -167,11 +167,14 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line-subtle pb-4">
       <div className="min-w-0">
         {overline && (
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
-            {overline}
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <span className="h-[3px] w-[3px] shrink-0 rounded-[1px] bg-ember" aria-hidden="true" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-3">
+              {overline}
+            </span>
           </div>
         )}
         <h1 className="font-display text-[26px] font-black leading-9">{title}</h1>
@@ -180,6 +183,74 @@ export function PageHeader({
         )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+/**
+ * 印章：方形宋体字，墨印（实底）或朱印（描边）。
+ * 全站的"人手迹"符号——品牌、空状态、英雄区点题，克制使用。
+ */
+export function Stamp({
+  char,
+  tone = "ink",
+  size = 28,
+  className,
+  title,
+}: {
+  char: string;
+  tone?: "ink" | "ember";
+  size?: number;
+  className?: string;
+  title?: string;
+}) {
+  return (
+    <span
+      title={title}
+      aria-hidden={!title}
+      className={cx(
+        "inline-grid shrink-0 select-none place-items-center rounded-[6px] font-display font-black leading-none",
+        tone === "ink"
+          ? "bg-ink text-canvas shadow-[0_4px_10px_-4px_rgba(26,24,20,.5)]"
+          : "border-[1.5px] border-ember bg-ember/[.08] text-ember",
+        className,
+      )}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.5) }}
+    >
+      {char}
+    </span>
+  );
+}
+
+/** 小节标题：ember 短竖条 + 宋体黑字 + 可选说明与右侧动作，用于页内分区节奏 */
+export function SectionTitle({
+  eyebrow,
+  title,
+  description,
+  action,
+  className,
+}: {
+  eyebrow?: string;
+  title: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cx("flex flex-wrap items-end justify-between gap-x-4 gap-y-2", className)}>
+      <div className="min-w-0">
+        {eyebrow && (
+          <div className="mb-0.5 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-ink-4">
+            {eyebrow}
+          </div>
+        )}
+        <div className="flex items-center gap-2.5">
+          <span className="h-[13px] w-[3px] shrink-0 rounded-sm bg-ember" aria-hidden="true" />
+          <h2 className="font-display text-[19px] font-black leading-7">{title}</h2>
+        </div>
+        {description && <p className="mt-1 max-w-3xl text-xs leading-5 text-ink-3">{description}</p>}
+      </div>
+      {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
     </div>
   );
 }
@@ -737,8 +808,38 @@ export function EmptyState({
 }) {
   return (
     <div className={cx("flex flex-col items-center gap-2.5 px-5 py-11 text-center", className)}>
-      <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary-tint text-primary">
+      <span className="relative grid h-12 w-12 place-items-center rounded-[10px] border border-line bg-surface-1 text-ink-2 shadow-e2">
         <Icon name={icon} className="h-5 w-5" />
+        <span
+          className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-ember shadow-[0_0_0_3px_rgba(245,243,239,.9)]"
+          aria-hidden="true"
+        />
+      </span>
+      <div className="text-[15px] font-semibold">{title}</div>
+      {description && (
+        <p className="max-w-sm text-[12.5px] leading-[19px] text-ink-3">{description}</p>
+      )}
+      {action && <div className="mt-1">{action}</div>}
+    </div>
+  );
+}
+
+/** 异常态：网络失败、权限不足、流中断等需要用户介入的场景 */
+export function ErrorState({
+  title = "加载失败",
+  description,
+  action,
+  className,
+}: {
+  title?: ReactNode;
+  description?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cx("flex flex-col items-center gap-2.5 px-5 py-10 text-center", className)}>
+      <span className="grid h-12 w-12 place-items-center rounded-[10px] border border-danger/40 bg-danger/10 text-danger">
+        <Icon name="alert" className="h-5 w-5" />
       </span>
       <div className="text-[15px] font-semibold">{title}</div>
       {description && (

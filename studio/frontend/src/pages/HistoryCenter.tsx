@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { assetHref, useAssetStore } from "../stores/assetStore";
@@ -52,7 +52,9 @@ export default function HistoryCenter() {
   const setAsset = useAssetStore((state) => state.set);
   const [engine, setEngine] = useState("all");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // 深链支持：/history?open=<id> 直达某条档案（首页「最近出炉」等入口）
+  const [selectedId, setSelectedId] = useState<string | null>(() => searchParams.get("open"));
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
 
@@ -336,7 +338,15 @@ export default function HistoryCenter() {
             title="档案详情"
             icon="cube"
             right={
-              <Button variant="ghost" size="sm" icon="x" onClick={() => setSelectedId(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                icon="x"
+                onClick={() => {
+                  setSelectedId(null);
+                  if (searchParams.get("open")) setSearchParams({}, { replace: true });
+                }}
+              >
                 关闭
               </Button>
             }

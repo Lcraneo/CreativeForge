@@ -113,6 +113,19 @@
   }
 }
 
+/* 路由进入过渡：淡入 + 轻位移；元素仅在本轮动画期间带 transform，
+   结束后回归 none，不影响 fixed/sticky 子元素 */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+.cf-page-enter {
+  animation: page-enter var(--motion-base) var(--ease-standard);
+}
+
 /* reduced-motion：系统声明降级时动画与过渡一律瞬时完成（windup 同款纪律） */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -188,6 +201,45 @@
 @layer utilities {
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* 纸纹肌理：单色极低透明度噪声覆层，让纸面可感而几乎不改色 */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 0.032;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+
+  /* 竖排题字：英雄区侧缘的人文点缀 */
+  .cf-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.42em;
+  }
+
+  /* 灵感签：略带手作歪斜的纸签，悬停回正 */
+  .cf-slip {
+    transform: rotate(-0.55deg);
+  }
+  .cf-slip:nth-child(even) {
+    transform: rotate(0.45deg);
+  }
+  .cf-slip:nth-child(3n) {
+    transform: rotate(-0.2deg);
+  }
+  .cf-slip:hover,
+  .cf-slip:focus-visible {
+    transform: rotate(0deg) translateY(-1px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .cf-slip {
+      transform: none;
+    }
   }
 
   .cf-scroll {
