@@ -29,6 +29,26 @@ REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..")
 EXPORTS_DIR = os.path.join(REPO, "studio", "backend", "exports")
 
 WINDOW_W, WINDOW_H = 640, 480
+# 网页编辑器轻量档：Godot web editor 的浏览器虚拟文件系统对大 zip 提取
+# 不稳（28MB 包实测 PNG 提取失败 → 图集缺失连锁"缺少依赖"）。192px 帧
+# 对像素画视觉无损，整包从 ~28MB 降到几 MB。
+LIGHT_FRAME_WIDTH = 192
+
+
+def _maybe_lighten(sheet_bytes: bytes, light: bool) -> tuple[bytes, int, int]:
+    """light=True 时把横排条带等比缩到 LIGHT_FRAME_WIDTH 帧宽，返回 (bytes, w, h)。"""
+    with Image.open(_io.BytesIO(sheet_bytes)) as handle:
+        handle.load()  # 显式解码：惰性加载的 fp 在 resize 二次读取时会断言失败
+        width, height = handle.size
+        if not light or width <= LIGHT_FRAME_WIDTH * 2:
+            return sheet_bytes, width, height
+        frames = max(1, round(width / height)) if height else 1
+        target_w = LIGHT_FRAME_WIDTH * frames
+        target_h = max(1, round(height * target_w / width))
+        resized = handle.resize((target_w, target_h), Image.LANCZOS)
+    buffer = _io.BytesIO()
+    resized.save(buffer, "PNG", optimize=True)
+    return buffer.getvalue(), target_w, target_h
 
 
 def _safe(name: str) -> str:
@@ -48,7 +68,7 @@ def latest_godot_package() -> str:
     return max(candidates, key=os.path.getmtime)
 
 
-def build(package_path: str) -> str:
+def build(package_path: str, light: bool = True) -> str:
     with zipfile.ZipFile(package_path) as package:
         manifest = json.loads(package.read("manifest.json"))
         asset = manifest.get("asset") or {}
@@ -63,9 +83,7 @@ def build(package_path: str) -> str:
             sheet_path = "animations/" + sheet_name
             if sheet_path not in package.namelist():
                 continue
-            sheet_bytes = package.read(sheet_path)
-            with Image.open(_io.BytesIO(sheet_bytes)) as handle:
-                sheet_w, sheet_h = handle.size
+            sheet_bytes, sheet_w, sheet_h = _maybe_lighten(package.read(sheet_path), light)
             frames = int(entry.get("frames") or 1)
             fps = float(entry.get("fps") or 12)
             if frames < 1 or sheet_w % frames:
@@ -226,7 +244,7 @@ def build(package_path: str) -> str:
             ]
         )
 
-        out_name = "{}_godot_native.zip".format(_safe(asset_id))
+        out_name = "{}_godot_native{}.zip".format(_safe(asset_id), "" if light else "_full")
         out_path = os.path.join(EXPORTS_DIR, out_name)
         with zipfile.ZipFile(out_path, "w", zipfile.ZIP_DEFLATED) as out:
             out.writestr("project.godot", project_godot)
@@ -247,5 +265,7 @@ def build(package_path: str) -> str:
 
 
 if __name__ == "__main__":
-    package = sys.argv[1] if len(sys.argv) > 1 else latest_godot_package()
-    build(package)
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
+    light = "--full" not in sys.argv[1:]  # 缺省轻量档（网页编辑器友好）；--full 保原尺寸
+    package = args[0] if args else latest_godot_package()
+    build(package, light=light)
