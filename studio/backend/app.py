@@ -60,6 +60,12 @@ def create_app():
             "/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets"
         )
 
+        # 仓库级小游戏（games/coin-arena）静态伺服。必须注册在 SPA 兜底
+        # 路由之前——catch-all 会把 /game/* 吞成 index.html
+        game_dir = os.path.join(REPO_ROOT, "games", "coin-arena")
+        if os.path.isdir(game_dir):
+            app.mount("/game", StaticFiles(directory=game_dir, html=True), name="game")
+
         # /api 前缀的未知路径必须 404 JSON——SPA 兜底会把它们当成前端路由
         # 返回 200 index.html，前端 request() 会拿 HTML 当 JSON 解析报错
         @app.get("/api/{full_path:path}", include_in_schema=False)
