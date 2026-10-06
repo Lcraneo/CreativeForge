@@ -20,7 +20,7 @@
   ctx.imageSmoothingEnabled = false;
 
   /* ── 资产加载 ─────────────────────────────────────────────── */
-  const ASSET_V = 6; // 素材迭代版本：更新图集后递增，强制浏览器刷新缓存
+  const ASSET_V = 7; // 素材迭代版本：更新图集后递增，强制浏览器刷新缓存
   const VQ = `?v=${ASSET_V}`;
   const SHEETS = {
     hero: { idle: "assets/hero_idle.png", walk: "assets/hero_walk.png", run: "assets/hero_run.png", attack: "assets/hero_attack.png" },
