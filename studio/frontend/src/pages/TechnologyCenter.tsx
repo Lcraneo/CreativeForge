@@ -73,11 +73,7 @@ export default function TechnologyCenter() {
           CreativeForge Engine
         </div>
         <h2 className="mt-2.5 max-w-3xl font-display text-[38px] font-black leading-[50px]">
-          把创意
-          <span className="bg-gradient-to-br from-[#a9812f] to-[#c46a3a] bg-clip-text text-transparent">
-            锻造
-          </span>
-          成可运行的资产
+          把创意<span className="text-ember">锻造</span>成可运行的资产
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-[22px] text-ink-2">
           CreativeAsset 统一协议连接像素重建、动画切帧对齐与引擎自动导入。多智能体自主规划，

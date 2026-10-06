@@ -11,6 +11,7 @@ import {
   EmptyState,
   KV,
   PageHeader,
+  SafeImage,
   ScoreBar,
   Skeleton,
   StatusDot,
@@ -252,6 +253,9 @@ export default function HistoryCenter() {
                         onChange={toggleAll}
                       />
                     </th>
+                    <th className="w-14 px-3 py-2.5">
+                      <span className="sr-only">缩略图</span>
+                    </th>
                     <th className="px-4 py-2.5 font-semibold">时间</th>
                     <th className="px-4 py-2.5 font-semibold">目标 / 资产</th>
                     <th className="px-4 py-2.5 font-semibold">状态</th>
@@ -278,6 +282,21 @@ export default function HistoryCenter() {
                           className="h-3.5 w-3.5 translate-y-px accent-ink"
                           checked={selected.has(record.id)}
                           onChange={() => toggleOne(record.id)}
+                        />
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <SafeImage
+                          src={record.image?.url ?? undefined}
+                          alt={record.name || record.goal || "资产"}
+                          className="h-10 w-10 rounded-md border border-line-subtle bg-paper object-cover"
+                          fallback={
+                            <CharacterArt
+                              spec={record.character}
+                              palette={record.palette}
+                              view="bust"
+                              className="h-8 w-8"
+                            />
+                          }
                         />
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-[11.5px] text-ink-3">
@@ -360,21 +379,20 @@ export default function HistoryCenter() {
             ) : (
               <div className="flex flex-col gap-4">
                 <div className="flex gap-4">
-                  <div className="grid h-[120px] w-[104px] shrink-0 place-items-center overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
-                    {detail.image?.url ? (
-                      <img
-                        src={detail.image.url}
-                        alt={detail.name ?? "asset"}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <CharacterArt
-                        spec={detail.character}
-                        palette={detail.palette}
-                        view="bust"
-                        className="h-[96px] w-[88px]"
-                      />
-                    )}
+                  <div className="grid h-[120px] w-[104px] shrink-0 place-items-center overflow-hidden rounded-[10px] border border-line-subtle bg-paper">
+                    <SafeImage
+                      src={detail.image?.url ?? undefined}
+                      alt={detail.name ?? "asset"}
+                      className="h-full w-full object-cover"
+                      fallback={
+                        <CharacterArt
+                          spec={detail.character}
+                          palette={detail.palette}
+                          view="bust"
+                          className="h-[96px] w-[88px]"
+                        />
+                      }
+                    />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[15px] font-semibold text-ink">

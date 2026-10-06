@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import {
   useId,
+  useState,
   type ButtonHTMLAttributes,
+  type ImgHTMLAttributes,
   type InputHTMLAttributes,
   type ReactNode,
   type SelectHTMLAttributes,
@@ -22,10 +24,11 @@ type ButtonVariant = "primary" | "ember" | "secondary" | "ghost" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
+  /* 墨锭按钮：实底 + 顶部内高光，像一块被磨亮的墨 */
   primary:
-    "bg-primary text-canvas hover:bg-primary-hover active:bg-primary-active shadow-[0_6px_16px_-8px_rgba(26,24,20,.55)]",
+    "bg-primary text-canvas hover:bg-primary-hover active:bg-primary-active shadow-[0_6px_16px_-8px_rgba(26,24,20,.55),inset_0_1px_0_rgba(255,255,255,.14)]",
   ember:
-    "bg-gradient-to-br from-ember to-[#c46a3a] text-[#fdfcf9] shadow-[0_6px_16px_-8px_rgba(169,129,47,.6)] hover:brightness-110",
+    "bg-gradient-to-br from-ember to-[#c46a3a] text-[#fdfcf9] shadow-[0_6px_16px_-8px_rgba(169,129,47,.6),inset_0_1px_0_rgba(255,255,255,.28)] hover:brightness-110",
   secondary: "bg-surface-2 border border-line text-ink hover:bg-surface-3 hover:border-line-strong",
   ghost: "text-ink-2 hover:bg-surface-2 hover:text-ink",
   danger: "bg-danger/15 border border-danger/40 text-danger hover:bg-danger/25",
@@ -58,7 +61,8 @@ export function Button({
       type="button"
       disabled={disabled || loading}
       className={cx(
-        "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-all duration-(--motion-fast) ease-standard active:translate-y-px disabled:pointer-events-none disabled:opacity-45",
+        // transition 只声明会变的属性（禁 transition-all）；按压 = scale .96 触觉反馈
+        "inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-md font-semibold transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard active:scale-[0.96] disabled:pointer-events-none disabled:opacity-45",
         BUTTON_VARIANTS[variant],
         BUTTON_SIZES[size],
         className,
@@ -83,7 +87,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        "grid h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-2 transition-colors duration-(--motion-fast) ease-standard hover:border-line hover:text-ink",
+        "grid h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-2 transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-line hover:text-ink active:scale-[0.96]",
         className,
       )}
       {...rest}
@@ -132,9 +136,9 @@ export function Card({
   return (
     <section
       className={cx(
-        "cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1]",
+        "cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1] shadow-e1",
         interactive &&
-          "transition-all duration-(--motion-fast) ease-standard hover:-translate-y-px hover:border-line",
+          "cf-raise hover:-translate-y-px hover:border-line hover:shadow-e3",
         className,
       )}
     >
@@ -170,16 +174,16 @@ export function PageHeader({
     <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line-subtle pb-4">
       <div className="min-w-0">
         {overline && (
-          <div className="mb-1.5 flex items-center gap-1.5">
-            <span className="h-[3px] w-[3px] shrink-0 rounded-[1px] bg-ember" aria-hidden="true" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-ink-3">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 shrink-0 rotate-45 rounded-[1px] bg-ember" aria-hidden="true" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-3">
               {overline}
             </span>
           </div>
         )}
-        <h1 className="font-display text-[26px] font-black leading-9">{title}</h1>
+        <h1 className="font-display text-[28px] font-black leading-9 [text-wrap:balance]">{title}</h1>
         {description && (
-          <p className="mt-1 max-w-3xl text-[13px] leading-5 text-ink-3">{description}</p>
+          <p className="mt-1.5 max-w-3xl text-[13px] leading-5 text-ink-3 [text-wrap:pretty]">{description}</p>
         )}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -245,10 +249,10 @@ export function SectionTitle({
           </div>
         )}
         <div className="flex items-center gap-2.5">
-          <span className="h-[13px] w-[3px] shrink-0 rounded-sm bg-ember" aria-hidden="true" />
+          <span className="h-2 w-2 shrink-0 rotate-45 rounded-[1px] bg-ember" aria-hidden="true" />
           <h2 className="font-display text-[19px] font-black leading-7">{title}</h2>
         </div>
-        {description && <p className="mt-1 max-w-3xl text-xs leading-5 text-ink-3">{description}</p>}
+        {description && <p className="mt-1 max-w-3xl text-xs leading-5 text-ink-3 [text-wrap:pretty]">{description}</p>}
       </div>
       {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
     </div>
@@ -274,12 +278,12 @@ const BADGE_TONES: Record<Tone, string> = {
   neutral: "bg-ink/[.06] text-ink-2",
   primary: "bg-primary/15 text-primary",
   success: "bg-success/15 text-success",
-  warning: "bg-warning/15 text-warning",
+  warning: "bg-warning/15 text-[color:var(--color-ember-ink)]",
   danger: "bg-danger/15 text-danger",
   precon: "bg-precon/15 text-precon",
   falign: "bg-falign/15 text-falign",
   gimport: "bg-gimport/15 text-gimport",
-  ember: "bg-ember/15 text-ember",
+  ember: "bg-ember/15 text-[color:var(--color-ember-ink)]",
 };
 
 export function Badge({
@@ -343,10 +347,10 @@ export function Chip({
     <button
       type="button"
       className={cx(
-        "inline-flex h-8 select-none items-center gap-2 rounded-full border px-3 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
+        "inline-flex h-8 select-none items-center gap-2 rounded-full border px-3 text-[12.5px] transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard active:scale-[0.96]",
         active
-          ? "border-primary/45 bg-primary-tint text-primary"
-          : "border-line-subtle bg-surface-1 text-ink-2 hover:border-line hover:text-ink",
+          ? "border-primary/45 bg-primary-tint text-primary shadow-[inset_0_1px_0_rgba(255,255,255,.55)]"
+          : "border-line-subtle bg-paper text-ink-2 hover:border-line hover:text-ink",
         className,
       )}
       {...rest}
@@ -369,7 +373,7 @@ export function Input({
   return (
     <label
       className={cx(
-        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-all duration-(--motion-fast) ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-surface-2 px-3 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
     >
@@ -386,7 +390,7 @@ export function Textarea({ className, ...rest }: TextareaHTMLAttributes<HTMLText
   return (
     <textarea
       className={cx(
-        "w-full resize-none rounded-[10px] border border-line bg-[#faf9f5] px-4 py-3.5 text-sm leading-6 text-ink outline-none transition-all duration-(--motion-fast) ease-standard placeholder:text-ink-4 focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "w-full resize-none rounded-[10px] border border-line bg-paper px-4 py-3.5 text-sm leading-6 text-ink shadow-[inset_0_1px_2px_rgba(26,24,20,.04)] outline-none transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard placeholder:text-ink-4 hover:border-line-strong focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.1)]",
         className,
       )}
       {...rest}
@@ -404,7 +408,7 @@ export function Select({
   return (
     <select
       className={cx(
-        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23918c82%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-all duration-(--motion-fast) ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
+        "h-9 w-full appearance-none rounded-md border border-line bg-surface-2 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%23918c82%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(26,24,20,.12)]",
         className,
       )}
       {...rest}
@@ -439,10 +443,11 @@ export function Switch({
         checked ? "border-primary bg-primary/30" : "border-line bg-surface-3",
       )}
     >
+      {/* 滑块位移走 transform（合成器友好），不动画 left 布局属性 */}
       <span
         className={cx(
-          "absolute top-0.5 h-3.5 w-3.5 rounded-full transition-all duration-(--motion-fast) ease-standard",
-          checked ? "left-[18px] bg-primary" : "left-0.5 bg-ink-3",
+          "absolute left-0.5 top-0.5 h-3.5 w-3.5 rounded-full transition-transform duration-(--motion-base) ease-standard",
+          checked ? "translate-x-[14px] bg-primary" : "translate-x-0 bg-ink-3",
         )}
       />
     </button>
@@ -479,10 +484,10 @@ export function Segmented<T extends string>({
           aria-selected={value === option.id}
           onClick={() => onChange(option.id)}
           className={cx(
-            "flex h-7 select-none items-center gap-1.5 rounded-[7px] px-3.5 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
+            "flex h-7 select-none items-center gap-1.5 rounded-[7px] border px-3.5 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
             value === option.id
-              ? "bg-surface-3 font-semibold text-ink shadow-[inset_0_1px_0_rgba(255,255,255,.65)]"
-              : "text-ink-2 hover:text-ink",
+              ? "border-line-subtle bg-paper font-semibold text-ink shadow-e2"
+              : "border-transparent text-ink-2 hover:text-ink",
           )}
         >
           {option.icon && <Icon name={option.icon} className="h-4 w-4" />}
@@ -504,6 +509,8 @@ export function Tabs({
   onChange: (id: string) => void;
   className?: string;
 }) {
+  // 每个实例独立的 layoutId，切换时墨色下划线在标签间平滑滑移
+  const groupId = useId().replace(/:/g, "");
   return (
     <div className={cx("flex gap-5 border-b border-line-subtle", className)}>
       {items.map((item) => (
@@ -520,7 +527,11 @@ export function Tabs({
             <span className="ml-1.5 font-mono text-[10.5px] text-ink-4">{item.count}</span>
           )}
           {value === item.id && (
-            <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-sm bg-primary" />
+            <motion.span
+              layoutId={`tabs-underline-${groupId}`}
+              className="absolute inset-x-0 -bottom-px h-0.5 rounded-sm bg-primary"
+              transition={{ duration: MOTION.base, ease: EASE_STANDARD }}
+            />
           )}
         </button>
       ))}
@@ -566,11 +577,12 @@ export function ScoreBar({
         <span className="min-w-0 truncate text-ink-2">{label}</span>
         <span className="tabular shrink-0 font-mono text-[12.5px] text-ink">{format(value)}</span>
       </div>
-      <div className="relative h-1.5 rounded-full bg-surface-3">
+      <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-3">
+        {/* 填充用 scaleX（transform 合成器通道）揭示，不动画 width 布局属性 */}
         <motion.div
-          className={cx("h-1.5 rounded-full", SCORE_FILLS[fill])}
-          initial={{ width: 0 }}
-          animate={{ width: `${percent}%` }}
+          className={cx("h-full w-full origin-left rounded-full", SCORE_FILLS[fill])}
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: Math.max(percent / 100, 0.0001) }}
           transition={{ duration: MOTION.reveal, ease: EASE_STANDARD }}
         />
         {threshold !== undefined && (
@@ -645,11 +657,12 @@ export function ScoreRing({
       {label && (
         <text
           x="50"
-          y="66"
+          y="96"
           textAnchor="middle"
           fill="var(--color-ink-3)"
-          fontSize="7.5"
+          fontSize="6.5"
           fontFamily="var(--font-sans)"
+          letterSpacing="0.3"
         >
           {label}
         </text>
@@ -687,6 +700,7 @@ export function Stat({
   tone,
   icon,
   chart,
+  display = false,
   className,
 }: {
   label: ReactNode;
@@ -695,6 +709,8 @@ export function Stat({
   tone?: string;
   icon?: IconName;
   chart?: ReactNode;
+  /** 展示级数字：宋体黑字重，编辑风大数字观感 */
+  display?: boolean;
   className?: string;
 }) {
   return (
@@ -703,7 +719,13 @@ export function Stat({
         {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
         <span className="truncate">{label}</span>
       </div>
-      <div className={cx("tabular text-[32px] font-semibold leading-10 tracking-[-0.02em]", tone)}>
+      <div
+        className={cx(
+          "tabular text-[32px] font-semibold leading-10 tracking-[-0.02em]",
+          display && "cf-display-num",
+          tone,
+        )}
+      >
         {value}
       </div>
       {chart}
@@ -808,19 +830,87 @@ export function EmptyState({
 }) {
   return (
     <div className={cx("flex flex-col items-center gap-2.5 px-5 py-11 text-center", className)}>
-      <span className="relative grid h-12 w-12 place-items-center rounded-[10px] border border-line bg-surface-1 text-ink-2 shadow-e2">
+      <span className="cf-hatch relative grid h-12 w-12 place-items-center rounded-[10px] border border-line bg-paper text-ink-2 shadow-e2">
         <Icon name={icon} className="h-5 w-5" />
         <span
-          className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-ember shadow-[0_0_0_3px_rgba(245,243,239,.9)]"
+          className="absolute -right-1 -top-1 h-2 w-2 rotate-45 rounded-[1px] bg-ember shadow-[0_0_0_3px_rgba(245,243,239,.9)]"
           aria-hidden="true"
         />
       </span>
       <div className="text-[15px] font-semibold">{title}</div>
       {description && (
-        <p className="max-w-sm text-[12.5px] leading-[19px] text-ink-3">{description}</p>
+        <p className="max-w-sm text-[12.5px] leading-[19px] text-ink-3 [text-wrap:pretty]">{description}</p>
       )}
       {action && <div className="mt-1">{action}</div>}
     </div>
+  );
+}
+
+/**
+ * SafeImage：图片加载失败（文件被清理、404）时优雅回退，
+ * 用朱印字代替破图标——资产名的首字入印，破图也是"作品档案"。
+ * 尺寸/描边由 className 透传给回退容器，布局零抖动。
+ */
+export function SafeImage({
+  src,
+  alt,
+  className,
+  sealChar,
+  fallback,
+  ...rest
+}: {
+  src?: string | null;
+  alt: string;
+  className?: string;
+  /** 印面文字；默认取 alt 首个非 ASCII 字符，否则"印" */
+  sealChar?: string;
+  /** 完全自定义回退内容（如 CharacterArt 像素人） */
+  fallback?: ReactNode;
+} & Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt" | "children">) {
+  const [failed, setFailed] = useState(false);
+  const trimmed = alt.trim();
+  const seal = sealChar ?? (trimmed && /\P{ASCII}/u.test(trimmed[0]) ? trimmed[0] : "印");
+
+  if (!src || failed) {
+    return (
+      <span
+        role="img"
+        aria-label={alt}
+        className={cx(
+          "cf-hatch relative grid shrink-0 place-items-center overflow-hidden bg-paper",
+          className,
+        )}
+      >
+        {fallback ?? (
+          <svg viewBox="0 0 24 24" className="h-full w-full" aria-hidden="true">
+            <text
+              x="12"
+              y="16.5"
+              textAnchor="middle"
+              fontSize="13"
+              className="fill-ink/30 font-display font-black"
+            >
+              {seal}
+            </text>
+          </svg>
+        )}
+      </span>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      className={cx(
+        // 图片发丝描边：亮色环境用纯黑 10%，避免图片边缘"脏边"并稳定轮廓层次
+        "outline-1 -outline-offset-1 outline-black/10",
+        className,
+      )}
+      {...rest}
+    />
   );
 }
 

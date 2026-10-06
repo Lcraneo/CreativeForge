@@ -15,6 +15,7 @@
 @theme {
   /* base surfaces（由 Obsidian Arc 暗色映射为暖纸） */
   --color-canvas: #f5f3ef;
+  --color-paper: #faf9f5; /* 输入框、灵感签等"更白一档"的纸面 */
   --color-surface-1: #edebe5;
   --color-surface-2: #e5e2da;
   --color-surface-3: #dbd7cc;
@@ -34,6 +35,8 @@
   --color-primary-active: #000000;
   --color-primary-tint: rgba(26, 24, 20, 0.07);
   --color-ember: #a9812f;
+  /* 小字号 ember 文字（徽章等）用加深档，纸底对比 ≥4.5:1 */
+  --color-ember-ink: #7c5c12;
   --color-ember-tint: rgba(169, 129, 47, 0.14);
   --color-success: #3e7d5a;
   --color-warning: #a9812f;
@@ -61,9 +64,10 @@
   --radius-lg: 10px;
   --radius-xl: 12px;
 
-  /* elevation（暖色柔影，不用深色重投影） */
-  --shadow-e2: 0 1px 2px rgba(26, 24, 20, 0.06);
-  --shadow-e3: 0 12px 32px -12px rgba(26, 24, 20, 0.18);
+  /* elevation（暖色柔影：环境层 + 直接层双影，不用深色重投影） */
+  --shadow-e1: 0 1px 2px rgba(26, 24, 20, 0.04), 0 0 1px rgba(26, 24, 20, 0.03);
+  --shadow-e2: 0 1px 2px rgba(26, 24, 20, 0.06), 0 2px 8px -4px rgba(26, 24, 20, 0.05);
+  --shadow-e3: 0 2px 6px -2px rgba(26, 24, 20, 0.1), 0 16px 40px -16px rgba(26, 24, 20, 0.2);
   --shadow-glow-primary: 0 0 0 1px rgba(26, 24, 20, 0.16),
     0 0 24px -8px rgba(26, 24, 20, 0.2);
 
@@ -118,15 +122,32 @@
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
 }
 
 .cf-page-enter {
-  animation: page-enter var(--motion-base) var(--ease-standard);
+  animation: page-enter var(--motion-deliberate) var(--ease-standard);
 }
 
-/* reduced-motion：系统声明降级时动画与过渡一律瞬时完成（windup 同款纪律） */
+/* 悬停微抬升：纸片被"拈起"的物理感，位移克制在 1px */
+@keyframes raise-none {
+  from,
+  to {
+    transform: none;
+  }
+}
+.cf-raise {
+  transition:
+    transform var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
+}
+.cf-raise:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-e3);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -135,6 +156,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .cf-slip {
+    transform: none !important;
+  }
+  .cf-raise:hover {
+    transform: none;
   }
 }
 
@@ -147,7 +174,12 @@
   body {
     margin: 0;
     min-height: 100vh;
+    /* 纸面光感：顶部天光 + 右上极淡金晕，铺在纸底上，安静但有层次 */
+    background-image:
+      radial-gradient(1100px 480px at 50% -180px, rgba(255, 255, 255, 0.8), transparent 72%),
+      radial-gradient(900px 420px at 108% -60px, rgba(169, 129, 47, 0.05), transparent 70%);
     background-color: var(--color-canvas);
+    background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 14px;
@@ -170,18 +202,25 @@
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #d3cfc5;
-    border-radius: 4px;
+    background: #ccc7bb;
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #c2bcae;
+    background: #b9b3a5;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 
   button,
@@ -190,6 +229,25 @@
   select {
     font: inherit;
     color: inherit;
+    /* 触屏：双击缩放禁用 + 点按高亮与纸面一致（移动端点击观感） */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  textarea {
+    /* 光标也是设计的一部分：统一墨色插字符 */
+    caret-color: var(--color-primary);
+  }
+
+  /* 移动端输入 ≥16px，避免 iOS Safari 聚焦时自动放大页面 */
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+      line-height: 1.45 !important;
+    }
   }
 
   a {
@@ -222,12 +280,29 @@
     letter-spacing: 0.42em;
   }
 
-  /* 灵感签：略带手作歪斜的纸签，悬停回正 */
+  /* 灵感签：略带手作歪斜的纸签 + 顶部一截和纸胶带，悬停回正 */
   .cf-slip {
+    position: relative;
     transform: rotate(-0.55deg);
+  }
+  .cf-slip::before {
+    content: "";
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 30px;
+    height: 9px;
+    transform: translateX(-50%) rotate(-2deg);
+    background: rgba(169, 129, 47, 0.14);
+    border-left: 1px dashed rgba(169, 129, 47, 0.28);
+    border-right: 1px dashed rgba(169, 129, 47, 0.28);
+    pointer-events: none;
   }
   .cf-slip:nth-child(even) {
     transform: rotate(0.45deg);
+  }
+  .cf-slip:nth-child(even)::before {
+    transform: translateX(-50%) rotate(2.5deg);
   }
   .cf-slip:nth-child(3n) {
     transform: rotate(-0.2deg);
@@ -236,15 +311,10 @@
   .cf-slip:focus-visible {
     transform: rotate(0deg) translateY(-1px);
   }
-  @media (prefers-reduced-motion: reduce) {
-    .cf-slip {
-      transform: none;
-    }
-  }
 
   .cf-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #d3cfc5 transparent;
+    scrollbar-color: #ccc7bb transparent;
   }
 
   .cf-sheen {
@@ -255,18 +325,24 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 42%);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 44%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  /* 展示级数字：编辑风大数字用宋体黑字重，配 .tabular 防跳动 */
+  .cf-display-num {
+    font-family: var(--font-display);
+    font-weight: 900;
+    letter-spacing: -0.01em;
+  }
+
+  /* 斜纹底：空态/占位的"未凿"质感 */
+  .cf-hatch {
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(26, 24, 20, 0.028) 0 6px,
+      transparent 6px 12px
+    );
   }
 }
 

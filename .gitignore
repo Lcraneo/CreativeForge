@@ -35,3 +35,7 @@ studio/backend/generated/
 # 基准样片产物（可由脚本重生成；报告 JSON 入库）
 benchmark/i2v_runs/
 benchmark/mos_kit/clips/
+
+# 设计技能调用的工作区（临时解包与本地引擎，技能本体在 .zcode/skills/）
+.tmp-skills/
+.tools/

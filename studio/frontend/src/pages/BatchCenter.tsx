@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { Badge, Button, Card, EmptyState, PageHeader, Segmented, Stat, cx } from "../components/ui";
+import { Badge, Button, Card, EmptyState, PageHeader, SafeImage, Segmented, Stat, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import { assetHref } from "../stores/assetStore";
@@ -369,18 +369,17 @@ export default function BatchCenter() {
                     <div
                       key={task.task_id}
                       className={cx(
-                        "flex flex-col overflow-hidden rounded-xl border transition-all",
+                        "flex flex-col overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
                         isSelected
                           ? "border-primary/60 shadow-[0_0_0_1px_rgba(74,111,138,.35)]"
                           : "border-line-subtle",
                       )}
                     >
-                      <div className="relative grid h-[150px] place-items-center bg-[#f1efe9]">
+                      <div className="relative grid h-[150px] place-items-center bg-paper">
                         {task.image_url ? (
-                          <img
+                          <SafeImage
                             src={task.image_url}
                             alt={task.name ?? task.task_id}
-                            loading="lazy"
                             className="h-full w-full object-contain p-2"
                           />
                         ) : (

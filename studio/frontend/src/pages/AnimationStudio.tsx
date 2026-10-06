@@ -21,7 +21,7 @@ import {
   selectionAfterRemoval,
   type ActionSource,
 } from "../lib/actionSelection";
-import { Badge, Button, Card, PageHeader, ScoreBar, Textarea, cx } from "../components/ui";
+import { Badge, Button, Card, PageHeader, SafeImage, ScoreBar, Textarea, cx } from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
@@ -1074,9 +1074,9 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
                   <div
-                    className="h-full rounded-full bg-primary transition-all duration-(--motion-slow) ease-standard"
+                    className="h-full w-full origin-left rounded-full bg-primary transition-transform duration-(--motion-slow) ease-standard"
                     style={{
-                      width: `${Math.max(4, Math.min(100, videoTaskStage.progress))}%`,
+                      transform: `scaleX(${Math.max(0.04, Math.min(1, videoTaskStage.progress / 100))})`,
                     }}
                   />
                 </div>
@@ -1194,11 +1194,10 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                             className="flex items-center gap-2 text-left"
                           >
                             {person.image_url ? (
-                              <img
+                              <SafeImage
                                 src={person.image_url}
                                 alt={person.name}
-                                loading="lazy"
-                                className="h-9 w-9 rounded-md border border-line-subtle bg-[#f1efe9] object-contain"
+                                className="h-9 w-9 rounded-md border border-line-subtle bg-paper object-contain"
                               />
                             ) : (
                               <span className="grid h-9 w-9 place-items-center rounded-md border border-line-subtle bg-surface-2 text-ink-4">

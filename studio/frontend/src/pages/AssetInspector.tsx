@@ -7,6 +7,7 @@ import {
   Card,
   KV,
   PageHeader,
+  SafeImage,
   ScoreBar,
   ScoreRing,
 } from "../components/ui";
@@ -137,10 +138,11 @@ export default function AssetInspector() {
             />
           </div>
           {aiImage ? (
-            <div className="flex h-[230px] items-center justify-center overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
-              <img
+            <div className="flex h-[230px] items-center justify-center overflow-hidden rounded-[10px] border border-line-subtle bg-paper">
+              <SafeImage
                 src={aiImage}
                 alt={asset.name ?? "AI 原画"}
+                sealChar="画"
                 className="max-h-full max-w-full object-contain"
               />
             </div>
@@ -344,10 +346,18 @@ export default function AssetInspector() {
             <div className="grid grid-cols-12 gap-5">
               <div className="col-span-12 flex items-center justify-center overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(120px_120px_at_50%_24%,rgba(26,24,20,.06),transparent_70%),#f1efe9] py-3 md:col-span-2">
                 {asset.image?.url ? (
-                  <img
+                  <SafeImage
                     src={asset.image.url}
                     alt={asset.name ?? "concept art"}
                     className="h-[180px] w-[150px] rounded-lg object-cover"
+                    fallback={
+                      <CharacterArt
+                        spec={asset.character}
+                        palette={asset.pixel?.palette.colors}
+                        view="bust"
+                        className="h-[180px] w-[150px]"
+                      />
+                    }
                   />
                 ) : (
                   <CharacterArt

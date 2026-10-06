@@ -8,6 +8,7 @@ import {
   Card,
   EmptyState,
   PageHeader,
+  SafeImage,
   Segmented,
   StatusDot,
   cx,
@@ -271,11 +272,11 @@ export default function VersionCenter() {
                               v{version.version_no}
                             </span>
                             {version.image_url ? (
-                              <img
+                              <SafeImage
                                 src={version.image_url}
                                 alt={`v${version.version_no}`}
-                                loading="lazy"
-                                className="h-14 w-14 shrink-0 rounded-lg border border-line-subtle object-cover"
+                                sealChar={`v${version.version_no}`.slice(-1)}
+                                className="h-14 w-14 shrink-0 rounded-lg border border-line-subtle bg-paper object-cover"
                               />
                             ) : (
                               <span className="grid h-14 w-14 shrink-0 place-items-center rounded-lg border border-line-subtle bg-surface-2 text-ink-4">
@@ -364,9 +365,10 @@ export default function VersionCenter() {
                           </span>
                         </div>
                         {version.image_url ? (
-                          <img
+                          <SafeImage
                             src={version.image_url}
                             alt={`v${version.version_no}`}
+                            sealChar={`v${version.version_no}`.slice(-1)}
                             className="mx-auto h-[220px] object-contain"
                           />
                         ) : (

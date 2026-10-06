@@ -6,7 +6,7 @@ import Konva from "konva";
 import { Image as KonvaImage, Layer, Rect, Stage, Text as KonvaText, Rect as KonvaRect } from "react-konva";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
-import { Badge, Button, Card, PageHeader, cx } from "../components/ui";
+import { Badge, Button, Card, EmptyState, PageHeader, SafeImage, Skeleton, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
@@ -502,8 +502,23 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
         >
           <div
             ref={stageBoxRef}
-            className="overflow-hidden rounded-xl border border-line-subtle bg-[#f1efe9]"
+            className="relative overflow-hidden rounded-xl border border-line-subtle bg-[#f1efe9]"
           >
+            {/* 未选人空态：不留给一块死画布，给出明确下一步（规范：空态是行动邀请） */}
+            {!selectedAssetId && (
+              <div className="absolute inset-0 z-10 grid place-items-center bg-[#f1efe9]/92 backdrop-blur-[2px]">
+                <EmptyState
+                  icon="play"
+                  title="选一位试玩人物"
+                  description="从近期生成记录中挑一个角色，方向键即可开跑；骨骼动作绑定后，素材好坏一跑便知。"
+                  action={
+                    <Button variant="primary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
+                      打开人物挑选
+                    </Button>
+                  }
+                />
+              </div>
+            )}
             <Stage width={stageW} height={STAGE_H} className="max-w-full">
               <Layer listening={false}>
                 {/* 地面：地面线必须在舞台内，角色脚底贴线 */}
@@ -588,7 +603,7 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
             <span className="ml-auto">点击下方动作卡可直接切换预览</span>
           </div>
           {chibi && rigged && (
-            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-amber-700">
+            <p className="mt-2 flex items-center gap-1.5 text-[11px] text-ember-ink">
               <Icon name="clock" className="h-3 w-3" />
               检测到 Q
               版头身比，骨骼分区拟合度较低，动作可能出现轻微错位；完整动画建议在动画工作台使用 AI
@@ -604,7 +619,19 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
           bodyClassName="p-3"
         >
           {previews.isLoading ? (
-            <p className="p-3 text-xs text-ink-3">渲染动作预览…</p>
+            <div className="flex flex-col gap-2.5">
+              {Array.from({ length: 4 }, (_, index) => (
+                <Skeleton key={index} className="h-[58px] rounded-xl" />
+              ))}
+            </div>
+          ) : !selectedAssetId ? (
+            /* 未选人：画廊不留白板，说明待命状态 */
+            <EmptyState
+              icon="grid"
+              title="动作画廊待命"
+              description="选择人物后，这里会列出该角色的全部动作卡，点卡即切预览。"
+              className="py-10"
+            />
           ) : (
             <div className="flex flex-col gap-2.5">
               {missingCount > 0 && (
@@ -647,7 +674,7 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
                     pinnedRef.current = name;
                   }}
                   className={cx(
-                    "flex items-center gap-3 rounded-xl border p-2 text-left transition-all",
+                    "flex items-center gap-3 rounded-xl border p-2 text-left transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
                     action === name
                       ? "border-primary/60 bg-primary-tint/40"
                       : "border-line-subtle hover:border-line",
@@ -724,7 +751,7 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
                       pinnedRef.current = key;
                     }}
                     className={cx(
-                      "flex items-center gap-3 rounded-xl border p-2 text-left transition-all",
+                      "flex items-center gap-3 rounded-xl border p-2 text-left transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
                       action === key
                         ? "border-ember/60 bg-ember-tint/40"
                         : "border-line-subtle hover:border-line",
@@ -782,11 +809,23 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
       {pickerOpen && (
         <Card title="选择试玩人物 · 近期生成" icon="cube" bodyClassName="p-3">
           {history.isLoading ? (
-            <p className="p-3 text-xs text-ink-3">读取近期生成记录…</p>
+            /* 骨架与最终网格同构，加载完不跳版 */
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+              {Array.from({ length: 6 }, (_, index) => (
+                <Skeleton key={index} className="h-[150px] rounded-xl" />
+              ))}
+            </div>
           ) : people.length === 0 ? (
-            <p className="p-3 text-xs text-ink-3">
-              还没有可用的人物——先去工作台生成一个角色，再回到这里挑选。
-            </p>
+            <EmptyState
+              icon="cube"
+              title="还没有可用的人物"
+              description="先去工作台生成一个角色，再回到这里挑选。"
+              action={
+                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/")}>
+                  去工作台生成
+                </Button>
+              }
+            />
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
               {people.map((record) => (
@@ -801,17 +840,16 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
                     setPickerOpen(false);
                   }}
                   className={cx(
-                    "flex flex-col overflow-hidden rounded-xl border transition-all",
+                    "flex flex-col overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
                     selected?.id === record.asset_id
                       ? "border-primary/60"
                       : "border-line-subtle hover:border-line",
                   )}
                 >
-                  <img
+                  <SafeImage
                     src={record.image?.url ?? undefined}
                     alt={String(record.name ?? record.asset_id ?? "")}
-                    loading="lazy"
-                    className="h-[120px] w-full bg-[#f1efe9] object-contain"
+                    className="h-[120px] w-full bg-paper object-contain"
                   />
                   <span className="truncate px-2 py-1.5 text-[11px] text-ink-3">
                     {record.name || record.asset_id}

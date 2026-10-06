@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "../api/client";
@@ -23,7 +23,16 @@ import {
 } from "../components/ui";
 import { Icon } from "../components/icons";
 import { EASE_STANDARD, MOTION } from "../lib/motion";
+import { NAV_GROUPS } from "../lib/navigation";
 import type { GenerationOverrides } from "../types";
+
+/** 四大工区旅程条：章序/名称/副题直接取自导航信息架构，落点 = 各区块首站 */
+const JOURNEY = NAV_GROUPS.map((group) => ({
+  numeral: group.numeral,
+  label: group.label,
+  hint: group.hint,
+  to: group.items[0].to,
+}));
 
 const EXAMPLES = [
   "生成一个像素RPG火焰法师Boss，带攻击动画，并导入Unity",
@@ -159,6 +168,45 @@ const RISE = {
   hidden: { opacity: 0, y: 12 },
   show: { opacity: 1, y: 0, transition: { duration: MOTION.base, ease: EASE_STANDARD } },
 };
+
+/** 工坊读数单卡：领域色条 + 小字标签 + 宋体展示数字，编辑物排版 */
+function ReadingCard({
+  label,
+  value,
+  unit,
+  hint,
+  domain,
+  valueClass,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  hint: string;
+  domain: "primary" | "precon" | "falign" | "gimport";
+  valueClass: string;
+}) {
+  return (
+    <Card domain={domain} bodyClassName="p-4">
+      <div className="flex flex-col">
+        <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">
+          {label}
+        </span>
+        <span
+          className={cx(
+            "tabular cf-display-num mt-1 text-[30px] leading-9",
+            valueClass,
+          )}
+        >
+          {value}
+          <small className="ml-1 font-sans text-[13px] font-semibold tracking-normal text-ink-3">
+            {unit}
+          </small>
+        </span>
+        <span className="mt-0.5 text-[11px] text-ink-3">{hint}</span>
+      </div>
+    </Card>
+  );
+}
 
 export default function Workspace() {
   const [goal, setGoal] = useState(EXAMPLES[0]);
@@ -334,7 +382,7 @@ export default function Workspace() {
             onKeyDown={(event) => {
               if ((event.metaKey || event.ctrlKey) && event.key === "Enter") generate();
             }}
-            rows={4}
+            rows={5}
             className="mt-4"
             placeholder="创建一个像素风火焰法师Boss：需要 Idle 动画、Attack 动画、Unity 导出"
           />
@@ -346,7 +394,7 @@ export default function Workspace() {
                 <button
                   key={example}
                   onClick={() => setGoal(example)}
-                  className="cf-slip rounded-[6px] border border-line-subtle bg-canvas px-3 py-1.5 text-xs text-ink-3 shadow-e2 transition-all duration-(--motion-fast) ease-standard hover:border-primary/45 hover:text-primary"
+                  className="cf-slip rounded-[6px] border border-line-subtle bg-paper px-3 py-1.5 text-xs text-ink-3 shadow-e2 transition-[color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-primary/45 hover:text-primary active:scale-[0.97]"
                 >
                   {example.length > 26 ? `${example.slice(0, 26)}…` : example}
                 </button>
@@ -442,9 +490,10 @@ export default function Workspace() {
 
         <motion.div variants={RISE} className="col-span-12 xl:col-span-4">
           <Card
-            className="h-full"
+            className="flex h-full flex-col"
             title="生产管线"
             icon="activity"
+            bodyClassName="flex flex-1 flex-col p-[18px]"
             right={
               <Badge tone={liveTaskId ? "primary" : "neutral"}>
                 <StatusDot tone={liveTaskId ? "running" : "idle"} />
@@ -452,7 +501,12 @@ export default function Workspace() {
               </Badge>
             }
           >
-            <ol className="space-y-[15px]">
+            {/* 纵向炉程：一条墨线贯穿五段，节点落在序号上，随任务进度点亮 */}
+            <ol className="relative flex flex-1 flex-col justify-between gap-3 py-0.5">
+              <span
+                className="absolute bottom-3 left-[13px] top-3 w-px bg-line-subtle"
+                aria-hidden="true"
+              />
               {pipeline.map((step, index) => {
                 const tone =
                   step.status === "done"
@@ -461,47 +515,84 @@ export default function Workspace() {
                       ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(26,24,20,.08)]"
                       : step.status === "failed"
                         ? "border-danger bg-danger/10 text-danger"
-                        : "border-line bg-surface-1 text-ink-4";
+                        : "border-line bg-paper text-ink-4";
+                const filled = step.status !== "pending";
                 return (
-                  <li key={`${step.label}-${index}`} className="flex items-center gap-3">
+                  <li key={`${step.label}-${index}`} className="relative flex items-center gap-3">
                     <span
                       className={cx(
-                        "relative z-10 grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-2 bg-canvas",
+                        "relative z-10 grid h-[26px] w-[26px] shrink-0 place-items-center rounded-full border-2",
                         tone,
                       )}
                     >
-                      <Icon
-                        name={
-                          step.status === "done"
-                            ? "check"
-                            : step.status === "running"
-                              ? "refresh"
-                              : step.status === "failed"
-                                ? "x"
-                                : "clock"
-                        }
-                        className="h-3 w-3"
-                      />
+                      {filled ? (
+                        <Icon
+                          name={
+                            step.status === "done"
+                              ? "check"
+                              : step.status === "running"
+                                ? "refresh"
+                                : "x"
+                          }
+                          className="h-3 w-3"
+                        />
+                      ) : (
+                        <span className="cf-display-num text-[10px] leading-none text-ink-4">
+                          {index + 1}
+                        </span>
+                      )}
                     </span>
                     <span
                       className={cx(
                         "min-w-0 truncate text-[12.5px]",
                         step.status === "pending" ? "text-ink-3" : "font-medium text-ink-2",
+                        step.status === "running" && "font-semibold text-ink",
                       )}
                     >
                       {step.label}
                     </span>
-                    <span className="h-px flex-1 bg-line-subtle" aria-hidden="true" />
-                    <span className="tabular font-display text-[11px] font-black text-ink-4">
+                    <span className="h-px flex-1 bg-line-subtle/70" aria-hidden="true" />
+                    <span className="tabular cf-display-num text-[11px] text-ink-4">
                       0{index + 1}
                     </span>
                   </li>
                 );
               })}
             </ol>
+            <div className="mt-4 flex items-center gap-1.5 border-t border-ink/[.06] pt-3 text-[11px] text-ink-4">
+              <Icon name="spark" className="h-3 w-3 shrink-0 text-ember" />
+              五段炉程由 Supervisor 编排 · QA 质量门自动把关
+            </div>
           </Card>
         </motion.div>
       </div>
+
+      {/* 四大工区：旅程导航条（壹→贰→叁→肆），把侧栏的信息架构在案头显性一次。
+          导航不做延迟进场（不参与 stagger），即时呈现并保证后续区块动画不被卡住 */}
+      <nav
+        aria-label="四大工区导航"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line-subtle bg-line-subtle shadow-e1 md:grid-cols-4"
+      >
+        {JOURNEY.map((zone) => (
+          <NavLink
+            key={zone.label}
+            to={zone.to}
+            className="group flex items-center gap-3 bg-surface-1 px-4 py-3.5 transition-colors duration-(--motion-fast) ease-standard hover:bg-surface-2"
+          >
+            <span className="cf-display-num text-[22px] leading-none text-ember">
+              {zone.numeral}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.5px] font-semibold text-ink">{zone.label}</span>
+              <span className="block truncate text-[11px] text-ink-3">{zone.hint}</span>
+            </span>
+            <Icon
+              name="chevron"
+              className="h-3.5 w-3.5 shrink-0 text-ink-4 transition-transform duration-(--motion-fast) ease-standard group-hover:translate-x-0.5 group-hover:text-ink-2"
+            />
+          </NavLink>
+        ))}
+      </nav>
 
       {/* 工坊读数 */}
       <motion.div variants={RISE} className="flex flex-col gap-4">
@@ -526,71 +617,52 @@ export default function Workspace() {
         />
         {!benchmark.isError && (
           <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-            <Card bodyClassName="p-4">
-              {kpis ? (
-                <div className="flex flex-col">
-                  <span className="text-xs text-ink-3">CF Score 综合评分</span>
-                  <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-ember">
-                    {(kpis.cf_score.overall * 100).toFixed(1)}
-                    <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-                  </span>
-                  <span className="text-[11px] text-ink-3">
-                    权重 pixel .30 / anim .30 / engine .25 / agent .15
-                  </span>
-                </div>
-              ) : (
-                <Skeleton className="h-24" />
-              )}
-            </Card>
-            <Card bodyClassName="p-4">
-              {kpis ? (
-                <div className="flex flex-col">
-                  <span className="text-xs text-ink-3">PReCon 像素一致性</span>
-                  <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-precon">
-                    {Math.round(kpis.precon.method_pixel_score * 100)}
-                    <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-                  </span>
-                  <span className="text-[11px] text-ink-3">
-                    baseline {Math.round(kpis.precon.baseline_pixel_score * 100)}% · +
-                    {(kpis.precon.improvement * 100).toFixed(1)}%
-                  </span>
-                </div>
-              ) : (
-                <Skeleton className="h-24" />
-              )}
-            </Card>
-            <Card bodyClassName="p-4">
-              {kpis ? (
-                <div className="flex flex-col">
-                  <span className="text-xs text-ink-3">FAlign 根漂移</span>
-                  <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-falign">
-                    {kpis.falign.method_root_drift.toFixed(2)}
-                    <small className="ml-0.5 text-base font-semibold text-ink-3">px/f</small>
-                  </span>
-                  <span className="text-[11px] text-ink-3">
-                    基线 {kpis.falign.baseline_root_drift.toFixed(2)} px/f
-                  </span>
-                </div>
-              ) : (
-                <Skeleton className="h-24" />
-              )}
-            </Card>
-            <Card bodyClassName="p-4">
-              {kpis ? (
-                <div className="flex flex-col">
-                  <span className="text-xs text-ink-3">GImport 结构校验通过率</span>
-                  <span className="tabular text-[32px] font-semibold leading-10 tracking-[-0.02em] text-gimport">
-                    {Math.round(kpis.gimport.import_success_rate * 100)}
-                    <small className="ml-0.5 text-base font-semibold text-ink-3">%</small>
-                  </span>
-                  <span className="text-[11px] text-ink-3">
-                    管线实测 {kpis.gimport.average_pipeline_seconds.toFixed(2)} 秒 · 不含编辑器导入
-                  </span>
-                </div>
-              ) : (
-                <Skeleton className="h-24" />
-              )}
-            </Card>
+            {kpis ? (
+              <>
+                <ReadingCard
+                  label="CF Score 综合评分"
+                  value={(kpis.cf_score.overall * 100).toFixed(1)}
+                  unit="%"
+                  hint="权重 pixel .30 / anim .30 / engine .25 / agent .15"
+                  domain="primary"
+                  valueClass="text-ember"
+                />
+                <ReadingCard
+                  label="PReCon 像素一致性"
+                  value={String(Math.round(kpis.precon.method_pixel_score * 100))}
+                  unit="%"
+                  hint={`baseline ${Math.round(kpis.precon.baseline_pixel_score * 100)}% · +${(kpis.precon.improvement * 100).toFixed(1)}%`}
+                  domain="precon"
+                  valueClass="text-precon"
+                />
+                <ReadingCard
+                  label="FAlign 根漂移"
+                  value={kpis.falign.method_root_drift.toFixed(2)}
+                  unit="px/f"
+                  hint={`基线 ${kpis.falign.baseline_root_drift.toFixed(2)} px/f`}
+                  domain="falign"
+                  valueClass="text-falign"
+                />
+                <ReadingCard
+                  label="GImport 结构校验通过率"
+                  value={String(Math.round(kpis.gimport.import_success_rate * 100))}
+                  unit="%"
+                  hint={`管线实测 ${kpis.gimport.average_pipeline_seconds.toFixed(2)} 秒 · 不含编辑器导入`}
+                  domain="gimport"
+                  valueClass="text-gimport"
+                />
+              </>
+            ) : (
+              Array.from({ length: 4 }, (_, index) => (
+                <Card key={index} bodyClassName="p-4">
+                  <div className="flex flex-col gap-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-9 w-20" />
+                    <Skeleton className="h-3 w-32" />
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         )}
       </motion.div>
@@ -629,20 +701,26 @@ export default function Workspace() {
                 text: "图集 · 动画与预制体配置 · 包结构校验 · 一键导出 ZIP",
               },
             ].map((tech) => (
-              <div key={tech.mark} className="p-5">
+              <div
+                key={tech.mark}
+                className="group relative p-5 transition-colors duration-(--motion-base) ease-standard hover:bg-surface-2/40"
+              >
                 <div className="flex items-center gap-2.5">
                   <Badge tone={tech.tone} icon={tech.icon}>
                     {tech.mark}
                   </Badge>
                   <span className="text-[15px] font-semibold">{tech.name}</span>
                 </div>
-                <p className="mt-2.5 text-xs leading-[18px] text-ink-3">{tech.text}</p>
+                <p className="mt-2.5 text-xs leading-[18px] text-ink-3 [text-wrap:pretty]">{tech.text}</p>
                 <button
                   onClick={() => navigate("/technology")}
                   className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
                 >
                   查看技术细节
-                  <Icon name="chevron" className="h-3.5 w-3.5" />
+                  <Icon
+                    name="chevron"
+                    className="h-3.5 w-3.5 transition-transform duration-(--motion-fast) ease-standard group-hover:translate-x-0.5"
+                  />
                 </button>
               </div>
             ))}

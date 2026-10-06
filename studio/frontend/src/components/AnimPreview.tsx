@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
+import { SafeImage } from "./ui";
 
 interface Props {
   assetId: string;
@@ -53,5 +54,5 @@ export function AnimPreview({
   }, [assetId, action, fps, duration, size]);
 
   const src = url || `/api/assets/${assetId}/image.png?view=front&size=384`;
-  return <img src={src} alt="animation preview" className={className} />;
+  return <SafeImage src={src} alt="动画预览" sealChar="帧" className={className} />;
 }

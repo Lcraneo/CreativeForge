@@ -14,11 +14,13 @@ import {
   Card,
   EmptyState,
   PageHeader,
+  SafeImage,
   ScoreBar,
   StatusDot,
   Tabs,
   cx,
 } from "../components/ui";
+import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { GenerationResult } from "../components/GenerationResult";
 import { LiveStream } from "../components/live/LiveStream";
@@ -119,8 +121,23 @@ function RecentRuns() {
             <button
               key={record.id}
               onClick={() => openAsset(record)}
-              className="flex w-full items-center gap-4 border-b border-ink/[.08] px-[18px] py-3 text-left transition-colors last:border-0 hover:bg-surface-2/60"
+              className="group flex w-full items-center gap-3.5 border-b border-ink/[.08] px-[18px] py-3 text-left transition-colors last:border-0 hover:bg-surface-2/60"
             >
+              <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-line-subtle bg-paper">
+                <SafeImage
+                  src={record.image?.url ?? undefined}
+                  alt={record.name || record.goal || "资产"}
+                  className="h-full w-full object-cover"
+                  fallback={
+                    <CharacterArt
+                      spec={record.character}
+                      palette={record.palette}
+                      view="bust"
+                      className="h-8 w-8"
+                    />
+                  }
+                />
+              </span>
               <span className="w-[86px] shrink-0 font-mono text-[11.5px] text-ink-3">
                 {timeLabel(record.finished_at || record.created_at)}
               </span>
@@ -154,7 +171,10 @@ function RecentRuns() {
                 {record.report_status || record.status}
               </Badge>
               {record.asset_id && (
-                <Icon name="chevron" className="h-3.5 w-3.5 shrink-0 text-ink-4" />
+                <Icon
+                  name="chevron"
+                  className="h-3.5 w-3.5 shrink-0 text-ink-4 transition-transform duration-(--motion-fast) ease-standard group-hover:translate-x-0.5 group-hover:text-ink-2"
+                />
               )}
             </button>
           ))}

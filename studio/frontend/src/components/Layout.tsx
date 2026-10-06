@@ -159,7 +159,7 @@ export default function Layout() {
             <div key={group.label} title={group.hint}>
               {!rail && (
                 <div className="flex items-baseline gap-1.5 px-2.5 pb-1.5 pt-4">
-                  <span className="font-display text-[12px] font-black leading-none text-ink-3">
+                  <span className="cf-display-num text-[13px] leading-none text-ink-4">
                     {group.numeral}
                   </span>
                   <span className="text-[10.5px] font-semibold tracking-[0.14em] text-ink-4">
@@ -350,26 +350,33 @@ export default function Layout() {
           )}
         >
           {!rail && <span className="text-[11px] text-ink-3">v1.0 · 纸上工坊</span>}
-          <span className="flex gap-1.5">
-            <span
-              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
-              title="Unity"
-            />
-            <span
-              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
-              title="Cocos"
-            />
-            <span
-              className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
-              title="Godot"
-            />
+          <span className="flex items-center gap-2" title="Unity · Cocos · Godot 引擎通道就绪">
+            <span className="flex gap-1.5">
+              <span
+                className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+                title="Unity"
+              />
+              <span
+                className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+                title="Cocos"
+              />
+              <span
+                className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
+                title="Godot"
+              />
+            </span>
+            {!rail && (
+              <span className="font-mono text-[9.5px] uppercase tracking-[0.08em] text-ink-4">
+                引擎就绪
+              </span>
+            )}
           </span>
         </div>
       </aside>
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line-subtle bg-[rgba(245,243,239,.86)] px-4 backdrop-blur-md md:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line-subtle bg-canvas/85 px-4 backdrop-blur-md md:px-6">
           <span className="flex items-center gap-2 md:hidden">
             <span className="grid h-6 w-6 place-items-center rounded-md bg-ink font-display text-[10px] font-black text-canvas">
               CF
@@ -452,7 +459,7 @@ export default function Layout() {
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 pb-[env(safe-area-inset-bottom)] border-t border-line-subtle bg-[rgba(245,243,239,.95)] backdrop-blur-md md:hidden">
+        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line-subtle bg-canvas/95 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -460,13 +467,25 @@ export default function Layout() {
               end={tab.to === "/"}
               className={({ isActive }) =>
                 cx(
-                  "flex min-h-11 flex-col items-center gap-1 pb-3 pt-2 text-[10px] transition-colors",
+                  "relative flex min-h-11 flex-col items-center gap-1 pb-3 pt-2 text-[10px] transition-colors duration-(--motion-fast) ease-standard",
                   isActive ? "text-primary" : "text-ink-4",
                 )
               }
             >
-              <Icon name={tab.icon} className="h-4 w-4" />
-              {tab.label}
+              {({ isActive }) => (
+                <>
+                  {/* 激活指示器：色觉之外的冗余状态线索 */}
+                  <span
+                    className={cx(
+                      "absolute top-0 h-0.5 w-7 rounded-full bg-primary transition-opacity duration-(--motion-fast) ease-standard",
+                      isActive ? "opacity-100" : "opacity-0",
+                    )}
+                    aria-hidden="true"
+                  />
+                  <Icon name={tab.icon} className="h-4 w-4" />
+                  {tab.label}
+                </>
+              )}
             </NavLink>
           ))}
           <button type="button" aria-label="更多功能" aria-haspopup="dialog" aria-expanded={mobileOpen}

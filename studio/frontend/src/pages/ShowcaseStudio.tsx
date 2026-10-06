@@ -1,10 +1,10 @@
 import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
 import type { CreativeAsset } from "../types";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { api, type ShowcaseJob } from "../api/client";
-import { Badge, Button, Card, EmptyState, PageHeader, cx } from "../components/ui";
+import { Badge, Button, Card, EmptyState, PageHeader, SafeImage, Skeleton, cx } from "../components/ui";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
 import type { HistoryRecord } from "../types";
@@ -55,6 +55,7 @@ export default function ShowcaseStudio() {
 
 function ShowcaseContent({ selected }: { selected: CreativeAsset | null }) {
   const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [jobId, setJobId] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
@@ -225,11 +226,29 @@ function ShowcaseContent({ selected }: { selected: CreativeAsset | null }) {
 
         <Card className="col-span-12 lg:col-span-4" title="选择角色 · 近期生成" icon="cube" bodyClassName="p-3">
           {history.isLoading ? (
-            <p className="p-3 text-xs text-ink-3">读取近期生成记录…</p>
+            /* 骨架与最终列表同构：图块 + 两行文字 */
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 5 }, (_, index) => (
+                <div key={index} className="flex items-center gap-3 rounded-xl border border-line-subtle p-2">
+                  <Skeleton className="h-12 w-12 rounded-md" />
+                  <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <Skeleton className="h-3 w-3/5" />
+                    <Skeleton className="h-2.5 w-4/5" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : people.length === 0 ? (
-            <p className="p-3 text-xs text-ink-3">
-              还没有可用角色——先去工作台生成角色并补齐动作，再来生成发布片。
-            </p>
+            <EmptyState
+              icon="cube"
+              title="还没有可用角色"
+              description="先去工作台生成角色并补齐动作，再来生成发布片。"
+              action={
+                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/")}>
+                  去工作台生成
+                </Button>
+              }
+            />
           ) : (
             <div className="flex flex-col gap-2">
               {people.map((record) => (
@@ -243,17 +262,16 @@ function ShowcaseContent({ selected }: { selected: CreativeAsset | null }) {
                     });
                   }}
                   className={cx(
-                    "flex items-center gap-3 rounded-xl border p-2 text-left transition-all",
+                    "flex items-center gap-3 rounded-xl border p-2 text-left transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
                     selected?.id === record.asset_id
                       ? "border-primary/60 bg-primary-tint/40"
                       : "border-line-subtle hover:border-line",
                   )}
                 >
-                  <img
+                  <SafeImage
                     src={record.image?.url ?? undefined}
                     alt={String(record.name ?? record.asset_id ?? "")}
-                    loading="lazy"
-                    className="h-12 w-12 rounded-md border border-line-subtle bg-[#f1efe9] object-contain"
+                    className="h-12 w-12 rounded-md border border-line-subtle bg-paper object-contain"
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[12.5px] font-medium text-ink">

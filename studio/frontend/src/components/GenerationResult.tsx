@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
-import { Badge, Button, Card } from "./ui";
+import { Badge, Button, Card, SafeImage } from "./ui";
 import { toast } from "../stores/toastStore";
 import { assetHref, useAssetStore } from "../stores/assetStore";
 import type { CreativeAsset } from "../types";
@@ -55,7 +55,7 @@ export function GenerationResult({ asset }: Props) {
     <Card title="生成结果 Generation Result" icon="spark" iconClassName="text-primary">
       <div className="flex flex-wrap items-center gap-5">
         <div className="grid h-36 w-36 shrink-0 place-items-center overflow-hidden rounded-xl border border-line-subtle bg-surface-1">
-          <img
+          <SafeImage
             src={image}
             alt={asset.name ?? "generated"}
             className="h-full w-full object-contain"

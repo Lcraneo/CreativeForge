@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAssetLoader, useAssetStore } from "../stores/assetStore";
-import { Badge, Button, Card, EmptyState, KV, PageHeader, Segmented, cx } from "../components/ui";
+import { Badge, Button, Card, EmptyState, KV, PageHeader, SafeImage, Segmented, cx } from "../components/ui";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
@@ -185,16 +185,17 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                   key={view}
                   onClick={() => setPose(view)}
                   className={cx(
-                    "group flex flex-col items-center gap-3 rounded-xl border p-4 transition-all duration-(--motion-fast) ease-standard",
+                    "group flex flex-col items-center gap-3 rounded-xl border p-4 transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
                     pose === view
                       ? "border-primary/45 bg-primary-tint/50"
                       : "border-line-subtle bg-[#f1efe9] hover:border-line",
                   )}
                 >
                   {url ? (
-                    <img
+                    <SafeImage
                       src={url}
                       alt={`character ${view} view`}
+                      sealChar={view === "front" ? "正" : view === "side" ? "侧" : "背"}
                       className="h-[220px] w-full object-contain"
                     />
                   ) : (
@@ -299,7 +300,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                   风格迁移 · {asset.restyle.style}（点击放大另存）
                 </p>
                 <a href={asset.restyle.url} target="_blank" rel="noreferrer">
-                  <img
+                  <SafeImage
                     src={asset.restyle.url}
                     alt={`restyle ${asset.restyle.style}`}
                     className="mx-auto h-[200px] object-contain"
@@ -313,9 +314,10 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                   透明底立绘（棋盘格外的都是透明像素）
                 </p>
                 <a href={asset.cutout_png} target="_blank" rel="noreferrer">
-                  <img
+                  <SafeImage
                     src={asset.cutout_png}
                     alt="cutout"
+                    sealChar="立"
                     className="mx-auto h-[200px] object-contain"
                     style={{
                       backgroundImage:
@@ -328,10 +330,11 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
               </div>
             )}
             {asset.image?.url ? (
-              <div className="overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
-                <img
+              <div className="overflow-hidden rounded-[10px] border border-line-subtle bg-paper">
+                <SafeImage
                   src={asset.image.url}
                   alt={asset.name ?? "concept art"}
+                  sealChar="画"
                   className="mx-auto h-[220px] object-contain"
                 />
               </div>
