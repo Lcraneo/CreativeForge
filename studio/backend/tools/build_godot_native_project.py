@@ -61,14 +61,17 @@ def latest_godot_package() -> str:
     candidates = [
         os.path.join(EXPORTS_DIR, name)
         for name in os.listdir(EXPORTS_DIR)
-        if name.endswith(".zip") and "godot" in name.lower()
+        if name.endswith(".zip") and "godot" in name.lower() and "native" not in name.lower()
     ]
     if not candidates:
         raise SystemExit("exports/ 下没有 godot 包——先在导出中心导出一次 Godot 包")
     return max(candidates, key=os.path.getmtime)
 
 
-def build(package_path: str, light: bool = True) -> str:
+def build(package_path: str, light: bool = True, flat: bool = True) -> str:
+    """flat=True：图集放 zip 根目录（Godot web editor 的 zip 解压对隐式
+    创建子目录不稳定——实测 animations/ 下文件全部"无法从包中提取"而根
+    目录文件正常；拍平后该坑物理消失）。"""
     with zipfile.ZipFile(package_path) as package:
         manifest = json.loads(package.read("manifest.json"))
         asset = manifest.get("asset") or {}
@@ -94,6 +97,7 @@ def build(package_path: str, light: bool = True) -> str:
                 {
                     "action": action,
                     "sheet_name": sheet_name,
+                    "sheet_file": "sheet_{}.png".format(action) if flat else sheet_name,
                     "sheet_bytes": sheet_bytes,
                     "sheet_w": sheet_w,
                     "sheet_h": sheet_h,
@@ -111,8 +115,8 @@ def build(package_path: str, light: bool = True) -> str:
         for index, anim in enumerate(animations, start=1):
             res_id = "sheet_{}".format(index)
             ext_lines.append(
-                '[ext_resource type="Texture2D" path="res://animations/{name}" id="{rid}"]'.format(
-                    name=anim["sheet_name"], rid=res_id
+                '[ext_resource type="Texture2D" path="res://{file}" id="{rid}"]'.format(
+                    file=anim["sheet_file"], rid=res_id
                 )
             )
             frame_ids = []
@@ -253,7 +257,7 @@ def build(package_path: str, light: bool = True) -> str:
             out.writestr("demo.gd", demo_gd)
             out.writestr("README_GODOT.md", readme)
             for anim in animations:
-                out.writestr("animations/" + anim["sheet_name"], anim["sheet_bytes"])
+                out.writestr(anim["sheet_file"], anim["sheet_bytes"])
 
         print("== Godot 原生工程已生成 ==")
         print("  产物:", out_path)
