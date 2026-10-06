@@ -12,7 +12,6 @@ import {
   Button,
   Card,
   Chip,
-  EmptyState,
   Input,
   SectionTitle,
   Select,
@@ -23,7 +22,6 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
-import { CharacterArt } from "../components/CharacterArt";
 import { EASE_STANDARD, MOTION } from "../lib/motion";
 import type { GenerationOverrides } from "../types";
 
@@ -156,15 +154,6 @@ const DEFAULT_STEPS = [
 
 const WEEKDAYS = "日一二三四五六";
 
-function relTime(seconds: number) {
-  const diff = Date.now() - seconds * 1000;
-  if (diff < 60_000) return "刚刚";
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
-  if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)} 天前`;
-  return new Date(seconds * 1000).toLocaleDateString();
-}
-
 /** 交错进场：整页四个节拍依次浮现；系统声明降级时直通终态 */
 const RISE = {
   hidden: { opacity: 0, y: 12 },
@@ -203,11 +192,6 @@ export default function Workspace() {
     queryKey: ["model-settings"],
     queryFn: api.getModelSettings,
     staleTime: 15000,
-  });
-  const recent = useQuery({
-    queryKey: ["history", "recent"],
-    queryFn: () => api.listHistory({ limit: 6 }),
-    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -303,7 +287,6 @@ export default function Workspace() {
   }
 
   const kpis = benchmark.data;
-  const works = recent.data?.records ?? [];
   const now = new Date();
   const greeting =
     now.getHours() < 5 ? "夜深了" : now.getHours() < 11 ? "早上好" : now.getHours() < 14 ? "午安" : now.getHours() < 18 ? "下午好" : "晚上好";
@@ -519,89 +502,6 @@ export default function Workspace() {
           </Card>
         </motion.div>
       </div>
-
-      {/* 最近出炉 */}
-      <motion.div variants={RISE} className="flex flex-col gap-4">
-        <SectionTitle
-          title="最近出炉"
-          description="工坊最新的产出档案，点开直达详情。"
-          action={
-            <Button variant="ghost" size="sm" onClick={() => navigate("/history")}>
-              进入历史记录
-              <Icon name="chevron" className="h-3.5 w-3.5" />
-            </Button>
-          }
-        />
-        {recent.isLoading ? (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <div key={index} className="space-y-2">
-                <Skeleton className="aspect-[5/4] rounded-xl" />
-                <Skeleton className="h-3.5 w-3/4" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-            ))}
-          </div>
-        ) : works.length === 0 ? (
-          <EmptyState
-            icon="image"
-            title="炉子还没开过火"
-            description="第一件资产出炉后，会陈列在这里。"
-            className="rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1]"
-          />
-        ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-            {works.map((record) => (
-              <button
-                key={record.id}
-                onClick={() => navigate(`/history?open=${record.id}`)}
-                className="group cf-sheen relative overflow-hidden rounded-xl border border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ece9e1] text-left transition-all duration-(--motion-fast) ease-standard hover:-translate-y-px hover:border-line"
-              >
-                <div className="relative aspect-[5/4] overflow-hidden border-b border-ink/[.06] bg-[#f1efe9]">
-                  {record.image?.url ? (
-                    <img
-                      src={record.image.url}
-                      alt={record.name ?? record.goal}
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-(--motion-slow) ease-standard group-hover:scale-[1.04]"
-                    />
-                  ) : (
-                    <CharacterArt
-                      spec={record.character}
-                      palette={record.palette}
-                      view="bust"
-                      className="h-full w-full"
-                    />
-                  )}
-                </div>
-                <div className="p-3">
-                  <div className="flex items-center gap-1.5">
-                    <StatusDot
-                      tone={
-                        record.status === "failed"
-                          ? "failed"
-                          : record.status === "pass" || record.status === "success"
-                            ? "success"
-                            : "running"
-                      }
-                      className="scale-75"
-                    />
-                    <span className="truncate text-[12.5px] font-semibold text-ink">
-                      {record.name || record.goal}
-                    </span>
-                  </div>
-                  <div className="mt-0.5 flex items-center justify-between gap-2 text-[10.5px] text-ink-4">
-                    <span className="truncate">{record.engine ? record.engine : "未入引擎"}</span>
-                    <span className="tabular shrink-0 font-mono">
-                      {relTime(record.finished_at)}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-      </motion.div>
 
       {/* 工坊读数 */}
       <motion.div variants={RISE} className="flex flex-col gap-4">
