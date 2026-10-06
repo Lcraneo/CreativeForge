@@ -33,10 +33,11 @@ describe("action selection model", () => {
     expect(BUILTIN_ACTIONS).toEqual(["idle", "walk", "run", "attack", "jump"]);
   });
 
-  it("基础动作生成:参数不传(内置默认),view 取工作区选择", () => {
+  it("基础动作生成:参数不传(内置默认),view 取工作区选择,无自定义身份", () => {
     const plan = resolveGeneration({ kind: "base", name: "walk" }, PRESETS, "front");
     expect(plan).toEqual({ action: "walk", view: "front" });
     expect(plan?.pose_config).toBeUndefined();
+    expect(plan?.custom_action).toBeUndefined();
   });
 
   it("自定义动作生成:严格按 preset 保存时的 action/view/pose_config 原样", () => {
@@ -45,11 +46,44 @@ describe("action selection model", () => {
       action: "run",
       view: "side",
       pose_config: { ...DEFAULTS, stride: 1.6, bob: 1.3 },
+      custom_action: "轻快小跑",
     });
     // 工作区视角不影响自定义动作——即使当前是 front 也用保存的 side
     expect(resolveGeneration({ kind: "custom", name: "轻快小跑" }, PRESETS, "front")?.view).toBe(
       "side",
     );
+  });
+
+  it("命名空间隔离:自定义动作必带 custom_action 身份,运动族(action)不代表归属", () => {
+    // 敲竹板场景复现:自定义动作保存的运动族是 walk,生成计划也必须
+    // 携带 custom_action 名称——后端据此以 "custom:<名称>" 记账,
+    // 绝不占用内置 walk 槽位
+    const clapper: ActionPresetLike = {
+      name: "原地敲竹板待机循环动画",
+      action: "walk",
+      view: "side",
+      pose_config: { ...DEFAULTS },
+    };
+    const plan = resolveGeneration({ kind: "custom", name: clapper.name }, [clapper], "front");
+    expect(plan?.action).toBe("walk"); // 仅运动族
+    expect(plan?.custom_action).toBe("原地敲竹板待机循环动画"); // 播放归属
+    expect(plan?.custom_action).not.toBe(plan?.action);
+  });
+
+  it("同名冲突:自定义动作与内置动作同名时,两个命名空间互不污染", () => {
+    const builtinNamed: ActionPresetLike = {
+      name: "walk",
+      action: "walk",
+      view: "front",
+      pose_config: { ...DEFAULTS },
+    };
+    // 自定义身份始终携带(后端加 custom: 前缀记账)
+    const customPlan = resolveGeneration({ kind: "custom", name: "walk" }, [builtinNamed], "front");
+    expect(customPlan?.custom_action).toBe("walk");
+    expect(customPlan?.action).toBe("walk");
+    // 基础动作生成无 custom_action —— 不可能与自定义记录混淆
+    const basePlan = resolveGeneration({ kind: "base", name: "walk" }, [builtinNamed], "front");
+    expect(basePlan?.custom_action).toBeUndefined();
   });
 
   it("选中的自定义动作被删除后解析返回 null(生成按钮禁用,不静默回落基础动作)", () => {

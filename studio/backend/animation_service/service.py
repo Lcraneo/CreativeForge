@@ -318,6 +318,75 @@ def custom_motion_clause(settings, description: str) -> str | None:
             pass
     return text
 
+
+# ── 动作身份命名空间（自定义动作与内置动作严格隔离） ─────────────────
+# 自定义动作的动画 meta 用 "custom:<名称>" 记录归属——内置动作槽位
+# （试玩条带匹配、动作矩阵、批次补齐跳过判定）只认无前缀的内置动作名，
+# 杜绝「自定义动作以基础动作词（如 walk）入账 → 抢占内置槽位」的混淆。
+CUSTOM_ACTION_PREFIX = "custom:"
+
+
+def custom_action_identity(name: str) -> str:
+    return f"{CUSTOM_ACTION_PREFIX}{name}"
+
+
+def parse_action_identity(value: str | None) -> tuple[str, str]:
+    """动作身份解析：``("custom", 名称)`` 或 ``("base", 动作词)``。
+
+    未知/空值按 base 原样返回（调用方再按 ACTIONS 成员性过滤）。"""
+
+    if isinstance(value, str) and value.startswith(CUSTOM_ACTION_PREFIX):
+        return "custom", value[len(CUSTOM_ACTION_PREFIX):]
+    return "base", value or ""
+
+
+def sanitize_custom_action(name: str | None) -> str | None:
+    """请求侧自定义动作名规范化：剥意外携带的前缀、去空白、限长。
+
+    返回 None 表示无有效自定义动作身份（请求按内置动作处理）。"""
+
+    if not name:
+        return None
+    value = str(name).strip()
+    if value.startswith(CUSTOM_ACTION_PREFIX):
+        value = value[len(CUSTOM_ACTION_PREFIX):]
+    value = value.strip()[:40]
+    return value or None
+
+
+def collect_ai_strips(directory: str, asset_id: str | None, actions: list[str]) -> dict[str, dict]:
+    """试玩舞台 AI 条带收集：按「资产 + 内置动作名」取最新 AI 视频动画。
+
+    命名空间隔离的关键执行点：requested_action 带 custom: 前缀的记录
+    永不参与内置动作槽位——修复「自定义动作以基础动作词入账后抢占
+    walk 等条带」的历史缺陷。同槽位多条时取 created_at 最新。"""
+
+    import glob as _glob
+
+    strips: dict[str, dict] = {}
+    if not asset_id:
+        return strips
+    for meta_path in _glob.glob(os.path.join(directory, "*.json")):
+        try:
+            with open(meta_path, "r", encoding="utf-8") as handle:
+                meta = json.load(handle)
+        except (ValueError, OSError):
+            continue
+        if meta.get("asset_id") != asset_id:
+            continue
+        kind, name = parse_action_identity(meta.get("requested_action"))
+        if kind != "base" or name not in actions:
+            continue
+        frame_urls = meta.get("frame_urls") or []
+        if len(frame_urls) < 4:
+            continue
+        stamp = meta.get("created_at", 0)
+        prev = strips.get(name)
+        if prev is None or stamp > prev.get("created_at", 0):
+            strips[name] = meta
+    return strips
+
+
 MIN_SEGMENT_COVERAGE = 0.02  # mask 面积下限（低于此说明分割失败/人物丢失）
 MAX_SEGMENT_COVERAGE = 0.85  # mask 面积上限（高于此说明背景没抠掉）
 
@@ -547,8 +616,11 @@ class AnimationService:
             if local < 4:
                 continue
             action = meta.get("requested_action") or meta.get("action")
-            if action:
-                done.add(action)
+            # 命名空间隔离：custom: 前缀的自定义动作不算内置动作已交付
+            # （否则自定义动作会以基础动作词入账，让批次补齐错误跳过）
+            kind, name = parse_action_identity(action)
+            if kind == "base" and name:
+                done.add(name)
         return done
 
     def action_matrix(self, asset_id: str | None) -> dict:
@@ -574,6 +646,11 @@ class AnimationService:
                 action = meta.get("requested_action") or meta.get("action")
                 if not action:
                     continue
+                # 矩阵只统计内置动作槽位；自定义动作归动作库管理，不占格
+                kind, name = parse_action_identity(action)
+                if kind != "base" or not name:
+                    continue
+                action = name
                 frame_urls = meta.get("frame_urls") or []
                 local = sum(
                     1
@@ -848,6 +925,7 @@ class AnimationService:
         final_quality: bool,
         equipment_aware: bool,
         action_description: str,
+        custom_action: str | None = None,
     ) -> dict:
         """单次 AI 视频生成入队（生成任务化）：立即返回初始快照，后台线程
         跑 create_video（progress_cb 汇报 prompt/video/sampling/composing
@@ -868,6 +946,8 @@ class AnimationService:
             "started_at": time.time(),
             "asset_id": asset_id,
             "requested_action": action,
+            # 命名空间隔离：自定义动作身份随任务透传到 meta（快照仅展示用）
+            "custom_action": sanitize_custom_action(custom_action),
         }
         _persist_tasks()
         thread = threading.Thread(
@@ -883,6 +963,7 @@ class AnimationService:
                 final_quality=final_quality,
                 equipment_aware=equipment_aware,
                 action_description=action_description,
+                custom_action=custom_action,
             ),
             name="cf-video-task-{}".format(task_id),
             daemon=True,
@@ -1354,6 +1435,7 @@ class AnimationService:
         equipment_aware: bool = True,
         action_description: str | None = None,
         view: str = "front",
+        custom_action: str | None = None,
         progress_cb=None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
@@ -1380,9 +1462,15 @@ class AnimationService:
 
         ``progress_cb``：可选阶段回调（生成任务化用）——在 prompt/video/
         sampling/composing 四个阶段边界触发，缺省 None 时零开销、行为
-        与未接任务化前完全一致。"""
+        与未接任务化前完全一致。
+
+        ``custom_action``：自定义动作名称（命名空间隔离）——有值时
+        meta.requested_action 记 "custom:<名称>" 并附 custom_action 字段，
+        该记录不参与内置动作槽位；``action`` 此时仅是运动族（决定提示词
+        词表回退/装备子句/idle 稳定分支），不再代表动作归属。"""
 
         action = action if action in ACTIONS else "walk"
+        custom_action = sanitize_custom_action(custom_action)
         if progress_cb:
             progress_cb("prompt")  # 装备识别/裁边/润色都计入准备阶段
 
@@ -1517,9 +1605,15 @@ class AnimationService:
         # 记录归属资产与真实动作（compose 会把 action 覆盖为 "sequence"），
         # 试玩舞台按「资产 + 动作」匹配 AI 动画帧。view 供动作×视角矩阵与
         # 补缺失/重试判定（历史记录无 view 字段时矩阵按 unknown 归档）。
+        # 命名空间隔离：自定义动作记 "custom:<名称>"——永不占用内置动作
+        # 槽位；action 参数此时只作运动族（提示词/装备子句/idle 稳定分支）。
         if asset_id:
             meta["asset_id"] = asset_id
-        meta["requested_action"] = action
+        if custom_action:
+            meta["requested_action"] = custom_action_identity(custom_action)
+            meta["custom_action"] = custom_action
+        else:
+            meta["requested_action"] = action
         meta["view"] = view
         if enhanced_prompt != base_prompt:
             meta["prompt_enhanced"] = True

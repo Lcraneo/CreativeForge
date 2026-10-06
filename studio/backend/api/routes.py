@@ -107,6 +107,10 @@ class AnimationRequest(BaseModel):
     # 自定义动作的用户描述（词表外动作如鞠躬/挥手的唯一表达通道）：仅 i2v
     # 链消费——经独立润色通道替换词表主体句；骨骼链与内置动作不受影响
     action_description: str = ""
+    # 自定义动作名称（命名空间隔离）：有值时产物 meta.requested_action 记
+    # "custom:<名称>"，与内置动作槽位（试玩条带/矩阵/补齐跳过）严格分离；
+    # action 字段此时仅作运动族。缺省 = 内置动作生成，行为不变
+    custom_action: str | None = None
 
 
 class PreviewFrameRequest(BaseModel):
@@ -716,6 +720,7 @@ def build_router(runtime):
                     equipment_aware=request.equipment_aware,
                     action_description=(request.action_description or "").strip()[:500],
                     view=request.view,
+                    custom_action=request.custom_action,
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -802,6 +807,7 @@ def build_router(runtime):
             final_quality=request.final_quality,
             equipment_aware=request.equipment_aware,
             action_description=(request.action_description or "").strip()[:500],
+            custom_action=request.custom_action,
         )
         payload = {"task_id": snapshot["id"], "snapshot": snapshot}
         if idem_key:
@@ -1823,26 +1829,13 @@ def build_router(runtime):
         # ── AI 动画帧优先（用户授权 API 路线）：该资产+动作已生成过 AI
         # 视频驱动动画时，用其真实帧拼条带（20 帧真实运动）；未生成的动作
         # 回退 rigged/procedural 渲染，前端对缺失动作显示「生成 AI 动画」入口。
+        # collect_ai_strips 按命名空间严格匹配：custom: 前缀的自定义动作
+        # 记录永不占用内置动作槽位（修复自定义动画抢占 walk 等条带的混淆）。
         ai_strips: dict[str, dict] = {}
         if asset_id:
-            import glob as _glob
+            from studio.backend.animation_service.service import collect_ai_strips
 
-            for meta_path in _glob.glob(os.path.join(ANIMATION_DIR, "*.json")):
-                try:
-                    with open(meta_path, "r", encoding="utf-8") as handle:
-                        meta = json.load(handle)
-                except (ValueError, OSError):
-                    continue
-                if meta.get("asset_id") != asset_id:
-                    continue
-                action_name = meta.get("requested_action")
-                frame_urls = meta.get("frame_urls") or []
-                if action_name not in actions or len(frame_urls) < 4:
-                    continue
-                stamp = meta.get("created_at", 0)
-                prev = ai_strips.get(action_name)
-                if prev is None or stamp > prev.get("created_at", 0):
-                    ai_strips[action_name] = meta
+            ai_strips = collect_ai_strips(ANIMATION_DIR, asset_id, actions)
 
         def _pack_ai_strip(meta):
             """把 AI 动画的本地逐帧拼成条带 PNG（与 strips 结构统一，

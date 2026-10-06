@@ -248,6 +248,9 @@ export interface AnimationRequestPayload {
   /** 自定义动作的用户描述：仅 i2v 链消费（独立润色通道，词表外动作的
    * 表达通道）；基础动作不带，内置词表路径保持原样 */
   action_description?: string;
+  /** 自定义动作名称（命名空间隔离）：后端以此把产物记为 "custom:<名称>"，
+   * 与内置动作槽位严格分离；基础动作不带 */
+  custom_action?: string;
 }
 
 /** 生成任务快照（任务化轮询）：running 带 stage/progress；终态带 result
@@ -260,6 +263,9 @@ export interface VideoTaskSnapshot {
   progress: number;
   asset_id?: string;
   requested_action?: string;
+  /** 自定义动作名称（命名空间隔离）：有值时 requested_action 为运动族，
+   * 播放归属以 custom_action 为准 */
+  custom_action?: string | null;
   result?: AnimationResult;
   error?: string;
   error_kind?: string;

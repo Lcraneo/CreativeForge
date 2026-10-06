@@ -23,9 +23,15 @@ export interface ActionPresetLike {
 export type ActionSource = { kind: "base"; name: string } | { kind: "custom"; name: string };
 
 export interface GenerationPlan {
+  /** 内置动作词（基础动作=动作名；自定义动作=其保存的运动族，
+   * 仅决定提示词/骨骼参数路径，不代表播放归属） */
   action: string;
   view: string;
   pose_config?: PoseConfig;
+  /** 自定义动作身份（命名空间隔离）：随请求送达后端，产物 meta 以
+   * "custom:<名称>" 记账——与内置动作槽位严格分离，杜绝「自定义动作
+   * 以基础动作词入账后抢占试玩 walk 等条带」的混淆 */
+  custom_action?: string;
 }
 
 export function isBuiltinAction(name: string): boolean {
@@ -34,7 +40,8 @@ export function isBuiltinAction(name: string): boolean {
 
 /** 生成参数解析。
  * 基础动作:view 取工作区视角选择,pose_config 不传(姿态引擎内置默认);
- * 自定义动作:action/view/pose_config 全部来自 preset 原样。
+ * 自定义动作:action/view/pose_config 全部来自 preset 原样,并携带
+ * custom_action 名称作为独立身份。
  * 选中项在 presets 中已不存在(被删除)时返回 null,生成按钮保持禁用。 */
 export function resolveGeneration(
   source: ActionSource,
@@ -47,7 +54,12 @@ export function resolveGeneration(
   }
   const preset = presets.find((item) => item.name === source.name);
   if (!preset) return null;
-  return { action: preset.action, view: preset.view, pose_config: preset.pose_config };
+  return {
+    action: preset.action,
+    view: preset.view,
+    pose_config: preset.pose_config,
+    custom_action: preset.name,
+  };
 }
 
 /** 编辑器(预览台)跟随选中动作载入的姿态状态。

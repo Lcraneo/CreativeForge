@@ -447,6 +447,12 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           payload.action_description =
             presets.find((preset) => preset.name === source.name)?.description ?? "";
         }
+        // 命名空间隔离：自定义动作显式携带独立身份——后端产物以
+        // "custom:<名称>" 记账，绝不占用内置动作槽位（plan.action 只是
+        // 运动族，不再代表动作归属）
+        if (plan.custom_action) {
+          payload.custom_action = plan.custom_action;
+        }
         // 生成任务化：AI 视频链（60~90s 大头）走异步任务——立即拿 task_id
         // 轮询阶段进度，刷新后凭 localStorage 续接；骨骼/序列帧秒级完成维持同步
         if (useVideo) {
