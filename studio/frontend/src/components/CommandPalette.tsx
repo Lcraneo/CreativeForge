@@ -47,7 +47,12 @@ export function CommandPalette({
       setQuery("");
       setActive(0);
       const previous = document.activeElement as HTMLElement | null;
-      const frame = requestAnimationFrame(() => inputRef.current?.focus());
+      const frame = requestAnimationFrame(() => {
+        // 面板打开是异步聚焦；若焦点已被用户/测试移入面板内（如焦点陷阱），
+        // 不得抢回输入框，否则 Shift+Tab 等焦点操作会被覆盖
+        if (dialogRef.current?.contains(document.activeElement)) return;
+        inputRef.current?.focus();
+      });
       return () => {
         cancelAnimationFrame(frame);
         previous?.focus();

@@ -11,33 +11,33 @@ import { MobileNavigation } from "./MobileNavigation";
 import { CommandPalette } from "./CommandPalette";
 import { Toaster } from "./Toaster";
 import { Icon } from "./icons";
-import { Badge, StatusDot, cx } from "./ui";
+import { Badge, Stamp, StatusDot, cx } from "./ui";
 
 const AGENTS_NAV_KEY = "cf-nav-agents-open";
 
 const MOBILE_TABS: NavItem[] = [
-  { to: "/", label: "工作台", icon: "spark" },
+  { to: "/", label: "工作台", icon: "panel" },
   { to: "/agents", label: "智能体", icon: "layers" },
   { to: "/asset", label: "资产", icon: "cube" },
-  { to: "/export", label: "导出", icon: "package" },
+  { to: "/playtest", label: "舞台", icon: "play" },
 ];
 
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
-  "/": { group: "生产", label: "工作台" },
-  "/workspace": { group: "生产", label: "工作台" },
-  "/agents": { group: "生产", label: "智能体指挥中心" },
-  "/history": { group: "智能体指挥中心", label: "历史记录" },
-  "/batch": { group: "生产", label: "批量生产线" },
-  "/showcase": { group: "生产", label: "发布展示间" },
-  "/playtest": { group: "生产", label: "试玩舞台" },
-  "/versions": { group: "资产", label: "版本控制中心" },
-  "/asset": { group: "资产", label: "资产检查器" },
-  "/design": { group: "资产", label: "角色设计三视图" },
-  "/animation": { group: "资产", label: "动画工作台" },
-  "/export": { group: "交付", label: "导出中心" },
-  "/benchmark": { group: "洞察", label: "基准中心" },
-  "/technology": { group: "洞察", label: "技术中心" },
-  "/settings": { group: "洞察", label: "模型设置" },
+  "/": { group: "创作", label: "工作台" },
+  "/workspace": { group: "创作", label: "工作台" },
+  "/agents": { group: "创作", label: "智能体" },
+  "/history": { group: "创作 · 智能体", label: "历史记录" },
+  "/batch": { group: "创作", label: "批量生产线" },
+  "/showcase": { group: "舞台", label: "发布展示间" },
+  "/playtest": { group: "舞台", label: "试玩舞台" },
+  "/versions": { group: "资产库", label: "版本控制" },
+  "/asset": { group: "资产库", label: "资产检查" },
+  "/design": { group: "资产库", label: "设计三视图" },
+  "/animation": { group: "资产库", label: "动画工作台" },
+  "/export": { group: "舞台", label: "导出中心" },
+  "/benchmark": { group: "手记", label: "基准中心" },
+  "/technology": { group: "手记", label: "技术中心" },
+  "/settings": { group: "手记", label: "模型设置" },
 };
 
 export default function Layout() {
@@ -120,6 +120,13 @@ export default function Layout() {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-canvas text-ink">
+      {/* 键盘用户跳过导航直达主内容 */}
+      <a
+        href="#cf-main"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-md focus:border focus:border-line focus:bg-canvas focus:px-3 focus:py-2 focus:text-sm"
+      >
+        跳到主内容
+      </a>
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
@@ -137,21 +144,28 @@ export default function Layout() {
             CF
           </span>
           {!rail && (
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="truncate font-display text-[14.5px] font-black">CreativeForge</div>
               <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-ink-3">
-                AI Asset Factory
+                AI 资产工坊
               </div>
             </div>
           )}
+          {!rail && <Stamp char="锻" tone="ember" size={22} title="CreativeForge 纸上工坊" />}
         </div>
 
         <nav className="cf-scroll flex-1 overflow-y-auto">
           {NAV_GROUPS.map((group) => (
-            <div key={group.label}>
+            <div key={group.label} title={group.hint}>
               {!rail && (
-                <div className="px-2.5 pb-1.5 pt-3.5 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-ink-4">
-                  {group.label}
+                <div className="flex items-baseline gap-1.5 px-2.5 pb-1.5 pt-4">
+                  <span className="font-display text-[12px] font-black leading-none text-ink-3">
+                    {group.numeral}
+                  </span>
+                  <span className="text-[10.5px] font-semibold tracking-[0.14em] text-ink-4">
+                    {group.label}
+                  </span>
+                  <span className="ml-1 h-px flex-1 bg-line-subtle" aria-hidden="true" />
                 </div>
               )}
               {group.items.map((item) =>
@@ -335,7 +349,7 @@ export default function Layout() {
             rail ? "justify-center" : "justify-between px-2.5",
           )}
         >
-          {!rail && <span className="text-[11px] text-ink-3">v1.0 · Studio</span>}
+          {!rail && <span className="text-[11px] text-ink-3">v1.0 · 纸上工坊</span>}
           <span className="flex gap-1.5">
             <span
               className="h-2 w-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(52,211,153,.15)]"
@@ -427,8 +441,14 @@ export default function Layout() {
           </button>
         </header>
 
-        <main className="cf-scroll min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0">
-          <Outlet />
+        <main
+          id="cf-main"
+          className="cf-scroll min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0"
+        >
+          {/* 路由进入过渡：CSS 动画（key 变化触发重放，query 变化不重挂载） */}
+          <div key={location.pathname} className="cf-page-enter">
+            <Outlet />
+          </div>
         </main>
 
         {/* Bottom tabs (mobile) */}
