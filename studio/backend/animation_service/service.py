@@ -354,15 +354,21 @@ def sanitize_custom_action(name: str | None) -> str | None:
     return value or None
 
 
-def collect_ai_strips(directory: str, asset_id: str | None, actions: list[str]) -> dict[str, dict]:
-    """试玩舞台 AI 条带收集：按「资产 + 内置动作名」取最新 AI 视频动画。
+def collect_ai_strips(
+    directory: str, asset_id: str | None, actions: list[str], custom_names: list[str] | None = None
+) -> dict[str, dict]:
+    """试玩舞台 AI 条带收集：按「资产 + 动作身份」取最新 AI 视频动画。
 
-    命名空间隔离的关键执行点：requested_action 带 custom: 前缀的记录
-    永不参与内置动作槽位——修复「自定义动作以基础动作词入账后抢占
-    walk 等条带」的历史缺陷。同槽位多条时取 created_at 最新。"""
+    命名空间隔离的关键执行点：只收集显式请求的身份——内置动作词（如
+    walk）与 ``custom_names`` 对应的 custom:<名称> 身份。自定义记录若未
+    经身份请求绝不混入内置槽位（修复「自定义动作以基础动作词入账后抢占
+    walk 等条带」的历史缺陷）。同身份多条时取 created_at 最新，返回键为
+    动作身份（内置=动作词，自定义=custom:<名称>）。"""
 
     import glob as _glob
 
+    wanted = {value for value in (actions or []) if value}
+    wanted |= {custom_action_identity(name) for name in (custom_names or [])}
     strips: dict[str, dict] = {}
     if not asset_id:
         return strips
@@ -374,16 +380,16 @@ def collect_ai_strips(directory: str, asset_id: str | None, actions: list[str]) 
             continue
         if meta.get("asset_id") != asset_id:
             continue
-        kind, name = parse_action_identity(meta.get("requested_action"))
-        if kind != "base" or name not in actions:
+        identity = meta.get("requested_action")
+        if identity not in wanted:
             continue
         frame_urls = meta.get("frame_urls") or []
         if len(frame_urls) < 4:
             continue
         stamp = meta.get("created_at", 0)
-        prev = strips.get(name)
+        prev = strips.get(identity)
         if prev is None or stamp > prev.get("created_at", 0):
-            strips[name] = meta
+            strips[identity] = meta
     return strips
 
 

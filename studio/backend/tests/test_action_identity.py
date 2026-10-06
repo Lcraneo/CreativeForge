@@ -109,6 +109,22 @@ class CollectAiStripsTests(unittest.TestCase):
     def test_no_asset_returns_empty(self):
         self.assertEqual(collect_ai_strips(self.dir, None, self.actions), {})
 
+    def test_custom_names_collect_custom_identities_only(self):
+        # 试玩舞台自定义陈列：显式请求的自定义身份才被收集，且键保持
+        # custom:<名称> 命名空间——未请求的自定义记录仍被拒之门外
+        _write_meta(self.dir, "custom00", asset_id=self.asset,
+                    requested_action=custom_action_identity("原地敲竹板待机循环动画"),
+                    created_at=200, frame_urls=_touch_frames(self.dir, "custom00", 5))
+        _write_meta(self.dir, "custom01", asset_id=self.asset,
+                    requested_action=custom_action_identity("未请求的动作"),
+                    created_at=210, frame_urls=_touch_frames(self.dir, "custom01", 5))
+        _write_meta(self.dir, "genuine0", asset_id=self.asset, requested_action="walk",
+                    created_at=100, frame_urls=_touch_frames(self.dir, "genuine0", 5))
+        strips = collect_ai_strips(
+            self.dir, self.asset, self.actions, custom_names=["原地敲竹板待机循环动画"]
+        )
+        self.assertEqual(set(strips), {"walk", custom_action_identity("原地敲竹板待机循环动画")})
+
 
 class ExistingAiActionsTests(unittest.TestCase):
     def setUp(self):

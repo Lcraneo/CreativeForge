@@ -1,7 +1,7 @@
 import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
 import type { CreativeAsset } from "../types";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Konva from "konva";
 import { Image as KonvaImage, Layer, Rect, Stage, Text as KonvaText, Rect as KonvaRect } from "react-konva";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import { useHeldKeys } from "../lib/keyboard";
 import { toast } from "../stores/toastStore";
-import type { ActionBatchTask, PlaytestStrip } from "../types";
+import type { ActionBatchTask, PlaytestCustomAction, PlaytestStrip } from "../types";
 
 // 补丁 C②：canvas 背板按 DPR 渲染（封顶 2），必须在 Stage 挂载前设置
 Konva.pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
@@ -56,8 +56,17 @@ export default function PlaytestStage() {
   return <SelectedAssetBoundary>{(asset) => <PlaytestContent key={asset?.id ?? "unselected"} selected={asset} />}</SelectedAssetBoundary>;
 }
 
+const BASE_ACTION_LABEL: Record<string, string> = {
+  idle: "待机",
+  walk: "行走",
+  run: "奔跑",
+  attack: "攻击",
+  jump: "跳跃",
+};
+
 function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
   const [, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [pickerOpen, setPickerOpen] = useState(!selected);
   const selectedAssetId = selected?.id ?? null;
   const history = useQuery({
@@ -198,29 +207,42 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
     }
   }
 
-  // 条带地址表：新结构读 strips，旧响应把 previews 图当条带用
+  // 条带地址表：新结构读 strips，旧响应把 previews 图当条带用；
+  // 自定义动作以 custom:<名称> 身份并入同一键空间（播放循环零改动）
+  const customActions = useMemo(() => previews.data?.custom_actions ?? [], [previews.data]);
+  const customByKey = useMemo(() => {
+    const map: Record<string, PlaytestCustomAction> = {};
+    for (const item of customActions) map[`custom:${item.name}`] = item;
+    return map;
+  }, [customActions]);
+
   const stripUrls: Record<string, string> = useMemo(() => {
     const data = previews.data;
     if (!data) return {};
+    const out: Record<string, string> = {};
     if (data.strips) {
-      const out: Record<string, string> = {};
       for (const [name, s] of Object.entries(data.strips)) {
         if (s?.url) out[name] = s.url;
       }
-      return out;
+    } else {
+      Object.assign(out, data.previews ?? {});
     }
-    return { ...(data.previews ?? {}) };
-  }, [previews.data]);
+    for (const [key, item] of Object.entries(customByKey)) {
+      if (item.strip?.url) out[key] = item.strip.url;
+    }
+    return out;
+  }, [previews.data, customByKey]);
 
   const stripMeta: PlaytestStrip | undefined = useMemo(() => {
     const data = previews.data;
     if (!data) return undefined;
+    if (customByKey[action]?.strip) return customByKey[action].strip;
     if (data.strips?.[action]) return data.strips[action];
     const url = stripUrls[action];
     return url
       ? { url, frames: 8, width: 96, height: 96, engine: data.source ?? "procedural" }
       : undefined;
-  }, [previews.data, stripUrls, action]);
+  }, [previews.data, customByKey, stripUrls, action]);
 
   // 补丁 A：全部动作统一预载（idle 优先 high），切换动作零请求
   useEffect(() => {
@@ -282,12 +304,14 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
       for (const [name, s] of Object.entries(data.strips)) {
         table[name] = Math.max(1, s?.frames ?? 8);
       }
-      framesByActionRef.current = table;
-      return;
+    } else {
+      for (const name of Object.keys(data.previews ?? {})) table[name] = 8;
     }
-    for (const name of Object.keys(data.previews ?? {})) table[name] = 8;
+    for (const [key, item] of Object.entries(customByKey)) {
+      table[key] = Math.max(1, item.strip?.frames ?? 8);
+    }
     framesByActionRef.current = table;
-  }, [previews.data]);
+  }, [previews.data, customByKey]);
 
   const framesFor = (name: string) => framesByActionRef.current[name] ?? 8;
 
@@ -469,7 +493,12 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
           className="col-span-12 lg:col-span-8"
           title="试玩区 Playtest"
           icon="film"
-          right={<Badge tone="neutral">{ACTION_HINT[action]}</Badge>}
+          right={
+            <Badge tone="neutral">
+              {ACTION_HINT[action] ??
+                (customByKey[action] ? `自定义 · ${customByKey[action].name}` : action)}
+            </Badge>
+          }
         >
           <div
             ref={stageBoxRef}
@@ -677,6 +706,68 @@ function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
                   )}
                 </button>
               ))}
+              {/* 自定义动作陈列：custom:<名称> 身份独立按键，与内置槽位互不占用 */}
+              {customActions.length > 0 && (
+                <div className="mt-1.5 flex items-center gap-2 pt-1">
+                  <span className="text-[10.5px] uppercase tracking-[0.14em] text-ember">
+                    自定义动作
+                  </span>
+                  <span className="h-px flex-1 bg-line-subtle" />
+                </div>
+              )}
+              {customActions.map((item) => {
+                const key = `custom:${item.name}`;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      pinnedRef.current = key;
+                    }}
+                    className={cx(
+                      "flex items-center gap-3 rounded-xl border p-2 text-left transition-all",
+                      action === key
+                        ? "border-ember/60 bg-ember-tint/40"
+                        : "border-line-subtle hover:border-line",
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-1.5">
+                        <span className="truncate text-[12.5px] font-medium text-ink">
+                          {item.name}
+                        </span>
+                        {item.engine === "ai-video" && <Badge tone="ember">AI</Badge>}
+                        {item.engine === "rigged" && <Badge tone="neutral">骨骼</Badge>}
+                        {item.engine === "procedural" && <Badge tone="neutral">程序化</Badge>}
+                      </span>
+                      <span className="block truncate text-[10.5px] text-ink-3">
+                        {BASE_ACTION_LABEL[item.base_action ?? ""] ?? item.base_action ?? "自定义"}
+                        {item.view === "side" ? " · 侧视" : ""}
+                        {item.description ? ` · ${item.description}` : ""}
+                      </span>
+                      {item.engine !== "ai-video" && selectedAssetId && (
+                        <button
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            navigate(`/animation?asset=${encodeURIComponent(selectedAssetId)}`);
+                          }}
+                          className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-ember underline-offset-2 hover:underline"
+                        >
+                          <Icon name="spark" className="h-3 w-3" />
+                          到动画工作台生成 AI 版
+                        </button>
+                      )}
+                    </span>
+                    {item.strip?.url && (
+                      <img
+                        src={item.strip.url}
+                        alt={item.name}
+                        loading="lazy"
+                        className="h-[46px] w-[128px] rounded-md border border-line-subtle bg-white object-cover object-left"
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
           <p className="mt-3 flex items-center gap-1.5 text-[11px] text-ink-4">

@@ -1728,11 +1728,70 @@ def build_router(runtime):
             )
         ]
 
+        # ── 自定义动作（命名空间隔离下的试玩陈列）────────────────────
+        # 与内置动作同台：条带键为 custom:<名称> 身份，AI 版优先、其次按
+        # 保存的姿态参数程序化渲染。未绑定资产时不提供（试玩对象必须是
+        # 该角色，程序化演示小人没有自定义动作的意义）。
+        custom_presets: list[dict] = []
+        if asset is not None:
+            from studio.backend.animation_service.custom_actions import CustomActionStore
+
+            custom_presets = CustomActionStore(
+                os.path.join(ANIMATION_DIR, "custom_actions.json")
+            ).list()
+        custom_names = [str(item.get("name")) for item in custom_presets]
+
+        # AI 动画帧收集（内置 + 自定义身份一次完成；只读磁盘，需在骨架
+        # 准备前完成——自定义条带是否要渲染取决于它有没有 AI 版）
+        from studio.backend.animation_service.service import (
+            collect_ai_strips,
+            custom_action_identity,
+        )
+
+        ai_strips: dict[str, dict] = {}
+        if asset_id:
+            ai_strips = collect_ai_strips(
+                ANIMATION_DIR, asset_id, actions, custom_names=custom_names
+            )
+
+        def _safe_label(value: str) -> str:
+            import re as _re
+
+            # custom:<名称> 里的冒号与各类符号在 Windows 文件名非法
+            return _re.sub(r"[^\w-]+", "_", str(value), flags=_re.UNICODE)
+
+        def _custom_pose_key(item: dict) -> str:
+            payload = json.dumps(
+                {
+                    "a": item.get("action"),
+                    "v": item.get("view"),
+                    "p": item.get("pose_config"),
+                    "r": item.get("revision"),
+                },
+                sort_keys=True,
+            )
+            return hashlib.sha1(payload.encode()).hexdigest()[:8]
+
+        def _custom_strip_path(item: dict, engine_name: str) -> str:
+            safe = _safe_label(item.get("name"))
+            seed = "{}|{}|{}".format(
+                seed_key, item.get("action"), item.get("view"), _custom_pose_key(item)
+            )
+            return os.path.join(
+                cache_dir,
+                "play_custom_{}_{}.png".format(safe, _digest(engine_name, seed, safe)),
+            )
+
+        custom_needs_render = any(
+            ai_strips.get(custom_action_identity(item.get("name"))) is None
+            for item in custom_presets
+        )
+
         # 第二步：真的需要渲染时才做昂贵准备 —— 一次 AI 主体分割（五动作
         # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底
         rig = None
         segment_mask = None
-        if source is not None and pending:
+        if source is not None and (pending or custom_needs_render):
             if not _source_is_transparent(source):
                 settings = runtime.model_settings.effective()
                 if settings.get("enabled") and settings.get("api_key"):
@@ -1827,17 +1886,10 @@ def build_router(runtime):
                 )
 
         # ── AI 动画帧优先（用户授权 API 路线）：该资产+动作已生成过 AI
-        # 视频驱动动画时，用其真实帧拼条带（20 帧真实运动）；未生成的动作
-        # 回退 rigged/procedural 渲染，前端对缺失动作显示「生成 AI 动画」入口。
-        # collect_ai_strips 按命名空间严格匹配：custom: 前缀的自定义动作
-        # 记录永不占用内置动作槽位（修复自定义动画抢占 walk 等条带的混淆）。
-        ai_strips: dict[str, dict] = {}
-        if asset_id:
-            from studio.backend.animation_service.service import collect_ai_strips
+        # 视频驱动动画时，用其真实帧拼条带；未生成的动作回退 rigged/
+        # procedural 渲染。收集已在骨架准备前完成（ai_strips）。
 
-            ai_strips = collect_ai_strips(ANIMATION_DIR, asset_id, actions)
-
-        def _pack_ai_strip(meta):
+        def _pack_ai_strip(meta, label: str | None = None):
             """把 AI 动画的本地逐帧拼成条带 PNG（与 strips 结构统一，
             前端播放器零改动），缓存于 play_cache。"""
 
@@ -1852,7 +1904,9 @@ def build_router(runtime):
             digest = _hashlib.sha1(
                 ("ai|{}|{}".format(meta.get("id"), len(frame_files))).encode()
             ).hexdigest()[:10]
-            out_name = "play_ai_{}_{}.png".format(meta.get("requested_action"), digest)
+            out_name = "play_ai_{}_{}.png".format(
+                _safe_label(label or meta.get("requested_action")), digest
+            )
             out_path = os.path.join(cache_dir, out_name)
             samples = [f for f in frame_files if f]
             if len(samples) < 4:
@@ -1914,6 +1968,93 @@ def build_router(runtime):
                 "engine": engine,
             }
 
+        # ── 自定义动作条带：AI 版优先，其次按保存的姿态参数渲染。
+        # 骨骼可用走 rigged（与内置同一条分区变形链路，config 带姿态参数）；
+        # 骨架缺失时退姿态引擎程序化渲染；仍失败则该动作本轮缺席。
+        custom_out: list[dict] = []
+        for item in custom_presets:
+            name = str(item.get("name") or "")
+            if not name:
+                continue
+            identity = custom_action_identity(name)
+            strip: dict | None = None
+            engine_name = "procedural"
+            ai_meta = ai_strips.get(identity)
+            if ai_meta is not None:
+                packed = _pack_ai_strip(ai_meta, label=identity)
+                if packed:
+                    strip = packed
+                    engine_name = "ai-video"
+            if strip is None and rig is not None and source is not None:
+                try:
+                    from artgen.riganim import animate_rigged
+
+                    strip_path = _custom_strip_path(item, "rigged-custom")
+                    if not os.path.isfile(strip_path):
+                        frames = animate_rigged(
+                            source,
+                            item.get("action") or "idle",
+                            PLAYTEST_FRAMES,
+                            PLAYTEST_SIZE,
+                            rig=rig,
+                            config=item.get("pose_config") or None,
+                            segment_mask=segment_mask,
+                            keep_background=False,
+                            view=item.get("view") or "front",
+                        )[0]
+                        pack_strip(frames).save(strip_path, "PNG")
+                    with PILImage.open(strip_path) as handle:
+                        strip_w, strip_h = handle.size
+                    url = "/api/animation/play_cache/" + os.path.basename(strip_path)
+                    strip = {
+                        "url": url,
+                        "frames": PLAYTEST_FRAMES,
+                        "fps": PLAYTEST_FPS,
+                        "width": max(1, strip_w // PLAYTEST_FRAMES),
+                        "height": strip_h,
+                        "engine": "rigged",
+                    }
+                    engine_name = "rigged"
+                except Exception:  # noqa: BLE001 - 自定义条带失败不拖垮舞台
+                    strip = None
+            if strip is None and asset is not None:
+                try:
+                    strip_path = _custom_strip_path(item, "procedural-custom")
+                    if not os.path.isfile(strip_path):
+                        frames = render_action_frames(
+                            asset_params(asset) or {},
+                            item.get("action") or "idle",
+                            PLAYTEST_FRAMES,
+                            PLAYTEST_SIZE,
+                            config=item.get("pose_config") or None,
+                        )
+                        pack_strip(frames).save(strip_path, "PNG")
+                    with PILImage.open(strip_path) as handle:
+                        strip_w, strip_h = handle.size
+                    url = "/api/animation/play_cache/" + os.path.basename(strip_path)
+                    strip = {
+                        "url": url,
+                        "frames": PLAYTEST_FRAMES,
+                        "fps": PLAYTEST_FPS,
+                        "width": max(1, strip_w // PLAYTEST_FRAMES),
+                        "height": strip_h,
+                        "engine": "procedural",
+                    }
+                except Exception:  # noqa: BLE001
+                    strip = None
+            if strip is None:
+                continue
+            custom_out.append(
+                {
+                    "name": name,
+                    "base_action": item.get("action"),
+                    "view": item.get("view"),
+                    "description": (item.get("description") or "")[:100],
+                    "engine": engine_name,
+                    "strip": strip,
+                }
+            )
+
         character = None
         if engine == "rigged" and source_hash:
             meta_path = os.path.join(cache_dir, "play_meta_{}.json".format(source_hash))
@@ -1937,6 +2078,9 @@ def build_router(runtime):
             "fps": PLAYTEST_FPS,
             "source": engine,
             "character": character,
+            # 自定义动作陈列（命名空间隔离）：条带键 custom:<名称>，与内置
+            # 槽位互不占用
+            "custom_actions": custom_out,
         }
 
     # ------------------------------------------------------------------
