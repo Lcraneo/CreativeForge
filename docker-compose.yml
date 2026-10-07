@@ -7,4 +7,5 @@ services:
       - "8600:8600"
     environment:
       - PYTHONUNBUFFERED=1
+      - PORT=8600
     restart: unless-stopped
