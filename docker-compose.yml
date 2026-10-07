@@ -2,7 +2,6 @@ services:
   studio:
     build:
       context: .
-      dockerfile: docker/Dockerfile
     ports:
       - "8600:8600"
     environment:
