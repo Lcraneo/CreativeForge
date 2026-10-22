@@ -6,24 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="1adb681f-9f5a-4c2e-a026-60424efa0552" name="更改" comment="加入了试玩专区，同时允许动画工作台自定义动作，和文本增强">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/design/02-visual-spec.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/design/02-visual-spec.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/AnimPreview.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/AnimPreview.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/GenerationResult.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/GenerationResult.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/Layout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/components/ui.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/components/ui.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/index.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/AgentDashboard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/AgentDashboard.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/AnimationStudio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/AnimationStudio.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/AssetInspector.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/AssetInspector.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/BatchCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/BatchCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/DesignCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/DesignCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/HistoryCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/HistoryCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/PlaytestStage.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/PlaytestStage.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/ShowcaseStudio.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/ShowcaseStudio.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/VersionCenter.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/VersionCenter.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio/frontend/src/pages/Workspace.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/studio/frontend/src/pages/Workspace.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/studio_backend.log" beforeDir="false" afterPath="$PROJECT_DIR$/studio_backend.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/studio/backend/history_service/history.json" beforeDir="false" afterPath="$PROJECT_DIR$/studio/backend/history_service/history.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,6 +70,13 @@
       <workItem from="1791101722751" duration="45000" />
       <workItem from="1791209624086" duration="1252000" />
       <workItem from="1791270419472" duration="3213000" />
+      <workItem from="1791354718733" duration="641000" />
+      <workItem from="1791419605058" duration="3000" />
+      <workItem from="1791446611683" duration="205000" />
+      <workItem from="1791882887585" duration="978000" />
+      <workItem from="1791884875283" duration="104000" />
+      <workItem from="1791885119549" duration="16000" />
+      <workItem from="1791885146703" duration="21000" />
     </task>
     <task id="LOCAL-00001" summary="优化了三视图，动画生成逻辑还有待提升">
       <option name="closed" value="true" />

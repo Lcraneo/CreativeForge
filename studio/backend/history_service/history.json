@@ -34311,13 +34311,13 @@
         },
         "side": {
           "file": "edit_1791122467201.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/1d/20261004/17bff29b/f8d61a7c-1ca7-4d43-a2ad-6c07d5033464-1.png?Expires=1791728266&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=X4V2xFdXADE8Ww4ctMCXbQky5NY%3D",
+          "url": "/api/generated/edit_1791122467201.png",
           "model": "qwen-image-edit",
           "view": "side"
         },
         "back": {
           "file": "edit_1791122485337.png",
-          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/a5/20261004/17bff29b/63d349c1-c073-431c-a056-888ace53b784-1.png?Expires=1791728284&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=7uah8Dd7b6I8r6UexCG8tQRRm78%3D",
+          "url": "/api/generated/edit_1791122485337.png",
           "model": "qwen-image-edit",
           "view": "back"
         }
@@ -35481,5 +35481,310 @@
       }
     },
     "id": "T0001-31"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1791355137.1654627,
+    "finished_at": 1791355182.0338607,
+    "goal": "黑短发带雀斑少年，白短袖衬衫配棕帆布围裙，口袋插鹅毛笔与羊皮纸卷，深色束腿裤配厚皮凉鞋，低头蘸墨书写循环动画，墨水滴落，神情专注，港口背景微光闪烁。，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast77025",
+    "name": "黑短发带雀斑少年_白短袖衬衫配棕帆布围裙_口袋插",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 44.868,
+    "character": {
+      "id": "ast77025",
+      "name": "黑短发带雀斑少年_白短袖衬衫配棕帆布围裙_口袋插",
+      "type": "character",
+      "role": "npc",
+      "seed": 2041877025,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#28486a",
+        "base": "#4b84c8",
+        "highlight": "#99c5e9",
+        "accent": "#5ac7b8",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1791355145432.png",
+      "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/59/20261007/77c9ad12/cf5f104b-6381-4a59-ad8b-8064b7153094-1.png?Expires=1791441543&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=aDWS02oMtlrQszUk%2FI9IRgcNBqQ%3D",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791355145432.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast77025",
+      "name": "黑短发带雀斑少年_白短袖衬衫配棕帆布围裙_口袋插",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 2041877025,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#28486a",
+          "base": "#4b84c8",
+          "highlight": "#99c5e9",
+          "accent": "#5ac7b8",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1791355145432.png",
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/59/20261007/77c9ad12/cf5f104b-6381-4a59-ad8b-8064b7153094-1.png?Expires=1791441543&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=aDWS02oMtlrQszUk%2FI9IRgcNBqQ%3D",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791355145432.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast77025",
+        "name": "黑短发带雀斑少年_白短袖衬衫配棕帆布围裙_口袋插",
+        "type": "character",
+        "role": "npc",
+        "seed": 2041877025,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#28486a",
+          "base": "#4b84c8",
+          "highlight": "#99c5e9",
+          "accent": "#5ac7b8",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast77025",
+          "type": "character",
+          "resources": {
+            "texture": "ast77025.png",
+            "animation": "ast77025.anim",
+            "prefab": "ast77025.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast77025.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast77025.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast77025.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast77025.png",
+          "Animation": "Assets/Animation/ast77025.anim",
+          "Prefab": "Assets/Prefab/ast77025.prefab",
+          "Controller": "Assets/Controller/ast77025.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "黑短发带雀斑少年，白短袖衬衫配棕帆布围裙，口袋插鹅毛笔与羊皮纸卷，深色束腿裤配厚皮凉鞋，低头蘸墨书写循环动画，墨水滴落，神情专注，港口背景微光闪烁。，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1791355145432.png",
+        "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/59/20261007/77c9ad12/cf5f104b-6381-4a59-ad8b-8064b7153094-1.png?Expires=1791441543&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=aDWS02oMtlrQszUk%2FI9IRgcNBqQ%3D",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "E:\\develop\\opencode\\hekesong\\studio\\backend\\generated\\img_1791355145432.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "design_views": {
+        "front": {
+          "url": "https://dashscope-5859.oss-cn-wulanchabu-acdr-1.aliyuncs.com/1d/59/20261007/77c9ad12/cf5f104b-6381-4a59-ad8b-8064b7153094-1.png?Expires=1791441543&OSSAccessKeyId=LTAI5tKPD3TMqf2Lna1fASuh&Signature=aDWS02oMtlrQszUk%2FI9IRgcNBqQ%3D",
+          "model": "wanx2.1-t2i-turbo"
+        },
+        "side": {
+          "file": "edit_1791355163364.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/ec/20261007/17bff29b/3f3cd391-90ce-4dfa-a75b-69d161858854-1.png?Expires=1791960963&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=hhdIp3Ojqlmn89wrYky2%2BU7PCDM%3D",
+          "model": "qwen-image-edit",
+          "view": "side"
+        },
+        "back": {
+          "file": "edit_1791355181299.png",
+          "url": "https://dashscope-7c2c.oss-cn-shanghai.aliyuncs.com/7d/c8/20261007/17bff29b/8468b673-7df8-4188-a37e-adc1ec037115-1.png?Expires=1791960981&OSSAccessKeyId=LTAI5tPxpiCM2hjmWrFXrym1&Signature=kflalEsW4hrV16eUq7SRbtB6xGE%3D",
+          "model": "qwen-image-edit",
+          "view": "back"
+        }
+      }
+    },
+    "id": "T0001-26"
   }
 ]
