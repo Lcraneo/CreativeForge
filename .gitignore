@@ -39,3 +39,6 @@ benchmark/mos_kit/clips/
 # 设计技能调用的工作区（临时解包与本地引擎，技能本体在 .zcode/skills/）
 .tmp-skills/
 .tools/
+
+# IDE 配置
+.idea/

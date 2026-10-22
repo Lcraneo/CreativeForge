@@ -730,4 +730,101 @@ export const api = {
     request<MultipartSession>(`/api/storage/multipart/${sessionId}/abort`, {
       method: "POST",
     }),
+
+  /* ── 云生成能力（A 部分）── */
+  cloudProviders: () =>
+    request<import("../types").CloudProvidersResponse>("/api/settings/cloud/providers", {
+      timeoutMs: 15_000,
+    }),
+
+  cloudSaveProvider: (providerId: string, changes: Record<string, unknown>) =>
+    request<import("../types").CloudProvider>(
+      `/api/settings/cloud/providers/${encodeURIComponent(providerId)}`,
+      { method: "PUT", body: JSON.stringify(changes) },
+    ),
+
+  cloudTestProvider: (providerId: string) =>
+    request<import("../types").CloudTestResult>(
+      `/api/settings/cloud/providers/${encodeURIComponent(providerId)}/test`,
+      { method: "POST", timeoutMs: 20_000 },
+    ),
+
+  cloudSetKey: (providerId: string, apiKey: string) =>
+    request<import("../types").CloudProvider>(
+      `/api/settings/cloud/providers/${encodeURIComponent(providerId)}/key`,
+      { method: "PUT", body: JSON.stringify({ api_key: apiKey }) },
+    ),
+
+  cloudUsage: () =>
+    request<import("../types").CloudUsageSnapshot>("/api/settings/cloud/usage", {
+      timeoutMs: 15_000,
+    }),
+
+  cloudGenerateImage: (payload: {
+    prompt: string;
+    size?: string;
+    seed?: number;
+    asset_id?: string;
+    provider?: string;
+  }) =>
+    request<import("../types").CloudGenerationResult>("/api/cloud/image", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      timeoutMs: 180_000,
+    }),
+
+  cloudGenerateAudio: (payload: {
+    kind?: "dialogue" | "sfx";
+    text?: string;
+    prompt?: string;
+    voice?: string;
+    asset_id?: string;
+    provider?: string;
+  }) =>
+    request<import("../types").CloudGenerationResult>("/api/cloud/audio", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      timeoutMs: 180_000,
+    }),
+
+  cloudStart3d: (payload: {
+    prompt?: string;
+    image_url?: string;
+    seed?: number;
+    decimation_target?: number;
+    texture_size?: number;
+    asset_id?: string;
+    provider?: string;
+  }) =>
+    request<{ task_id: string; status: string; snapshot: import("../types").CloudTaskSnapshot }>(
+      "/api/cloud/3d",
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+
+  cloudGet3dTask: (taskId: string) =>
+    request<import("../types").CloudTaskSnapshot>(
+      `/api/cloud/3d/${encodeURIComponent(taskId)}`,
+      { timeoutMs: 15_000 },
+    ),
+
+  cloudStartVideo: (payload: {
+    prompt?: string;
+    image_url?: string;
+    duration?: number;
+    ratio?: string;
+    asset_id?: string;
+    provider?: string;
+  }) =>
+    request<{ task_id: string; status: string; snapshot: import("../types").CloudTaskSnapshot }>(
+      "/api/cloud/video",
+      { method: "POST", body: JSON.stringify(payload) },
+    ),
+
+  cloudGetVideoTask: (taskId: string) =>
+    request<import("../types").CloudTaskSnapshot>(
+      `/api/cloud/video/${encodeURIComponent(taskId)}`,
+      { timeoutMs: 15_000 },
+    ),
+
+  cloudArtifactUrl: (relPath: string) => `/api/cloud/artifacts/${relPath}`,
 };

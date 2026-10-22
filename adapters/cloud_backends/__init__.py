@@ -13,7 +13,8 @@
 隔离铁律：本子包自成闭环，主工程只通过 ``AssetAdapter`` 接口与
 ``CapabilityRegistry`` 感知它；本包不得反向依赖主工程内部模块。
 
-S1 只导出已就绪的三块（配置、契约、接缝），S2/S3 落地后再逐个补出。
+``__init__`` 只导出零网络依赖的三块（配置、契约、接缝），
+S2/S3 的客户端、wrapper、算子与适配器由调用方按需导入，避免冷启动付成本。
 """
 
 from . import config, contracts, sidecar

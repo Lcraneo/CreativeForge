@@ -51,6 +51,22 @@ def create_app():
     app.include_router(build_router(runtime))
     app.include_router(build_ws_router(runtime))
 
+    # 云生成能力（A 部分）：配置面与生成面各挂一组路由，共用同一份加密存储，
+    # 避免两个实例各自缓存导致「配置面板改了、生成面看不到」。
+    # 总开关关闭时不导入、不注册，冷启动与融合前完全一致（惰性加载）。
+    from adapters.cloud_backends import config as cloud_config
+
+    if cloud_config.cloud_enabled():
+        from studio.backend.api.cloud_routes import build_cloud_router
+        from studio.backend.api.cloud_settings_routes import build_cloud_settings_router
+        from studio.backend.cloud_service.provider_store import CloudProviderStore
+
+        cloud_store = CloudProviderStore(
+            settings_provider=lambda: runtime.model_settings.effective()
+        )
+        app.include_router(build_cloud_router(runtime, cloud_store))
+        app.include_router(build_cloud_settings_router(runtime, cloud_store))
+
     if os.path.isdir(FRONTEND_DIST):
         from fastapi.responses import FileResponse, JSONResponse
         from fastapi.staticfiles import StaticFiles

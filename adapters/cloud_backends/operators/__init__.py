@@ -1,8 +1,13 @@
-"""云能力算子（S3 落地）。
+"""云能力算子（S3）：能力输入 → 云 wrapper → 产物写回扩展槽位。
 
-S3 将在此实现：``object_3d.py`` / ``image.py`` / ``cg_video.py`` / ``audio.py``。
-每个算子只做「能力输入 -> 云 wrapper 调用 -> 产物写回
-``extensions.cloud_backends`` 对应槽位」，编排权仍在 Supervisor。
+- ``object_3d`` → ``mesh``
+- ``image``     → ``image``
+- ``cg_video``  → ``video``
+- ``audio``     → ``audio``
 
-S1 只占位，不含实现。
+每个算子只做单次能力调用；后端选择、fallback 与编排仍在 Supervisor / 路由层。
 """
+
+from . import audio, base, cg_video, image, object_3d
+
+__all__ = ["base", "object_3d", "image", "cg_video", "audio"]

@@ -756,3 +756,95 @@ export interface ActionMatrix {
   cells: ActionMatrixCell[];
   batches: ActionMatrixBatch[];
 }
+
+/* ── 云生成能力（A 部分）─────────────────────────────────────────────── */
+
+export interface CloudProvider {
+  id: string;
+  label: string;
+  capabilities: string[];
+  slot: string;
+  protocol: string;
+  env_keys: string[];
+  credential_ref: string | null;
+  notes: string;
+  free_tier: string;
+  price_note: string;
+  priority: number;
+  fallback: string;
+  enabled: boolean;
+  base_url: string;
+  model: string;
+  model_options: string[];
+  extra_fields: string[];
+  region: string;
+  workspace_id: string;
+  missing_fields: string[];
+  updated_at: number;
+  has_key: boolean;
+  key_hint: string;
+  key_source: "env" | "store" | "credential_ref" | "";
+  configured: boolean;
+}
+
+export interface CloudProvidersResponse {
+  enabled: boolean;
+  providers: CloudProvider[];
+  readiness: Record<string, boolean>;
+  config: {
+    enabled: boolean;
+    sidecar_enabled: boolean;
+    cache_dir: string;
+    cache_ttl_days: number;
+    cache_max_mb: number;
+    timeout: number;
+    max_retries: number;
+  };
+}
+
+export interface CloudTestResult {
+  ok: boolean;
+  status: number | null;
+  detail: string;
+  latency_ms: number;
+  provider: string;
+  key_source: string;
+  has_key: boolean;
+}
+
+export interface CloudGenerationResult {
+  status: "succeeded" | "failed";
+  provider?: string;
+  local_path?: string;
+  bytes?: number;
+  sha256?: string;
+  kind?: string;
+  format?: string;
+  model?: string;
+  error_class?: string;
+  error_message?: string;
+  attempts?: Array<{ provider: string; status: string; error_class?: string | null }>;
+}
+
+export interface CloudTaskSnapshot {
+  id: string;
+  status: "running" | "succeeded" | "failed";
+  stage: string;
+  progress: number;
+  provider?: string;
+  result?: CloudGenerationResult;
+  error?: string;
+  error_class?: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface CloudUsageSnapshot {
+  enabled: boolean;
+  providers: Record<
+    string,
+    { calls: number; cache_hits: number; bytes: number; errors: number; slots: Record<string, unknown> }
+  >;
+  totals: { calls: number; cache_hits: number; bytes: number; errors: number };
+  cache: { dir: string; files: number; bytes: number; max_bytes: number; ttl_days: number };
+}

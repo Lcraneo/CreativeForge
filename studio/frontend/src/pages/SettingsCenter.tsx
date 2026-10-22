@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
 import PreferencesSync from "../components/PreferencesSync";
+import { CloudProviderPanel } from "../components/CloudProviderPanel";
 import {
   Badge,
   Button,
@@ -786,6 +787,9 @@ export default function SettingsCenter() {
               />
             </div>
           </Card>
+
+          {/* 云生成能力（3D / 图像 / 视频 / 音频）：与上面的 OpenAI 兼容连接互相独立 */}
+          <CloudProviderPanel />
         </div>
 
         <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">

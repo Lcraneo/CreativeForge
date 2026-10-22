@@ -251,6 +251,44 @@ class CloudAPIClient:
 
         raise last_error or CloudAPIError("请求失败", provider=self.provider)
 
+    def request_bytes(
+        self,
+        method: str,
+        path: str,
+        *,
+        json_body: dict | None = None,
+        headers: dict | None = None,
+    ) -> bytes:
+        """发一次带重试的请求并返回原始字节（音频等二进制响应）。"""
+
+        url = self._url(path)
+        attempts = self.max_retries + 1
+        last_error: Exception | None = None
+
+        for attempt in range(attempts):
+            try:
+                response = self._client.request(
+                    method.upper(),
+                    url,
+                    json=json_body,
+                    headers=self._headers(headers),
+                )
+            except httpx.TransportError as error:
+                last_error = CloudAPIServerError(f"网络传输失败：{error}", provider=self.provider)
+            else:
+                if response.status_code < 400:
+                    return response.content
+                error = classify_status(response.status_code, _error_message(response))
+                error.provider = self.provider
+                last_error = error
+                if not error.retryable:
+                    raise error
+
+            if attempt < attempts - 1:
+                self._sleep(self.backoff * (2**attempt))
+
+        raise last_error or CloudAPIError("请求失败", provider=self.provider)
+
     # ── 下载 ──────────────────────────────────────────────────────────────
 
     def download(self, url: str, *, max_bytes: int | None = None) -> bytes:

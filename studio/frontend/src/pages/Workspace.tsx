@@ -241,6 +241,12 @@ export default function Workspace() {
     queryFn: api.getModelSettings,
     staleTime: 15000,
   });
+  const cloudProviders = useQuery({
+    queryKey: ["cloud-providers"],
+    queryFn: api.cloudProviders,
+    staleTime: 60_000,
+    retry: false,
+  });
 
   useEffect(() => {
     const incoming = (location.state as { goal?: string } | null)?.goal;
@@ -339,6 +345,7 @@ export default function Workspace() {
   const greeting =
     now.getHours() < 5 ? "夜深了" : now.getHours() < 11 ? "早上好" : now.getHours() < 14 ? "午安" : now.getHours() < 18 ? "下午好" : "晚上好";
   const dateLabel = `${now.getMonth() + 1}月${now.getDate()}日 周${WEEKDAYS[now.getDay()]}`;
+  const cloudReady = Object.values(cloudProviders.data?.readiness ?? {}).filter(Boolean).length;
 
   return (
     <motion.div
@@ -415,6 +422,21 @@ export default function Workspace() {
                     : "系统默认模型"}
                 </Badge>
               </button>
+              {cloudProviders.data?.enabled && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/settings")}
+                  title="云生成能力（3D / 图像 / 视频 / 音频）配置"
+                >
+                  <Badge
+                    tone={cloudReady === 4 ? "success" : cloudReady > 0 ? "primary" : "neutral"}
+                    icon="cube"
+                    className="cursor-pointer"
+                  >
+                    {cloudReady > 0 ? `云能力 · ${cloudReady}/4 可用` : "云能力未配置"}
+                  </Badge>
+                </button>
+              )}
               {ENGINES.map((item) => (
                 <Chip
                   key={item.id}

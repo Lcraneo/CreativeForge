@@ -330,6 +330,93 @@ def run_onetake_showcase(asset, task):
     return asset
 
 
+def _cloud_call(asset, task, capability):
+    """云能力统一入口：按任务指定厂商调用算子，产物写回 ``extensions``。
+
+    ``CF_CLOUD_BACKENDS=off`` 时直接返回原资产（零侵入）；厂商未指定时取
+    catalog 优先级最高的后端。异常在算子内部已收敛为失败槽位。
+    """
+
+    from adapters.cloud_backends import config as cloud_config
+    from adapters.cloud_backends import providers as cloud_providers
+    from adapters.cloud_backends.operators import audio, cg_video, image, object_3d
+
+    if not cloud_config.cloud_enabled():
+        return asset
+    if asset is None:
+        raise ValueError(f"{capability} requires an existing CreativeAsset")
+
+    task = task or {}
+    provider = (
+        str(task.get("cloud_provider") or task.get("provider") or "").strip() or "ark"
+    )
+    if capability == "gen_3d_object_cloud" and provider == "ark":
+        provider = "tripo"
+    if capability == "gen_audio_cloud" and provider == "ark":
+        provider = "seed-audio"
+
+    model = cloud_providers.build_model(provider, capability=capability)
+    overrides = task.get("overrides") or {}
+    prompt = str(task.get("prompt") or task.get("goal") or "")
+
+    try:
+        if capability == "gen_3d_object_cloud":
+            object_3d.generate(
+                asset,
+                model,
+                prompt=prompt or None,
+                image_url=task.get("image_url"),
+                seed=task.get("seed"),
+                decimation_target=overrides.get("decimation_target"),
+                texture_size=overrides.get("texture_size"),
+            )
+        elif capability == "gen_image_cloud":
+            image.generate(
+                asset,
+                model,
+                prompt=prompt,
+                size=overrides.get("size"),
+                seed=task.get("seed"),
+            )
+        elif capability == "gen_cg_video_cloud":
+            cg_video.generate(
+                asset,
+                model,
+                prompt=prompt or None,
+                image_url=task.get("image_url"),
+                duration=overrides.get("duration"),
+                ratio=overrides.get("ratio"),
+                seed=task.get("seed"),
+            )
+        elif capability == "gen_audio_cloud":
+            audio.generate(
+                asset,
+                model,
+                kind=str(task.get("audio_kind") or "dialogue"),
+                text=prompt,
+                prompt=prompt,
+            )
+    finally:
+        model.close()
+    return asset
+
+
+def run_cloud_3d(asset, task):
+    return _cloud_call(asset, task, "gen_3d_object_cloud")
+
+
+def run_cloud_image(asset, task):
+    return _cloud_call(asset, task, "gen_image_cloud")
+
+
+def run_cloud_video(asset, task):
+    return _cloud_call(asset, task, "gen_cg_video_cloud")
+
+
+def run_cloud_audio(asset, task):
+    return _cloud_call(asset, task, "gen_audio_cloud")
+
+
 def build_default_registry():
     """Default capability registry binding the Phase 1-5 engines."""
     registry = CapabilityRegistry()
@@ -363,4 +450,53 @@ def build_default_registry():
             quality=0.9,
         )
     )
+
+    # 云生成能力（A 部分）：开关关闭时零注册，主工程行为与融合前一致
+    from adapters.cloud_backends import config as cloud_config
+
+    if cloud_config.cloud_enabled():
+        registry.register(
+            Capability(
+                "gen_3d_object_cloud",
+                "generator",
+                handler=run_cloud_3d,
+                input="CreativeAsset",
+                output="CreativeAsset",
+                cost=3.0,
+                quality=0.86,
+            )
+        )
+        registry.register(
+            Capability(
+                "gen_image_cloud",
+                "generator",
+                handler=run_cloud_image,
+                input="CreativeAsset",
+                output="CreativeAsset",
+                cost=0.5,
+                quality=0.9,
+            )
+        )
+        registry.register(
+            Capability(
+                "gen_cg_video_cloud",
+                "generator",
+                handler=run_cloud_video,
+                input="CreativeAsset",
+                output="CreativeAsset",
+                cost=2.0,
+                quality=0.88,
+            )
+        )
+        registry.register(
+            Capability(
+                "gen_audio_cloud",
+                "generator",
+                handler=run_cloud_audio,
+                input="CreativeAsset",
+                output="CreativeAsset",
+                cost=0.2,
+                quality=0.85,
+            )
+        )
     return registry

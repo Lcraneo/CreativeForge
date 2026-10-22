@@ -45,7 +45,7 @@ NAMESPACE = "cloud_backends"
 VERSION = "1.0"
 SLOT_NAMES = ("mesh", "image", "video", "audio")
 STATUSES = ("pending", "running", "succeeded", "failed")
-PROVIDERS = ("tripo", "meshy", "ark", "seed-audio")
+PROVIDERS = ("bailian-tripo", "tripo", "meshy", "ark", "seed-audio")
 ERROR_CLASSES = (
     "auth",
     "quota",
@@ -75,12 +75,14 @@ _SLOT_FIELDS = {
         "width": int,
         "height": int,
         "seed": int,
+        "bytes": int,
         "sha256": "sha256",
     },
     "video": {
         "model": str,
         "local_path": "path",
         "duration_s": float,
+        "bytes": int,
         "sha256": "sha256",
     },
     "audio": {
@@ -88,6 +90,7 @@ _SLOT_FIELDS = {
         "local_path": "path",
         "duration_s": float,
         "sample_rate": int,
+        "bytes": int,
         "sha256": "sha256",
     },
 }
@@ -133,7 +136,7 @@ def resolve_local_path(rel_path: str, root: str | None = None) -> str:
     if clean is None:
         raise CloudExtensionError("local_path 必须是以缓存根为基准的相对路径")
     if root is None:
-        from . import config  # 延迟导入：避免契约层与运营配置互相牵连
+        from .. import config  # 延迟导入：避免契约层与运营配置互相牵连
 
         root = config.cache_dir()
     base = os.path.abspath(root)

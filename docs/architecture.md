@@ -461,6 +461,53 @@ Dynamic Planner grows a third minimal chain: `change=skill` runs
 `build_dag` fix connects head to tail on linear chains — short chains
 previously left `quality_check` disconnected.
 
+## Layer 18 — Cloud Generation Backends (pure-cloud A + sidecar C seam)
+
+Optional pure-cloud generation path bolted onto the frozen contracts. Nothing
+here changes `CreativeAsset v1.0`: cloud results live only in the
+`extensions.cloud_backends` subtree, and every module is lazy — with
+`CF_CLOUD_BACKENDS=off` the routers are not imported or registered and the
+system behaves exactly as before.
+
+```text
+adapters/cloud_backends/
+  config.py            CF_CLOUD_BACKENDS / CF_SIDECAR_ENABLED / cache dir,
+                       TTL 7d / cap 500MB / timeout / retries
+  contracts/           extension_v1: normalize/validate/read/write/export_view,
+                       safe_rel_path (R5 sandbox), error_slot (R7)
+  client/              CloudAPIClient (retry + error classification),
+                       poll_task, request_hash (R9), ResponseCache (LRU evict)
+  models/              tripo / meshy / bailian_tripo (3D),
+                       seedream (image), seedance (video), seed_audio (dialogue/sfx)
+  operators/           base + object_3d / image / cg_video / audio
+                       (download -> slot -> sha256 + provenance; failures recorded)
+  cloud_adapter.py     CloudAssetAdapter(AssetAdapter): import/export mapping,
+                       provenance stripped on export (R8), cache stats/clear
+  sidecar/             C-part seam, disabled by default
+
+studio/backend/api/
+  cloud_routes.py          POST /api/cloud/{3d,image,video,audio}
+                           GET  /api/cloud/{3d,video}/{task_id}
+                           GET  /api/cloud/providers
+                           GET  /api/cloud/artifacts/{rel_path}
+  cloud_settings_routes.py GET/PUT /api/settings/cloud/providers[/{id}]
+                           POST .../{id}/test  PUT .../{id}/key
+                           GET  /api/settings/cloud/usage
+```
+
+Slots follow `mesh / image / video / audio`; 3D and video are `202 + task_id`
+polling, image and audio are synchronous. Provider fallback follows
+`catalog.provider_spec().fallback` (bailian-tripo -> tripo -> meshy). Every
+attempt is written to the local usage ledger; failures return
+`502 "<error_class>: <message>"` and leave a failure footprint instead of a
+silent empty slot. Provider keys are encrypted at rest, never echoed, and
+ARK reuses the model-marketplace volcengine credential (`credential_ref`).
+
+Cold-start increment measured at ~80 ms (≤ 200 ms budget); added source is
+~170 KB (≤ 3 MB), no new dependencies and no model weights. Regression suite:
+`python -m unittest studio.backend.tests.test_cloud_contract
+studio.backend.tests.test_cloud_client studio.backend.tests.test_cloud_adapter`.
+
 ## Phase spec -> merged location mapping
 
 The original phase packages were standalone; the merged repo consolidates
