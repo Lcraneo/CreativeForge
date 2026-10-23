@@ -441,10 +441,21 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ text, asset_id: assetId }),
     }),
-  playtestPreviews: (assetId?: string | null) =>
-    request<import("../types").PlaytestPreviews>(
-      `/api/playtest/previews${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
-    ),
+  /** 试玩舞台预览。V2 渐进式加载：actions 过滤内置动作（缺省=全部），
+   * includeCustom=false 跳过自定义动作条带渲染——两者均向后兼容 */
+  playtestPreviews: (
+    assetId?: string | null,
+    opts?: { actions?: string[]; includeCustom?: boolean },
+  ) => {
+    const search = new URLSearchParams();
+    if (assetId) search.set("asset_id", assetId);
+    if (opts?.actions) search.set("actions", opts.actions.join(","));
+    if (opts?.includeCustom === false) search.set("include_custom", "0");
+    const query = search.toString();
+    return request<import("../types").PlaytestPreviews>(
+      `/api/playtest/previews${query ? `?${query}` : ""}`,
+    );
+  },
 
   /* ── OneTake 发布展示视频（External Creative Capability）── */
   startShowcase: (assetId: string, duration?: number) =>

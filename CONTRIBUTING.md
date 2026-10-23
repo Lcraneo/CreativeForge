@@ -30,5 +30,8 @@ CI（GitHub Actions）双工作流必绿；gitleaks 扫描密钥。
 - node 在 `C:\Tool\node.exe`（不在 PATH），tsc 用
   `C:\Tool\node.exe node_modules\typescript\bin\tsc -b`。
 - vitest 锁 v3（vite 5 兼容）；升级 vite 前不要动它。
+- jsdom 锁 v26（本地 Node 18.19 兼容）。jsdom ≥30 要求
+  `node ^22.22.2 || ^24.15.0 || >=26`，在 Node 18 下 vitest 环境会全部
+  报错；升级 Node ≥22.22 后可还原 `jsdom@^30`。
 - 遗留 `backend/`、`frontend/` 已删除——见 `docs/legacy-inventory.md`；需要旧功能时
   从 git 历史找回对应模块，按 CreativeAsset 协议重写进 `studio/`，不要直接复活。

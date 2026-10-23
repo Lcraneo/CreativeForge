@@ -21,6 +21,12 @@ ANIMATION_DIR = os.path.join(
 # 生成类 POST 的幂等键（防双击/重发重复扣费）：键 TTL 与视频任务 TTL 同量级
 _ANIM_TASK_IDEMPOTENCY = IdempotencyStore(ttl=3600.0)
 
+# 试玩舞台 rig/分割 mask 缓存（按 source_hash）：V2 渐进式加载会把条带请求
+# 拆成多批（先 idle/walk，再 run/attack/jump），没有这份内存缓存时第二批
+# 请求会重复执行 AI 主体分割与骨架提取这两个昂贵步骤。rig 是轻量 dict、
+# mask 是 256×256 单通道图，8 个角色约 0.5MB。
+_PLAYTEST_RIG_CACHE: dict[str, tuple] = {}
+
 # ── 前端构建过期自检 ────────────────────────────────────────────────
 # dist/index.html 落后于 src 最新 mtime → /health.frontend_stale=true →
 # 前端页脚角标提示「请重新构建并强刷」。60s TTL 缓存避免每次健康检查全量
@@ -1340,7 +1346,12 @@ def build_router(runtime):
             media = "video/mp4"
         else:
             media = "application/octet-stream"
-        return FileResponse(path, media_type=media)
+        response = FileResponse(path, media_type=media)
+        if name.startswith("play_cache/"):
+            # 试玩条带以内容哈希命名（同名=同内容），可长期缓存：
+            # 重访/切换动作命中浏览器缓存时零网络请求
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
 
     # ------------------------------------------------------------------
     # P1-A 资产版本树 / 差异对比 / 一键回滚
@@ -1613,13 +1624,23 @@ def build_router(runtime):
 
 
     @router.get("/playtest/previews")
-    def playtest_previews(asset_id: str | None = None):
+    def playtest_previews(
+        asset_id: str | None = None, actions: str | None = None, include_custom: bool = True
+    ):
         """试玩舞台动作预览。
 
         有资产时绑定「当前角色的真实源图」：Character Rig 提取 → 分区变形
         （与动画工作台骨骼模式同一条链路），不同角色得到各自的外观与动作；
         没有资产（或源图解析失败）时才回退默认演示角色。条带图统一裁掉
         空白边并返回真实帧尺寸，前端据此按角色实际比例摆放、脚底贴地。
+
+        V2 渐进式加载参数（缺省=旧行为，完全向后兼容）：
+        - actions：逗号分隔的内置动作过滤（?actions=idle,walk 只渲染这两个
+          动作的条带），空/全部非法时回退全集；
+        - include_custom=0：跳过自定义动作（条带渲染昂贵，前端打开动作库
+          前不需要）。
+        rig/分割 mask 按 source_hash 进程内缓存，分批请求不重复执行
+        昂贵准备。
         """
 
         import hashlib
@@ -1635,7 +1656,17 @@ def build_router(runtime):
         # 下的块状化（角尖悬浮成"虫角"、手臂细断、描边破碎）
         PLAYTEST_FRAMES = 16
         PLAYTEST_FPS = 16
+        requested = actions  # ?actions=idle,walk（逗号分隔过滤；None=全集）
         actions = ["idle", "walk", "run", "attack", "jump"]
+        if requested is not None:
+            wanted = {part.strip() for part in requested.split(",") if part.strip()}
+            actions = [name for name in actions if name in wanted] or [
+                "idle",
+                "walk",
+                "run",
+                "attack",
+                "jump",
+            ]
 
         # 仅使用显式传入的 asset：没有 asset_id 时一律默认演示角色，
         # 不做 latest 回退（避免历史资产劫持试玩区）
@@ -1732,8 +1763,10 @@ def build_router(runtime):
         # 与内置动作同台：条带键为 custom:<名称> 身份，AI 版优先、其次按
         # 保存的姿态参数程序化渲染。未绑定资产时不提供（试玩对象必须是
         # 该角色，程序化演示小人没有自定义动作的意义）。
+        # include_custom=0：跳过自定义动作（V2 渐进式加载——动作库打开前
+        # 不触发自定义条带的昂贵渲染）。
         custom_presets: list[dict] = []
-        if asset is not None:
+        if asset is not None and include_custom:
             from studio.backend.animation_service.custom_actions import CustomActionStore
 
             custom_presets = CustomActionStore(
@@ -1788,29 +1821,39 @@ def build_router(runtime):
         )
 
         # 第二步：真的需要渲染时才做昂贵准备 —— 一次 AI 主体分割（五动作
-        # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底
+        # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底。
+        # rig/mask 按 source_hash 命中进程内缓存（V2 分批请求第二批不再
+        # 重复执行 AI 分割与骨架提取）
         rig = None
         segment_mask = None
         if source is not None and (pending or custom_needs_render):
-            if not _source_is_transparent(source):
-                settings = runtime.model_settings.effective()
-                if settings.get("enabled") and settings.get("api_key"):
-                    try:
-                        from studio.backend.animation_service.service import (
-                            ai_segment_subject,
-                        )
+            cached = _PLAYTEST_RIG_CACHE.get(source_hash) if source_hash else None
+            if cached is not None:
+                rig, segment_mask = cached
+            else:
+                if not _source_is_transparent(source):
+                    settings = runtime.model_settings.effective()
+                    if settings.get("enabled") and settings.get("api_key"):
+                        try:
+                            from studio.backend.animation_service.service import (
+                                ai_segment_subject,
+                            )
 
-                        segment_mask = ai_segment_subject(
-                            source, PLAYTEST_SIZE, settings, deadline=time.time() + 45.0
-                        )
-                    except Exception:
-                        segment_mask = None
-            try:
-                from artgen.rig import build_rig
+                            segment_mask = ai_segment_subject(
+                                source, PLAYTEST_SIZE, settings, deadline=time.time() + 45.0
+                            )
+                        except Exception:
+                            segment_mask = None
+                try:
+                    from artgen.rig import build_rig
 
-                rig = build_rig(source, PLAYTEST_SIZE, segment_mask=segment_mask)
-            except Exception:
-                rig = None
+                    rig = build_rig(source, PLAYTEST_SIZE, segment_mask=segment_mask)
+                except Exception:
+                    rig = None
+                if source_hash and rig is not None:
+                    _PLAYTEST_RIG_CACHE[source_hash] = (rig, segment_mask)
+                    if len(_PLAYTEST_RIG_CACHE) > 8:
+                        _PLAYTEST_RIG_CACHE.pop(next(iter(_PLAYTEST_RIG_CACHE)))
 
         if source is not None and rig is not None and pending:
             from artgen.riganim import animate_rigged

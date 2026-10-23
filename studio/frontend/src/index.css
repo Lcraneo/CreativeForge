@@ -51,6 +51,14 @@
   --color-qa: #a9812f;
   --color-memory: #6f7d8c;
 
+  /* playtest stage · 纸面工坊中的深色测试台（暖黑底 + 琥珀地面线 +
+   * precon 青调试层，Canvas 与 React 壳共用同一组令牌） */
+  --color-stage-bg: #16120d;
+  --color-stage-ground: #1f1a12;
+  --color-stage-line: #a9812f;
+  --color-stage-debug: #2f9bb5;
+  --color-stage-text: #f2ebdb;
+
   /* fonts */
   --font-sans: "Outfit", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
