@@ -8,6 +8,7 @@ Covers the three deliverables the phase spec names:
     * the service passes the asset source into the skeletal pipeline
 """
 
+import io
 import os
 import sys
 import tempfile
@@ -16,8 +17,10 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
+from PIL import Image, ImageDraw  # noqa: E402
+
 from artgen import build_rig, render_character_view  # noqa: E402
-from artgen.riganim import animate_rigged  # noqa: E402
+from artgen.riganim import animate_rigged, animate_sprite  # noqa: E402
 from studio.backend.animation_service.service import AnimationService  # noqa: E402
 
 BLUE = {
@@ -80,6 +83,51 @@ def test_service_passes_asset_source_into_skeletal_pipeline():
     assert meta.get("rig", {}).get("source_hash"), "rig summary must carry source_hash"
     assert meta.get("falign", {}).get("overall", 0) > 0, "falign report expected"
     assert meta["frame_count"] >= 2
+
+
+def _near(rgb, target, tol=12):
+    return all(abs(rgb[i] - target[i]) <= tol for i in range(3))
+
+
+def test_animate_sprite_honors_segment_mask_for_opaque_source():
+    """整身形变对不透明源要采用外部 segment_mask 抠背景。
+
+    复杂/米色背景（此处的白描边 + 米色内底）会卡住经典洪泛：洪泛从白框
+    出发啃不进米色内底，把米色底一并当主体留下；此时只有外部 AI 分割
+    mask 能把米色底 alpha 归零。
+    """
+    size = 256
+    beige = (212, 196, 176)
+    src = Image.new("RGBA", (size, size), beige + (255,))
+    draw = ImageDraw.Draw(src)
+    draw.rectangle([0, 0, size - 1, size - 1], outline=(255, 255, 255, 255), width=3)
+    draw.rectangle([96, 88, 160, 168], fill=(40, 80, 180, 255))
+
+    mask = Image.new("L", (size, size), 0)
+    mask.paste(255, (96, 88, 160, 168))
+
+    def _png(img):
+        buf = io.BytesIO()
+        img.save(buf, "PNG")
+        return buf.getvalue()
+
+    def _opaques(rgba):
+        return [
+            (rgba[i], rgba[i + 1], rgba[i + 2])
+            for i in range(0, len(rgba), 4)
+            if rgba[i + 3] > 0
+        ]
+
+    frames, _ = animate_sprite(_png(src), "idle", 4, size, segment_mask=mask)
+    _, _, rgba = frames[0]
+    opaques = _opaques(rgba)
+    assert opaques, "主体应保留不透明像素"
+    assert not any(_near(c, beige) for c in opaques), "有分割掩码时米色底应被抠除"
+
+    frames_no, _ = animate_sprite(_png(src), "idle", 4, size)
+    _, _, rgba_no = frames_no[0]
+    opaques_no = _opaques(rgba_no)
+    assert any(_near(c, beige) for c in opaques_no), "该背景确为洪泛盲区：无掩码应残留米色底"
 
 
 def _run():

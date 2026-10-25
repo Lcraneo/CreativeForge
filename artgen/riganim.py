@@ -904,18 +904,25 @@ def _sprite_pose(action: str, index: int, count: int):
     return (0.0, -30.0 * hop, -4.0 * hop, 1.0 - 0.03 * hop, 1.0 + 0.06 * hop)
 
 
-def animate_sprite(image_bytes, action, frame_count=16, size=256):
+def animate_sprite(image_bytes, action, frame_count=16, size=256, segment_mask=None):
     """整身形变动画（不切分身体）-> (frames, reference)。
 
     ``frames`` 与 :func:`animate_rigged` 同格式 ``(w, h, RGBA bytes)``。
     试玩条带专用：动作可读、帧间连贯，帧内不存在分区接缝。
+
+    ``segment_mask``：可选预计算主体掩码（PIL "L"，size x size，255 =
+    主体），来自外部分割器（如 AI 分割）。仅对不透明源生效——透明 PNG
+    自带完美 alpha；复杂场景背景（渐变/纹理）洪泛兜不住时靠它抠掉米色底。
     """
     size = max(64, min(1024, int(size)))
     frame_count = max(2, min(60, int(frame_count)))
     action = action if action in SPRITE_ACTIONS else "walk"
 
     canvas = _fit(Image.open(io.BytesIO(image_bytes)), size)
-    mask, _transparent, _bg = _subject_mask(canvas)
+    mask, transparent, _bg = _subject_mask(canvas)
+    if segment_mask is not None and not transparent:
+        # 外部 AI 分割掩码：优先于经典洪泛，抠掉洪泛残留的背景
+        mask = segment_mask.resize((size, size))
     subject = canvas.copy()
     subject.putalpha(mask)
 

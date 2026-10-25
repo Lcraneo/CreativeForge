@@ -848,3 +848,34 @@ export interface CloudUsageSnapshot {
   totals: { calls: number; cache_hits: number; bytes: number; errors: number };
   cache: { dir: string; files: number; bytes: number; max_bytes: number; ttl_days: number };
 }
+
+/* ── 试玩舞台 3D POC-0 ───────────────────────────────────────────── */
+
+/** 3D 清单里的单个标准动作：name 为 idle/walk/run/jump/attack 之一。 */
+export interface Playtest3DClip {
+  name: string;
+  /** GLB 内实际 clip 名（后端无法解析 GLB 时省略，前端按名字就近映射）。 */
+  source_clip?: string | null;
+  loop: boolean;
+}
+
+/** 后端 3D 清单的「不可用」原因（前端据此展示错误文案与 2D 回退）。 */
+export type Playtest3DManifestError =
+  | "mesh_missing"
+  | "mesh_failed"
+  | "unsupported_format"
+  | "path_invalid"
+  | "asset_not_found";
+
+export interface Playtest3DManifest {
+  version: string;
+  asset_id: string;
+  available: boolean;
+  error?: Playtest3DManifestError | null;
+  mesh_url?: string | null;
+  bytes?: number | null;
+  sha256?: string | null;
+  rig?: { provider?: string | null; rigged: boolean } | null;
+  clips: Playtest3DClip[];
+  fallback_url: string;
+}

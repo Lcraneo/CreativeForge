@@ -61,6 +61,83 @@ def _frontend_build_stale() -> bool:
     return stale
 
 
+# ── 试玩舞台 3D POC-0 ───────────────────────────────────────────────────
+# 固定 GLB 夹具（离网验收）：皮肤/骨骼 + 5 个 animation clips，供前端 3D
+# 舞台在没有真实 3D 资产时加载，验证「真实 GLB 加载 → 动画播放」链路。
+_PLAYTEST3D_FIXTURE_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "tests", "fixtures", "playtest3d",
+)
+# 3D 舞台第一版只映射这 5 个标准动作；idle/walk/run 循环、jump/attack 一次性。
+_PLAYTEST3D_ACTIONS = (
+    {"name": "idle", "loop": True},
+    {"name": "walk", "loop": True},
+    {"name": "run", "loop": True},
+    {"name": "jump", "loop": False},
+    {"name": "attack", "loop": False},
+)
+
+
+def _playtest3d_error_manifest(asset_id: str, error: str, fallback_url: str) -> dict:
+    """构造「不可用」的 3D 清单：错误状态 + 明确 2D 回退入口。"""
+
+    return {
+        "version": "1.0",
+        "asset_id": asset_id,
+        "available": False,
+        "error": error,
+        "mesh_url": None,
+        "bytes": None,
+        "sha256": None,
+        "rig": None,
+        "clips": [dict(action) for action in _PLAYTEST3D_ACTIONS],
+        "fallback_url": fallback_url,
+    }
+
+
+def _playtest3d_fixture_manifest() -> dict:
+    """返回离网验收用的固定夹具清单（manifest.json 即唯一事实源）。"""
+
+    with open(os.path.join(_PLAYTEST3D_FIXTURE_DIR, "manifest.json"), encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def _playtest3d_manifest_from_mesh(asset_id: str, mesh: dict | None) -> dict:
+    """从资产 ``extensions.cloud_backends.mesh`` 槽位派生 3D 清单。"""
+
+    import urllib.parse
+
+    from adapters.cloud_backends.contracts import extension_v1 as contract
+
+    fallback_url = "/playtest?asset=" + urllib.parse.quote(asset_id or "", safe="")
+    if mesh is None:
+        return _playtest3d_error_manifest(asset_id, "mesh_missing", fallback_url)
+    if mesh.get("status") != "succeeded":
+        return _playtest3d_error_manifest(asset_id, "mesh_failed", fallback_url)
+    if mesh.get("format") not in ("glb",):
+        return _playtest3d_error_manifest(asset_id, "unsupported_format", fallback_url)
+    clean = contract.safe_rel_path(mesh.get("local_path"))
+    if clean is None:
+        return _playtest3d_error_manifest(asset_id, "path_invalid", fallback_url)
+    try:
+        if not os.path.isfile(contract.resolve_local_path(clean)):
+            return _playtest3d_error_manifest(asset_id, "path_invalid", fallback_url)
+    except contract.CloudExtensionError:
+        return _playtest3d_error_manifest(asset_id, "path_invalid", fallback_url)
+    return {
+        "version": "1.0",
+        "asset_id": asset_id,
+        "available": True,
+        "error": None,
+        "mesh_url": "/api/cloud/artifacts/" + clean,
+        "bytes": mesh.get("bytes"),
+        "sha256": mesh.get("sha256"),
+        "rig": {"provider": mesh.get("provider"), "rigged": bool(mesh.get("rigged", False))},
+        "clips": [dict(action) for action in _PLAYTEST3D_ACTIONS],
+        "fallback_url": fallback_url,
+    }
+
+
 def _resolve_asset(runtime, asset_id: str | None) -> dict | None:
     """Find an asset in the in-memory store, then in persistent history.
 
@@ -1696,7 +1773,9 @@ def build_router(runtime):
         # v9：内置动作改整身形变（不再切分身体分区）——分区骨架在 Q 版
         # 角色上会在颈胸留下横向撕裂，旧 rigged 条带全部作废
         # v10：整身形变幅度调优（步频/挤压/冲刺更可读）——v9 条带作废
-        PLAYTEST_CACHE_VERSION = 10
+        # v11：整身形变（sprite）接入 AI segment_mask 背景透明化——非透明源的
+        # 复杂/米色背景此前洪泛兜不住、帧上残留底色，旧 sprite 条带作废
+        PLAYTEST_CACHE_VERSION = 11
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(
@@ -1866,7 +1945,9 @@ def build_router(runtime):
             from artgen.riganim import animate_sprite
 
             def _render(action: str):
-                return animate_sprite(source, action, PLAYTEST_FRAMES, PLAYTEST_SIZE)[0]
+                return animate_sprite(
+                    source, action, PLAYTEST_FRAMES, PLAYTEST_SIZE, segment_mask=segment_mask
+                )[0]
 
             try:
                 from concurrent.futures import ThreadPoolExecutor
@@ -2125,6 +2206,38 @@ def build_router(runtime):
             # 槽位互不占用
             "custom_actions": custom_out,
         }
+
+    # ------------------------------------------------------------------
+    # 试玩舞台 3D POC-0
+    # ------------------------------------------------------------------
+
+    @router.get("/playtest/3d")
+    def playtest_3d(asset_id: str | None = None):
+        """3D 试玩清单。
+
+        没有 ``asset_id`` 时走离网固定夹具（GLB + manifest 随仓库提交），
+        用于验收「真实 GLB 加载 → AnimationMixer 播放」链路；有 ``asset_id``
+        时从该资产的 ``extensions.cloud_backends.mesh`` 槽位解析 GLB 地址。
+        """
+
+        if not asset_id:
+            return _playtest3d_fixture_manifest()
+        asset = _resolve_asset(runtime, asset_id)
+        if asset is None:
+            return _playtest3d_error_manifest(asset_id, "asset_not_found", "/playtest")
+        from adapters.cloud_backends.contracts import extension_v1 as contract
+
+        mesh = (contract.read_extension(asset) or {}).get("mesh")
+        return _playtest3d_manifest_from_mesh(asset_id, mesh)
+
+    @router.get("/playtest/3d/fixture.glb")
+    def playtest_3d_fixture_glb():
+        """伺服固定 GLB 夹具（离网验收用，不进 CreativeAsset 主协议）。"""
+
+        path = os.path.join(_PLAYTEST3D_FIXTURE_DIR, "character.glb")
+        if not os.path.isfile(path):
+            raise HTTPException(status_code=404, detail="3D 夹具缺失")
+        return FileResponse(path, media_type="model/gltf-binary", filename="character.glb")
 
     # ------------------------------------------------------------------
     # P1-B 批量生成与批量导出

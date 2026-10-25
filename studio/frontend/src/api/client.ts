@@ -838,4 +838,11 @@ export const api = {
     ),
 
   cloudArtifactUrl: (relPath: string) => `/api/cloud/artifacts/${relPath}`,
+
+  /* ── 试玩舞台 3D POC-0 ── */
+  /** 3D 试玩清单：无 assetId 走离网固定夹具；有则从资产 mesh 槽位解析 GLB。 */
+  playtest3DManifest: (assetId?: string | null) =>
+    request<import("../types").Playtest3DManifest>(
+      `/api/playtest/3d${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
+    ),
 };

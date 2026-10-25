@@ -14,6 +14,7 @@ const DesignCenter = lazy(() => import("./pages/DesignCenter"));
 const SettingsCenter = lazy(() => import("./pages/SettingsCenter"));
 const BatchCenter = lazy(() => import("./pages/BatchCenter"));
 const PlaytestStage = lazy(() => import("./pages/PlaytestStage"));
+const Playtest3DPage = lazy(() => import("./pages/playtest3d/Playtest3DPage"));
 const ArcadeStage = lazy(() => import("./pages/ArcadeStage"));
 const ShowcaseStudio = lazy(() => import("./pages/ShowcaseStudio"));
 const VersionCenter = lazy(() => import("./pages/VersionCenter"));
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="settings" element={<SettingsCenter />} />
             <Route path="animation" element={<AnimationStudio />} />
             <Route path="playtest" element={<PlaytestStage />} />
+            <Route path="playtest-3d" element={<Playtest3DPage />} />
             <Route path="arcade" element={<ArcadeStage />} />
             <Route path="showcase" element={<ShowcaseStudio />} />
             <Route path="benchmark" element={<BenchmarkCenter />} />
