@@ -26,6 +26,7 @@ export interface PlaytestDiagnosticsProps {
 
 const SOURCE_LABEL: Record<string, string> = {
   rigged: "骨骼绑定（原画实时变形）",
+  sprite: "整身形变（原画实时变形）",
   "ai-video": "AI 视频驱动",
   procedural: "程序化演示小人",
 };

@@ -116,8 +116,14 @@ export function PlaytestCanvas(props: PlaytestCanvasProps) {
       const strip = props.strips[state.action];
       const cropFrames = Math.max(1, strip?.frames ?? 1);
       const cropW = image.naturalWidth / cropFrames;
+      // 显示尺寸以 idle 帧高为唯一基准：各动作条带裁边后画布高度不同
+      // （sprite 引擎 198~234px 不等），逐条带归一化会让角色在切换
+      // 瞬间变大变小；idle 未就绪时回落当前条带
+      const idleImage = props.images.idle;
+      const baseFrameH =
+        idleImage && idleImage.naturalHeight > 0 ? idleImage.naturalHeight : image.naturalHeight;
       const scale = Math.min(
-        (h * CHAR_HEIGHT_RATIO) / image.naturalHeight,
+        (h * CHAR_HEIGHT_RATIO) / baseFrameH,
         (w * CHAR_WIDTH_RATIO) / cropW,
       );
       const charW = cropW * scale;

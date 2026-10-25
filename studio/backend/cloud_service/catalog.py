@@ -106,12 +106,19 @@ PROVIDER_CATALOG = {
         "auth": "bearer",
         "env_keys": ("SEED_AUDIO_API_KEY",),
         "credential_ref": None,
-        "base_url": "",
-        "model": "",
-        "free_tier": "以厂商控制台为准",
+        "base_url": "https://openspeech.bytedance.com",
+        "model": "seed-audio-1.0",
+        "model_options": ("seed-audio-1.0",),
+        "extra_fields": (),
+        "region": "",
         "priority": 1,
         "fallback": "",
-        "notes": "单 wrapper 双槽：dialogue（对白）与 sfx（音效）。地址与模型待 S2 核对后回填。",
+        "price_note": "以火山引擎语音控制台为准",
+        "free_tier": "以厂商控制台为准",
+        "notes": (
+            "单 wrapper 双槽：dialogue（对白）与 sfx（音效）；端点 "
+            "POST /api/v3/tts/create，参考音色需配置 SEED_AUDIO_SPEAKER_ID。"
+        ),
     },
 }
 

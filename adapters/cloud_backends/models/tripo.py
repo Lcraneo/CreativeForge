@@ -12,10 +12,11 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any, Optional
 
 from ..client import cloud_client
-from .base import BaseCloudModel
+from .base import BaseCloudModel, glb_triangles
 
 log = logging.getLogger("adapters.cloud_backends.tripo")
 
@@ -26,9 +27,12 @@ DEFAULT_MODEL = "v3.1-20260211"
 
 MODEL_ALIASES = {
     "tripo": DEFAULT_MODEL,
+    "tripo-v3.1": "v3.1-20260211",
     "v3.1": "v3.1-20260211",
     "v3.0": "v3.0-20250812",
+    "tripo-v3.0": "v3.0-20250812",
     "v2.5": "v2.5-20250123",
+    "tripo-v2.5": "v2.5-20250123",
     "p1": "P1-20260311",
     "tripo-p1": "P1-20260311",
 }
@@ -60,6 +64,7 @@ class TripoOfficialModel(BaseCloudModel):
         texture_quality: str = "standard",
         geometry_quality: str = "standard",
         low_poly: bool = False,
+        quad: bool = False,
         poll_interval: float = 3.0,
         **kwargs,
     ):
@@ -70,6 +75,7 @@ class TripoOfficialModel(BaseCloudModel):
         self.texture_quality = texture_quality
         self.geometry_quality = geometry_quality
         self.low_poly = low_poly
+        self.quad = quad
 
     # ── 信封 ──────────────────────────────────────────────────────────────
 
@@ -170,6 +176,8 @@ class TripoOfficialModel(BaseCloudModel):
         }
         if self.low_poly:
             payload["smart_low_poly"] = True
+        if self.quad:
+            payload["quad"] = True
         if decimation_target:
             payload["face_limit"] = self._clamp_face_limit(decimation_target)
         if prompt:
@@ -245,6 +253,7 @@ class TripoOfficialModel(BaseCloudModel):
             }
             return cached
 
+        started = time.monotonic()
         if png is not None:
             payload["input"] = self._upload_png(png)
             endpoint = "/generation/image-to-model"
@@ -278,24 +287,32 @@ class TripoOfficialModel(BaseCloudModel):
             )
 
         data = self._fetch_bytes(self._extract_model_url(task), cache_key)
-        self.last_call_info.update(
-            {
-                "provider": self.PROVIDER,
-                "model": self.model,
-                "task_id": task_id,
-                "cached": False,
-                "cache_key": cache_key,
-                "bytes": len(data),
-                "credits": task.get("credits_consumed", task.get("credits")),
-                "preview_url": (task.get("output") or {}).get("rendered_image_url"),
-            }
-        )
+        # GF 统一返回信息口径：provider/model/task_id/elapsed_sec/credits/
+        # cached/cache_key/preview_url/triangles/bytes
+        info: dict[str, Any] = {
+            "provider": self.PROVIDER,
+            "model": self.model,
+            "task_id": task_id,
+            "elapsed_sec": round(time.monotonic() - started, 2),
+            "cached": False,
+            "cache_key": cache_key,
+            "bytes": len(data),
+            "credits": task.get("credits_consumed", task.get("credits")),
+            "preview_url": (task.get("output") or {}).get("rendered_image_url"),
+        }
+        if self.OUTPUT_EXT == "glb":
+            triangles = glb_triangles(data)
+            if triangles is not None:
+                info["triangles"] = triangles
+        self.last_call_info.update(info)
         log.info(
-            "[tripo] task=%s model=%s bytes=%s credits=%s",
+            "[tripo] task=%s model=%s %.1fs credits=%s triangles=%s bytes=%s",
             task_id,
             self.model,
-            len(data),
+            self.last_call_info.get("elapsed_sec") or 0.0,
             self.last_call_info.get("credits"),
+            self.last_call_info.get("triangles"),
+            len(data),
         )
         return data
 

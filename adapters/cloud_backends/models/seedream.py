@@ -1,8 +1,13 @@
 """火山方舟 ARK · Seedream 图像生成（图像能力云端通道）。
 
-接口要点（对齐方舟 OpenAI 兼容的 ``/images/generations``）：
+接口要点（对齐方舟 OpenAI 兼容的 ``/images/generations``，已对照
+GameFactory-3A ``models/gen_image/seedream_model.py`` 实码核验）：
 
 - 创建：``POST {base}/images/generations``，同步返回图片 URL 或 base64
+- 请求体：``{model, prompt, seed, size, watermark, response_format}``；
+  参考图（图生图）以 PNG base64 data URI 放在 ``image`` 字段
+- ``response_format``：``url``（默认，即时下载产物链接）或 ``b64_json``，
+  响应解析对两种形态都兼容（以实际返回字段为准）
 - 鉴权：``Authorization: Bearer <ARK_API_KEY>``，Key 复用模型广场 volcengine
 - 尺寸：``size`` 形如 ``1024x1024``；模型支持的档位以控制台开通页为准
 
@@ -15,7 +20,7 @@ import logging
 from typing import Any, Optional
 
 from ..client import cloud_client
-from .base import BaseCloudModel
+from .base import BaseCloudModel, image_to_data_uri, png_bytes_of
 
 log = logging.getLogger("adapters.cloud_backends.seedream")
 
@@ -37,10 +42,20 @@ class SeedreamModel(BaseCloudModel):
     ENV_KEY = "ARK_API_KEY"
     DEFAULT_TASK_TIMEOUT = 120.0
 
-    def __init__(self, *, size: str = "1024x1024", watermark: bool = False, **kwargs):
+    def __init__(
+        self,
+        *,
+        size: str = "1024x1024",
+        watermark: bool = False,
+        response_format: str = "url",
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.size = size
         self.watermark = watermark
+        if response_format not in ("url", "b64_json"):
+            raise ValueError(f"response_format 只能是 url / b64_json：{response_format!r}")
+        self.response_format = response_format
 
     # ── 响应解析 ──────────────────────────────────────────────────────────
 
@@ -74,25 +89,31 @@ class SeedreamModel(BaseCloudModel):
         prompt: str = "",
         size: Optional[str] = None,
         seed: int | None = None,
+        image: Any = None,
+        image_url: Optional[str] = None,
         **provider_kwargs,
     ) -> bytes:
-        """文生图，返回 PNG/JPEG 原始字节。"""
+        """文生图 / 图生图（参考图 base64），返回 PNG/JPEG 原始字节。"""
 
         text = (prompt or "").strip()
         if not text:
             raise ValueError("Seedream 需要非空 prompt")
-        if provider_kwargs.pop("image", None):
-            raise ValueError("Seedream 通道只支持文生图，图生图请使用 DashScope 通道")
+        if image_url:
+            raise ValueError("Seedream 参考图只接受本地 image（base64），公网图请先下载")
 
         payload: dict[str, Any] = {
             "model": self.model,
             "prompt": text,
             "size": size or self.size,
-            "response_format": "url",
+            "response_format": self.response_format,
             "watermark": self.watermark,
         }
         if seed is not None:
             payload["seed"] = int(seed)
+        png = png_bytes_of(image)
+        if png is not None:
+            # 图生图：参考图以 base64 data URI 内联（GF 同款字段名 ``image``）
+            payload["image"] = image_to_data_uri(png)
         payload.update(provider_kwargs)
 
         cache_key = self._cache_key(payload=payload)
@@ -130,6 +151,7 @@ class SeedreamModel(BaseCloudModel):
                 "cache_key": cache_key,
                 "bytes": len(data),
                 "size": payload["size"],
+                "response_format": payload["response_format"],
             }
         )
         log.info("[seedream] model=%s size=%s bytes=%s", self.model, payload["size"], len(data))

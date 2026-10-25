@@ -1691,7 +1691,12 @@ def build_router(runtime):
         # 剖面检测 + 腿带中缝/顶部按真实双脚收窄）——渲染语义再变，旧条带作废
         # v7：matting 精修（sourceanim.refine_edge_alpha 白底 alpha 反解，
         # 边界带像素色与 alpha 均变化）——非透明源条带旧缓存作废
-        PLAYTEST_CACHE_VERSION = 7
+        # v8：条带裁切起点对齐帧边界（旧条带每帧窗口偏进前一帧，
+        # 播放时胸口/颈部会粘上邻帧残段）——所有旧条带作废
+        # v9：内置动作改整身形变（不再切分身体分区）——分区骨架在 Q 版
+        # 角色上会在颈胸留下横向撕裂，旧 rigged 条带全部作废
+        # v10：整身形变幅度调优（步频/挤压/冲刺更可读）——v9 条带作废
+        PLAYTEST_CACHE_VERSION = 10
 
         def _digest(engine_name: str, seed: str, action: str) -> str:
             return hashlib.sha1(
@@ -1726,8 +1731,8 @@ def build_router(runtime):
             if source is not None:
                 source_hash = hashlib.sha1(source).hexdigest()[:12]
 
-        engine = "rigged" if source_hash else "procedural"
-        seed_key = "rig-{}".format(source_hash) if source_hash else _procedural_seed()
+        engine = "sprite" if source_hash else "procedural"
+        seed_key = "sprite-{}".format(source_hash) if source_hash else _procedural_seed()
 
         def pack_strip(frames: list) -> "PILImage.Image":
             frame_w, frame_h = frames[0][0], frames[0][1]
@@ -1740,12 +1745,12 @@ def build_router(runtime):
             if box:
                 pad = 2
                 x0, y0, x1, y1 = box
-                x0 = max(0, x0 - pad)
+                # 帧宽对齐：裁切起点必须落在帧边界上，否则第一帧取景偏移，
+                # 前端按「总宽/帧数」裁切时每帧都会带一段邻帧残影
+                x0 = (max(0, x0 - pad) // frame_w) * frame_w
                 y0 = max(0, y0 - pad)
-                x1 = min(sheet.width, x1 + pad)
                 y1 = min(sheet.height, y1 + pad)
-                # 帧宽对齐：裁剪后总宽必须是帧数的整数倍
-                x1 = x0 + max(1, (x1 - x0) // len(frames)) * len(frames)
+                x1 = min(sheet.width, x0 + frame_w * len(frames))
                 sheet = sheet.crop((x0, y0, x1, y1))
             return sheet
 
@@ -1855,19 +1860,13 @@ def build_router(runtime):
                     if len(_PLAYTEST_RIG_CACHE) > 8:
                         _PLAYTEST_RIG_CACHE.pop(next(iter(_PLAYTEST_RIG_CACHE)))
 
-        if source is not None and rig is not None and pending:
-            from artgen.riganim import animate_rigged
+        if source is not None and pending:
+            # 内置动作走整身形变：完整角色只做位移/倾斜/挤压，帧内不存在
+            # 分区接缝（分区 rig 在 Q 版角色颈胸会撕裂），帧间用正弦相位衔接
+            from artgen.riganim import animate_sprite
 
             def _render(action: str):
-                return animate_rigged(
-                    source,
-                    action,
-                    PLAYTEST_FRAMES,
-                    PLAYTEST_SIZE,
-                    rig=rig,
-                    segment_mask=segment_mask,
-                    keep_background=False,
-                )[0]
+                return animate_sprite(source, action, PLAYTEST_FRAMES, PLAYTEST_SIZE)[0]
 
             try:
                 from concurrent.futures import ThreadPoolExecutor
@@ -1975,12 +1974,13 @@ def build_router(runtime):
                     sheet.paste(img, (i * frame_w + (frame_w - img.width) // 2, frame_h - img.height))
                 sheet.save(out_path, "PNG")
             with PILImage.open(out_path) as handle:
-                frame_w, frame_h = handle.size
+                strip_w, strip_h = handle.size
             return {
                 "url": "/api/animation/play_cache/" + out_name,
                 "frames": len(samples),
-                "width": frame_w,
-                "height": frame_h,
+                # width 必须是单帧宽（不是整条宽度）：前端与检查报告都按它换算
+                "width": max(1, strip_w // max(1, len(samples))),
+                "height": strip_h,
                 "fps": meta.get("fps", 12),
                 "engine": "ai-video",
             }
@@ -2099,7 +2099,7 @@ def build_router(runtime):
             )
 
         character = None
-        if engine == "rigged" and source_hash:
+        if source_hash and engine in ("rigged", "sprite"):
             meta_path = os.path.join(cache_dir, "play_meta_{}.json".format(source_hash))
             if os.path.isfile(meta_path):
                 try:

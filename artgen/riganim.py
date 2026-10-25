@@ -847,6 +847,116 @@ def animate_rigged(
     return frames, reference, rig, _falign(frames)
 
 
+# ── 整身形变（试玩条带专用）────────────────────────────────────────
+# 分区骨架变形在 Q 版/大头角色上，上半身与手臂层旋转后会在颈胸处
+# 留下硬接缝（表现为"胸口横条、脸部切片"）。试玩条带只需要动作可读、
+# 帧间连贯，因此改用整身形变：完整角色只做位移/倾斜/挤压，
+# 帧内不存在任何分区接缝，帧间用正弦相位衔接。
+
+SPRITE_ACTIONS = ("idle", "walk", "run", "attack", "jump")
+
+
+def _sprite_pose(action: str, index: int, count: int):
+    """-> (dx, dy, angle, sx, sy)；角度单位为度，正值向右倾。
+
+    相位口径：``sin`` 控左右（摆动/倾角），``|sin|`` 控上下（步频两倍）。
+    挤压与拉伸成对出现（sx 涨则 sy 落），保持体积感，动作才读得出来。"""
+    t = 2.0 * math.pi * index / max(1, count)
+    swing = math.sin(t)
+    step = abs(math.sin(t))
+    if action == "idle":
+        return (
+            0.0,
+            2.2 * swing,
+            1.0 * math.sin(t + 0.6),
+            1.0 + 0.006 * math.sin(t + 1.0),
+            1.0 + 0.008 * math.sin(t + 1.0),
+        )
+    if action == "walk":
+        return (
+            2.5 * swing,
+            -6.0 * step,
+            3.0 * swing,
+            1.0 + 0.02 * step,
+            1.0 - 0.025 * step,
+        )
+    if action == "run":
+        return (
+            4.0 * swing,
+            -12.0 * step,
+            9.0 + 2.5 * swing,
+            1.0 + 0.03 * step,
+            1.0 - 0.04 * step,
+        )
+    if action == "attack":
+        u = index / max(1, count - 1)
+        punch = math.sin(math.pi * u)
+        return (
+            18.0 * punch,
+            -3.0 * punch,
+            10.0 * punch,
+            1.0 + 0.03 * punch,
+            1.0 + 0.02 * punch,
+        )
+    # jump：单峰起伏，首尾回到站立姿势（循环播放不会突然起跳）
+    u = index / max(1, count - 1)
+    hop = math.sin(math.pi * u)
+    return (0.0, -30.0 * hop, -4.0 * hop, 1.0 - 0.03 * hop, 1.0 + 0.06 * hop)
+
+
+def animate_sprite(image_bytes, action, frame_count=16, size=256):
+    """整身形变动画（不切分身体）-> (frames, reference)。
+
+    ``frames`` 与 :func:`animate_rigged` 同格式 ``(w, h, RGBA bytes)``。
+    试玩条带专用：动作可读、帧间连贯，帧内不存在分区接缝。
+    """
+    size = max(64, min(1024, int(size)))
+    frame_count = max(2, min(60, int(frame_count)))
+    action = action if action in SPRITE_ACTIONS else "walk"
+
+    canvas = _fit(Image.open(io.BytesIO(image_bytes)), size)
+    mask, _transparent, _bg = _subject_mask(canvas)
+    subject = canvas.copy()
+    subject.putalpha(mask)
+
+    box = subject.getbbox() or (0, 0, size, size)
+    sprite = subject.crop(box)
+    # 预留变换余量：显示高度压到画布的 74%，宽度 84%（冲刺位移 18px
+    # + 旋转外扩后仍不出画）
+    fit = min((size * 0.74) / max(1, sprite.height), (size * 0.84) / max(1, sprite.width))
+    sprite = sprite.resize(
+        (max(1, int(round(sprite.width * fit))), max(1, int(round(sprite.height * fit)))),
+        Image.BICUBIC,
+    )
+    base_x = size / 2.0
+    base_y = size - 8.0
+    anchor_x = sprite.width / 2.0
+    anchor_y = float(sprite.height)
+
+    frames = []
+    for index in range(frame_count):
+        dx, dy, angle, sx, sy = _sprite_pose(action, index, frame_count)
+        layer = sprite
+        if abs(sx - 1.0) > 1e-4 or abs(sy - 1.0) > 1e-4:
+            layer = layer.resize(
+                (max(1, int(round(layer.width * sx))), max(1, int(round(layer.height * sy)))),
+                Image.BICUBIC,
+            )
+        ax = anchor_x * layer.width / sprite.width
+        ay = anchor_y * layer.height / sprite.height
+        if abs(angle) > 1e-3:
+            rotated = layer.rotate(angle, resample=Image.BICUBIC, expand=True)
+            ax += (rotated.width - layer.width) / 2.0
+            ay += (rotated.height - layer.height) / 2.0
+            layer = rotated
+        frame = Image.new("RGBA", (size, size), CANVAS_BG)
+        frame.paste(layer, (int(round(base_x + dx - ax)), int(round(base_y + dy - ay))), layer)
+        frames.append((size, size, bytearray(frame.tobytes())))
+
+    reference = (size, size, bytearray(canvas.tobytes()))
+    return frames, reference
+
+
 def render_rigged_frame_rgba(
     image_bytes, action, phase, size, rig=None, config=None, segment_mask=None, count=24,
     view="front",

@@ -6,11 +6,15 @@
 运行：``python -m unittest studio.backend.tests.test_cloud_client -v``
 """
 
+import base64
+import io
 import json
 import os
 import tempfile
 import unittest
+import wave
 from pathlib import Path
+from unittest import mock
 
 import httpx
 
@@ -18,6 +22,8 @@ from adapters.cloud_backends.client import cloud_client
 from adapters.cloud_backends.contracts import extension_v1 as contract
 from adapters.cloud_backends.models.bailian_tripo import BailianTripoModel
 from adapters.cloud_backends.models.meshy import MeshyModel
+from adapters.cloud_backends.models.seed_audio import SeedAudioModel
+from adapters.cloud_backends.models.seedream import SeedreamModel
 from adapters.cloud_backends.models.tripo import TripoOfficialModel
 
 NO_SLEEP = lambda _seconds: None  # noqa: E731 - 测试用空休眠
@@ -295,14 +301,18 @@ class BailianTripoTests(unittest.TestCase):
         if request.url.path.endswith("/tasks/task-1"):
             return _json_response(
                 {
-                    "output": {"task_status": "SUCCEEDED", "task_id": "task-1"},
+                    # 官方响应：task_status 与 results 同在 output 下
+                    "output": {
+                        "task_status": "SUCCEEDED",
+                        "task_id": "task-1",
+                        "results": [
+                            {
+                                "pbr_model_url": "https://cdn.example.com/a.glb",
+                                "rendered_image_url": "https://cdn.example.com/a.png",
+                            }
+                        ],
+                    },
                     "usage": {"3d_task_type": "text-to-3D"},
-                    "results": [
-                        {
-                            "pbr_model_url": "https://cdn.example.com/a.glb",
-                            "rendered_image_url": "https://cdn.example.com/a.png",
-                        }
-                    ],
                 }
             )
         return httpx.Response(200, content=GLB_BYTES)
@@ -443,7 +453,10 @@ class TripoOfficialTests(unittest.TestCase):
                         "data": {
                             "task_id": "tk-1",
                             "status": "success",
-                            "output": {"model_url": "https://cdn.example.com/a.glb"},
+                            "output": {
+                                "model_url": "https://cdn.example.com/a.glb",
+                                "rendered_image_url": "https://cdn.example.com/r.png",
+                            },
                             "credits_consumed": 20,
                         },
                     }
@@ -458,8 +471,45 @@ class TripoOfficialTests(unittest.TestCase):
         self.assertTrue(self.calls[0].url.path.endswith("/files"))
         body = json.loads(self.calls[1].content)
         self.assertEqual(body["input"], "ft-1")
+        # GF 口径请求体：seed → model_seed/texture_seed，pbr/贴图质量默认透传
         self.assertEqual(body["model_seed"], 7)
+        self.assertEqual(body["texture_seed"], 7)
+        self.assertTrue(body["pbr"])
+        self.assertTrue(body["texture"])
+        self.assertEqual(body["texture_quality"], "standard")
+        self.assertEqual(body["geometry_quality"], "standard")
+        # GF 统一返回信息口径的 provenance
         self.assertEqual(model.last_call_info["credits"], 20)
+        self.assertGreaterEqual(model.last_call_info["elapsed_sec"], 0)
+        self.assertTrue(model.last_call_info["preview_url"].endswith("r.png"))
+        self.assertNotIn("triangles", model.last_call_info)  # 假 GLB 解析不出面数
+
+    def test_quad_forwarded_and_model_alias_resolved(self):
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/generation/text-to-model"):
+                captured.update(json.loads(request.content))
+                return _json_response(
+                    {
+                        "code": 0,
+                        "data": {
+                            "task_id": "tk-3",
+                            "status": "success",
+                            "output": {"model_url": "https://cdn.example.com/c.glb"},
+                        },
+                    }
+                )
+            return httpx.Response(200, content=GLB_BYTES)
+
+        model = self._model(handler, quad=True, model="tripo-v3.1")
+        self.assertEqual(model.model, "v3.1-20260211")
+        model.infer(prompt="cat", seed=3)
+
+        self.assertEqual(captured["model"], "v3.1-20260211")
+        self.assertTrue(captured["quad"])
+        self.assertEqual(captured["model_seed"], 3)
+        self.assertEqual(captured["texture_seed"], 3)
 
     def test_nonzero_code_is_terminal(self):
         calls: list = []
@@ -539,14 +589,25 @@ class MeshyTests(unittest.TestCase):
             )
         return httpx.Response(200, content=GLB_BYTES)
 
-    def test_image_input_uses_data_uri(self):
+    def test_image_input_uses_data_uri_and_v1_endpoint(self):
         model = self._model(self._handler)
         data = model.infer(image=b"PNGDATA")
         self.assertEqual(data, GLB_BYTES)
+        # 图片输入走 v1 端点 + base64 data URI
+        self.assertTrue(self.calls[0].url.path.endswith("/openapi/v1/image-to-3d"))
         body = json.loads(self.calls[0].content)
         self.assertTrue(body["image_url"].startswith("data:image/png;base64,"))
+        self.assertTrue(body["should_texture"])
+        self.assertTrue(body["enable_pbr"])
+        self.assertNotIn("should_remesh", body)  # 未配置时不透传
         self.assertEqual(model.last_call_info["credits"], 25)
         self.assertIn("CC BY 4.0", model.last_call_info["license_note"])
+
+    def test_should_remesh_forwarded_when_configured(self):
+        model = self._model(self._handler, should_remesh=False)
+        model.infer(image=b"PNGDATA")
+        body = json.loads(self.calls[0].content)
+        self.assertFalse(body["should_remesh"])
 
     def test_polycount_clamped(self):
         model = self._model(self._handler)
@@ -588,6 +649,248 @@ class MeshyTests(unittest.TestCase):
         self.assertEqual(bodies[1]["mode"], "refine")
         self.assertEqual(bodies[1]["preview_task_id"], "ms-1")
         self.assertEqual(len(model.last_call_info["task_ids"]), 2)
+
+
+def _wav_bytes(seconds: float = 0.5, rate: int = 24000) -> bytes:
+    """构造一段真实的内存 WAV，供 Seed Audio 协议解析时长。"""
+
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as handle:
+        handle.setnchannels(1)
+        handle.setsampwidth(2)
+        handle.setframerate(rate)
+        handle.writeframes(b"\x00\x00" * int(rate * seconds))
+    return buffer.getvalue()
+
+
+class SeedreamTests(unittest.TestCase):
+    """Seedream：/images/generations 请求体与 b64_json/url 双解析。"""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.calls: list = []
+
+    def _model(self, handler, **kwargs) -> SeedreamModel:
+        return SeedreamModel(
+            api_key="test-key",
+            api_base="https://ark.cn-beijing.volces.com/api/v3",
+            cache_dir=self.directory.name,
+            transport=_transport(handler, self.calls),
+            sleep=NO_SLEEP,
+            **kwargs,
+        )
+
+    def test_b64_json_response_is_decoded(self):
+        png = b"\x89PNG-fake-image"
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured.update(json.loads(request.content))
+            return _json_response(
+                {"data": [{"b64_json": base64.b64encode(png).decode()}]}
+            )
+
+        model = self._model(handler, response_format="b64_json")
+        data = model.infer(prompt="a knight", seed=9)
+
+        self.assertEqual(data, png)
+        self.assertEqual(captured["model"], "doubao-seedream-3-0-t2i")
+        self.assertEqual(captured["prompt"], "a knight")
+        self.assertEqual(captured["seed"], 9)
+        self.assertEqual(captured["size"], "1024x1024")
+        self.assertFalse(captured["watermark"])
+        self.assertEqual(captured["response_format"], "b64_json")
+        self.assertEqual(model.last_call_info["response_format"], "b64_json")
+
+    def test_url_response_is_downloaded(self):
+        png = b"\x89PNG-url-image"
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.method == "POST":
+                return _json_response({"data": [{"url": "https://cdn.example.com/x.png"}]})
+            return httpx.Response(200, content=png)
+
+        model = self._model(handler)
+        data = model.infer(prompt="a knight", watermark=True)
+
+        self.assertEqual(data, png)
+        body = json.loads(self.calls[0].content)
+        self.assertEqual(body["response_format"], "url")
+        self.assertTrue(body["watermark"])
+
+    def test_reference_image_sent_as_base64_data_uri(self):
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured.update(json.loads(request.content))
+            return _json_response({"data": [{"b64_json": base64.b64encode(b"png").decode()}]})
+
+        model = self._model(handler)
+        model.infer(prompt="same knight", image=b"PNGDATA")
+
+        self.assertTrue(captured["image"].startswith("data:image/png;base64,"))
+
+    def test_invalid_response_format_rejected_at_construction(self):
+        with self.assertRaises(ValueError):
+            self._model(lambda _r: _json_response({}), response_format="hex")
+
+
+class SeedAudioTests(unittest.TestCase):
+    """Seed Audio：/api/v3/tts/create 请求体与 base64/URL 双解析。"""
+
+    def setUp(self):
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.calls: list = []
+
+    def _model(self, handler, **kwargs) -> SeedAudioModel:
+        return SeedAudioModel(
+            api_key="test-key",
+            api_base="https://openspeech.bytedance.com",
+            cache_dir=self.directory.name,
+            transport=_transport(handler, self.calls),
+            sleep=NO_SLEEP,
+            **kwargs,
+        )
+
+    def test_empty_base_url_falls_back_to_official_endpoint(self):
+        """面板留空时不能报「未配置 base_url」：必须回落到官方根地址。"""
+
+        model = SeedAudioModel(
+            api_key="test-key",
+            api_base="",
+            cache_dir=self.directory.name,
+            transport=_transport(lambda request: _json_response({}), self.calls),
+            sleep=NO_SLEEP,
+        )
+        self.assertEqual(model.api_base, "https://openspeech.bytedance.com")
+
+    def test_dialogue_sends_text_prompt_and_audio_config(self):
+        wav = _wav_bytes()
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured["path"] = request.url.path
+            captured["body"] = json.loads(request.content)
+            return _json_response(
+                {"audio": base64.b64encode(wav).decode()}
+            )
+
+        model = self._model(handler)
+        data = model.infer(kind="dialogue", text="你好", voice="zh_female_demo")
+
+        self.assertEqual(data, wav)
+        self.assertTrue(captured["path"].endswith("/api/v3/tts/create"))
+        body = captured["body"]
+        self.assertEqual(body["model"], "seed-audio-1.0")
+        self.assertEqual(body["text_prompt"], "你好")
+        self.assertEqual(body["audio_config"]["format"], "wav")
+        self.assertEqual(body["audio_config"]["sample_rate"], 24000)
+        self.assertEqual(body["audio_config"]["speech_rate"], 0)
+        self.assertNotIn("subtitle", body["audio_config"])  # 关闭时不发送
+        self.assertEqual(body["references"], [{"speaker": "zh_female_demo"}])
+        # 旧 OpenAI 协议字段不再出现
+        self.assertNotIn("input", body)
+        self.assertNotIn("voice", body)
+        self.assertNotIn("speed", body)
+        self.assertAlmostEqual(model.last_call_info["duration_sec"], 0.5, places=1)
+        self.assertEqual(model.last_call_info["mode"], "dialogue")
+
+    def test_sfx_mode_and_speed_map_to_speech_rate(self):
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured.update(json.loads(request.content))
+            return _json_response({"url": "https://cdn.example.com/a.wav"})
+
+        model = self._model(handler)
+        with mock.patch.object(model.client, "download") as fake_download:
+            fake_download.return_value = _wav_bytes()
+            model.infer(kind="sfx", prompt="rain", speed=1.4, duration_sec=3)
+
+        self.assertIn("Approximately 3 seconds long", captured["text_prompt"])
+        self.assertEqual(captured["audio_config"]["speech_rate"], 20)
+        fake_download.assert_called_once()
+
+    def test_url_in_body_envelope_is_downloaded(self):
+        wav = _wav_bytes(0.25)
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            return _json_response(
+                {"body": {"code": 0, "url": "https://cdn.example.com/a.wav"}}
+            )
+
+        model = self._model(handler)
+        with mock.patch.object(model.client, "download") as fake_download:
+            fake_download.return_value = wav
+            data = model.infer(kind="dialogue", text="hi")
+
+        self.assertEqual(data, wav)
+        fake_download.assert_called_once()
+
+    def test_nonzero_code_is_terminal(self):
+        calls: list = []
+
+        def handler(_request):
+            return _json_response({"code": 3000, "message": "bad text"})
+
+        model = SeedAudioModel(
+            api_key="k",
+            api_base="https://openspeech.bytedance.com",
+            cache_dir=self.directory.name,
+            max_retries=2,
+            transport=_transport(handler, calls),
+            sleep=NO_SLEEP,
+        )
+        with self.assertRaises(cloud_client.CloudAPIRequestError) as ctx:
+            model.infer(kind="dialogue", text="hi")
+        self.assertIn("3000", str(ctx.exception))
+        self.assertEqual(len(calls), 1)  # 终态错误不重试
+
+    def test_core_fields_survive_provider_kwargs_merge(self):
+        """GF kwargs 保护模式：None 不透传，核心字段不被覆盖。"""
+
+        captured: dict = {}
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured.update(json.loads(request.content))
+            return _json_response({"audio": base64.b64encode(_wav_bytes()).decode()})
+
+        model = self._model(handler)
+        model.infer(
+            kind="dialogue",
+            text="你好",
+            text_prompt="hijack",
+            audio_config="hijack",
+            speaker=None,  # None 不透传
+            extra_field="kept",  # 新增键原样追加
+        )
+
+        self.assertEqual(captured["text_prompt"], "你好")
+        self.assertIsInstance(captured["audio_config"], dict)
+        self.assertEqual(captured["extra_field"], "kept")
+
+    def test_reference_audio_goes_inline_as_base64(self):
+        captured: dict = {}
+        wav = _wav_bytes()
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            captured.update(json.loads(request.content))
+            return _json_response({"audio": base64.b64encode(_wav_bytes()).decode()})
+
+        model = self._model(handler)
+        model.infer(kind="dialogue", text="你好", reference_audio=wav)
+
+        self.assertTrue(captured["text_prompt"].startswith("Use @Audio1"))
+        self.assertEqual(
+            captured["references"][0]["audio_data"],
+            base64.b64encode(wav).decode("ascii"),
+        )
+
+    def test_wav_output_enforced(self):
+        with self.assertRaises(ValueError):
+            self._model(lambda _r: _json_response({}), output_format="mp3")
 
 
 if __name__ == "__main__":

@@ -477,8 +477,12 @@ adapters/cloud_backends/
                        safe_rel_path (R5 sandbox), error_slot (R7)
   client/              CloudAPIClient (retry + error classification),
                        poll_task, request_hash (R9), ResponseCache (LRU evict)
-  models/              tripo / meshy / bailian_tripo (3D),
-                       seedream (image), seedance (video), seed_audio (dialogue/sfx)
+  models/              tripo (image/text-to-model, pbr/quad/face_limit/seed) /
+                       meshy (v1 image / v2 text + refine, should_remesh) /
+                       bailian_tripo (3D), seedream (/images/generations,
+                       b64_json|url + reference image), seedance (video),
+                       seed_audio (/api/v3/tts/create, text_prompt + audio_config);
+                       request protocols verified against GameFactory-3A source
   operators/           base + object_3d / image / cg_video / audio
                        (download -> slot -> sha256 + provenance; failures recorded)
   cloud_adapter.py     CloudAssetAdapter(AssetAdapter): import/export mapping,
@@ -500,7 +504,9 @@ polling, image and audio are synchronous. Provider fallback follows
 `catalog.provider_spec().fallback` (bailian-tripo -> tripo -> meshy). Every
 attempt is written to the local usage ledger; failures return
 `502 "<error_class>: <message>"` and leave a failure footprint instead of a
-silent empty slot. Provider keys are encrypted at rest, never echoed, and
+silent empty slot. Successful calls also record GF-caliber `last_call_info`
+(credits / elapsed_sec / preview_url / triangles) into the asset provenance;
+task responses may add optional `credits` / `preview_url` fields. Provider keys are encrypted at rest, never echoed, and
 ARK reuses the model-marketplace volcengine credential (`credential_ref`).
 
 Cold-start increment measured at ~80 ms (≤ 200 ms budget); added source is

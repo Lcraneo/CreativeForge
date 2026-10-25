@@ -224,9 +224,15 @@ def build_cloud_router(runtime, store: CloudProviderStore | None = None):
                     "error_class": result.get("error_class"),
                 }
             )
+            # 缓存命中由 run_and_record 写入 provenance；台账单独计数（R9）
+            cache_hit = False
+            if result.get("status") == "succeeded":
+                provenance = (contract.read_extension(asset) or {}).get("provenance") or {}
+                cache_hit = bool(provenance.get("cache_hit"))
             usage.record(
                 provider_id,
                 slot,
+                cached=cache_hit,
                 bytes_written=_slot_bytes(result),
                 error_class=str(result.get("error_class") or ""),
             )
@@ -237,6 +243,17 @@ def build_cloud_router(runtime, store: CloudProviderStore | None = None):
                 asset, slot, "", ValueError(f"没有支持 {capability} 的云后端")
             )
         result["attempts"] = attempts
+        # GF 口径的可选留痕（credits/preview_url/elapsed_sec）：仅新增可选字段，
+        # 不改变既有响应形状；只在成功时读取，避免失败响应带上一次成功
+        # 留下的旧 provenance
+        if result.get("status") == "succeeded":
+            provenance = (contract.read_extension(asset) or {}).get("provenance") or {}
+            if provenance.get("credits_estimate") is not None:
+                result.setdefault("credits", provenance["credits_estimate"])
+            if provenance.get("preview_url"):
+                result.setdefault("preview_url", provenance["preview_url"])
+            if provenance.get("elapsed_sec") is not None:
+                result.setdefault("elapsed_sec", provenance["elapsed_sec"])
         return result
 
     def _persist(asset: dict) -> None:

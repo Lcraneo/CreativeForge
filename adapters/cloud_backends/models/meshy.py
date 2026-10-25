@@ -18,7 +18,7 @@ import logging
 from typing import Any, Optional
 
 from ..client import cloud_client
-from .base import BaseCloudModel, image_to_data_uri
+from .base import BaseCloudModel, glb_triangles, image_to_data_uri
 
 log = logging.getLogger("adapters.cloud_backends.meshy")
 
@@ -52,6 +52,7 @@ class MeshyModel(BaseCloudModel):
         texture: bool = True,
         enable_pbr: bool = True,
         topology: str = "triangle",
+        should_remesh: bool | None = None,
         low_poly: bool = False,
         refine: bool = True,
         poll_interval: float = 3.0,
@@ -66,6 +67,7 @@ class MeshyModel(BaseCloudModel):
         self.texture = texture
         self.enable_pbr = enable_pbr
         self.topology = topology
+        self.should_remesh = should_remesh
         self.low_poly = low_poly
         self.refine = refine
 
@@ -188,6 +190,8 @@ class MeshyModel(BaseCloudModel):
         }
         if polycount is not None:
             payload["target_polycount"] = polycount
+        if self.should_remesh is not None:
+            payload["should_remesh"] = self.should_remesh
 
         if use_image:
             payload["should_texture"] = self.texture
@@ -215,6 +219,10 @@ class MeshyModel(BaseCloudModel):
                 "cache_key": cache_key,
                 "bytes": len(cached),
             }
+            if self.OUTPUT_EXT == "glb":
+                triangles = glb_triangles(cached)
+                if triangles is not None:
+                    self.last_call_info["triangles"] = triangles
             return cached
 
         task_ids: list[str] = []
@@ -236,21 +244,25 @@ class MeshyModel(BaseCloudModel):
                 task = self._submit_and_wait(endpoint, refine_payload, task_ids)
 
         data = self._fetch_bytes(self._model_url(task), cache_key)
-        self.last_call_info.update(
-            {
-                "provider": self.PROVIDER,
-                "model": self.model,
-                "task_id": task_ids[-1],
-                "task_ids": task_ids,
-                "cached": False,
-                "cache_key": cache_key,
-                "bytes": len(data),
-                "format": self.output_format,
-                "credits": task.get("credits_consumed", task.get("credits")),
-                "preview_url": task.get("thumbnail_url"),
-                "license_note": "免费档产物为 CC BY 4.0，需署名 Meshy",
-            }
-        )
+        info: dict[str, Any] = {
+            "provider": self.PROVIDER,
+            "model": self.model,
+            "task_id": task_ids[-1],
+            "task_ids": task_ids,
+            "cached": False,
+            "cache_key": cache_key,
+            "bytes": len(data),
+            "format": self.output_format,
+            "credits": task.get("credits_consumed", task.get("credits")),
+            "preview_url": task.get("thumbnail_url"),
+            "license_note": "免费档产物为 CC BY 4.0，需署名 Meshy",
+        }
+        if self.OUTPUT_EXT == "glb":
+            # GF glb_summary 同口径：面数写入 provenance，便于与 Tripo 通道对比
+            triangles = glb_triangles(data)
+            if triangles is not None:
+                info["triangles"] = triangles
+        self.last_call_info.update(info)
         log.info(
             "[meshy] task=%s model=%s bytes=%s credits=%s",
             task_ids[-1],

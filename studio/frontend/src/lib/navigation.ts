@@ -57,6 +57,7 @@ export const NAV_GROUPS: NavGroup[] = [
     hint: "让角色登台演出",
     items: [
       { to: "/playtest", label: "试玩舞台", icon: "play" },
+      { to: "/arcade", label: "关卡试玩场", icon: "zap" },
       { to: "/showcase", label: "发布展示间", icon: "spark" },
       { to: "/export", label: "导出中心", icon: "package" },
     ],

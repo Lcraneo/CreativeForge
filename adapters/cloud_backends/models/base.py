@@ -16,7 +16,85 @@ import httpx
 from .. import config
 from ..client import cloud_client
 
-__all__ = ["BaseCloudModel", "require_api_key", "image_to_data_uri"]
+__all__ = [
+    "BaseCloudModel",
+    "require_api_key",
+    "image_to_data_uri",
+    "glb_triangles",
+    "merge_provider_kwargs",
+]
+
+
+def glb_triangles(data: bytes) -> int | None:
+    """统计 GLB 的三角面数（GF ``glb_summary`` 口径），解析失败返回 ``None``。
+
+    只读 JSON chunk 里每个 primitive 的 indices accessor count（mode 缺省或 4
+    才是三角网格），不引入第三方解析器。
+    """
+
+    import json
+    import struct
+
+    try:
+        if len(data) < 20 or data[:4] != b"glTF":
+            return None
+        chunk_length, chunk_type = struct.unpack_from("<I4s", data, 12)
+        if chunk_type != b"JSON":
+            return None
+        gltf = json.loads(data[20 : 20 + chunk_length].decode("utf-8"))
+        accessors = gltf.get("accessors") or []
+        total = 0
+        for mesh in gltf.get("meshes") or []:
+            for primitive in mesh.get("primitives") or []:
+                if primitive.get("mode", 4) != 4:
+                    continue
+                index = primitive.get("indices")
+                if not isinstance(index, int) or index >= len(accessors):
+                    return None
+                count = accessors[index].get("count")
+                if not isinstance(count, int):
+                    return None
+                total += count // 3
+        return total or None
+    except (ValueError, KeyError, struct.error, UnicodeDecodeError):
+        return None
+
+
+def png_bytes_of(image: Any) -> bytes | None:
+    """把 PIL / numpy / bytes 统一为 PNG 字节；``None`` 原样返回，其余报错。"""
+
+    if image is None:
+        return None
+    if isinstance(image, (bytes, bytearray)):
+        return bytes(image)
+    try:
+        import io
+
+        from PIL import Image  # 项目已有依赖
+
+        buffer = io.BytesIO()
+        if isinstance(image, Image.Image):
+            image.convert("RGBA").save(buffer, format="PNG")
+        else:
+            Image.fromarray(image).convert("RGBA").save(buffer, format="PNG")
+        return buffer.getvalue()
+    except Exception as error:  # noqa: BLE001 - 输入类型不可控
+        raise ValueError(
+            f"无法把 {type(image).__name__} 转成 PNG，请传 bytes 或 PIL.Image"
+        ) from error
+
+
+def merge_provider_kwargs(payload: dict, provider_kwargs: dict | None) -> dict:
+    """透传厂商专属参数的保护性合并（GF seed_audio kwargs 保护模式）：
+
+    ``None`` 不透传；payload 已有的核心字段不被意外覆盖；新增键原样追加。
+    """
+
+    for key, value in (provider_kwargs or {}).items():
+        if value is None or key in payload:
+            continue
+        payload[key] = value
+    return payload
 
 
 def require_api_key(explicit: str, env_name: str, *, who: str) -> str:

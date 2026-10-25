@@ -704,7 +704,7 @@ export interface PlaytestPreviews {
   actions: string[];
   strips?: Record<string, PlaytestStrip>;
   fps?: number;
-  source?: "rigged" | "procedural" | string;
+  source?: "rigged" | "sprite" | "procedural" | string;
   character?: PlaytestCharacter | null;
   /** 自定义动作陈列（命名空间隔离）：条带键 custom:<名称>，与内置槽位互不占用 */
   custom_actions?: PlaytestCustomAction[];

@@ -147,9 +147,17 @@ class BailianTripoModel(BaseCloudModel):
 
     @staticmethod
     def _extract_result(task: dict) -> dict:
-        """取 ``results`` 中第一条可用产物；失败条目优先报错。"""
+        """取 ``results`` 中第一条可用产物；失败条目优先报错。
 
-        results = task.get("results")
+        官方响应把结果放在 ``output.results``（与 ``task_status`` 同层），
+        部分网关/旧版本会平铺在顶层——两种形态都接受，避免主通道必失败。
+        """
+
+        results = None
+        for container in (task.get("output"), task.get("data"), task):
+            if isinstance(container, dict) and isinstance(container.get("results"), list):
+                results = container["results"]
+                break
         if isinstance(results, list):
             for item in results:
                 if not isinstance(item, dict):

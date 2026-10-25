@@ -62,6 +62,7 @@ function stageProgressPct(task?: ActionBatchTask): number {
 function EngineBadge({ engine }: { engine?: string }) {
   if (engine === "ai-video") return <Badge tone="primary">AI</Badge>;
   if (engine === "rigged") return <Badge tone="neutral">骨骼</Badge>;
+  if (engine === "sprite") return <Badge tone="neutral">整身形变</Badge>;
   if (engine === "procedural") return <Badge tone="neutral">程序化</Badge>;
   return null;
 }

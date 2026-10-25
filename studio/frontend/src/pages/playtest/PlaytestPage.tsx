@@ -220,7 +220,9 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
     return uiAction;
   }, [uiAction, meta.customActions]);
 
-  const rigged = meta.source === "rigged";
+  // rigged = 分区骨骼，sprite = 整身形变；两者都是"按角色原画变形"，
+  // 仅渲染方式不同，界面统一按角色动画展示
+  const bound = meta.source === "rigged" || meta.source === "sprite";
 
   const statusText = !selectedAssetId
     ? "未选择试玩人物"
@@ -233,11 +235,11 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
       <PageHeader
         overline="Playtest"
         title="试玩舞台"
-        description="绑定当前角色原画的骨骼动作——用方向键跑起来试一试，素材好不好，跑起来才知道"
+        description="绑定当前角色原画的动画——用方向键跑起来试一试，素材好不好，跑起来才知道"
         actions={
           <>
-            <Badge tone={rigged ? "primary" : "neutral"} icon="spark">
-              {rigged ? `角色绑定 · ${selected?.name ?? "未选择"}` : "未选择人物"}
+            <Badge tone={bound ? "primary" : "neutral"} icon="spark">
+              {bound ? `角色动画 · ${selected?.name ?? "未选择"}` : "未选择人物"}
             </Badge>
             <Button variant="secondary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
               更换人物
@@ -251,7 +253,13 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle px-3 py-2">
           <span className="text-[12px] font-medium text-ink">{selected?.name ?? "未选择人物"}</span>
           <Badge tone="neutral">
-            {rigged ? "骨骼绑定" : (meta.source ?? "procedural") === "ai-video" ? "AI 视频" : meta.source ?? "—"}
+            {bound
+              ? meta.source === "sprite"
+                ? "整身形变"
+                : "骨骼绑定"
+              : (meta.source ?? "procedural") === "ai-video"
+                ? "AI 视频"
+                : meta.source ?? "—"}
           </Badge>
           <span className="rounded-md border border-line bg-canvas px-2 py-0.5 text-[11px] text-ink-2">
             当前动作 · {actionLabel}

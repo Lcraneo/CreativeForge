@@ -1,6 +1,7 @@
-"""音频算子：对白 / 音效 → 云端语音合成 → MP3 写回 ``audio`` 槽位。
+"""音频算子：对白 / 音效 → 云端语音合成 → WAV 写回 ``audio`` 槽位。
 
 一个 wrapper 双槽位：``kind=dialogue`` 念文本，``kind=sfx`` 用描述词出音效。
+产物扩展名取自 wrapper 的 ``OUTPUT_EXT``（Seed Audio 协议为 wav）。
 """
 
 from __future__ import annotations
@@ -37,7 +38,8 @@ def generate(
         return base.record_failure(
             target, SLOT, str(getattr(model, "PROVIDER", "")), ValueError("音频内容不能为空")
         )
-    output_path = base.new_output_path(target, SLOT, "mp3", name=name or kind)
+    ext = str(getattr(model, "OUTPUT_EXT", "mp3") or "mp3").lower().lstrip(".")
+    output_path = base.new_output_path(target, SLOT, ext, name=name or kind)
     return base.run_and_record(
         model,
         target,

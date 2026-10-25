@@ -102,6 +102,10 @@ _PROVENANCE_FIELDS = {
     "cache_hit": bool,
     "credits_estimate": int,
     "cost_actual": float,
+    # GF last_call_info 口径的可选留痕（R8 导出时 provenance 整体剥离，不受影响）
+    "elapsed_sec": float,
+    "preview_url": str,
+    "triangles": int,
 }
 
 

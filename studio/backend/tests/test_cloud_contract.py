@@ -174,6 +174,39 @@ class ExtensionContractTests(unittest.TestCase):
         self.assertNotIn("provenance", view)
         self.assertIn("mesh", view)
 
+    def test_provenance_keeps_gf_caliber_fields_and_export_still_strips(self):
+        """GF last_call_info 口径字段可落 provenance；R8 导出剥离行为不变。"""
+
+        block = _block(
+            mesh=_succeeded_mesh(),
+            provenance={
+                "request_hash": "sha256:abc",
+                "created_at": "2026-10-23T00:00:00Z",
+                "cache_hit": False,
+                "credits_estimate": 20,
+                "elapsed_sec": 1.5,
+                "preview_url": "https://cdn.example.com/render.png",
+                "triangles": 12000,
+            },
+        )
+        self.assertEqual(contract.validate(block), [])
+        clean = contract.normalize(block)
+        provenance = clean["provenance"]
+        self.assertEqual(provenance["elapsed_sec"], 1.5)
+        self.assertEqual(provenance["preview_url"], "https://cdn.example.com/render.png")
+        self.assertEqual(provenance["triangles"], 12000)
+        self.assertEqual(provenance["credits_estimate"], 20)
+        # 旧字段名保持不变（R8：导出仍剥离 provenance 整体）
+        view = contract.export_view(block)
+        self.assertNotIn("provenance", view)
+
+    def test_provenance_rejects_non_numeric_elapsed(self):
+        block = _block(
+            provenance={"request_hash": "sha256:abc", "elapsed_sec": "soon"},
+        )
+        issues = contract.validate(block)
+        self.assertTrue(any("elapsed_sec" in item for item in issues))
+
     def test_invalid_block_type_reported(self):
         issues = contract.validate([1, 2])
         self.assertTrue(issues)

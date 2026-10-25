@@ -120,6 +120,16 @@ def _provenance(model, cache_key: str) -> dict:
     credits = info.get("credits")
     if isinstance(credits, (int, float)) and credits >= 0:
         provenance["credits_estimate"] = int(credits)
+    # GF last_call_info 口径的补充留痕：耗时、预览图、三角面数（可选）
+    elapsed = info.get("elapsed_sec")
+    if isinstance(elapsed, (int, float)) and elapsed >= 0:
+        provenance["elapsed_sec"] = float(elapsed)
+    preview = info.get("preview_url")
+    if isinstance(preview, str) and preview.startswith("http"):
+        provenance["preview_url"] = preview
+    triangles = info.get("triangles")
+    if isinstance(triangles, int) and not isinstance(triangles, bool) and triangles > 0:
+        provenance["triangles"] = triangles
     return provenance
 
 

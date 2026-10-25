@@ -139,6 +139,32 @@ class OperatorTests(_TempCache):
         self.assertEqual(slot["format"], "glb")
         self.assertTrue(slot["local_path"].endswith(".glb"))
 
+    def test_provenance_records_gf_caliber_fields(self):
+        """GF last_call_info 口径：elapsed_sec / preview_url / triangles 落 provenance。"""
+
+        class RichFakeModel(FakeModel):
+            def infer_and_save(self, output_path: str, **kwargs) -> str:
+                path = super().infer_and_save(output_path, **kwargs)
+                self.last_call_info.update(
+                    {
+                        "elapsed_sec": 1.5,
+                        "preview_url": "https://cdn.example.com/render.png",
+                        "triangles": 12000,
+                    }
+                )
+                return path
+
+        asset = _asset()
+        slot = object_3d.generate(asset, RichFakeModel(), prompt="a sword")
+
+        self.assertEqual(slot["status"], "succeeded")
+        provenance = contract.read_extension(asset)["provenance"]
+        self.assertEqual(provenance["request_hash"], "hash-1")
+        self.assertEqual(provenance["elapsed_sec"], 1.5)
+        self.assertEqual(provenance["preview_url"], "https://cdn.example.com/render.png")
+        self.assertEqual(provenance["triangles"], 12000)
+        self.assertEqual(provenance["credits_estimate"], 2)
+
     def test_cloud_error_class_is_preserved(self):
         asset = _asset()
         model = FakeModel(error=cloud_client.CloudAPIQuotaError("额度耗尽", provider="ark"))
@@ -300,6 +326,8 @@ class CloudRouteTests(_TempCache):
         self.assertEqual(body["status"], "succeeded")
         self.assertEqual(body["provider"], "ark")
         self.assertEqual(body["attempts"][0]["status"], "succeeded")
+        # GF 口径的可选响应字段（新增可选，不改变既有形状）
+        self.assertEqual(body["credits"], 2)
 
         served = self.client.get(f"/api/cloud/artifacts/{body['local_path']}")
         self.assertEqual(served.status_code, 200)
