@@ -19,25 +19,21 @@ const MOBILE_TABS: NavItem[] = [
   { to: "/", label: "工作台", icon: "panel" },
   { to: "/agents", label: "智能体", icon: "layers" },
   { to: "/asset", label: "资产", icon: "cube" },
-  { to: "/playtest", label: "舞台", icon: "play" },
+  { to: "/playtest", label: "试玩", icon: "play" },
+  { to: "/arcade", label: "关卡", icon: "zap" },
 ];
 
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
-  "/": { group: "创作", label: "工作台" },
-  "/workspace": { group: "创作", label: "工作台" },
-  "/agents": { group: "创作", label: "智能体" },
-  "/history": { group: "创作 · 智能体", label: "历史记录" },
-  "/batch": { group: "创作", label: "批量生产线" },
-  "/showcase": { group: "舞台", label: "发布展示间" },
-  "/playtest": { group: "舞台", label: "试玩舞台" },
+  "/": { group: "生成", label: "工作台" },
+  "/agents": { group: "生成", label: "智能体" },
+  "/history": { group: "生成 · 智能体", label: "历史记录" },
+  "/playtest": { group: "试玩", label: "试玩舞台" },
   "/versions": { group: "资产库", label: "版本控制" },
   "/asset": { group: "资产库", label: "资产检查" },
   "/design": { group: "资产库", label: "设计三视图" },
   "/animation": { group: "资产库", label: "动画工作台" },
-  "/export": { group: "舞台", label: "导出中心" },
-  "/benchmark": { group: "手记", label: "基准中心" },
-  "/technology": { group: "手记", label: "技术中心" },
-  "/settings": { group: "手记", label: "模型设置" },
+  "/export": { group: "资产库", label: "导出中心" },
+  "/settings": { group: "生成", label: "模型设置" },
 };
 
 export default function Layout() {
@@ -459,7 +455,7 @@ export default function Layout() {
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line-subtle bg-canvas/95 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line-subtle bg-canvas/95 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}

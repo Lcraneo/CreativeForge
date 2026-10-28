@@ -48,7 +48,7 @@ license: Apache License 2.0
                           游戏引擎就绪资产（Unity / Cocos / Godot）
 ```
 
-- **产品层** — `studio/`：React 18 + TypeScript + Vite 前端（工作台 / 智能体任务图 / 资产检查器 / 动画工作台 / 基准中心 / 导出中心）+ FastAPI 后端（REST + WebSocket 事件流）
+- **产品层** — `studio/`：React 18 + TypeScript + Vite 前端（工作台 / 智能体任务图 / 资产检查器 / 动画工作台 / 导出中心）+ FastAPI 后端（REST + WebSocket 事件流）
 - **智能层** — `agents/` + `agent/`：Supervisor 规划调度专家智能体，带 QA 修复轮、检查点与失败恢复
 - **技术层** — `precon/` `falign/` `gimport/`：三项自研引擎
 - **标准层** — `schemas/` + `packages/creative-core/`：CreativeAsset v1.0 统一资产协议（冻结契约）

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Phase A: 全 API 面只读/校验/边界/异常扫描（零成本，除一次文案增强 ~0.001 元）"""
-import httpx, asyncio, json, os
+import httpx, asyncio, json
 
 BASE = "http://127.0.0.1:8600"
 PASS, FAIL, DEFECTS = [], [], []
@@ -128,17 +128,8 @@ async def main():
         check("未知包 404", r.status_code == 404)
         r = await c.get("/api/exports/not-a-zip")
         check("非 zip 名 404", r.status_code == 404)
-        r = await c.post("/api/export/batch", json={"asset_ids": [aid], "engine": "cocos"})
-        ok_batch = r.status_code == 200 and os.path.isfile(os.path.join("studio/backend/exports", r.json().get("package", "x")))
-        check("批量导出 200 + 落盘", ok_batch, str(r.status_code))
 
-        # ── 9. 批量线/试玩/展示间/存储/生成文件 ──
-        r = await c.post("/api/batch", json={"goal": "测试", "count": 7})
-        check("批量 count=7 被拒", r.status_code in (400, 422), str(r.status_code))
-        r = await c.get("/api/batch/unknown-id")
-        check("未知批量任务 404", r.status_code == 404)
-        r = await c.get("/api/queue/snapshot")
-        check("队列快照 200", r.status_code == 200)
+        # ── 9. 试玩/存储/生成文件 ──
         r = await c.get("/api/playtest/previews")
         check("试玩预览列表 200", r.status_code == 200)
         r = await c.get("/api/generated/definitely-missing.png")

@@ -10,7 +10,6 @@ from fastapi import APIRouter, File, Form, HTTPException, Request, Response, Upl
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-from studio.backend.benchmark_service import DEFAULT_PATH, BenchmarkCache, source_version
 from studio.backend.idempotency import IdempotencyStore
 
 EXPORTS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "exports")
@@ -239,18 +238,6 @@ class ExportRequest(BaseModel):
     engine: str = "cocos"
 
 
-class BatchExportRequest(BaseModel):
-    asset_ids: list[str]
-    engine: str = "cocos"
-
-
-class BatchRequest(BaseModel):
-    goal: str
-    count: int = 4  # 4 / 9 / 12
-    mode: str = "seed"  # seed = 多变体 / pose = 多姿势
-    overrides: dict | None = None
-
-
 class RollbackRequest(BaseModel):
     record_ids: list[str]
 
@@ -390,7 +377,6 @@ def _enhance_context_for(asset) -> str | None:
 
 
 def build_router(runtime):
-    benchmark_cache = BenchmarkCache(DEFAULT_PATH, version=source_version())
     router = APIRouter(prefix="/api")
 
     @router.post("/tasks", status_code=202)
@@ -563,10 +549,6 @@ def build_router(runtime):
             raise HTTPException(status_code=404, detail="unknown package")
         return FileResponse(path, media_type="application/zip", filename=package_name)
 
-    @router.get("/benchmark")
-    def benchmark_report(refresh: bool = False):
-        return benchmark_cache.get(refresh=refresh)
-
     @router.get("/history")
     def list_history(
         engine: str = None,
@@ -717,8 +699,11 @@ def build_router(runtime):
 
     @router.post("/design/views")
     def generate_design_views(request: dict):
-        """基于资产的 AI 原画生成侧视/背视图（qwen-image-edit，含相似度自检）。"""
-        from studio.backend.model_service.service import generate_turnaround
+        """基于资产的 AI 原画生成三视图（严格的 canonical front gate）。"""
+        from studio.backend.model_service.service import (
+            CanonicalFrontError,
+            generate_turnaround,
+        )
 
         asset_id = request.get("asset_id") or ""
         asset = runtime.assets.get(asset_id)
@@ -731,9 +716,8 @@ def build_router(runtime):
                     break
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get(
-            "ai_image", {}
-        ).get("url")
+        source_image = asset.get("image") or (asset.get("source") or {}).get("ai_image")
+        base = (source_image or {}).get("url")
         if not base:
             raise HTTPException(
                 status_code=409,
@@ -744,7 +728,11 @@ def build_router(runtime):
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
 
-        views, failures = generate_turnaround(settings, base, front_image=asset.get("image"))
+        try:
+            views, failures = generate_turnaround(settings, base, front_image=source_image)
+        except CanonicalFrontError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+
         if not (views.get("side") or views.get("back")):
             raise HTTPException(status_code=502, detail="；".join(failures) or "generation failed")
 
@@ -2238,87 +2226,6 @@ def build_router(runtime):
         if not os.path.isfile(path):
             raise HTTPException(status_code=404, detail="3D 夹具缺失")
         return FileResponse(path, media_type="model/gltf-binary", filename="character.glb")
-
-    # ------------------------------------------------------------------
-    # P1-B 批量生成与批量导出
-    # ------------------------------------------------------------------
-
-    @router.post("/batch", status_code=202)
-    def start_batch(request: BatchRequest):
-        goal = request.goal.strip()
-        if not goal:
-            raise HTTPException(status_code=422, detail="goal is required")
-        if request.count not in (4, 9, 12):
-            raise HTTPException(status_code=422, detail="count 仅支持 4 / 9 / 12")
-        batch_id = runtime.start_batch(
-            goal, count=request.count, mode=request.mode, overrides=request.overrides
-        )
-        return {"batch_id": batch_id, "count": request.count, "mode": request.mode}
-
-    @router.get("/batch/{batch_id}")
-    def batch_status(batch_id: str):
-        snapshot = runtime.batch_snapshot(batch_id)
-        if snapshot is None:
-            raise HTTPException(status_code=404, detail="unknown batch")
-        return snapshot
-
-    @router.get("/queue/snapshot")
-    def queue_snapshot():
-        """队列中心：资产批次 + 动作批次聚合快照。
-
-        资产批次在内存（重启即清空）；动画批次/生成任务已落盘（重启后
-        running 任务标记 interrupted 终态，见 task_store）。这里合并为
-        单一视图供前端轮询；各取最近 20 条，running 计数驱动前端轮询频率。"""
-
-        asset_batches = []
-        batches = getattr(runtime, "batches", {})
-        for batch_id in sorted(
-            batches, key=lambda bid: (batches.get(bid) or {}).get("created_at", 0), reverse=True
-        )[:20]:
-            snapshot = runtime.batch_snapshot(batch_id)
-            if snapshot:
-                snapshot["kind"] = "assets"
-                asset_batches.append(snapshot)
-
-        from studio.backend.animation_service.service import (
-            _ACTION_BATCHES,
-            AnimationService,
-        )
-
-        action_batches = []
-        for batch_id in sorted(
-            _ACTION_BATCHES,
-            key=lambda bid: (_ACTION_BATCHES.get(bid) or {}).get("created_at", 0),
-            reverse=True,
-        )[:20]:
-            view = AnimationService(ANIMATION_DIR).action_batch_snapshot(batch_id)
-            if view:
-                view["kind"] = "actions"
-                action_batches.append(view)
-
-        merged = asset_batches + action_batches
-        return {
-            "running": sum(1 for batch in merged if batch.get("status") == "running"),
-            "asset_batches": asset_batches,
-            "action_batches": action_batches,
-        }
-
-    @router.post("/export/batch")
-    def export_batch(request: BatchExportRequest):
-        from studio.backend.export_service.service import ExportService
-
-        if not request.asset_ids:
-            raise HTTPException(status_code=422, detail="asset_ids 不能为空")
-        assets = []
-        for asset_id in request.asset_ids:
-            asset = _resolve_asset(runtime, asset_id)
-            if asset is not None:
-                assets.append(dict(asset))
-        if not assets:
-            raise HTTPException(status_code=404, detail="没有可导出的资产")
-        result = ExportService(EXPORTS_DIR).export_batch(assets, request.engine)
-        result.pop("path", None)
-        return result
 
     @router.post("/open-folder")
     def open_folder(request: OpenFolderRequest):

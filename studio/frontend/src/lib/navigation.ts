@@ -19,13 +19,13 @@ export interface NavGroup {
 }
 
 /**
- * 信息架构按创作旅程分章：
- * 壹·创作（从一句话到一条管线）→ 贰·资产库（每件作品都有档案）
- * → 叁·舞台（让角色登台演出）→ 肆·手记（度量、资料与调校）
+ * 信息架构按三条核心产品线分章：
+ * 壹·生成（从一句话到一条管线）→ 贰·资产库（每件作品都有档案）
+ * → 叁·试玩（让角色登台演出）
  */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: "创作",
+    label: "生成",
     numeral: "壹",
     hint: "从一句话到一条管线",
     items: [
@@ -37,7 +37,6 @@ export const NAV_GROUPS: NavGroup[] = [
         kbd: "2",
         children: [{ to: "/history", label: "历史记录", icon: "clock" }],
       },
-      { to: "/batch", label: "批量生产线", icon: "package" },
     ],
   },
   {
@@ -52,24 +51,12 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: "舞台",
+    label: "试玩",
     numeral: "叁",
     hint: "让角色登台演出",
     items: [
       { to: "/playtest", label: "试玩舞台", icon: "play" },
       { to: "/arcade", label: "关卡试玩场", icon: "zap" },
-      { to: "/showcase", label: "发布展示间", icon: "spark" },
-      { to: "/export", label: "导出中心", icon: "package" },
-    ],
-  },
-  {
-    label: "手记",
-    numeral: "肆",
-    hint: "度量、资料与调校",
-    items: [
-      { to: "/benchmark", label: "基准中心", icon: "gauge" },
-      { to: "/technology", label: "技术中心", icon: "book" },
-      { to: "/settings", label: "模型设置", icon: "terminal" },
     ],
   },
 ];

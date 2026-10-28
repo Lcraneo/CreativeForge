@@ -336,56 +336,6 @@ export interface ExportResult {
       };
 }
 
-export interface BenchmarkReport {
-  generated_at: string;
-  /** 响应附带的缓存元数据：refreshing=true 表示后台评测进行中（旧报告即时返回） */
-  cache?: { cached_at: number; refreshing: boolean };
-  dataset: { size: number; categories: string[]; animated: number };
-  precon: {
-    baseline_pixel_score: number;
-    method_pixel_score: number;
-    improvement: number;
-    baseline_colors: number;
-    method_colors: number;
-    baseline_contour: number;
-    method_contour: number;
-  };
-  falign: {
-    baseline_root_drift: number;
-    method_root_drift: number;
-    drift_reduction: number;
-    baseline_foot_sliding: number;
-    method_foot_sliding: number;
-    baseline_smoothness: number;
-    method_smoothness: number;
-    method_overall: number;
-  };
-  gimport: {
-    import_success_rate: number;
-    average_pipeline_seconds: number;
-    manual_reduction: { traditional_steps: number; gimport_steps: number; reduction: number };
-    time_comparison: {
-      traditional_minutes: number;
-      reference_seconds: number;
-      speedup: number;
-      measured_seconds: number;
-    };
-  };
-  agent: {
-    task_completion_rate: number;
-    planning_accuracy: number;
-    recovery_success_rate: number;
-    average_task_seconds: number;
-    completed: number;
-    total: number;
-  };
-  cf_score: {
-    weights: Record<string, number>;
-    components: { pixel: number; animation: number; engine: number; agent: number };
-    overall: number;
-  };
-}
-
 export interface HistoryCharacter {
   summary?: string;
   seed?: number;
@@ -564,45 +514,6 @@ export interface RollbackRecord {
   entries: RollbackEntry[];
 }
 
-/* ── P1-B 批量生成与导出 ───────────────────────────────────────── */
-
-export interface BatchTask {
-  task_id: string;
-  index: number;
-  status: string;
-  asset_id?: string | null;
-  name?: string | null;
-  image_url?: string | null;
-  overrides?: { seed?: number; action?: string };
-  scores?: Record<string, number>;
-  error?: string;
-}
-
-export interface BatchStatus {
-  id: string;
-  goal: string;
-  count: number;
-  mode: string;
-  status: string;
-  created_at: number;
-  tasks: BatchTask[];
-}
-
-export interface BatchExportResult {
-  package: string;
-  engine: string;
-  count: number;
-  size_bytes: number;
-  download_url: string;
-  assets: Array<{
-    asset_id: string;
-    name?: string | null;
-    ok: boolean;
-    error?: string;
-    validation_score?: number;
-  }>;
-}
-
 /** 角色资产包一键导出（原画 + 三视图 + 全动作 GIF + 引擎包） */
 export interface CharacterPackageResult {
   package: string;
@@ -663,13 +574,6 @@ export interface ActionBatchSnapshot {
   failed_count?: number;
   tasks: ActionBatchTask[];
   created_at?: number;
-}
-
-/** 队列中心：资产批次（内存态）+ 动画批次（已落盘，重启后 running 标记 interrupted） */
-export interface QueueSnapshot {
-  running: number;
-  asset_batches: Array<BatchStatus & { kind?: "assets" }>;
-  action_batches: Array<ActionBatchSnapshot & { kind?: "actions" }>;
 }
 
 export interface InterpretedAction {

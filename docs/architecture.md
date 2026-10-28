@@ -203,7 +203,7 @@ Modules:
 frontend (React 18 + TS + Vite)
   Workspace -> Agent Command Center (React Flow task graph)
             -> Asset Inspector (R3F 3D viewer) -> Pixel Studio (Konva)
-            -> Animation Studio -> Benchmark Center -> Export Center
+            -> Animation Studio -> Export Center
   Zustand stores + WebSocket event stream (staggered replay)
 
 backend (FastAPI)
@@ -213,7 +213,6 @@ backend (FastAPI)
                             QUALITY_REPORT | TASK_COMPLETE | ASSET_UPDATE
   GET  /api/assets/{id}      CreativeAsset
   POST /api/export           real zip engine package (download_url)
-  GET  /api/benchmark        live Phase 9 evaluation
 ```
 
 - `studio/backend/agent_runtime/runtime.py` — runs the Supervisor in a

@@ -1,5 +1,4 @@
 import type {
-  BenchmarkReport,
   CreativeAsset,
   ExportResult,
   GenerationOverrides,
@@ -13,8 +12,6 @@ import type {
   StorageConfigPublic,
   StorageTestResult,
   ActionBatchSnapshot,
-  BatchExportResult,
-  BatchStatus,
   CharacterPackageResult,
   RollbackRecord,
   TaskEvent,
@@ -73,34 +70,6 @@ export interface TaskDetail {
   asset_id: string | null;
   error: string | null;
   events: TaskEvent[];
-}
-
-/* ── OneTake 发布展示视频任务（showcase_service）── */
-export interface ShowcaseJob {
-  id: string;
-  asset_id: string | null;
-  asset_name: string | null;
-  status: "running" | "done" | "failed";
-  stage: string;
-  created_at: number;
-  duration: number;
-  error: string | null;
-  error_kind?: string;
-  verdict?: { passed: boolean | null; report_tail?: string; error?: string } | null;
-  /* 配音链路状态（showcase_service voice 阶段）：degraded=true 为纯音效降级版 */
-  voice?: {
-    status?: string;
-    degraded?: boolean;
-    error?: string;
-    model?: string;
-    voice?: string;
-    segments?: number;
-    cached?: number;
-    polished?: boolean;
-  } | null;
-  video_url?: string;
-  poster_url?: string;
-  preview_url?: string;
 }
 
 export interface StyleProfile {
@@ -457,26 +426,6 @@ export const api = {
     );
   },
 
-  /* ── OneTake 发布展示视频（External Creative Capability）── */
-  startShowcase: (assetId: string, duration?: number) =>
-    request<{ job_id: string; snapshot: ShowcaseJob }>("/api/showcase", {
-      method: "POST",
-      body: JSON.stringify({ asset_id: assetId, duration }),
-    }),
-  showcaseStatus: (jobId: string) => request<ShowcaseJob>(`/api/showcase/${jobId}`),
-  /* ── P1-B 批量生产线 ── */
-  startBatch: (goal: string, count: number, mode: string, overrides?: Record<string, unknown>) =>
-    request<{ batch_id: string; count: number; mode: string }>("/api/batch", {
-      method: "POST",
-      body: JSON.stringify({ goal, count, mode, overrides }),
-    }),
-  batchStatus: (batchId: string) => request<BatchStatus>(`/api/batch/${batchId}`),
-  queueSnapshot: () => request<import("../types").QueueSnapshot>("/api/queue/snapshot"),
-  batchExport: (assetIds: string[], engine: string) =>
-    request<BatchExportResult>("/api/export/batch", {
-      method: "POST",
-      body: JSON.stringify({ asset_ids: assetIds, engine }),
-    }),
   exportCharacterPackage: (assetId: string, engine: string) =>
     request<CharacterPackageResult>("/api/export/character-package", {
       silent: true, // 导出页保留错误并提供操作反馈，避免重复 toast
@@ -602,13 +551,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
-
-  /** 基准报告：响应含 cache.cached_at / cache.refreshing（后台刷新中）；
-   * 冷启动无缓存时后端同步评测（可能 10s+），超时放宽 */
-  benchmark: () => request<BenchmarkReport>("/api/benchmark", { timeoutMs: 120_000 }),
-  /** 手动刷新：后端立即返回旧报告（cache.refreshing=true）并后台重算 */
-  refreshBenchmark: () =>
-    request<BenchmarkReport>("/api/benchmark?refresh=1", { timeoutMs: 30_000 }),
 
   listHistory: (params: { engine?: string; q?: string; limit?: number } = {}) => {
     const search = new URLSearchParams();

@@ -15,7 +15,6 @@ import {
   Input,
   SectionTitle,
   Select,
-  Skeleton,
   Stamp,
   StatusDot,
   Textarea,
@@ -169,45 +168,6 @@ const RISE = {
   show: { opacity: 1, y: 0, transition: { duration: MOTION.base, ease: EASE_STANDARD } },
 };
 
-/** 工坊读数单卡：领域色条 + 小字标签 + 宋体展示数字，编辑物排版 */
-function ReadingCard({
-  label,
-  value,
-  unit,
-  hint,
-  domain,
-  valueClass,
-}: {
-  label: string;
-  value: string;
-  unit: string;
-  hint: string;
-  domain: "primary" | "precon" | "falign" | "gimport";
-  valueClass: string;
-}) {
-  return (
-    <Card domain={domain} bodyClassName="p-4">
-      <div className="flex flex-col">
-        <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">
-          {label}
-        </span>
-        <span
-          className={cx(
-            "tabular cf-display-num mt-1 text-[30px] leading-9",
-            valueClass,
-          )}
-        >
-          {value}
-          <small className="ml-1 font-sans text-[13px] font-semibold tracking-normal text-ink-3">
-            {unit}
-          </small>
-        </span>
-        <span className="mt-0.5 text-[11px] text-ink-3">{hint}</span>
-      </div>
-    </Card>
-  );
-}
-
 export default function Workspace() {
   const [goal, setGoal] = useState(EXAMPLES[0]);
   const [engine, setEngine] = useState("unity");
@@ -230,12 +190,6 @@ export default function Workspace() {
   const progress = useAgentStore((state) => state.progress);
   const setAsset = useAssetStore((state) => state.set);
 
-  const benchmark = useQuery({
-    queryKey: ["benchmark"],
-    queryFn: api.benchmark,
-    staleTime: 10 * 60 * 1000,
-    retry: false,
-  });
   const modelSettings = useQuery({
     queryKey: ["model-settings"],
     queryFn: api.getModelSettings,
@@ -340,7 +294,6 @@ export default function Workspace() {
     }
   }
 
-  const kpis = benchmark.data;
   const now = new Date();
   const greeting =
     now.getHours() < 5 ? "夜深了" : now.getHours() < 11 ? "早上好" : now.getHours() < 14 ? "午安" : now.getHours() < 18 ? "下午好" : "晚上好";
@@ -616,79 +569,6 @@ export default function Workspace() {
         ))}
       </nav>
 
-      {/* 工坊读数 */}
-      <motion.div variants={RISE} className="flex flex-col gap-4">
-        <SectionTitle
-          title="工坊读数"
-          description={
-            kpis
-              ? `基准数据集 ${kpis.dataset.size} 个样本 · ${new Date(kpis.generated_at).toLocaleString()} · 样本评测结果，不代表当前角色质量，GImport 为内部结构校验。`
-              : benchmark.isError
-                ? "基准报告暂不可用，仍可继续生成资产。"
-                : "正在加载基准报告，首次评测需要一些时间…"
-          }
-          action={
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => (benchmark.isError ? void benchmark.refetch() : navigate("/benchmark"))}
-            >
-              {benchmark.isError ? "重试加载" : "查看评测详情"}
-            </Button>
-          }
-        />
-        {!benchmark.isError && (
-          <div className="grid grid-cols-2 gap-5 xl:grid-cols-4">
-            {kpis ? (
-              <>
-                <ReadingCard
-                  label="CF Score 综合评分"
-                  value={(kpis.cf_score.overall * 100).toFixed(1)}
-                  unit="%"
-                  hint="权重 pixel .30 / anim .30 / engine .25 / agent .15"
-                  domain="primary"
-                  valueClass="text-ember"
-                />
-                <ReadingCard
-                  label="PReCon 像素一致性"
-                  value={String(Math.round(kpis.precon.method_pixel_score * 100))}
-                  unit="%"
-                  hint={`baseline ${Math.round(kpis.precon.baseline_pixel_score * 100)}% · +${(kpis.precon.improvement * 100).toFixed(1)}%`}
-                  domain="precon"
-                  valueClass="text-precon"
-                />
-                <ReadingCard
-                  label="FAlign 根漂移"
-                  value={kpis.falign.method_root_drift.toFixed(2)}
-                  unit="px/f"
-                  hint={`基线 ${kpis.falign.baseline_root_drift.toFixed(2)} px/f`}
-                  domain="falign"
-                  valueClass="text-falign"
-                />
-                <ReadingCard
-                  label="GImport 结构校验通过率"
-                  value={String(Math.round(kpis.gimport.import_success_rate * 100))}
-                  unit="%"
-                  hint={`管线实测 ${kpis.gimport.average_pipeline_seconds.toFixed(2)} 秒 · 不含编辑器导入`}
-                  domain="gimport"
-                  valueClass="text-gimport"
-                />
-              </>
-            ) : (
-              Array.from({ length: 4 }, (_, index) => (
-                <Card key={index} bodyClassName="p-4">
-                  <div className="flex flex-col gap-2">
-                    <Skeleton className="h-3 w-24" />
-                    <Skeleton className="h-9 w-20" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
-        )}
-      </motion.div>
-
       {/* 炉中三匠：三段领域智能体 */}
       <motion.div variants={RISE} className="flex flex-col gap-4">
         <SectionTitle
@@ -734,16 +614,6 @@ export default function Workspace() {
                   <span className="text-[15px] font-semibold">{tech.name}</span>
                 </div>
                 <p className="mt-2.5 text-xs leading-[18px] text-ink-3 [text-wrap:pretty]">{tech.text}</p>
-                <button
-                  onClick={() => navigate("/technology")}
-                  className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary transition-opacity hover:opacity-80"
-                >
-                  查看技术细节
-                  <Icon
-                    name="chevron"
-                    className="h-3.5 w-3.5 transition-transform duration-(--motion-fast) ease-standard group-hover:translate-x-0.5"
-                  />
-                </button>
               </div>
             ))}
           </div>

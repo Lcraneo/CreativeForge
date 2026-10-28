@@ -10,10 +10,8 @@ built-in deterministic pipeline (``MODEL_FALLBACK`` event).
 """
 
 import logging
-import random
 import threading
 import time
-import uuid
 
 from agent.generation.external import build_image_prompt
 from agent.generation.spec import apply_overrides, parse_prompt
@@ -45,7 +43,6 @@ class AgentRuntime:
         self.history = history or HistoryStore(DEFAULT_HISTORY_PATH)
         self.model_settings = model_settings or ModelSettingsStore()
         self._supervisor = supervisor or SupervisorAgent()
-        self.batches = {}
 
     def start_task(self, goal, overrides=None, turbo=False, asset=None):
         task_id = self.tasks.create(goal)
@@ -57,102 +54,6 @@ class AgentRuntime:
         )
         thread.start()
         return task_id
-
-    # -- batch production line (P1-B) --------------------------------------
-
-    def start_batch(self, goal, count=4, mode="seed", overrides=None):
-        """批量生成：一个后台线程串行跑 count 个任务（避免并发打爆图像
-        API 限流），每个任务通过 overrides 注入不同 seed（多变体）或不同
-        action（多姿势）。批次状态聚合在 self.batches 供前端轮询。"""
-
-        count = max(2, min(12, int(count)))
-        mode = "pose" if mode == "pose" else "seed"
-        batch_id = uuid.uuid4().hex[:8]
-        self.batches[batch_id] = {
-            "id": batch_id,
-            "goal": goal,
-            "count": count,
-            "mode": mode,
-            "status": "running",
-            "created_at": time.time(),
-            "tasks": [],
-        }
-        thread = threading.Thread(
-            target=self._run_batch,
-            args=(batch_id, goal, count, mode, overrides),
-            name="creativeforge-batch-{}".format(batch_id),
-            daemon=True,
-        )
-        thread.start()
-        return batch_id
-
-    def _run_batch(self, batch_id, goal, count, mode, overrides):
-        """批量执行：有界并发（默认 3 工位）——吞吐约为串行的 3 倍，同时
-        不打爆图像 API 限流；结果按提交顺序写回，前端展示顺序稳定。"""
-
-        from concurrent.futures import ThreadPoolExecutor
-
-        batch = self.batches.get(batch_id) or {}
-        actions = ["idle", "walk", "run", "attack", "jump"]
-        base_seed = random.randint(10**8, 10**9 - 1)
-
-        jobs = []
-        for index in range(count):
-            task_overrides = dict(overrides or {})
-            if mode == "seed":
-                task_overrides["seed"] = (base_seed + index * 7919) % (10**9)
-            else:
-                task_overrides["action"] = actions[index % len(actions)]
-            task_id = self.tasks.create(goal)
-            entry = {
-                "task_id": task_id,
-                "index": index + 1,
-                "overrides": {
-                    key: task_overrides.get(key)
-                    for key in ("seed", "action")
-                    if task_overrides.get(key)
-                },
-            }
-            batch.setdefault("tasks", []).append(entry)
-            jobs.append((task_id, task_overrides, entry))
-
-        def execute(job):
-            task_id, task_overrides, entry = job
-            try:
-                self._run(task_id, goal, task_overrides)
-                task = self.tasks.get(task_id) or {}
-                result = task.get("result") or {}
-                asset = result.get("asset") or {}
-                entry["asset_id"] = asset.get("id")
-                entry["name"] = asset.get("name")
-                entry["status"] = task.get("status", "done")
-                entry["image_url"] = (asset.get("image") or {}).get("url")
-                entry["scores"] = ((asset.get("quality") or {}).get("report") or {}).get(
-                    "scores"
-                ) or {}
-            except Exception as error:  # noqa: BLE001 - one failure must not kill the batch
-                entry["status"] = "failed"
-                entry["error"] = str(error)
-
-        workers = min(3, max(1, count))
-        with ThreadPoolExecutor(max_workers=workers, thread_name_prefix="cf-batch") as pool:
-            list(pool.map(execute, jobs))
-        batch["status"] = "done"
-
-    def batch_snapshot(self, batch_id):
-        batch = self.batches.get(batch_id)
-        if not batch:
-            return None
-        view = dict(batch)
-        view["tasks"] = [
-            dict(
-                entry,
-                status=entry.get("status")
-                or ((self.tasks.get(entry.get("task_id")) or {}).get("status") or "running"),
-            )
-            for entry in batch.get("tasks", [])
-        ]
-        return view
 
     def _run(self, task_id, goal, overrides=None, turbo=False, asset=None):
         started = time.time()
