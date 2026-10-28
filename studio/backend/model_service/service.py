@@ -1203,6 +1203,25 @@ TURNAROUND_REINFORCE = {
     + "。注意：这是一次视角变换，必须生成全新的背面构图，任何面部特征都不允许出现。",
 }
 
+# canonical front gate：当原画不是可靠的正面单人全身图时，先把原画编辑成
+# 一张标准正面基准图，side / back 只能以这张 canonical_front 为输入图派生。
+CANONICAL_FRONT_PROMPT = (
+    "把图中的角色改画成一张标准的正交正面全身图：单人、全身、正对镜头；"
+    "双眼、面部、胸前服装完整可见；双臂自然下垂，双脚完整露出并朝向镜头；"
+    "身体左右对称，中性站姿；纯白背景，无文字、无边框、无场景、无第二人物；"
+    "保持原画的角色身份、发型、发色、服装、配色、武器和身体比例不变；"
+    "正交正视图，禁止三分之四侧脸、侧身、回头和背面"
+)
+
+CANONICAL_FRONT_REINFORCE = CANONICAL_FRONT_PROMPT + (
+    "。注意：这是视角校正，必须生成全新的正面构图，"
+    "任何侧脸、侧身、背面或非正对镜头的构图都不允许出现。"
+)
+
+
+class CanonicalFrontError(RuntimeError):
+    """canonical front gate 失败：无法建立可靠的正面基准图。"""
+
 
 class ImageEditProvider:
     """Image edit for the turnaround views (side / back of the same character).
@@ -1370,20 +1389,150 @@ def _near_identical(path_a, path_b, threshold=0.03):
         return False, None
 
 
-def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
-    """Derives the side / back views from the base artwork with a self-check:
-    the edit models sometimes echo the input, so each result is compared with
-    the front image and regenerated once with a reinforced instruction when
-    it comes back near-identical.
+def _source_meta(front_image, base_url):
+    """把调用方传入的原画引用归一为 {file, url, model}。"""
+    meta = front_image if isinstance(front_image, dict) else {}
+    return {
+        "file": meta.get("file"),
+        "url": meta.get("url") or base_url,
+        "model": meta.get("model"),
+    }
 
-    Returns ``(views, failures)`` — ``views`` always carries ``front``;
-    a view that failed stays absent (the UI keeps its placeholder).
+
+def _image_b64(meta):
+    """读取本地生成图并返回纯 base64；文件不可读时返回 None。"""
+    path = safe_generated_path((meta or {}).get("file")) if isinstance(meta, dict) else None
+    if not path:
+        return None
+    try:
+        with open(path, "rb") as handle:
+            return base64.b64encode(handle.read()).decode("ascii")
+    except OSError:
+        return None
+
+
+def _parse_view_classification(text):
+    """解析 qwen-vl-plus 的视角判断 JSON；任何异常都退化为 unknown（不阻塞）。"""
+    data = {}
+    cleaned = (text or "").strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:]
+        cleaned = cleaned.strip()
+    start = cleaned.find("{")
+    end = cleaned.rfind("}")
+    if start != -1 and end > start:
+        try:
+            data = json.loads(cleaned[start : end + 1])
+        except (ValueError, TypeError):
+            data = {}
+    view = str(data.get("view", "")).strip().lower()
+    if view not in ("front", "side", "back", "unknown"):
+        view = "unknown"
+    try:
+        confidence = max(0.0, min(1.0, float(data.get("confidence", 0))))
+    except (TypeError, ValueError):
+        confidence = 0.0
+    return {
+        "view": view,
+        "confidence": confidence,
+        "single_person": bool(data.get("single_person", False)),
+        "full_body": bool(data.get("full_body", False)),
+    }
+
+
+def _classify_character_view(settings, image_meta):
+    """调用 qwen-vl-plus 判断原画视角；判断失败按 unknown 处理，不阻塞任务。"""
+    b64 = _image_b64(image_meta)
+    if not b64:
+        return {"view": "unknown", "confidence": 0.0, "single_person": False, "full_body": False}
+    system = "你是游戏角色立绘审查器。看图后只输出一个 JSON 对象，不要输出任何解释或多余文字。"
+    user = (
+        "判断这张角色图的视角与构图，只输出："
+        '{"view":"front|side|back|unknown","confidence":0到1的小数,'
+        '"single_person":true或false,"full_body":true或false}\n'
+        "view 取值：正对镜头为 front，正左侧面为 side，正后方背面为 back，"
+        "无法判断为 unknown；confidence 为可信度（0-1）；"
+        "single_person 表示画面是否只有一个人物；"
+        "full_body 表示人物是否头到脚全身完整入画、无裁切。"
+    )
+    try:
+        response = VisionChatProvider(settings).chat(system, user, b64, temperature=0.0)
+        return _parse_view_classification(response.get("content", ""))
+    except Exception:  # noqa: BLE001 - 判定失败视作 unknown
+        return {"view": "unknown", "confidence": 0.0, "single_person": False, "full_body": False}
+
+
+def _edit_front(settings, source_image, reinforce=False):
+    """把原画编辑为 candidate canonical_front。"""
+    editor = ImageEditProvider(settings)
+    prompt = CANONICAL_FRONT_REINFORCE if reinforce else CANONICAL_FRONT_PROMPT
+    result = editor.edit((source_image or {}).get("url"), prompt)
+    result["view"] = "front"
+    result["reused"] = False
+    return result
+
+
+def normalize_front(settings, source_image=None):
+    """canonical front gate 第一步：原画已是可靠的正面单人全身图时直接复用，
+    否则先把原画编辑成一张标准正面图。"""
+    source = source_image or {}
+    classification = _classify_character_view(settings, source)
+    if (
+        classification.get("view") == "front"
+        and classification.get("confidence", 0) >= 0.75
+        and classification.get("single_person")
+        and classification.get("full_body")
+    ):
+        return {
+            "file": source.get("file"),
+            "url": source.get("url"),
+            "model": source.get("model"),
+            "view": "front",
+            "reused": True,
+        }
+    return _edit_front(settings, source, reinforce=False)
+
+
+def validate_front(settings, front_image=None):
+    """canonical front gate 第二步：再次确认正面基准可靠。"""
+    classification = _classify_character_view(settings, front_image)
+    return (
+        classification.get("view") == "front"
+        and classification.get("confidence", 0) >= 0.75
+    )
+
+
+def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
+    """严格的 canonical front gate：
+
+    1. normalize_front：原画已是可靠的正面单人全身图时直接复用，否则先把原画
+       编辑成标准正面图 canonical_front；
+    2. validate_front：canonical_front 必须通过正面验证，失败时用强化指令重试
+       一次，仍失败则终止三视图（不生成 side / back）；
+    3. side / back 只能以 canonical_front 为输入图，各自独立请求生成。
+
+    Returns ``(views, failures)`` — ``views`` 始终含 ``front``（canonical_front）；
+    失败的侧/背视图缺席（UI 保留占位）。
     """
 
     editor = ImageEditProvider(settings)
-    front_path = safe_generated_path((front_image or {}).get("file"))
-    views = {"front": {"url": base_url, "model": (front_image or {}).get("model")}}
+    source_image = _source_meta(front_image, base_url)
+
+    canonical_front = normalize_front(settings, source_image)
+    if not validate_front(settings, canonical_front):
+        try:
+            canonical_front = _edit_front(settings, source_image, reinforce=True)
+        except Exception:  # noqa: BLE001 - 强化重试同样失败时终止
+            canonical_front = None
+        if canonical_front is None or not validate_front(settings, canonical_front):
+            raise CanonicalFrontError("无法建立可靠的正面基准图，未生成侧视和背视")
+
+    views = {"front": canonical_front}
     failures = []
+    front_url = canonical_front.get("url") or source_image.get("url")
+    front_path = safe_generated_path(canonical_front.get("file"))
 
     for view, instruction in TURNAROUND_PROMPTS.items():
         result = None
@@ -1394,7 +1543,7 @@ def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_
                 break
             try:
                 prompt = TURNAROUND_REINFORCE[view] if attempt else instruction
-                result = editor.edit(base_url, prompt)
+                result = editor.edit(front_url, prompt)
             except Exception as error:  # noqa: BLE001 - retry once on any error
                 result = None
                 reason = str(error)
