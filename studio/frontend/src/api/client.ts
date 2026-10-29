@@ -457,15 +457,17 @@ export const api = {
     }),
 
   generateDesignViews: (assetId: string) =>
-    // 三视图只允许手动触发；单侧生图可能耗时数分钟，放宽到 5 分钟
-    request<{ design_views: CreativeAsset["design_views"]; failures?: string[] }>(
-      "/api/design/views",
-      {
-        method: "POST",
-        body: JSON.stringify({ asset_id: assetId }),
-        timeoutMs: 300_000,
-      },
-    ),
+    // 三视图只允许手动触发；双栏生图可能耗时数分钟，放宽到 5 分钟
+    request<{
+      design_views: CreativeAsset["design_views"];
+      failures?: string[];
+      model?: string;
+      status?: string;
+    }>("/api/design/views", {
+      method: "POST",
+      body: JSON.stringify({ asset_id: assetId }),
+      timeoutMs: 300_000,
+    }),
 
   latestAsset: (options?: { signal?: AbortSignal }) =>
     // 后端已经解析持久化历史；404 表示暂无资产，其余错误由页面提供重试。

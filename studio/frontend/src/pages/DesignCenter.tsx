@@ -33,7 +33,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const navigate = useNavigate();
   const [pose, setPose] = useState<ViewId>("front");
   const [generating, setGenerating] = useState(false);
-  const [viewFailures, setViewFailures] = useState<Record<string, string>>({});
+  const [viewError, setViewError] = useState<string | null>(null);
   const [restyleStyle, setRestyleStyle] = useState("anime");
   const [restyleBusy, setRestyleBusy] = useState(false);
   const [cutoutBusy, setCutoutBusy] = useState(false);
@@ -61,6 +61,8 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const spec = asset.character;
   const palette = asset.pixel?.palette.colors;
   const views = asset.design_views;
+  const viewsReady = Boolean(views?.side?.url && views?.back?.url);
+  const viewModel = views?.side?.model ?? views?.back?.model ?? "qwen-image-2.1-turbo";
   const chips = [
     spec.gender_label,
     spec.class_label,
@@ -77,34 +79,25 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   async function generateViews() {
     if (!asset || generating) return;
     setGenerating(true);
-    setViewFailures({});
+    setViewError(null);
     try {
       const payload = await api.generateDesignViews(asset.id);
-      // 部分成功也必须保留上一轮的视角，不能整组覆盖
-      patchAsset(asset.id, {
-        design_views: { ...(asset.design_views ?? {}), ...(payload.design_views ?? {}) },
-      });
-      const failures = parseViewFailures(payload.failures ?? []);
-      if (Object.keys(failures).length > 0) {
-        setViewFailures(failures);
-        // 部分失败不能报成功：明确失败侧与原因，成功侧仍展示真实图片
-        toast({
-          tone: "danger",
-          title: "部分三视图生成失败",
-          description: Object.entries(failures)
-            .map(([view, reason]) => `${view === "side" ? "侧面" : "背面"}：${reason}`)
-            .join("；")
-            .slice(0, 200),
-        });
-      } else {
-        toast({
-          tone: "success",
-          title: "AI 三视图已生成",
-          description: "基于阿里云图像编辑模型，与原画同源",
-        });
+      const nextViews = payload.design_views ?? {};
+      if (!nextViews.side?.url || !nextViews.back?.url) {
+        // 后端只有 side / back 全部通过校验才返回成功；这里再兜一层
+        throw new Error("side / back 未完整生成，已保留上一版三视图");
       }
+      patchAsset(asset.id, { design_views: nextViews });
+      toast({
+        tone: "success",
+        title: "三视图已生成",
+        description: `${payload.model ?? "qwen-image-2.1-turbo"} · side / back 已通过校验`,
+      });
     } catch (cause) {
-      toast({ tone: "danger", title: "三视图生成失败", description: String(cause).slice(0, 200) });
+      // 失败不 patchAsset：上一版三视图保持原样
+      const reason = (cause instanceof Error ? cause.message : String(cause)).slice(0, 300);
+      setViewError(reason);
+      toast({ tone: "danger", title: "三视图生成失败", description: reason.slice(0, 200) });
     } finally {
       setGenerating(false);
     }
@@ -164,6 +157,11 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             <Badge tone="primary" icon="spark">
               seed {spec.seed}
             </Badge>
+            {viewsReady && (
+              <Badge tone="neutral" icon="spark">
+                {viewModel}
+              </Badge>
+            )}
             {aiImageAvailable(asset) && (
               <Button
                 variant="ember"
@@ -172,7 +170,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                 disabled={generating}
                 onClick={generateViews}
               >
-                {views?.side || views?.back ? "重新生成三视图" : "生成 AI 三视图"}
+                {generating ? "生成中…" : viewsReady ? "重新生成三视图" : "生成三视图"}
               </Button>
             )}
           </>
@@ -202,7 +200,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {(["front", "side", "back"] as const).map((view) => {
               const url = viewUrl(view);
-              const failure = view === "front" ? undefined : viewFailures[view];
               return (
                 <button
                   key={view}
@@ -237,25 +234,28 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                   >
                     {url
                       ? VIEW_CAPTION[view]
-                      : failure
-                        ? `${view === "side" ? "侧面" : "背面"}生成失败：${failure}`
-                        : view === "front"
-                          ? "未生成 AI 原画"
-                          : "未生成 · 点击生成三视图"}
+                      : view === "front"
+                        ? "未生成 AI 原画"
+                        : "未生成 · 点击生成三视图"}
                   </span>
                   {!url && <span className="text-[10px] text-ink-4">示意图 · 非 AI 结果</span>}
                 </button>
               );
             })}
           </div>
-          <p className="mt-3 text-[11px] text-ink-4">
+          <p
+            className={cx(
+              "mt-3 text-[11px]",
+              viewError ? "text-danger" : "text-ink-4",
+            )}
+          >
             {generating
-              ? "正在生成侧 / 背视图，请勿关闭页面…"
-              : Object.keys(viewFailures).length > 0
-                ? "部分视角生成失败：成功侧已保存，失败侧可再次点击按钮重试。"
-                : views?.side || views?.back
-                  ? "三视图由阿里云图像编辑模型基于 AI 原画生成，与资产同源。"
-                  : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成 AI 三视图」手动触发生成。"}
+              ? `正在调用 ${viewModel} 生成 side / back 双栏图，请勿关闭页面…`
+              : viewError
+                ? `三视图生成失败：${viewError}（已保留上一版三视图）`
+                : viewsReady
+                  ? `三视图由 ${viewModel} 基于 AI 原画一次生成双栏图后本地裁切，与资产同源。`
+                  : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成三视图」手动触发生成。"}
           </p>
         </Card>
 
@@ -420,18 +420,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
       </div>
     </div>
   );
-}
-
-/** 解析后端形如 ["side: 输出与原图几乎一致…"] 的失败列表。 */
-function parseViewFailures(failures: string[]): Record<string, string> {
-  const parsed: Record<string, string> = {};
-  for (const item of failures) {
-    const index = item.indexOf(":");
-    const view = index === -1 ? "" : item.slice(0, index).trim();
-    if (view !== "side" && view !== "back") continue;
-    parsed[view] = (index === -1 ? item : item.slice(index + 1)).trim() || "未知原因";
-  }
-  return parsed;
 }
 
 function aiImageAvailable(asset: { image?: { url?: string } | null }): boolean {

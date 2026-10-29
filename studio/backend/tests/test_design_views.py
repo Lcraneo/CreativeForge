@@ -1,15 +1,15 @@
-"""三视图手动生成回归（离线）：front 即角色原画，side / back 独立派生。
+"""三视图手动生成回归（离线）：front 即角色原画，side / back 来自一次双栏生成。
 
 固化的契约：
 
 1. 三视图流程不做正面视角识别，不调用任何 VLM / qwen-vl-plus；
 2. front 严格等于资产原画（file / url / model）；
-3. side / back 均以同一张原画为输入，互不依赖；
-4. 原画缺失或不可读时返回 409（该资产没有可用的 AI 原画）；
-5. side 成功、back 失败时保留 side（反之亦然），两侧都失败不写假数据；
-6. 角色生成阶段不自动生成三视图；
-7. 角色重新生成后旧 design_views 被清除；
-8. 角色原画 prompt 追加完整全身构图约束并移除冲突视角词。
+3. 以原画为参考，一次调用 qwen-image-2.1-turbo 生成 side + back 双栏图；
+4. qwen 是三视图唯一模型：失败直接抛真实错误，绝不回退 wanx2.1-imageedit；
+5. 双栏图按白色间隔（兜底 50%）裁成 side / back 两个独立本地文件；
+6. side / back 任一与 front 或彼此近乎重复、空白、尺寸过小即整体失败；
+7. 失败时保留旧 design_views，不写入本次结果；
+8. 角色生成阶段不自动生成三视图；角色重新生成后旧 design_views 被清除。
 
 全部走 mock，不访问网络与真实模型。
 运行：``python -m unittest studio.backend.tests.test_design_views -v``
@@ -22,43 +22,108 @@ from unittest import mock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from PIL import Image, ImageDraw
 
 from studio.backend.model_service import service as svc
 
 SOURCE_FILE = "source.png"
 SOURCE_URL = "http://source/src.png"
-SIDE_URL = "http://side/side.png"
-BACK_URL = "http://back/back.png"
+SHEET_FILE = "sheet.png"
+TURNAROUND_MODEL = "qwen-image-2.1-turbo"
 MISSING_ART = "该资产没有可用的 AI 原画"
 
 
-def _side_result():
-    return {"file": "side.png", "url": SIDE_URL, "model": "edit"}
+def _draw_front(path):
+    """正面原画：竖椭圆（与 side / back 的条形轮廓明显不同）。"""
+
+    image = Image.new("L", (256, 512), 255)
+    ImageDraw.Draw(image).ellipse((58, 70, 198, 440), fill=0)
+    image.save(path)
 
 
-def _back_result():
-    return {"file": "back.png", "url": BACK_URL, "model": "edit"}
+def _draw_bar_front(path):
+    """条形原画：与「左栏复刻原画」的双栏图几乎一致，用于重复检测。"""
+
+    image = Image.new("L", (256, 256), 255)
+    ImageDraw.Draw(image).rectangle((90, 30, 150, 220), fill=0)
+    image.save(path)
+
+
+def _write_sheet(path, left_box, right_box):
+    """双栏设定图：512×256，中间留有白色间隔，左右栏用给定色块区分。"""
+
+    image = Image.new("L", (512, 256), 255)
+    draw = ImageDraw.Draw(image)
+    draw.rectangle(left_box, fill=0)
+    draw.rectangle(right_box, fill=0)
+    image.save(path)
+
+
+def _write_distinct_sheet(path):
+    # 左栏竖条（side）、右栏横条（back），互不相似，也不像竖椭圆原画
+    _write_sheet(path, (90, 30, 150, 220), (316, 180, 456, 230))
+
+
+def _write_side_duplicates_front_sheet(path):
+    # 左栏与原画同构；右栏仍是横条
+    _write_sheet(path, (90, 30, 150, 220), (316, 180, 456, 230))
+
+
+def _write_views_duplicate_sheet(path):
+    # 两栏同构 → side / back 彼此近乎重复
+    _write_sheet(path, (90, 30, 150, 220), (340, 30, 400, 220))
 
 
 class _Editor:
-    """记录每次 edit 的 (base_image_url, instruction)，并按下标返回结果。"""
+    """记录每次 edit 的参数，并返回给定的双栏结果。"""
 
-    def __init__(self, results=None, error=None):
-        self.results = results or []
+    def __init__(self, result=None, error=None):
+        self.result = result or {
+            "file": SHEET_FILE,
+            "url": "http://sheet/sheet.png",
+            "model": TURNAROUND_MODEL,
+        }
         self.error = error
         self.calls = []
-        self._index = 0
 
-    def edit(self, base_image_url, instruction, poll_timeout=180.0):
-        self.calls.append((base_image_url, instruction))
+    def edit(self, base_image_url, instruction, poll_timeout=180.0, allow_wanx_fallback=True):
+        self.calls.append(
+            {
+                "url": base_image_url,
+                "instruction": instruction,
+                "allow_wanx_fallback": allow_wanx_fallback,
+            }
+        )
         if self.error:
-            raise RuntimeError(self.error)
-        result = dict(self.results[min(self._index, len(self.results) - 1)])
-        self._index += 1
-        return result
+            raise self.error
+        return dict(self.result)
 
 
 class TurnaroundServiceTests(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.tmp = self._tmp.name
+        self.source_path = os.path.join(self.tmp, SOURCE_FILE)
+        self.sheet_path = os.path.join(self.tmp, SHEET_FILE)
+        _draw_front(self.source_path)
+        _write_distinct_sheet(self.sheet_path)
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def _run(self, editor):
+        vision = mock.Mock(side_effect=AssertionError("vision model must not be called"))
+        with mock.patch.object(svc, "ImageEditProvider", return_value=editor), \
+                mock.patch.object(svc, "VisionChatProvider", vision), \
+                mock.patch.object(svc, "GENERATED_DIR", self.tmp):
+            result = svc.generate_turnaround(
+                {},
+                SOURCE_URL,
+                front_image={"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen"},
+            )
+        vision.assert_not_called()
+        return result
+
     def test_no_view_classifier_remains(self):
         # 正面识别链路（VLM / canonical front gate）必须整体移除
         for name in (
@@ -70,52 +135,69 @@ class TurnaroundServiceTests(unittest.TestCase):
         ):
             self.assertFalse(hasattr(svc, name), name)
 
-    def test_front_is_source_and_side_back_use_same_input(self):
-        editor = _Editor([_side_result(), _back_result()])
-        vision = mock.Mock(side_effect=AssertionError("vision model must not be called"))
-        with mock.patch.object(svc, "ImageEditProvider", return_value=editor), \
-                mock.patch.object(svc, "VisionChatProvider", vision), \
-                mock.patch.object(svc, "_near_identical", return_value=(False, None)):
-            views, failures = svc.generate_turnaround(
-                {},
-                SOURCE_URL,
-                front_image={"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen"},
-            )
+    def test_single_qwen_call_crops_two_distinct_files(self):
+        editor = _Editor()
+        views, failures = self._run(editor)
+        # 只调用一次 qwen，且明确禁用 Wanx 兜底
+        self.assertEqual(len(editor.calls), 1)
+        self.assertEqual(editor.calls[0]["url"], SOURCE_URL)
+        self.assertFalse(editor.calls[0]["allow_wanx_fallback"])
+        self.assertIn("双栏", editor.calls[0]["instruction"])
+
         self.assertEqual(
             views["front"],
             {"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen", "view": "front"},
         )
-        vision.assert_not_called()
-        # side / back 都以同一张原画为输入，各一次独立请求
-        self.assertEqual([call[0] for call in editor.calls], [SOURCE_URL, SOURCE_URL])
-        self.assertNotIn("side", editor.calls[1][1])
+        side, back = views["side"], views["back"]
+        self.assertNotEqual(side["file"], back["file"])
+        for view in (side, back):
+            path = os.path.join(self.tmp, view["file"])
+            self.assertTrue(os.path.isfile(path))
+            with Image.open(path) as image:
+                self.assertGreaterEqual(image.size[0], svc.TURNAROUND_VIEW_MIN_SIDE)
+                self.assertGreaterEqual(image.size[1], svc.TURNAROUND_VIEW_MIN_SIDE)
+        self.assertEqual(side["source"], "qwen-turnaround-sheet")
+        self.assertEqual(side["sheet_file"], SHEET_FILE)
+        self.assertEqual(side["model"], TURNAROUND_MODEL)
+        self.assertEqual(back["model"], TURNAROUND_MODEL)
+        self.assertEqual(side["view"], "side")
+        self.assertEqual(back["view"], "back")
+        self.assertEqual(len(side["bbox"]), 4)
+        self.assertEqual(len(back["bbox"]), 4)
+        self.assertEqual(side["bbox"][2], back["bbox"][0])  # 共用同一条裁切线
         self.assertEqual(failures, [])
 
-    def test_side_success_back_failure_keeps_side(self):
-        editor = _Editor([_side_result()])
+    def test_qwen_failure_propagates_real_error(self):
+        editor = _Editor(error=RuntimeError(TURNAROUND_MODEL + " 调用失败：boom"))
+        with self.assertRaises(RuntimeError) as caught:
+            self._run(editor)
+        self.assertIn(TURNAROUND_MODEL, str(caught.exception))
+        self.assertIn("boom", str(caught.exception))
 
-        def edit(base_image_url, instruction, poll_timeout=180.0):
-            editor.calls.append((base_image_url, instruction))
-            if "正后方" in instruction:
-                raise RuntimeError("back failed")
-            return _side_result()
+    def test_side_duplicating_front_fails(self):
+        _draw_bar_front(self.source_path)
+        self.sheet_path = os.path.join(self.tmp, SHEET_FILE)
+        _write_side_duplicates_front_sheet(self.sheet_path)
+        editor = _Editor()
+        with self.assertRaises(svc.TurnaroundError) as caught:
+            self._run(editor)
+        message = str(caught.exception)
+        self.assertIn("side", message)
+        self.assertIn("原画", message)
+        # 失败不留错误结果
+        leftovers = [n for n in os.listdir(self.tmp) if n.startswith("turnaround_")]
+        self.assertEqual(leftovers, [])
 
-        editor.edit = edit
-        with mock.patch.object(svc, "ImageEditProvider", return_value=editor), \
-                mock.patch.object(svc, "_near_identical", return_value=(False, None)):
-            views, failures = svc.generate_turnaround(
-                {},
-                SOURCE_URL,
-                front_image={"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen"},
-            )
-        self.assertEqual(views["side"]["url"], SIDE_URL)
-        self.assertNotIn("back", views)
-        self.assertEqual(len(failures), 1)
-        self.assertIn("back", failures[0])
+    def test_side_and_back_duplicate_each_other_fails(self):
+        _write_views_duplicate_sheet(self.sheet_path)
+        editor = _Editor()
+        with self.assertRaises(svc.TurnaroundError) as caught:
+            self._run(editor)
+        message = str(caught.exception)
+        self.assertIn("back", message)
+        self.assertIn("侧面", message)
 
     def test_near_identical_uses_pixel_and_dhash(self):
-        from PIL import Image, ImageDraw
-
         with tempfile.TemporaryDirectory() as tmp:
             paths = []
             for name, box in (
@@ -134,18 +216,56 @@ class TurnaroundServiceTests(unittest.TestCase):
             self.assertFalse(changed)
             self.assertIn("dHash", detail)
 
-    def test_both_views_failed_returns_front_only(self):
-        editor = _Editor(error="boom")
-        with mock.patch.object(svc, "ImageEditProvider", return_value=editor):
-            views, failures = svc.generate_turnaround(
+    def test_turnaround_forces_turbo_edit_model(self):
+        seen = {}
+
+        def factory(settings):
+            seen.update(settings)
+            return _Editor()
+
+        with mock.patch.object(svc, "ImageEditProvider", side_effect=factory), \
+                mock.patch.object(svc, "GENERATED_DIR", self.tmp):
+            svc.generate_turnaround(
                 {},
                 SOURCE_URL,
                 front_image={"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen"},
             )
-        self.assertEqual(list(views), ["front"])
-        self.assertEqual(len(failures), 2)
-        self.assertIn("side", failures[0])
-        self.assertIn("back", failures[1])
+        self.assertEqual(seen["edit_model"], TURNAROUND_MODEL)
+
+    def test_other_edit_chains_keep_default_model(self):
+        # 只在三视图里指定 turbo；风格迁移/抠图/发层仍走原有默认模型
+        self.assertEqual(svc.ImageEditProvider.QWEN_EDIT_MODEL, "qwen-image-edit")
+
+
+class ImageEditProviderFallbackTests(unittest.TestCase):
+    def test_disabled_fallback_never_calls_wanx(self):
+        settings = {"api_key": "k", "edit_model": TURNAROUND_MODEL}
+        provider = svc.ImageEditProvider(settings)
+        with mock.patch.object(
+            svc.ImageEditProvider, "_edit_qwen", side_effect=RuntimeError("boom")
+        ), mock.patch.object(svc.ImageEditProvider, "_edit_wanx") as wanx:
+            with self.assertRaises(RuntimeError) as caught:
+                provider.edit(SOURCE_URL, "prompt", allow_wanx_fallback=False)
+        wanx.assert_not_called()
+        message = str(caught.exception)
+        self.assertIn(TURNAROUND_MODEL, message)
+        self.assertIn("boom", message)
+
+    def test_default_fallback_still_uses_wanx(self):
+        settings = {"api_key": "k"}
+        provider = svc.ImageEditProvider(settings)
+        with mock.patch.object(
+            svc.ImageEditProvider, "_edit_qwen", side_effect=RuntimeError("boom")
+        ), mock.patch.object(
+            svc.ImageEditProvider,
+            "_edit_wanx",
+            return_value={"file": "edit.png", "url": "http://x", "model": "wanx2.1-imageedit"},
+        ) as wanx, mock.patch(
+            "studio.backend.model_service.usage.record_usage"
+        ):
+            result = provider.edit(SOURCE_URL, "prompt")
+        wanx.assert_called_once()
+        self.assertEqual(result["model"], "wanx2.1-imageedit")
 
 
 class CharacterPromptTests(unittest.TestCase):
@@ -239,8 +359,8 @@ class RuntimeViewsTests(unittest.TestCase):
         self.assertNotIn("design_views", saved)
 
 
-def _asset(image=None):
-    return {
+def _asset(image=None, design_views=None):
+    asset = {
         "id": "a1",
         "image": image
         if image is not None
@@ -249,6 +369,27 @@ def _asset(image=None):
             "url": "/api/generated/source.png",
             "model": "gen",
             "provider": "dashscope",
+        },
+    }
+    if design_views is not None:
+        asset["design_views"] = design_views
+    return asset
+
+
+def _full_views():
+    return {
+        "front": {"file": "source.png", "url": "/api/generated/source.png", "view": "front"},
+        "side": {
+            "file": "side.png",
+            "url": "/api/generated/side.png",
+            "model": TURNAROUND_MODEL,
+            "view": "side",
+        },
+        "back": {
+            "file": "back.png",
+            "url": "/api/generated/back.png",
+            "model": TURNAROUND_MODEL,
+            "view": "back",
         },
     }
 
@@ -290,29 +431,20 @@ class DesignViewsRouteTests(unittest.TestCase):
 
         def fake_generate(settings, base_url, front_image=None, deadline=None, on_result=None):
             captured["front_image"] = dict(front_image)
-            front = {
-                "file": front_image.get("file"),
-                "url": front_image.get("url"),
-                "model": front_image.get("model"),
-                "view": "front",
-            }
-            return (
-                {
-                    "front": front,
-                    "side": {"file": "side.png", "url": "/api/generated/side.png", "view": "side"},
-                    "back": {"file": "back.png", "url": "/api/generated/back.png", "view": "back"},
-                },
-                [],
-            )
+            return _full_views(), []
 
         with mock.patch.object(svc, "safe_generated_path", return_value=self.local_file), \
                 mock.patch.object(svc, "generate_turnaround", side_effect=fake_generate):
             response = TestClient(app).post("/api/design/views", json={"asset_id": "a1"})
         self.assertEqual(response.status_code, 200)
-        body = response.json()["design_views"]
-        self.assertEqual(body["front"]["file"], asset["image"]["file"])
-        self.assertEqual(body["front"]["url"], asset["image"]["url"])
-        self.assertEqual(body["front"]["view"], "front")
+        body = response.json()
+        self.assertEqual(body["status"], "success")
+        self.assertEqual(body["model"], TURNAROUND_MODEL)
+        self.assertEqual(body["failures"], [])
+        views = body["design_views"]
+        self.assertEqual(views["front"]["file"], asset["image"]["file"])
+        self.assertEqual(views["front"]["url"], asset["image"]["url"])
+        self.assertEqual(views["front"]["view"], "front")
         # side / back 的输入都是 asset.image
         self.assertEqual(captured["front_image"], asset["image"])
         runtime.assets.save.assert_called_once()
@@ -333,45 +465,39 @@ class DesignViewsRouteTests(unittest.TestCase):
         self.assertEqual(response.json()["detail"], MISSING_ART)
         runtime.assets.save.assert_not_called()
 
-    def test_partial_result_merges_with_previous_views(self):
-        asset = _asset()
-        asset["design_views"] = {
-            "side": {"file": "old_side.png", "url": "/api/generated/old_side.png"}
+    def test_qwen_failure_returns_real_error_and_keeps_old_views(self):
+        old_views = {
+            "front": {"file": "old_front.png", "url": "/api/generated/old_front.png"},
+            "side": {"file": "old_side.png", "url": "/api/generated/old_side.png"},
+            "back": {"file": "old_back.png", "url": "/api/generated/old_back.png"},
         }
+        asset = _asset(design_views=dict(old_views))
         app, runtime = self._app(asset)
-        views = {
-            "front": {
-                "file": "source.png",
-                "url": "/api/generated/source.png",
-                "model": "gen",
-                "view": "front",
-            },
-            "back": {"file": "back.png", "url": "/api/generated/back.png", "view": "back"},
-        }
         with mock.patch.object(svc, "safe_generated_path", return_value=self.local_file), \
                 mock.patch.object(
-                    svc, "generate_turnaround", return_value=(views, ["side: 生成失败"])
-                ):
-            response = TestClient(app).post("/api/design/views", json={"asset_id": "a1"})
-        self.assertEqual(response.status_code, 200)
-        body = response.json()["design_views"]
-        self.assertEqual(body["side"]["url"], "/api/generated/old_side.png")
-        self.assertEqual(body["back"]["url"], "/api/generated/back.png")
-        self.assertEqual(response.json()["failures"], ["side: 生成失败"])
-
-    def test_both_views_failed_does_not_save_fake_views(self):
-        views = {"front": {"file": "source.png", "url": "/api/generated/source.png"}}
-        app, runtime = self._app()
-        with mock.patch.object(svc, "safe_generated_path", return_value=self.local_file), \
-                mock.patch.object(
-                    svc, "generate_turnaround", return_value=(views, ["side: x", "back: y"])
+                    svc,
+                    "generate_turnaround",
+                    side_effect=RuntimeError(TURNAROUND_MODEL + " 调用失败：quota exhausted"),
                 ):
             response = TestClient(app).post("/api/design/views", json={"asset_id": "a1"})
         self.assertEqual(response.status_code, 502)
-        self.assertIn("side: x", response.json()["detail"])
-        self.assertIn("back: y", response.json()["detail"])
+        detail = response.json()["detail"]
+        self.assertIn(TURNAROUND_MODEL, detail)
+        self.assertIn("quota exhausted", detail)
         runtime.assets.save.assert_not_called()
-        self.assertNotIn("design_views", runtime.assets.get.return_value)
+        self.assertEqual(runtime.assets.get.return_value["design_views"], old_views)
+
+    def test_incomplete_views_do_not_overwrite_old(self):
+        old_views = {"side": {"file": "old_side.png", "url": "/api/generated/old_side.png"}}
+        asset = _asset(design_views=dict(old_views))
+        app, runtime = self._app(asset)
+        views = {"front": _full_views()["front"], "side": _full_views()["side"]}
+        with mock.patch.object(svc, "safe_generated_path", return_value=self.local_file), \
+                mock.patch.object(svc, "generate_turnaround", return_value=(views, [])):
+            response = TestClient(app).post("/api/design/views", json={"asset_id": "a1"})
+        self.assertEqual(response.status_code, 502)
+        runtime.assets.save.assert_not_called()
+        self.assertEqual(runtime.assets.get.return_value["design_views"], old_views)
 
     def test_duplicate_request_blocked_while_generating(self):
         app, _runtime = self._app()

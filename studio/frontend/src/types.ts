@@ -127,6 +127,12 @@ export interface DesignViewImage {
   file?: string;
   /** 后端返回的视角标记；front 恒为角色原画 */
   view?: "front" | "side" | "back";
+  /** side / back 来源：qwen 双栏设定图裁切 */
+  source?: string;
+  /** 裁切来源的双栏原图文件名 */
+  sheet_file?: string;
+  /** 在双栏图中的裁切框 [x0, y0, x1, y1] */
+  bbox?: number[];
 }
 
 export interface CreativeAsset {

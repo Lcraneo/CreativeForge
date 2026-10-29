@@ -466,7 +466,8 @@ class ModelSettingsStore:
         "model": "",  # 图像生成（原画）
         "chat_model": "",  # 文本 / 对话（提示词增强）
         "vl_model": "qwen-vl-plus",  # 视觉对话（装备/服装识别）：看图输出结构化 JSON
-        "edit_model": "",  # 图像编辑（三视图 / 抠图）；留空用服务商默认
+        "edit_model": "",  # 图像编辑（抠图 / 风格迁移 / 发层）；留空用服务商默认
+        # 三视图是固定模型 TURNAROUND_EDIT_MODEL（qwen-image-2.1-turbo），不受此项控制
         "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
         # 定稿档模型（V2 双档策略）：草稿走 video_model（flash 档确认动作），
         # 前端「高清定稿」走这里（plus 档出片，成本 2.8×）
@@ -1181,33 +1182,37 @@ class ImageProvider:
             return {"ok": False, "detail": str(exc)}
 
 
-TURNAROUND_PROMPTS = {
-    "side": (
-        "把图中角色向左旋转90度，生成同一个角色的正左侧全身侧面像：面朝画面左侧站立，"
-        "可见侧脸轮廓、单只眼睛、身体与手臂的侧面，保持完全相同的角色设计"
-        "（相同的发型、发色、配色、服装细节、体型与比例），单人全身立绘，纯白背景"
-    ),
-    "back": (
-        "把图中角色旋转180度，生成同一个角色的正后方全身背面像：背对镜头站立，"
-        "只可见后脑勺、发型背面、背部与服装背面，完全不可见面部，"
-        "保持完全相同的角色设计（相同的发型、发色、配色、服装细节、体型与比例），"
-        "单人全身立绘，纯白背景"
-    ),
-}
+# 一次生成 side + back：以原画为参考，输出横向双栏转面设定图，本地裁切。
+TURNAROUND_SHEET_PROMPT = (
+    "以参考图中的角色为唯一身份依据，生成一张双栏角色正交转面设定图。\n\n"
+    "左栏：同一个角色的正左侧 90° 全身侧面像，角色面朝画面左侧，单眼、侧脸轮廓、"
+    "鼻尖、下巴、身体厚度和背部轮廓清晰可见，双臂和双腿完整，双脚完整露出并朝左。\n\n"
+    "右栏：同一个角色的正后方 180° 全身背面像，角色背对镜头，只可见后脑勺、发型背面、"
+    "背部服装和背部结构，完全不可见眼睛、鼻子、嘴巴和面部。\n\n"
+    "两栏必须是同一个角色，保持相同的发型、发色、服装、配色、武器、配饰、体型和身高比例。\n\n"
+    "两栏人物均从头到脚完整入画，头顶、双手、双腿和双脚不被裁切；\n"
+    "两栏人物使用相同比例和脚底基准线，各自在栏内居中；\n"
+    "两栏之间保留白色间隔，人物互不重叠；\n"
+    "纯白背景，无文字、无边框、无场景、无其他人物。"
+)
 
-# 二次尝试时的强化指令：编辑模型偶尔会原样返回输入图，必须强调视角必须改变
-TURNAROUND_REINFORCE = {
-    "side": TURNAROUND_PROMPTS["side"]
-    + "。注意：这是一次视角变换，必须生成全新的侧面构图，正面朝向的形象不允许出现。",
-    "back": TURNAROUND_PROMPTS["back"]
-    + "。注意：这是一次视角变换，必须生成全新的背面构图，任何面部特征都不允许出现。",
-}
+
+class TurnaroundError(RuntimeError):
+    """三视图生成失败：携带可直接展示给用户的真实原因。"""
+
+
+# 三视图专用编辑模型：视角变换指令跟随更强。只在 generate_turnaround 里通过
+# scoped settings 显式指定，其它编辑链路（风格迁移 / 抠图 / 发层）仍沿用
+# 用户配置的 edit_model 或 ImageEditProvider 默认模型。
+TURNAROUND_EDIT_MODEL = "qwen-image-2.1-turbo"
+TURNAROUND_VIEW_MIN_SIDE = 96  # 单侧裁切图最小宽高（px）
+TURNAROUND_VIEW_BLANK_RATIO = 0.003  # 非白像素占比低于该值视为空白图
 
 
 class ImageEditProvider:
     """Image edit for the turnaround views (side / back of the same character).
 
-    Primary model ``qwen-image-edit`` (multimodal-generation, sync): follows
+    Default model ``qwen-image-edit`` (multimodal-generation, sync): follows
     viewpoint-change instructions. Falls back to the wanx2.1 description_edit
     async flow when qwen is unavailable for the account.
     """
@@ -1219,14 +1224,21 @@ class ImageEditProvider:
     def __init__(self, settings):
         self.settings = settings or {}
 
-    def edit(self, base_image_url, instruction, poll_timeout=180.0):
+    def edit(self, base_image_url, instruction, poll_timeout=180.0, allow_wanx_fallback=True):
+        """编辑图片；``allow_wanx_fallback=False`` 时仅允许 qwen，失败直接抛真实原因。
+
+        三视图链路固定走 qwen-image-2.1-turbo，不允许静默换模型；其他编辑功能
+        （风格迁移 / 抠图 / 发层）保持原有 Wanx 兜底行为。
+        """
+
         base_image_url = _resolve_cloud_image(base_image_url)
         last_error = None
+        model_hint = self.settings.get("edit_model") or self.QWEN_EDIT_MODEL
         for key in _keys_for(self.settings):
             scoped = {**self.settings, "api_key": key}
             try:
                 result = ImageEditProvider(scoped)._edit_chain(
-                    base_image_url, instruction, poll_timeout
+                    base_image_url, instruction, poll_timeout, allow_wanx_fallback
                 )
                 from studio.backend.model_service.usage import record_usage
 
@@ -1239,13 +1251,27 @@ class ImageEditProvider:
                 if classify_error(exc) in ("quota", "auth", "network"):
                     last_error = exc
                     continue
-                raise
-        raise last_error or RuntimeError("image edit failed")
+                if allow_wanx_fallback:
+                    raise
+                raise RuntimeError(
+                    "{} 调用失败：{}".format(model_hint, str(exc) or exc.__class__.__name__)
+                ) from exc
+        if not last_error:
+            raise RuntimeError("image edit failed")
+        if allow_wanx_fallback:
+            raise last_error
+        raise RuntimeError(
+            "{} 调用失败：{}".format(
+                model_hint, str(last_error) or last_error.__class__.__name__
+            )
+        ) from last_error
 
-    def _edit_chain(self, base_image_url, instruction, poll_timeout):
+    def _edit_chain(self, base_image_url, instruction, poll_timeout, allow_wanx_fallback=True):
         try:
             return self._edit_qwen(base_image_url, instruction, poll_timeout)
-        except Exception:  # noqa: BLE001 - fall back to the wanx flow
+        except Exception:  # noqa: BLE001 - 其他编辑链路保留 wanx 兜底
+            if not allow_wanx_fallback:
+                raise
             return self._edit_wanx(base_image_url, instruction, poll_timeout)
 
     def _download(self, url):
@@ -1303,7 +1329,8 @@ class ImageEditProvider:
         url = next((item.get("image") for item in content if item.get("image")), None)
         if not url:
             raise RuntimeError(
-                "qwen-image-edit: no image in response ({})".format(
+                "{}: no image in response ({})".format(
+                    edit_model,
                     str(body.get("code") or body.get("message") or "empty content")[:160]
                 )
             )
@@ -1419,51 +1446,122 @@ def _resolve_cloud_image(url):
     return url
 
 
-def _edit_view(editor, input_url, input_path, view, deadline):
-    """独立生成单个视角；返回 ``(result, reason)``。重复构图会换强化指令重试一次。"""
+def _sheet_split_x(image):
+    """双栏设定图裁切线：优先取中央白色间隔的中点，检测不到时取宽度 50%。"""
 
-    reason = None
-    for attempt in range(2):
-        remaining = None
-        if deadline is not None:
-            remaining = deadline - time.time()
-            if remaining <= 0:
-                return None, reason or "time budget exhausted"
-        try:
-            prompt = TURNAROUND_REINFORCE[view] if attempt else TURNAROUND_PROMPTS[view]
-            result = editor.edit(
-                input_url,
-                prompt,
-                poll_timeout=max(30.0, remaining) if remaining is not None else 180.0,
-            )
-        except Exception as error:  # noqa: BLE001 - retry once on any error
-            reason = str(error)
+    width, height = image.size
+    if width < 2:
+        return width // 2
+    # 缩到 256 宽再扫描，避免大图逐像素遍历过慢
+    sample_w = 256
+    sample_h = max(1, int(round(height * sample_w / float(width))))
+    gray = image.convert("L").resize((sample_w, sample_h))
+    pixels = gray.tobytes()
+    # 只在中央 50% 窗口内找白列，避免选到画布外侧留白
+    lo, hi = sample_w // 4, (sample_w * 3) // 4
+    blank_limit = max(1, int(sample_h * 0.01))
+    runs = []
+    start = None
+    for x in range(lo, hi):
+        ink = 0
+        for y in range(sample_h):
+            if pixels[y * sample_w + x] < 240:
+                ink += 1
+        blank = ink <= blank_limit
+        if blank and start is None:
+            start = x
+        elif not blank and start is not None:
+            runs.append((start, x))
+            start = None
+    if start is not None:
+        runs.append((start, hi))
+    if not runs:
+        return width // 2
+    center = sample_w / 2.0
+    best = max(
+        runs, key=lambda run: (run[1] - run[0], -abs((run[0] + run[1]) / 2.0 - center))
+    )
+    return int(round(width * (((best[0] + best[1]) / 2.0) / float(sample_w))))
+
+
+def _crop_turnaround_sheet(sheet_path):
+    """把双栏设定图裁成独立的 side / back PNG；返回 ``{view: {file,path,bbox}}``。"""
+
+    from PIL import Image
+
+    with Image.open(sheet_path) as sheet:
+        sheet.load()
+        width, height = sheet.size
+        split = _sheet_split_x(sheet)
+        if split <= 0 or split >= width:
+            split = width // 2
+        boxes = {"side": (0, 0, split, height), "back": (split, 0, width, height)}
+        os.makedirs(GENERATED_DIR, exist_ok=True)
+        stamp = int(time.time() * 1000)
+        saved = {}
+        for view, box in boxes.items():
+            crop = sheet.crop(box)
+            name = "turnaround_{}_{}.png".format(view, stamp)
+            path = os.path.join(GENERATED_DIR, name)
+            crop.save(path, format="PNG")
+            saved[view] = {"file": name, "path": path, "bbox": list(box)}
+    return saved
+
+
+def _validate_view_image(path, view, front_path, other_path=None):
+    """确定性质量校验；合格返回 ``None``，否则返回可读原因。"""
+
+    from PIL import Image
+
+    try:
+        with Image.open(path) as image:
+            image.load()
+            width, height = image.size
+            histogram = image.convert("L").histogram()
+    except Exception as error:  # noqa: BLE001 - 坏图按失败处理
+        return "{} 裁切图无法解码（{}）".format(view, error)
+    if width < TURNAROUND_VIEW_MIN_SIDE or height < TURNAROUND_VIEW_MIN_SIDE:
+        return "{} 裁切图尺寸过小（{}×{}）".format(view, width, height)
+    blank_ratio = sum(histogram[:245]) / float(width * height)
+    if blank_ratio < TURNAROUND_VIEW_BLANK_RATIO:
+        return "{} 裁切图接近纯白/空白（非白像素 {:.2%}）".format(view, blank_ratio)
+    try:
+        with Image.open(path) as reopened:
+            reopened.load()
+    except Exception as error:  # noqa: BLE001
+        return "{} 裁切图保存后无法重新打开（{}）".format(view, error)
+    peers = [("原画", front_path)]
+    if other_path:
+        peers.append(("背面" if view == "side" else "侧面", other_path))
+    for label, peer in peers:
+        if not peer or not os.path.isfile(peer):
             continue
-        duplicate, detail = _near_identical(input_path, safe_generated_path(result.get("file")))
+        duplicate, detail = _near_identical(path, peer)
         if duplicate:
-            reason = "输出与原图几乎一致（{}），未执行视角变换".format(detail or "?")
-            continue
-        result["view"] = view
-        return result, None
-    return None, reason
+            return "{} 与{}几乎一致（{}），未执行视角变换".format(view, label, detail or "?")
+    return None
 
 
 def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
-    """手动触发的三视图生成：front 直接使用角色原画，仅派生 side / back。
+    """手动触发的三视图生成：front 直接用角色原画，side/back 来自一次双栏生成。
 
     1. 不做正面视角识别，不调用任何 VLM / 图片理解模型；
     2. ``front`` 严格等于角色原画（file / url / model），不生成替换图；
-    3. ``side`` / ``back`` 分别以同一张原画为输入独立请求，互不依赖；
-    4. 单侧成功即保留（部分成功也返回），两侧都失败由调用方报错，
-       不写入假的 design_views。
+    3. 以原画为参考，一次调用 qwen-image-2.1-turbo 生成 side+back 双栏设定图，
+       禁止 Wanx 兜底；qwen 失败直接抛真实错误；
+    4. 双栏图按白色间隔（兜底 50%）裁成两个独立 PNG，再逐项做确定性校验；
+    5. side / back 任一不合格即整体失败，不返回可写入的 design_views。
 
-    Returns ``(views, failures)`` — ``views`` 恒含 ``front``（即原画）。
+    Returns ``(views, failures)``，成功时 ``failures`` 恒为空。
     """
 
-    editor = ImageEditProvider(settings)
+    editor = ImageEditProvider({**(settings or {}), "edit_model": TURNAROUND_EDIT_MODEL})
     source_image = _source_meta(front_image, base_url)
     if not source_image.get("url"):
         raise ValueError("source art url missing")
+    front_path = safe_generated_path(source_image.get("file"))
+    if not front_path:
+        raise TurnaroundError("角色原画文件不存在或不可读")
 
     views = {
         "front": {
@@ -1473,17 +1571,59 @@ def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_
             "view": "front",
         }
     }
+    remaining = None
+    if deadline is not None:
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            raise TurnaroundError("三视图生成超时，请稍后重试")
+
+    sheet = editor.edit(
+        source_image.get("url"),
+        TURNAROUND_SHEET_PROMPT,
+        poll_timeout=max(30.0, remaining) if remaining is not None else 180.0,
+        allow_wanx_fallback=False,
+    )
+    sheet_meta = sheet if isinstance(sheet, dict) else {}
+    sheet_name = sheet_meta.get("file")
+    sheet_path = safe_generated_path(sheet_name)
+    if not sheet_path:
+        raise TurnaroundError("双栏设定图未生成或无法读取")
+
+    try:
+        crops = _crop_turnaround_sheet(sheet_path)
+    except Exception as error:  # noqa: BLE001 - 坏图/裁切失败直接判失败
+        raise TurnaroundError("双栏设定图裁切失败：{}".format(error)) from error
+
     failures = []
-    input_url = source_image.get("url")
-    input_path = safe_generated_path(source_image.get("file"))
+    validated = {}
+    for view in ("side", "back"):
+        other = validated.get("side") if view == "back" else None
+        reason = _validate_view_image(crops[view]["path"], view, front_path, other)
+        if reason:
+            failures.append(reason)
+            continue
+        validated[view] = crops[view]["path"]
+    if failures:
+        # 整组失败：清掉已落盘的裁切文件，避免留下错误结果
+        for crop in crops.values():
+            try:
+                os.remove(crop["path"])
+            except OSError:
+                pass
+        raise TurnaroundError("；".join(failures))
 
     for view in ("side", "back"):
-        result, reason = _edit_view(editor, input_url, input_path, view, deadline)
-        if result:
-            views[view] = result
-            if on_result:
-                on_result(view, result)
-        else:
-            failures.append("{}: {}".format(view, (reason or "unknown")[:140]))
+        meta = {
+            "file": crops[view]["file"],
+            "url": "/api/generated/" + crops[view]["file"],
+            "model": sheet_meta.get("model") or TURNAROUND_EDIT_MODEL,
+            "view": view,
+            "source": "qwen-turnaround-sheet",
+            "sheet_file": sheet_name,
+            "bbox": crops[view]["bbox"],
+        }
+        views[view] = meta
+        if on_result:
+            on_result(view, meta)
 
-    return views, failures
+    return views, []

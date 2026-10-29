@@ -765,25 +765,27 @@ def build_router(runtime):
                     front_image=source_image,
                     deadline=deadline,
                 )
-            except Exception as error:  # noqa: BLE001 - surface upstream provider error
+            except Exception as error:  # noqa: BLE001 - surface real provider / validation error
                 raise HTTPException(status_code=502, detail=str(error))
 
-            if not (views.get("side") or views.get("back")):
-                if time.time() >= deadline:
-                    raise HTTPException(
-                        status_code=504, detail="三视图生成超时，请稍后重试"
-                    )
+            if not (views.get("side") and views.get("back")):
+                # 三视图必须三栏齐全；缺任何一侧都不写入 design_views
                 raise HTTPException(
-                    status_code=502, detail="；".join(failures) or "generation failed"
+                    status_code=502, detail="；".join(failures) or "side / back 未完整生成"
                 )
 
-            # 部分成功时不能丢掉上一轮已生成的视角
+            # 成功后整体更新三视图；旧版本仅在失败时保留
             existing = asset.get("design_views")
             merged = {**(existing if isinstance(existing, dict) else {}), **views}
             asset["design_views"] = merged
             runtime.assets.save(asset)
             runtime.history.patch_asset(asset_id, {"design_views": merged})
-            return {"design_views": merged, "failures": failures}
+            return {
+                "design_views": merged,
+                "failures": failures,
+                "model": views["side"].get("model"),
+                "status": "success",
+            }
         finally:
             lock.release()
 
