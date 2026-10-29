@@ -128,7 +128,9 @@ class HistoryStore:
         Returns True when a record was found and updated."""
 
         with self._lock:
-            for record in self._records:
+            # 从最新记录往前找：角色重新生成后同一 asset_id 会有多条记录，
+            # 只有最新一条是当前工作副本（旧记录的视角可能已随原画失效）。
+            for record in reversed(self._records):
                 if (
                     record.get("id") == asset_id
                     or record.get("task_id") == asset_id

@@ -33,6 +33,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const navigate = useNavigate();
   const [pose, setPose] = useState<ViewId>("front");
   const [generating, setGenerating] = useState(false);
+  const [viewFailures, setViewFailures] = useState<Record<string, string>>({});
   const [restyleStyle, setRestyleStyle] = useState("anime");
   const [restyleBusy, setRestyleBusy] = useState(false);
   const [cutoutBusy, setCutoutBusy] = useState(false);
@@ -70,23 +71,38 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   ].filter(Boolean);
 
   function viewUrl(view: ViewId): string | undefined {
-    return (
-      views?.[view]?.url ??
-      (view === "front" ? (asset?.image?.url ?? asset?.source?.ai_image?.url) : undefined)
-    );
+    return views?.[view]?.url ?? (view === "front" ? asset?.image?.url : undefined);
   }
 
   async function generateViews() {
     if (!asset || generating) return;
     setGenerating(true);
+    setViewFailures({});
     try {
-      const next = await api.generateDesignViews(asset.id);
-      patchAsset(asset.id, { design_views: next });
-      toast({
-        tone: "success",
-        title: "AI 三视图已生成",
-        description: "基于阿里云图像编辑模型，与原画同源",
+      const payload = await api.generateDesignViews(asset.id);
+      // 部分成功也必须保留上一轮的视角，不能整组覆盖
+      patchAsset(asset.id, {
+        design_views: { ...(asset.design_views ?? {}), ...(payload.design_views ?? {}) },
       });
+      const failures = parseViewFailures(payload.failures ?? []);
+      if (Object.keys(failures).length > 0) {
+        setViewFailures(failures);
+        // 部分失败不能报成功：明确失败侧与原因，成功侧仍展示真实图片
+        toast({
+          tone: "danger",
+          title: "部分三视图生成失败",
+          description: Object.entries(failures)
+            .map(([view, reason]) => `${view === "side" ? "侧面" : "背面"}：${reason}`)
+            .join("；")
+            .slice(0, 200),
+        });
+      } else {
+        toast({
+          tone: "success",
+          title: "AI 三视图已生成",
+          description: "基于阿里云图像编辑模型，与原画同源",
+        });
+      }
     } catch (cause) {
       toast({ tone: "danger", title: "三视图生成失败", description: String(cause).slice(0, 200) });
     } finally {
@@ -149,8 +165,14 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
               seed {spec.seed}
             </Badge>
             {aiImageAvailable(asset) && (
-              <Button variant="ember" icon="image" loading={generating} onClick={generateViews}>
-                {views?.side ? "重新生成三视图" : "生成 AI 三视图"}
+              <Button
+                variant="ember"
+                icon="image"
+                loading={generating}
+                disabled={generating}
+                onClick={generateViews}
+              >
+                {views?.side || views?.back ? "重新生成三视图" : "生成 AI 三视图"}
               </Button>
             )}
           </>
@@ -180,6 +202,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {(["front", "side", "back"] as const).map((view) => {
               const url = viewUrl(view);
+              const failure = view === "front" ? undefined : viewFailures[view];
               return (
                 <button
                   key={view}
@@ -212,17 +235,27 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                       pose === view ? "font-semibold text-primary" : "text-ink-3",
                     )}
                   >
-                    {VIEW_CAPTION[view]}
-                    {url ? "" : " · 示意"}
+                    {url
+                      ? VIEW_CAPTION[view]
+                      : failure
+                        ? `${view === "side" ? "侧面" : "背面"}生成失败：${failure}`
+                        : view === "front"
+                          ? "未生成 AI 原画"
+                          : "未生成 · 点击生成三视图"}
                   </span>
+                  {!url && <span className="text-[10px] text-ink-4">示意图 · 非 AI 结果</span>}
                 </button>
               );
             })}
           </div>
           <p className="mt-3 text-[11px] text-ink-4">
-            {views?.side
-              ? "三视图由阿里云图像编辑模型基于 AI 原画生成，与资产同源。"
-              : "正面为 AI 原画；侧 / 背为确定性示意。点「生成 AI 三视图」可基于原画生成真实多视角。"}
+            {generating
+              ? "正在生成侧 / 背视图，请勿关闭页面…"
+              : Object.keys(viewFailures).length > 0
+                ? "部分视角生成失败：成功侧已保存，失败侧可再次点击按钮重试。"
+                : views?.side || views?.back
+                  ? "三视图由阿里云图像编辑模型基于 AI 原画生成，与资产同源。"
+                  : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成 AI 三视图」手动触发生成。"}
           </p>
         </Card>
 
@@ -389,9 +422,18 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   );
 }
 
-function aiImageAvailable(asset: {
-  image?: { url?: string } | null;
-  source?: { ai_image?: { url?: string } | null } | null;
-}): boolean {
-  return Boolean(asset.image?.url || asset.source?.ai_image?.url);
+/** 解析后端形如 ["side: 输出与原图几乎一致…"] 的失败列表。 */
+function parseViewFailures(failures: string[]): Record<string, string> {
+  const parsed: Record<string, string> = {};
+  for (const item of failures) {
+    const index = item.indexOf(":");
+    const view = index === -1 ? "" : item.slice(0, index).trim();
+    if (view !== "side" && view !== "back") continue;
+    parsed[view] = (index === -1 ? item : item.slice(index + 1)).trim() || "未知原因";
+  }
+  return parsed;
+}
+
+function aiImageAvailable(asset: { image?: { url?: string } | null }): boolean {
+  return Boolean(asset.image?.url);
 }

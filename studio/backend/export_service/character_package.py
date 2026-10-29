@@ -112,7 +112,8 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
     # front 视图回退：design_views.front 缺失（未派生三视图/原画文件不在
     # 本机）时用 AI 原画充当正面图——原画本身就是正面视角，缺图会让角色
     # 包永远 missing 非零
-    if "view_front" in missing and isinstance(image, dict):
+    front_from_source = "view_front" in missing
+    if front_from_source and isinstance(image, dict):
         fallback = _read_generated(image.get("file"))
         if fallback is not None:
             artwork_entries.append(("artwork/front.png", fallback))
@@ -164,6 +165,17 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
             }
         )
 
+    # 三视图状态（供导出侧区分「未生成」与「生成失败」）：
+    # 没有 design_views → 未生成；有 design_views 但缺某个视角 → 该视角生成失败。
+    view_status: dict[str, str] = {}
+    for view in ("front", "side", "back"):
+        if view not in artwork_manifest:
+            view_status[view] = "not_generated" if not views else "failed"
+        elif view == "front" and front_from_source:
+            view_status[view] = "source"
+        else:
+            view_status[view] = "ready"
+
     # ── 清单 ──────────────────────────────────────────────────────────────
     manifest = {
         "format": "creativeforge-character-package/1",
@@ -176,6 +188,7 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
         },
         "generated_at": time.time(),
         "artwork": artwork_manifest,
+        "view_status": view_status,
         "animations": animation_manifest,
         "engine_package": "engine/" if engine_entries else None,
         "engine_error": engine_error,

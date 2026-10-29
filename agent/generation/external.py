@@ -44,6 +44,38 @@ _BARE_EXPANSION_EN = (
 )
 _BARE_THRESHOLD = 8
 
+# 角色原画是三视图的正面基准：最终 image prompt 必须锁定「完整全身」构图。
+# 用户原始描述里可能带「侧视站立 / 正侧面 / 背面 / 回头看」等会破坏正面
+# 参考的构图词，先移除再追加统一约束，避免同一句里出现互相冲突的视角。
+_CHARACTER_FRAMING_ZH = (
+    "单人全身角色标准设定图，正面或轻微三分之四侧身，角色从头到脚完整入画；"
+    "头部、双手、双腿和双脚完整可见，不被画面裁切；"
+    "双脚完整露出，身体比例自然，四肢无遮挡；"
+    "画面居中，人物上下左右留出适当边距；"
+    "纯白背景，无文字、无边框、无场景、无其他人物；"
+    "服装和身体轮廓完整清晰。"
+)
+_CHARACTER_FRAMING_EN = (
+    "single full-body character reference sheet, front view or a slight three-quarter turn, "
+    "character framed head to toe; head, both hands, both legs and both feet fully visible "
+    "and not cropped; both feet fully shown, natural proportions, limbs unobstructed; "
+    "centered composition with margin on all sides; pure white background, no text, "
+    "no border, no scenery, no other characters; costume and body silhouette fully clear."
+)
+
+_CONFLICT_VIEW_RE = re.compile(
+    r"(?:正侧视站立姿势|侧视站立姿势|正侧视站立|侧视站立|正侧面|侧面站立姿势|侧面站立|"
+    r"侧身站立|侧视|侧身|回头看|回头|背影|背面|"
+    r"side[-\s]?view|back[-\s]?view|looking\s+back|from\s+behind|facing\s+away)",
+    re.IGNORECASE,
+)
+
+
+def _strip_conflicting_view_words(text):
+    """移除会与「正面 / 三分之四」冲突的构图词。"""
+
+    return _CONFLICT_VIEW_RE.sub(" ", str(text or "")).strip(" ，,；;、")
+
 
 def _is_chinese(text):
     return any("\u4e00" <= ch <= "\u9fff" for ch in str(text or ""))
@@ -74,9 +106,15 @@ def build_image_prompt(goal, overrides=None, enhanced_prompt=None, style=None):
         expansion = _BARE_EXPANSION_ZH if _is_chinese(base) else _BARE_EXPANSION_EN
         base = "{}, {}".format(subject, expansion)
 
+    base = _strip_conflicting_view_words(base)
+    if not base:
+        base = "游戏角色" if _is_chinese(goal) else "a game character"
+
     style_key = style or (overrides or {}).get("style") or "auto"
     if _is_chinese(base):
         tail = STYLE_PROMPT_TAILS_ZH.get(style_key, AUTO_TAIL_ZH)
+        framing = _CHARACTER_FRAMING_ZH
     else:
         tail = STYLE_PROMPT_TAILS.get(style_key, AUTO_TAIL)
-    return "{}, {}".format(base, tail)
+        framing = _CHARACTER_FRAMING_EN
+    return "{}, {}, {}".format(base, framing, tail)

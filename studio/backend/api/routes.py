@@ -4,6 +4,7 @@ import base64
 import json
 import os
 import re
+import threading
 import time
 
 from fastapi import APIRouter, File, Form, HTTPException, Request, Response, UploadFile
@@ -19,6 +20,22 @@ ANIMATION_DIR = os.path.join(
 )
 # 生成类 POST 的幂等键（防双击/重发重复扣费）：键 TTL 与视频任务 TTL 同量级
 _ANIM_TASK_IDEMPOTENCY = IdempotencyStore(ttl=3600.0)
+
+# 三视图生成：按 asset_id 的互斥锁（防同一资产重复请求重复扣费），
+# 以及整条链路的总 deadline（qwen 超时后不把 wanx 的 180s 再加一遍）。
+_VIEW_GENERATION_TIMEOUT = 270.0
+_VIEW_LOCKS: dict[str, threading.Lock] = {}
+_VIEW_LOCKS_GUARD = threading.Lock()
+
+
+def _view_lock(asset_id: str) -> threading.Lock:
+    with _VIEW_LOCKS_GUARD:
+        lock = _VIEW_LOCKS.get(asset_id)
+        if lock is None:
+            lock = threading.Lock()
+            _VIEW_LOCKS[asset_id] = lock
+        return lock
+
 
 # 试玩舞台 rig/分割 mask 缓存（按 source_hash）：V2 渐进式加载会把条带请求
 # 拆成多批（先 idle/walk，再 run/attack/jump），没有这份内存缓存时第二批
@@ -699,47 +716,76 @@ def build_router(runtime):
 
     @router.post("/design/views")
     def generate_design_views(request: dict):
-        """基于资产的 AI 原画生成三视图（严格的 canonical front gate）。"""
+        """手动触发的三视图生成：front 直接取资产原画，仅派生 side / back。
+
+        角色生成阶段不再自动调用此接口；只有设计中心的按钮会发请求。"""
         from studio.backend.model_service.service import (
-            CanonicalFrontError,
+            _keys_for,
             generate_turnaround,
+            safe_generated_path,
         )
 
-        asset_id = request.get("asset_id") or ""
-        asset = runtime.assets.get(asset_id)
-        if asset is None:
-            # runtime 已重启等场景：从落盘历史里找回资产
-            for record in runtime.history.list(limit=100):
-                candidate = record.get("asset")
-                if isinstance(candidate, dict) and candidate.get("id") == asset_id:
-                    asset = candidate
-                    break
+        asset_id = str(request.get("asset_id") or "")
+        asset = _resolve_asset(runtime, asset_id) if asset_id else None
         if asset is None:
             raise HTTPException(status_code=404, detail="unknown asset")
-        source_image = asset.get("image") or (asset.get("source") or {}).get("ai_image")
-        base = (source_image or {}).get("url")
-        if not base:
-            raise HTTPException(
-                status_code=409,
-                detail="该资产没有 AI 原画，无法生成三视图（先在工作台用自定义模型生成）",
-            )
+        source_image = asset.get("image")
+        if not isinstance(source_image, dict) or not source_image.get("file") or not source_image.get(
+            "url"
+        ):
+            raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
+
+        local_path = safe_generated_path(source_image.get("file"))
+        readable = False
+        if local_path:
+            try:
+                with open(local_path, "rb") as handle:
+                    handle.read(1)
+                readable = True
+            except OSError:
+                readable = False
+        if not readable:
+            raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
 
         settings = runtime.model_settings.effective()
-        if not (settings.get("enabled") and settings.get("api_key")):
+        if not settings.get("enabled") or not _keys_for(settings):
             raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
 
+        # 同一资产并发请求会重复扣费：拿不到锁直接返回可理解的状态
+        lock = _view_lock(asset_id)
+        if not lock.acquire(blocking=False):
+            raise HTTPException(status_code=409, detail="该资产的三视图正在生成中，请稍候再试")
+
+        deadline = time.time() + _VIEW_GENERATION_TIMEOUT
         try:
-            views, failures = generate_turnaround(settings, base, front_image=source_image)
-        except CanonicalFrontError as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
+            try:
+                views, failures = generate_turnaround(
+                    settings,
+                    source_image.get("url"),
+                    front_image=source_image,
+                    deadline=deadline,
+                )
+            except Exception as error:  # noqa: BLE001 - surface upstream provider error
+                raise HTTPException(status_code=502, detail=str(error))
 
-        if not (views.get("side") or views.get("back")):
-            raise HTTPException(status_code=502, detail="；".join(failures) or "generation failed")
+            if not (views.get("side") or views.get("back")):
+                if time.time() >= deadline:
+                    raise HTTPException(
+                        status_code=504, detail="三视图生成超时，请稍后重试"
+                    )
+                raise HTTPException(
+                    status_code=502, detail="；".join(failures) or "generation failed"
+                )
 
-        asset["design_views"] = views
-        runtime.assets.save(asset)
-        runtime.history.patch_asset(asset_id, {"design_views": views})
-        return views
+            # 部分成功时不能丢掉上一轮已生成的视角
+            existing = asset.get("design_views")
+            merged = {**(existing if isinstance(existing, dict) else {}), **views}
+            asset["design_views"] = merged
+            runtime.assets.save(asset)
+            runtime.history.patch_asset(asset_id, {"design_views": merged})
+            return {"design_views": merged, "failures": failures}
+        finally:
+            lock.release()
 
     # ------------------------------------------------------------------
     # animation (style-consistent generation from an image)

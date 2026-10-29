@@ -125,6 +125,8 @@ export interface DesignViewImage {
   url: string;
   model?: string;
   file?: string;
+  /** 后端返回的视角标记；front 恒为角色原画 */
+  view?: "front" | "side" | "back";
 }
 
 export interface CreativeAsset {

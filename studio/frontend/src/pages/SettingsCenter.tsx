@@ -726,10 +726,10 @@ export default function SettingsCenter() {
                 icon="refresh"
                 name="图像编辑 · 三视图 / 抠图"
                 purpose="生成侧/背三视图与主体分割（动作动画受益）。"
-                support="百炼：qwen-image-edit → wanx2.1-imageedit 回退；其他服务商不支持时自动回退离线。"
+                support="百炼：wanx2.1-imageedit；其他服务商不支持时自动回退离线。"
                 modelKey="edit_model"
                 modelValue={form.edit_model}
-                placeholder="留空 = 服务商默认（qwen-image-edit）"
+                placeholder="留空 = wanx2.1-imageedit"
                 enabled
                 onModel={(value) => setForm({ ...form, edit_model: value })}
                 active={on}
@@ -739,10 +739,10 @@ export default function SettingsCenter() {
                 icon="film"
                 name="视频 · 图生视频（i2v）"
                 purpose="让当前角色原画动起来，再抽帧合成为动画。"
-                support={`当前仅支持阿里百炼 DashScope（wan2.2-i2v-flash / wanx2.1-i2v-turbo）${videoProviderOk ? "" : "，当前服务商不是百炼，将不可用"}。`}
+                support={`当前仅支持阿里百炼 DashScope（wanx2.1-i2v-turbo / wan2.2-i2v-flash）${videoProviderOk ? "" : "，当前服务商不是百炼，将不可用"}。`}
                 modelKey="video_model"
                 modelValue={form.video_model}
-                placeholder="留空 = wan2.2-i2v-flash"
+                placeholder="留空 = wanx2.1-i2v-turbo"
                 enabled={form.use_video}
                 onEnabled={(use_video) => setForm({ ...form, use_video })}
                 onModel={(value) => setForm({ ...form, video_model: value })}

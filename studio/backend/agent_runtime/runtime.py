@@ -102,11 +102,8 @@ class AgentRuntime:
             overrides = dict(overrides or {})
             overrides["_model_image"] = image
 
-        # 三视图 worker 与主管线并行：视图生成（约 20-60s）不再串行压在
-        # 管线之后；极速档（turbo）直接跳过以压缩等待时间
-        views_thread, views_getter = (None, None)
-        if image and not turbo:
-            views_thread, views_getter = self._start_views_worker(task_id, image)
+        # 角色生成只负责原画；三视图改为用户在设计中心手动触发
+        # （POST /api/design/views），任务不再等待 side/back，也不写 design_views。
 
         def on_event(event):
             self.tasks.append_event(task_id, event)
@@ -129,21 +126,10 @@ class AgentRuntime:
             # 「AI 生图失败，已用离线示意替代」徽章（含一键重试）
             asset["model_fallback"] = image_error
 
-        if asset and views_thread is not None:
-            views, failures = views_getter()
-            if views:
-                asset["design_views"] = views
-            if failures:
-                self.tasks.append_event(
-                    task_id,
-                    {
-                        "type": "MODEL_FALLBACK",
-                        "stage": "views",
-                        "detail": "侧/背视图生成失败（{}），对应视角保留确定性示意；可在设计中心重试".format(
-                            "；".join(failures)
-                        ),
-                    },
-                )
+        if isinstance(asset, dict):
+            # 重新生成的角色原画已更新，旧三视图与新原画不匹配，随本次任务失效；
+            # 新三视图只能由用户在设计中心手动点击生成。
+            asset.pop("design_views", None)
 
         # 先落库再发事件（P0 修复）：此前 ASSET_UPDATE 先于 assets.save 发出，
         # 前端收到事件立即 GET /api/assets/{id} 会 404（"unknown asset"），
@@ -162,91 +148,8 @@ class AgentRuntime:
                     "image": (image or {}).get("url"),
                 },
             )
-        if asset and views_thread is not None:
-            self.tasks.append_event(
-                task_id,
-                {
-                    "type": "ASSET_UPDATE",
-                    "id": asset.get("id"),
-                    "name": asset.get("name"),
-                    "engine": asset.get("engine", {}).get("target"),
-                    "image": (image or {}).get("url"),
-                },
-            )
-
         self.tasks.finish(task_id, result)
         self._record(task_id, goal, result, None, started, image_error)
-
-    def _start_views_worker(self, task_id, image):
-        """在后台线程预生成三视图（与主管线并行）。返回 (thread, getter)，
-        getter() 阻塞至 worker 结束并返回 (views|None, failures|None)。"""
-
-        settings = self.model_settings.effective()
-        base_url = (image or {}).get("url")
-        if not base_url or not settings.get("enabled") or not settings.get("api_key"):
-            return None, (lambda: (None, None))
-
-        from studio.backend.model_service.service import (
-            ImageEditProvider,
-            generate_turnaround,
-        )
-
-        self.tasks.append_event(
-            task_id,
-            {
-                "type": "MODEL_START",
-                "stage": "views",
-                "provider": settings.get("provider"),
-                "model": ImageEditProvider.EDIT_MODEL,
-            },
-        )
-
-        def on_result(view, result):
-            self.tasks.append_event(
-                task_id,
-                {
-                    "type": "MODEL_IMAGE",
-                    "stage": "views",
-                    "view": view,
-                    "id": result.get("file"),
-                    "url": result.get("url"),
-                    "model": result.get("model"),
-                },
-            )
-
-        outcome = {}
-
-        def worker():
-            try:
-                views, failures = generate_turnaround(
-                    settings,
-                    base_url,
-                    front_image=image,
-                    deadline=time.time() + 180.0,
-                    on_result=on_result,
-                )
-                outcome["views"] = views
-                outcome["failures"] = failures
-            except Exception as error:  # noqa: BLE001 - views are best-effort
-                outcome["views"] = None
-                outcome["failures"] = [str(error)]
-
-        thread = threading.Thread(
-            target=worker,
-            name="creativeforge-views-{}".format(task_id),
-            daemon=True,
-        )
-        thread.start()
-
-        def getter():
-            thread.join(timeout=200.0)
-            if thread.is_alive():
-                return None, ["视图生成超时，已跳过"]
-            if "views" not in outcome:
-                return None, ["视图生成异常"]
-            return outcome.get("views"), outcome.get("failures")
-
-        return thread, getter
 
     def _call_external(self, task_id, goal, overrides, spec=None):
         """Runs the configured model API: optional image generation. Every

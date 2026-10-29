@@ -37,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
         kbd: "2",
         children: [{ to: "/history", label: "历史记录", icon: "clock" }],
       },
+      { to: "/settings", label: "模型设置", icon: "key" },
     ],
   },
   {

@@ -913,7 +913,7 @@ class VisionChatProvider:
 
         base_url = (self.settings.get("base_url") or "").rstrip("/")
         model = self.settings.get("vl_model") or "qwen-vl-plus"
-        if not base_url or not self.settings.get("api_key") or not model:
+        if not base_url or not _keys_for(self.settings) or not model:
             raise RuntimeError("vision chat provider not configured")
         if image_b64.startswith("data:"):
             data_url = image_b64
@@ -1203,25 +1203,6 @@ TURNAROUND_REINFORCE = {
     + "。注意：这是一次视角变换，必须生成全新的背面构图，任何面部特征都不允许出现。",
 }
 
-# canonical front gate：当原画不是可靠的正面单人全身图时，先把原画编辑成
-# 一张标准正面基准图，side / back 只能以这张 canonical_front 为输入图派生。
-CANONICAL_FRONT_PROMPT = (
-    "把图中的角色改画成一张标准的正交正面全身图：单人、全身、正对镜头；"
-    "双眼、面部、胸前服装完整可见；双臂自然下垂，双脚完整露出并朝向镜头；"
-    "身体左右对称，中性站姿；纯白背景，无文字、无边框、无场景、无第二人物；"
-    "保持原画的角色身份、发型、发色、服装、配色、武器和身体比例不变；"
-    "正交正视图，禁止三分之四侧脸、侧身、回头和背面"
-)
-
-CANONICAL_FRONT_REINFORCE = CANONICAL_FRONT_PROMPT + (
-    "。注意：这是视角校正，必须生成全新的正面构图，"
-    "任何侧脸、侧身、背面或非正对镜头的构图都不允许出现。"
-)
-
-
-class CanonicalFrontError(RuntimeError):
-    """canonical front gate 失败：无法建立可靠的正面基准图。"""
-
 
 class ImageEditProvider:
     """Image edit for the turnaround views (side / back of the same character).
@@ -1239,6 +1220,7 @@ class ImageEditProvider:
         self.settings = settings or {}
 
     def edit(self, base_image_url, instruction, poll_timeout=180.0):
+        base_image_url = _resolve_cloud_image(base_image_url)
         last_error = None
         for key in _keys_for(self.settings):
             scoped = {**self.settings, "api_key": key}
@@ -1262,7 +1244,7 @@ class ImageEditProvider:
 
     def _edit_chain(self, base_image_url, instruction, poll_timeout):
         try:
-            return self._edit_qwen(base_image_url, instruction)
+            return self._edit_qwen(base_image_url, instruction, poll_timeout)
         except Exception:  # noqa: BLE001 - fall back to the wanx flow
             return self._edit_wanx(base_image_url, instruction, poll_timeout)
 
@@ -1275,7 +1257,7 @@ class ImageEditProvider:
             handle.write(image_response.content)
         return file_name
 
-    def _edit_qwen(self, base_image_url, instruction):
+    def _edit_qwen(self, base_image_url, instruction, poll_timeout=180.0):
         """Sync multimodal-generation call; image URL at
         ``output.choices[0].message.content[i].image``."""
 
@@ -1283,7 +1265,11 @@ class ImageEditProvider:
         if not api_key:
             raise RuntimeError("image edit not configured")
         edit_model = self.settings.get("edit_model") or self.QWEN_EDIT_MODEL
-        timeout = max(120.0, float(self.settings.get("timeout", 60)) * 2)
+        # 请求超时不超过 side / back 的统一时间预算（poll_timeout 由 deadline 折算）
+        timeout = max(
+            30.0,
+            min(float(poll_timeout), max(120.0, float(self.settings.get("timeout", 60)) * 2)),
+        )
         response = httpx.post(
             DASHSCOPE_HOST + "/api/v1/services/aigc/multimodal-generation/generation",
             headers={
@@ -1370,10 +1356,27 @@ class ImageEditProvider:
         }
 
 
-def _near_identical(path_a, path_b, threshold=0.03):
-    """Mean abs diff of two downscaled grayscale images. Returns
-    ``(bool, score)``; any failure yields ``(False, None)`` so the check can
-    never break generation."""
+def _dhash(image):
+    """64 位差异感知哈希（9×8 灰度邻像素比较）。"""
+    pixels = image.convert("L").resize((9, 8)).tobytes()
+    value = 0
+    for row in range(8):
+        offset = row * 9
+        for col in range(8):
+            value <<= 1
+            if pixels[offset + col] < pixels[offset + col + 1]:
+                value |= 1
+    return value
+
+
+def _near_identical(path_a, path_b, threshold=0.03, hash_distance=6):
+    """判断编辑模型是否把输入图原样返回。
+
+    同时用像素差异（64×64 灰度平均差）与 dHash 感知哈希（汉明距离），
+    避免仅靠灰度均值把「换了构图但明暗接近」误判为重复，也避免把
+    「原图原样返回」当成有效的侧/背视图。返回 ``(bool, detail)``；
+    任何异常都返回 ``(False, None)``，不让校验阻断生成。
+    """
 
     if not path_a or not path_b:
         return False, None
@@ -1381,10 +1384,14 @@ def _near_identical(path_a, path_b, threshold=0.03):
         from PIL import Image
 
         with Image.open(path_a) as handle_a, Image.open(path_b) as handle_b:
-            data_a = handle_a.convert("L").resize((64, 64)).tobytes()
-            data_b = handle_b.convert("L").resize((64, 64)).tobytes()
+            gray_a = handle_a.convert("L").resize((64, 64))
+            gray_b = handle_b.convert("L").resize((64, 64))
+            data_a = gray_a.tobytes()
+            data_b = gray_b.tobytes()
+            distance = bin(_dhash(handle_a) ^ _dhash(handle_b)).count("1")
         score = sum(abs(a - b) for a, b in zip(data_a, data_b)) / (255.0 * 64 * 64)
-        return score < threshold, score
+        duplicate = score < threshold or distance <= hash_distance
+        return duplicate, "diff={:.4f}, dHash={}".format(score, distance)
     except Exception:  # noqa: BLE001
         return False, None
 
@@ -1399,167 +1406,80 @@ def _source_meta(front_image, base_url):
     }
 
 
-def _image_b64(meta):
-    """读取本地生成图并返回纯 base64；文件不可读时返回 None。"""
-    path = safe_generated_path((meta or {}).get("file")) if isinstance(meta, dict) else None
-    if not path:
-        return None
-    try:
-        with open(path, "rb") as handle:
-            return base64.b64encode(handle.read()).decode("ascii")
-    except OSError:
-        return None
+def _resolve_cloud_image(url):
+    """把本地代理 URL（/api/generated/<file>）转成可被 DashScope 访问的
+    base64 data URI；已是 data URI 或公网 URL 时原样返回，避免把 localhost
+    相对地址直接发到云端导致「Incorrect padding」等解码失败。"""
+    prefix = "/api/generated/"
+    if isinstance(url, str) and url.startswith(prefix):
+        path = safe_generated_path(url[len(prefix):])
+        if path:
+            with open(path, "rb") as handle:
+                return "data:image/png;base64," + base64.b64encode(handle.read()).decode("ascii")
+    return url
 
 
-def _parse_view_classification(text):
-    """解析 qwen-vl-plus 的视角判断 JSON；任何异常都退化为 unknown（不阻塞）。"""
-    data = {}
-    cleaned = (text or "").strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`")
-        if cleaned.lower().startswith("json"):
-            cleaned = cleaned[4:]
-        cleaned = cleaned.strip()
-    start = cleaned.find("{")
-    end = cleaned.rfind("}")
-    if start != -1 and end > start:
+def _edit_view(editor, input_url, input_path, view, deadline):
+    """独立生成单个视角；返回 ``(result, reason)``。重复构图会换强化指令重试一次。"""
+
+    reason = None
+    for attempt in range(2):
+        remaining = None
+        if deadline is not None:
+            remaining = deadline - time.time()
+            if remaining <= 0:
+                return None, reason or "time budget exhausted"
         try:
-            data = json.loads(cleaned[start : end + 1])
-        except (ValueError, TypeError):
-            data = {}
-    view = str(data.get("view", "")).strip().lower()
-    if view not in ("front", "side", "back", "unknown"):
-        view = "unknown"
-    try:
-        confidence = max(0.0, min(1.0, float(data.get("confidence", 0))))
-    except (TypeError, ValueError):
-        confidence = 0.0
-    return {
-        "view": view,
-        "confidence": confidence,
-        "single_person": bool(data.get("single_person", False)),
-        "full_body": bool(data.get("full_body", False)),
-    }
-
-
-def _classify_character_view(settings, image_meta):
-    """调用 qwen-vl-plus 判断原画视角；判断失败按 unknown 处理，不阻塞任务。"""
-    b64 = _image_b64(image_meta)
-    if not b64:
-        return {"view": "unknown", "confidence": 0.0, "single_person": False, "full_body": False}
-    system = "你是游戏角色立绘审查器。看图后只输出一个 JSON 对象，不要输出任何解释或多余文字。"
-    user = (
-        "判断这张角色图的视角与构图，只输出："
-        '{"view":"front|side|back|unknown","confidence":0到1的小数,'
-        '"single_person":true或false,"full_body":true或false}\n'
-        "view 取值：正对镜头为 front，正左侧面为 side，正后方背面为 back，"
-        "无法判断为 unknown；confidence 为可信度（0-1）；"
-        "single_person 表示画面是否只有一个人物；"
-        "full_body 表示人物是否头到脚全身完整入画、无裁切。"
-    )
-    try:
-        response = VisionChatProvider(settings).chat(system, user, b64, temperature=0.0)
-        return _parse_view_classification(response.get("content", ""))
-    except Exception:  # noqa: BLE001 - 判定失败视作 unknown
-        return {"view": "unknown", "confidence": 0.0, "single_person": False, "full_body": False}
-
-
-def _edit_front(settings, source_image, reinforce=False):
-    """把原画编辑为 candidate canonical_front。"""
-    editor = ImageEditProvider(settings)
-    prompt = CANONICAL_FRONT_REINFORCE if reinforce else CANONICAL_FRONT_PROMPT
-    result = editor.edit((source_image or {}).get("url"), prompt)
-    result["view"] = "front"
-    result["reused"] = False
-    return result
-
-
-def normalize_front(settings, source_image=None):
-    """canonical front gate 第一步：原画已是可靠的正面单人全身图时直接复用，
-    否则先把原画编辑成一张标准正面图。"""
-    source = source_image or {}
-    classification = _classify_character_view(settings, source)
-    if (
-        classification.get("view") == "front"
-        and classification.get("confidence", 0) >= 0.75
-        and classification.get("single_person")
-        and classification.get("full_body")
-    ):
-        return {
-            "file": source.get("file"),
-            "url": source.get("url"),
-            "model": source.get("model"),
-            "view": "front",
-            "reused": True,
-        }
-    return _edit_front(settings, source, reinforce=False)
-
-
-def validate_front(settings, front_image=None):
-    """canonical front gate 第二步：再次确认正面基准可靠。"""
-    classification = _classify_character_view(settings, front_image)
-    return (
-        classification.get("view") == "front"
-        and classification.get("confidence", 0) >= 0.75
-    )
+            prompt = TURNAROUND_REINFORCE[view] if attempt else TURNAROUND_PROMPTS[view]
+            result = editor.edit(
+                input_url,
+                prompt,
+                poll_timeout=max(30.0, remaining) if remaining is not None else 180.0,
+            )
+        except Exception as error:  # noqa: BLE001 - retry once on any error
+            reason = str(error)
+            continue
+        duplicate, detail = _near_identical(input_path, safe_generated_path(result.get("file")))
+        if duplicate:
+            reason = "输出与原图几乎一致（{}），未执行视角变换".format(detail or "?")
+            continue
+        result["view"] = view
+        return result, None
+    return None, reason
 
 
 def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
-    """严格的 canonical front gate：
+    """手动触发的三视图生成：front 直接使用角色原画，仅派生 side / back。
 
-    1. normalize_front：原画已是可靠的正面单人全身图时直接复用，否则先把原画
-       编辑成标准正面图 canonical_front；
-    2. validate_front：canonical_front 必须通过正面验证，失败时用强化指令重试
-       一次，仍失败则终止三视图（不生成 side / back）；
-    3. side / back 只能以 canonical_front 为输入图，各自独立请求生成。
+    1. 不做正面视角识别，不调用任何 VLM / 图片理解模型；
+    2. ``front`` 严格等于角色原画（file / url / model），不生成替换图；
+    3. ``side`` / ``back`` 分别以同一张原画为输入独立请求，互不依赖；
+    4. 单侧成功即保留（部分成功也返回），两侧都失败由调用方报错，
+       不写入假的 design_views。
 
-    Returns ``(views, failures)`` — ``views`` 始终含 ``front``（canonical_front）；
-    失败的侧/背视图缺席（UI 保留占位）。
+    Returns ``(views, failures)`` — ``views`` 恒含 ``front``（即原画）。
     """
 
     editor = ImageEditProvider(settings)
     source_image = _source_meta(front_image, base_url)
+    if not source_image.get("url"):
+        raise ValueError("source art url missing")
 
-    canonical_front = normalize_front(settings, source_image)
-    if not validate_front(settings, canonical_front):
-        try:
-            canonical_front = _edit_front(settings, source_image, reinforce=True)
-        except Exception:  # noqa: BLE001 - 强化重试同样失败时终止
-            canonical_front = None
-        if canonical_front is None or not validate_front(settings, canonical_front):
-            raise CanonicalFrontError("无法建立可靠的正面基准图，未生成侧视和背视")
-
-    views = {"front": canonical_front}
+    views = {
+        "front": {
+            "file": source_image.get("file"),
+            "url": source_image.get("url"),
+            "model": source_image.get("model"),
+            "view": "front",
+        }
+    }
     failures = []
-    front_url = canonical_front.get("url") or source_image.get("url")
-    front_path = safe_generated_path(canonical_front.get("file"))
+    input_url = source_image.get("url")
+    input_path = safe_generated_path(source_image.get("file"))
 
-    for view, instruction in TURNAROUND_PROMPTS.items():
-        result = None
-        reason = None
-        for attempt in range(2):
-            if deadline is not None and time.time() >= deadline:
-                reason = reason or "time budget exhausted"
-                break
-            try:
-                prompt = TURNAROUND_REINFORCE[view] if attempt else instruction
-                result = editor.edit(front_url, prompt)
-            except Exception as error:  # noqa: BLE001 - retry once on any error
-                result = None
-                reason = str(error)
-                continue
-            duplicate, score = _near_identical(front_path, safe_generated_path(result.get("file")))
-            if duplicate:
-                result = None
-                reason = "输出与原图几乎一致（diff={}），未执行视角变换".format(
-                    round(score, 4) if score is not None else "?"
-                )
-                continue
-            reason = None
-            break
-
+    for view in ("side", "back"):
+        result, reason = _edit_view(editor, input_url, input_path, view, deadline)
         if result:
-            result["view"] = view
             views[view] = result
             if on_result:
                 on_result(view, result)
