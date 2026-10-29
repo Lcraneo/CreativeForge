@@ -12,31 +12,11 @@ import {
   ScoreRing,
 } from "../components/ui";
 import { AssetLoadState } from "../components/AssetLoadState";
-import { AnimPreview } from "../components/AnimPreview";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
 import { api } from "../api/client";
 import { toast } from "../stores/toastStore";
 const AssetViewer = lazy(() => import("../three/AssetViewer"));
-
-const FALLBACK_PALETTE = [
-  "#07090d",
-  "#4cc2ff",
-  "#22d3ee",
-  "#f4d58d",
-  "#ff9d3d",
-  "#a16207",
-  "#dc2626",
-  "#7f1d1d",
-  "#0ea5e9",
-  "#075985",
-  "#16a34a",
-  "#14532d",
-  "#e4e4e7",
-  "#a1a1aa",
-  "#3a4658",
-  "#1b2230",
-];
 
 export default function AssetInspector() {
   const asset = useAssetLoader();
@@ -46,12 +26,6 @@ export default function AssetInspector() {
 
   const quality = asset.quality;
   const report = quality?.report;
-  const frames = asset.animation?.frames ?? [];
-  const phases = asset.animation?.phase?.phase ?? [];
-  const isStatic = Boolean(asset.character?.static) || !asset.animation?.phase;
-  const palette = asset.pixel?.palette.colors?.length
-    ? asset.pixel.palette.colors.slice(0, 16)
-    : FALLBACK_PALETTE;
   const spec = asset.character;
   const aiImage = asset.image?.url ?? asset.source?.ai_image?.url;
   const aiImageMeta = asset.image ?? asset.source?.ai_image;
@@ -191,143 +165,7 @@ export default function AssetInspector() {
         </Card>
 
         <Card
-          className="col-span-12 md:col-span-6 lg:col-span-4"
-          domain="precon"
-          title="Pixel / PReCon 像素重建"
-          icon="grid"
-          iconClassName="text-precon"
-          right={<Badge tone="precon">{Math.round((quality?.pixel?.overall ?? 0) * 100)}%</Badge>}
-        >
-          <KV
-            label="Grid"
-            value={`${asset.pixel?.grid.size ?? "—"} × ${asset.pixel?.grid.size ?? "—"}`}
-          />
-          <KV label="Grid Confidence" value={asset.pixel?.grid.confidence ?? "—"} />
-          <KV label="Palette Colors" value={asset.pixel?.palette.max_colors ?? "—"} />
-          <KV label="Contour Style" value={asset.pixel?.contour.style ?? "—"} />
-          <KV label="Repaired" value={asset.pixel?.contour.repaired ? "yes" : "no"} />
-          <div className="mt-3">
-            <ScoreBar
-              label="pixel overall · 阈值 0.80"
-              value={quality?.pixel?.overall ?? 0}
-              threshold={0.8}
-              tone="precon"
-            />
-          </div>
-          {asset.pixel?.pixels && (
-            <div className="mt-4">
-              <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
-                AI 重建矩阵 · {asset.pixel.pixels.length}×{asset.pixel.pixels.length}
-              </div>
-              <div
-                className="mt-2 grid gap-px rounded-sm bg-line-subtle p-px"
-                style={{
-                  gridTemplateColumns: `repeat(${asset.pixel.pixels.length}, 1fr)`,
-                  maxWidth: 200,
-                }}
-              >
-                {asset.pixel.pixels.flat().map((color, index) => (
-                  <span
-                    key={index}
-                    className="aspect-square"
-                    style={{ background: color ?? "transparent" }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="mt-4 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
-            Semantic Palette
-          </div>
-          <div className="mt-2 grid grid-cols-8 gap-1.5">
-            {palette.map((color, index) => (
-              <button
-                key={`${color}-${index}`}
-                title={`${color} · 点击复制`}
-                onClick={() => {
-                  navigator.clipboard?.writeText(color).catch(() => undefined);
-                  toast({ tone: "info", title: "已复制色值", description: color });
-                }}
-                className="h-6 rounded-sm border border-ink/[.12] transition-transform hover:scale-110"
-                style={{ background: color }}
-              />
-            ))}
-          </div>
-        </Card>
-
-        <Card
-          className="col-span-12 md:col-span-6 lg:col-span-4"
-          domain={isStatic ? "memory" : "falign"}
-          title={isStatic ? "Static / 静态资产" : "Animation / FAlign 对齐"}
-          icon={isStatic ? "cube" : "film"}
-          iconClassName={isStatic ? "text-ink-3" : "text-falign"}
-          right={
-            isStatic ? (
-              <Badge tone="neutral">无动画</Badge>
-            ) : (
-              <Badge tone="falign">{Math.round((quality?.animation?.overall ?? 0) * 100)}%</Badge>
-            )
-          }
-        >
-          <KV
-            label="Action / FPS"
-            value={`${asset.animation?.action ?? "—"} / ${asset.animation?.fps ?? "—"}`}
-          />
-          <KV
-            label="Frames / Loop"
-            value={`${frames.length} / ${asset.animation?.loop ? "true" : "false"}`}
-          />
-          {isStatic ? (
-            <>
-              <KV label="Type" value={`${asset.type ?? "prop"} · 静态立绘/图标`} />
-              <div className="mt-3 flex items-center gap-3 rounded-lg border border-line-subtle bg-surface-2/50 p-3">
-                <CharacterArt
-                  spec={asset.character}
-                  palette={asset.pixel?.palette.colors}
-                  view="bust"
-                  className="h-16 w-14 shrink-0"
-                  detail="simple"
-                />
-                <p className="text-[11.5px] leading-[18px] text-ink-3">
-                  该目标被识别为静态资产，规划中不包含 FAlign 切帧对齐，直接进入 GImport 引擎导入。
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <KV
-                label="Phase"
-                value={phases.length ? phases.map((p) => p.toFixed(2)).join(" / ") : "—"}
-              />
-              <KV
-                label="Drift Corrected"
-                value={asset.animation?.motion?.drift_corrected ? "true" : "false"}
-              />
-              <div className="mt-3 grid place-items-center overflow-hidden rounded-[10px] border border-line-subtle bg-[radial-gradient(180px_90px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9] p-2">
-                <AnimPreview
-                  assetId={asset.id}
-                  action={asset.animation?.action ?? "walk"}
-                  className="h-[150px] w-auto object-contain"
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-ink-3">
-                AI 生成动画：源图风格 → 人物特征提取 → 帧序列 →
-                一致性校验。可在动画工作台调整动作/帧率/时长。
-              </p>
-              <div className="mt-3">
-                <ScoreBar
-                  label="animation overall · 阈值 0.85"
-                  value={quality?.animation?.overall ?? 0}
-                  threshold={0.85}
-                  tone="falign"
-                />
-              </div>
-            </>
-          )}
-        </Card>
-
-        <Card
-          className="col-span-12"
+          className="col-span-12 lg:col-span-8"
           domain="primary"
           title="Character / 提示词角色档案"
           icon="spark"
