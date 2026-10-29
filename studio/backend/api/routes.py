@@ -926,6 +926,7 @@ def build_router(runtime):
             final_quality=request.final_quality,
             equipment_aware=request.equipment_aware,
             action_description=(request.action_description or "").strip()[:500],
+            view=request.view,
             custom_action=request.custom_action,
         )
         payload = {"task_id": snapshot["id"], "snapshot": snapshot}

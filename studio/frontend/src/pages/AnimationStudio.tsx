@@ -5,7 +5,14 @@ import type { ActionMatrixCell, CreativeAsset } from "../types";
 import { AssetLoadState } from "../components/AssetLoadState";
 import { ModelApiPanel } from "../components/ModelApiPanel";
 import { assetHref, useAssetLoader, useAssetStore } from "../stores/assetStore";
-import { hideAll, hidePerson, loadHidden, loadRecent, pushRecent, type PersonEntry } from "../lib/peopleHistory";
+import {
+  hideAll,
+  hidePerson,
+  loadHidden,
+  loadRecent,
+  pushRecent,
+  type PersonEntry,
+} from "../lib/peopleHistory";
 import {
   api,
   ApiError,
@@ -21,7 +28,16 @@ import {
   selectionAfterRemoval,
   type ActionSource,
 } from "../lib/actionSelection";
-import { Badge, Button, Card, PageHeader, SafeImage, ScoreBar, Textarea, cx } from "../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  PageHeader,
+  SafeImage,
+  ScoreBar,
+  Textarea,
+  cx,
+} from "../components/ui";
 import StorageApiConfig from "../components/StorageApiConfig";
 import { Icon } from "../components/icons";
 import { toast } from "../stores/toastStore";
@@ -98,13 +114,198 @@ interface SeqFrame {
   dataUrl: string;
 }
 
+const CORE_ACTIONS = ["walk", "run", "jump"] as const;
+type CoreAction = (typeof CORE_ACTIONS)[number];
+
+/**
+ * The production path deliberately exposes only the three actions consumed by
+ * the arcade.  The older workbench remains below as implementation history,
+ * but is no longer the user-facing first step: users should not need to learn
+ * rig parameters, matrices, or custom-action namespaces just to get a
+ * playable character.
+ */
+function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
+  const navigate = useNavigate();
+  const [direction, setDirection] = useState("");
+  const [active, setActive] = useState<CoreAction>("walk");
+  const [task, setTask] = useState<{ id: string; action: CoreAction } | null>(null);
+  const [results, setResults] = useState<Partial<Record<CoreAction, AnimationResult>>>({});
+  const [error, setError] = useState<string | null>(null);
+
+  const start = useCallback(
+    async (action: CoreAction) => {
+      if (!asset?.id || task) return;
+      setActive(action);
+      setError(null);
+      try {
+        // A task returns immediately.  The service polls the provider in the
+        // background, so browser/proxy request limits cannot turn rendering
+        // time into a user-visible network timeout.
+        const started = await api.startVideoTask({
+          asset_id: asset.id,
+          action,
+          action_description: direction.trim(),
+          use_video: true,
+          view: "side",
+          fps: 12,
+          duration: action === "jump" ? 1.2 : 1.0,
+          size: 512,
+          equipment_aware: true,
+        });
+        setTask({ id: started.task_id, action });
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : String(cause));
+      }
+    },
+    [asset?.id, direction, task],
+  );
+
+  useEffect(() => {
+    if (!task) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const snapshot = await api.getVideoTask(task.id);
+        if (!alive || snapshot.status === "running") return;
+        if (snapshot.status === "done" && snapshot.result) {
+          setResults((previous) => ({ ...previous, [task.action]: snapshot.result }));
+        } else {
+          setError(snapshot.error || "动作生成失败，请重试");
+        }
+        setTask(null);
+      } catch {
+        // Keep polling: this is a status read, not evidence that the remote
+        // rendering task failed.
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 2000);
+    return () => {
+      alive = false;
+      window.clearInterval(timer);
+    };
+  }, [task]);
+
+  if (!asset?.id) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-6">
+        <Card>
+          <div className="py-8 text-center">
+            <h1 className="text-lg font-semibold text-ink">先选择一个角色资产</h1>
+            <p className="mt-2 text-sm text-ink-3">
+              动画必须绑定真实角色原画，不能用演示角色替代。
+            </p>
+            <Button className="mt-4" variant="primary" onClick={() => navigate("/")}>
+              去生成角色
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  const preview = results[active];
+  return (
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 md:px-6">
+      <PageHeader
+        overline="Playable Motion"
+        title="基础动作"
+        description="一句动作提示词会作为风格方向叠加到行走、奔跑、跳跃的真实动作模板；生成结果可直接用于试玩场。"
+        actions={
+          <Button
+            variant="secondary"
+            icon="play"
+            onClick={() => navigate(assetHref("/arcade", asset.id))}
+          >
+            打开试玩场
+          </Button>
+        }
+      />
+
+      <Card title="一句话动作提示词" icon="spark">
+        <Textarea
+          value={direction}
+          onChange={(event) => setDirection(event.target.value)}
+          placeholder="例如：轻快、有弹性，披风随步伐自然摆动"
+          className="min-h-24"
+        />
+        <p className="mt-2 text-xs text-ink-4">不填也可以：系统使用经过验证的基础运动模板。</p>
+      </Card>
+
+      <Card
+        title="生成试玩动作"
+        icon="play"
+        right={
+          task ? (
+            <Badge tone="primary">{ACTION_LABELS[task.action]}生成中，网络抖动会自动续轮询</Badge>
+          ) : undefined
+        }
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          {CORE_ACTIONS.map((action) => {
+            const result = results[action];
+            return (
+              <button
+                key={action}
+                disabled={Boolean(task)}
+                onClick={() => void start(action)}
+                className={cx(
+                  "rounded-xl border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-60",
+                  active === action
+                    ? "border-primary bg-primary-tint/40"
+                    : "border-line-subtle hover:border-primary/50",
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-semibold text-ink">{ACTION_LABELS[action]}</span>
+                  {result && <Badge tone="success">已生成</Badge>}
+                </div>
+                <p className="mt-1 text-xs text-ink-3">
+                  {action === "walk" ? "常速移动" : action === "run" ? "冲刺移动" : "跨越平台"}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+        {error && (
+          <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
+        )}
+      </Card>
+
+      <Card title="当前动作预览" icon="image">
+        {preview ? (
+          <div className="flex flex-col items-center gap-3">
+            <img
+              src={preview.urls.gif}
+              alt={`${ACTION_LABELS[active]} animation`}
+              className="max-h-[420px] rounded-lg object-contain"
+            />
+            <div className="flex gap-3 text-xs">
+              <a className="text-primary underline" href={preview.urls.gif} download>
+                下载 GIF
+              </a>
+              {preview.urls.video && (
+                <a className="text-primary underline" href={preview.urls.video} download>
+                  下载 MP4
+                </a>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="py-16 text-center text-sm text-ink-4">选择行走、奔跑或跳跃生成预览。</p>
+        )}
+      </Card>
+    </div>
+  );
+}
+
 export default function AnimationStudio() {
   const asset = useAssetLoader();
   const [params] = useSearchParams();
   const loading = useAssetStore((state) => state.loading);
   const error = useAssetStore((state) => state.error);
   if (!asset && (params.get("asset") || loading || error)) return <AssetLoadState />;
-  return <AnimationWorkbench key={asset?.id ?? "upload"} asset={asset} />;
+  return <CoreAnimationWorkbench key={asset?.id ?? "upload"} asset={asset} />;
 }
 
 function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
@@ -187,7 +388,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
       return { state: cell.state, hint: `质检 ${cell.qa_grade ?? ""}`.trim() } as const;
     return {
       state: "success",
-      hint: cell.source === "video" ? "AI 视频驱动" : cell.source ?? undefined,
+      hint: cell.source === "video" ? "AI 视频驱动" : (cell.source ?? undefined),
     } as const;
   }
 
@@ -343,9 +544,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
       setPhase(0);
       setPresetName(action.label);
       // 词表外动作标记：常驻提示条引导切换 AI 视频驱动（下次解读无标记时清除）
-      setSuggestVideoAction(
-        action.suggest_video ? action.label || text.slice(0, 8) : null,
-      );
+      setSuggestVideoAction(action.suggest_video ? action.label || text.slice(0, 8) : null);
       toast({
         tone: "success",
         title: `已套用动作「${action.label}」`,
@@ -403,7 +602,9 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
   // 资产原图:本地端点优先——后端 /api/assets/{id}/image.png 会做本地解析
   // 与缓存,不依赖远端签名 URL;OSS 直链只作本地服务不可用时的兜底
   const assetImage =
-    (asset?.id ? `/api/assets/${encodeURIComponent(asset.id)}/image.png?view=front&size=512` : undefined) ||
+    (asset?.id
+      ? `/api/assets/${encodeURIComponent(asset.id)}/image.png?view=front&size=512`
+      : undefined) ||
     (asset as { image?: { url?: string } } | null)?.image?.url ||
     (asset?.source as { ai_image?: { url?: string } } | undefined)?.ai_image?.url;
 
@@ -502,7 +703,23 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
         setBusySource(null);
       }
     },
-    [busy, presets, view, fps, duration, size, upload, videoTaskStorageKey, asset, skeletal, meshSkin, hairMotion, equipmentAware, useVideo, finalQuality],
+    [
+      busy,
+      presets,
+      view,
+      fps,
+      duration,
+      size,
+      upload,
+      videoTaskStorageKey,
+      asset,
+      skeletal,
+      meshSkin,
+      hairMotion,
+      equipmentAware,
+      useVideo,
+      finalQuality,
+    ],
   );
 
   // 预载门控：新结果一到就把 gif/sheet/逐帧全部预载 + decode，
@@ -510,10 +727,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
   // （mp4 回退标记的重置在上方渲染期完成——react-hooks 禁止 effect 内直接 setState）
   useEffect(() => {
     if (!result) return;
-    void preloadImages(
-      [result.urls.gif, result.urls.sheet, ...(result.frame_urls ?? [])],
-      0,
-    );
+    void preloadImages([result.urls.gif, result.urls.sheet, ...(result.frame_urls ?? [])], 0);
   }, [result]);
 
   // 视频任务轮询：阶段进度 → 终态收尾（done 与同步成功同款：清相位帧/
@@ -714,7 +928,10 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
   );
 
   const selectCustom = useCallback(
-    (name: string, list?: Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>) => {
+    (
+      name: string,
+      list?: Array<{ name: string; action: string; view: string; pose_config: PoseConfig }>,
+    ) => {
       const source: ActionSource = { kind: "custom", name };
       const state = editorStateFor(source, list ?? presets, DEFAULT_POSE_CONFIG);
       if (!state) return;
@@ -899,8 +1116,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
     const plan = editorStateFor(selected, presets, DEFAULT_POSE_CONFIG);
     if (!plan) return false;
     return POSE_PARAMS.some(
-      (param) =>
-        Math.abs((poseConfig[param.key] ?? 0) - (plan.pose_config[param.key] ?? 0)) > 1e-6,
+      (param) => Math.abs((poseConfig[param.key] ?? 0) - (plan.pose_config[param.key] ?? 0)) > 1e-6,
     );
   }, [selected, presets, poseConfig]);
 
@@ -1046,12 +1262,12 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
               <span>
                 源：
                 {mode === "sequence"
-                    ? `序列帧 · ${seqFrames.length} 张`
-                    : upload
-                      ? `上传 · ${upload.name}`
-                      : asset
-                        ? `资产 · ${asset.name ?? asset.id}`
-                        : "—"}
+                  ? `序列帧 · ${seqFrames.length} 张`
+                  : upload
+                    ? `上传 · ${upload.name}`
+                    : asset
+                      ? `资产 · ${asset.name ?? asset.id}`
+                      : "—"}
               </span>
               {result && (
                 <span>
@@ -1059,9 +1275,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                   {result.urls.video
                     ? ` · MP4 ${result.video_spec?.width ?? "?"}×${
                         result.video_spec?.height ?? "?"
-                      }@${
-                        result.video_spec ? Math.round(result.video_spec.fps) : "?"
-                      }`
+                      }@${result.video_spec ? Math.round(result.video_spec.fps) : "?"}`
                     : ""}
                 </span>
               )}
@@ -1114,8 +1328,8 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                 {mode === "smart"
                   ? "智能生成 + 动作精修一体：调参数、拖时间轴逐帧预览真实人物，可保存为自定义动作复用"
                   : mode === "sequence"
-                      ? "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"
-                      : "六厂商对象存储 API 配置：凭证加密存储、脱敏展示、连通性测试"}
+                    ? "标准序列帧工作流：按文件名顺序导入帧图，直接合成为循环动画"
+                    : "六厂商对象存储 API 配置：凭证加密存储、脱敏展示、连通性测试"}
               </span>
             </div>
 
@@ -1298,12 +1512,14 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                     </div>
                     {legacyUnknownCount > 0 && (
                       <p className="mt-2 text-[11px] text-ink-4">
-                        另有 {legacyUnknownCount} 条早期记录未记录视角，不计入矩阵；重新生成后会自动归位。
+                        另有 {legacyUnknownCount}{" "}
+                        条早期记录未记录视角，不计入矩阵；重新生成后会自动归位。
                       </p>
                     )}
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       <span className="text-[11px] text-ink-4">
-                        操作视角：{view === "side" ? "侧视横版" : "正面"}（下方「生成视角」可切换；侧视需已生成侧视源图）
+                        操作视角：{view === "side" ? "侧视横版" : "正面"}
+                        （下方「生成视角」可切换；侧视需已生成侧视源图）
                       </span>
                       <Button
                         variant="secondary"
@@ -1328,13 +1544,16 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                 )}
                 {useVideo && (
                   <div className="rounded-lg border border-line-subtle bg-surface-2/40 px-3 py-2 text-[11.5px] text-ink-3">
-                    AI 视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。
+                    AI
+                    视频驱动由提示词控制动作，下方参数滑杆仅对「全身骨骼」生效；预览区仍展示角色骨架绑定效果。
                   </div>
                 )}
                 {suggestVideoAction && !useVideo && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-ember/40 bg-ember-tint/20 px-3 py-2">
                     <span className="text-[11.5px] text-ink">
-                      「{suggestVideoAction}」超出骨骼引擎词表（内置 5 种动作之外的一次性手势）——全身骨骼只能给近似姿态，AI 视频驱动才能真实演出该动作。
+                      「{suggestVideoAction}」超出骨骼引擎词表（内置 5
+                      种动作之外的一次性手势）——全身骨骼只能给近似姿态，AI
+                      视频驱动才能真实演出该动作。
                     </span>
                     <Button
                       variant="secondary"
@@ -1450,38 +1669,38 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                   {skeletal &&
                     selected.kind === "base" &&
                     (selected.name === "walk" || selected.name === "run") && (
-                    <div>
-                      <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
-                        生成视角 · 基础动作专用
+                      <div>
+                        <div className="mb-2 text-[11px] uppercase tracking-widest text-ink-4">
+                          生成视角 · 基础动作专用
+                        </div>
+                        <div className="flex overflow-hidden rounded-lg border border-line-subtle">
+                          <button
+                            onClick={() => setView("side")}
+                            title="2D 横版侧视步态：腿部交替支撑/摆动，运动最自然"
+                            className={cx(
+                              "px-3 py-1.5 text-[12px] transition-colors",
+                              view === "side"
+                                ? "bg-primary text-white"
+                                : "text-ink-2 hover:bg-surface-2",
+                            )}
+                          >
+                            侧视横版
+                          </button>
+                          <button
+                            onClick={() => setView("front")}
+                            title="正面视角，面向镜头"
+                            className={cx(
+                              "px-3 py-1.5 text-[12px] transition-colors",
+                              view === "front"
+                                ? "bg-primary text-white"
+                                : "text-ink-2 hover:bg-surface-2",
+                            )}
+                          >
+                            正面
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex overflow-hidden rounded-lg border border-line-subtle">
-                        <button
-                          onClick={() => setView("side")}
-                          title="2D 横版侧视步态：腿部交替支撑/摆动，运动最自然"
-                          className={cx(
-                            "px-3 py-1.5 text-[12px] transition-colors",
-                            view === "side"
-                              ? "bg-primary text-white"
-                              : "text-ink-2 hover:bg-surface-2",
-                          )}
-                        >
-                          侧视横版
-                        </button>
-                        <button
-                          onClick={() => setView("front")}
-                          title="正面视角，面向镜头"
-                          className={cx(
-                            "px-3 py-1.5 text-[12px] transition-colors",
-                            view === "front"
-                              ? "bg-primary text-white"
-                              : "text-ink-2 hover:bg-surface-2",
-                          )}
-                        >
-                          正面
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                    )}
                   {useVideo && (
                     <div className="w-full">
                       <ModelApiPanel
@@ -1852,7 +2071,8 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                 {editingName && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ember/40 bg-ember-tint/20 px-3 py-2">
                     <span className="text-[11px] text-ember">
-                      正在编辑「{editingName}」——保存后覆盖该动作（保留创建时间并记入修改历史；改名则整卡迁移元数据）
+                      正在编辑「{editingName}
+                      」——保存后覆盖该动作（保留创建时间并记入修改历史；改名则整卡迁移元数据）
                     </span>
                     <button
                       onClick={cancelEdit}
@@ -2246,7 +2466,12 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
 
         {/* 窄屏（<1280px）：参数面板入口；桌面端侧栏恒显示，此按钮隐藏 */}
         <div className="col-span-12 xl:hidden">
-          <Button variant="secondary" icon="panel" className="w-full" onClick={() => setPanelOpen(true)}>
+          <Button
+            variant="secondary"
+            icon="panel"
+            className="w-full"
+            onClick={() => setPanelOpen(true)}
+          >
             参数与模型设置
           </Button>
         </div>

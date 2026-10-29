@@ -603,15 +603,29 @@ def _http_error(exc):
 
 
 def poll_video_task(api_key, task_id, timeout_seconds):
-    """Poll a DashScope i2v (图生视频) async task; returns the video URL."""
+    """Poll a DashScope i2v task without discarding an accepted job on a blip.
+
+    The video task has already been accepted by DashScope when this function is
+    entered.  A transient timeout while *asking for its status* must therefore
+    not be treated as a failed generation (nor cause the caller to submit an
+    expensive duplicate task).  Keep polling until the end-to-end budget is
+    spent; authentication and terminal provider states still fail immediately.
+    """
 
     deadline = time.time() + timeout_seconds
+    last_transport_error = None
     while time.time() < deadline:
-        poll = httpx.get(
-            DASHSCOPE_HOST + "/api/v1/tasks/" + task_id,
-            headers={"Authorization": "Bearer " + api_key},
-            timeout=30,
-        )
+        try:
+            poll = httpx.get(
+                DASHSCOPE_HOST + "/api/v1/tasks/" + task_id,
+                headers={"Authorization": "Bearer " + api_key},
+                timeout=30,
+            )
+        except (httpx.TimeoutException, httpx.TransportError) as exc:
+            last_transport_error = exc
+            # Do not re-submit a task that may already be rendering remotely.
+            time.sleep(min(5, max(0.2, deadline - time.time())))
+            continue
         if poll.status_code in (401, 403):
             raise RuntimeError(
                 "dashscope task poll unauthorized: HTTP {}".format(poll.status_code)
@@ -629,7 +643,13 @@ def poll_video_task(api_key, task_id, timeout_seconds):
         if status in ("FAILED", "CANCELED", "UNKNOWN"):
             message = output.get("message") or status
             raise RuntimeError("dashscope video task {}: {}".format(task_id, message))
-        time.sleep(5)
+        time.sleep(min(5, max(0.2, deadline - time.time())))
+    if last_transport_error is not None:
+        raise RuntimeError(
+            "dashscope video task timeout after transient network errors: {} ({})".format(
+                task_id, str(last_transport_error)[:120]
+            )
+        )
     raise RuntimeError("dashscope video task timeout: " + str(task_id))
 
 
@@ -726,7 +746,10 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_o
                 "input": {"prompt": prompt_now, "img_url": "data:image/png;base64," + encoded},
                 "parameters": parameters,
             },
-            timeout=60,
+            # Creating an async task should be quick, but gateways sometimes
+            # queue the acknowledgement.  Honour the configured network budget
+            # and never use a shorter-than-one-minute connect/read window.
+            timeout=max(60.0, float(settings.get("timeout", 60))),
         )
 
     # 两轮策略：第 1 轮原始提示词；若被内容审核拦截，第 2 轮用安全改写

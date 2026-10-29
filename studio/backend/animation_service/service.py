@@ -931,6 +931,7 @@ class AnimationService:
         final_quality: bool,
         equipment_aware: bool,
         action_description: str,
+        view: str = "front",
         custom_action: str | None = None,
     ) -> dict:
         """单次 AI 视频生成入队（生成任务化）：立即返回初始快照，后台线程
@@ -969,6 +970,7 @@ class AnimationService:
                 final_quality=final_quality,
                 equipment_aware=equipment_aware,
                 action_description=action_description,
+                view=view,
                 custom_action=custom_action,
             ),
             name="cf-video-task-{}".format(task_id),
@@ -1518,12 +1520,11 @@ class AnimationService:
                 else equipment_line
             )
         base_prompt = MOTION_PROMPTS.get(action, MOTION_PROMPTS["walk"])
-        # 自定义动作描述（独立通道）：有描述→描述句替换词表主体句——词表里
-        # "no large motion" 一类措辞对词表外动作是反作用；无描述→内置原路径
-        # （enhance 润色词表句）完全不变。循环收尾句代码级补挂：抽帧循环
-        # 接缝优化依赖首尾同姿态，不能全靠改写模型自觉。
+        # 自定义动作可替换词表主体句；基础 walk/run/jump 的一句话输入只是
+        # 风格/节奏方向，必须保留各自的运动学模板，否则「轻快移动」会把三种
+        # 动作生成成同一种模糊摆动。
         custom_clause = custom_motion_clause(settings, action_description or "")
-        if custom_clause:
+        if custom_clause and custom_action:
             enhanced_prompt = (
                 custom_clause
                 + " The motion starts and ends in the same neutral standing pose."
@@ -1532,6 +1533,8 @@ class AnimationService:
             enhanced_prompt = ai_enhance_motion_prompt(
                 settings, action, base_prompt, context=context
             )
+            if custom_clause:
+                enhanced_prompt += " Creative direction: " + custom_clause
         extra_clauses = _equipment_motion_clauses(equipment, action) if equipment else []
         clause_text = (" " + " ".join(extra_clauses)) if extra_clauses else ""
         prompt = enhanced_prompt + clause_text + " " + FRAMING_CLAUSE
@@ -1543,7 +1546,9 @@ class AnimationService:
         if progress_cb:
             progress_cb("video")  # i2v 生成是 60~90s 的大头（进度按已等待时间爬升）
         video_bytes, video_model = generate_video_with_policy(
-            settings, prompt, work_bytes, timeout_seconds=420.0, model_override=model_override
+            # 视频异步任务创建成功后，服务端渲染偶尔超过 7 分钟；任务化 UI
+            # 会持续轮询，因此给远端足够预算而不是过早标成“网络超时”。
+            settings, prompt, work_bytes, timeout_seconds=600.0, model_override=model_override
         )
         if progress_cb:
             progress_cb("sampling")

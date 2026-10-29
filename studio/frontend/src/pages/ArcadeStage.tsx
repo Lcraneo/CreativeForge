@@ -219,6 +219,9 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     for (const item of customActions) {
       if (item.strip?.url) out[`custom:${item.name}`] = item.strip.url;
     }
+    // 基础试玩不要求额外生成待机；静止时显示行走条带的第一帧即可，避免
+    // “少一条 idle 动画就无法进入关卡”这种与核心体验无关的阻断。
+    if (!out.idle && out.walk) out.idle = out.walk;
     return out;
   }, [previews.data, customActions]);
 
@@ -288,8 +291,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     if (key === "arrowup") jumpQueuedAtRef.current = performance.now();
     if (key === " ") {
       // 覆盖窗口按 attack 自己的帧长算，完整播完一套帧再回落
-      attackUntilRef.current =
-        performance.now() + clipDurationMs(clips, "attack", ATTACK_TAIL_MS);
+      attackUntilRef.current = performance.now() + clipDurationMs(clips, "attack", ATTACK_TAIL_MS);
     }
   });
 
@@ -496,7 +498,13 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
             <Button variant="secondary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
               更换人物
             </Button>
-            <Button variant="primary" size="sm" icon="refresh" onClick={restart} disabled={!selected}>
+            <Button
+              variant="primary"
+              size="sm"
+              icon="refresh"
+              onClick={restart}
+              disabled={!selected}
+            >
               重新开始
             </Button>
           </>
@@ -522,7 +530,12 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     title="选一位受检人物"
                     description="从近期生成记录中挑一个角色，进入关卡跑一遍，报告会自动生成。"
                     action={
-                      <Button variant="primary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        icon="cube"
+                        onClick={() => setPickerOpen(true)}
+                      >
                         打开人物挑选
                       </Button>
                     }
@@ -538,7 +551,11 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
 
             <div className="pointer-events-none absolute left-3 top-3 z-[5] flex flex-wrap items-center gap-1.5">
               <HudChip icon="cube" text={`金币 ${coinsTaken.size}/${level.coins.length}`} />
-              <HudChip icon="zap" text={`${hud.hearts}/${MAX_HEARTS}`} tone={hud.hearts > 1 ? "normal" : "danger"} />
+              <HudChip
+                icon="zap"
+                text={`${hud.hearts}/${MAX_HEARTS}`}
+                tone={hud.hearts > 1 ? "normal" : "danger"}
+              />
               <HudChip icon="clock" text={`${hud.seconds.toFixed(1)}s`} />
               <HudChip icon="gauge" text={`${Math.round(hud.fps)} fps`} />
             </div>
@@ -591,7 +608,13 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                   )}
 
                   <Group x={level.goalX} y={226}>
-                    <Rect x={-3} width={6} height={GROUND_Y - 226} fill="#8a7a5c" cornerRadius={2} />
+                    <Rect
+                      x={-3}
+                      width={6}
+                      height={GROUND_Y - 226}
+                      fill="#8a7a5c"
+                      cornerRadius={2}
+                    />
                     <Rect x={2} y={4} width={56} height={34} fill="#c46a3a" cornerRadius={3} />
                     <KonvaText x={10} y={13} text="终点" fontSize={14} fill="#fdf8ec" />
                   </Group>
@@ -647,7 +670,9 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                       variant="secondary"
                       size="sm"
                       icon="gauge"
-                      onClick={() => navigate(`/asset?asset=${encodeURIComponent(selectedAssetId ?? "")}`)}
+                      onClick={() =>
+                        navigate(`/asset?asset=${encodeURIComponent(selectedAssetId ?? "")}`)
+                      }
                     >
                       查看资产档案
                     </Button>
@@ -660,9 +685,15 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
           <div className="mt-3 flex flex-wrap items-center gap-2 text-[11.5px] text-ink-3">
             <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
             <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">→</kbd> 移动
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">Shift</kbd> 奔跑
+            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">
+              Shift
+            </kbd>{" "}
+            奔跑
             <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">↑</kbd> 跳跃
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">空格</kbd> 攻击
+            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">
+              空格
+            </kbd>{" "}
+            攻击
             <span className="ml-auto">掉进坑里会回到最近落点，三次掉落本轮终止</span>
           </div>
           <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/[.08]">
@@ -747,9 +778,11 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     </span>
                     <span className="text-right text-[10.5px] text-ink-4">
                       {strip?.engine
-                        ? ENGINE_LABEL[strip.engine] ?? strip.engine
+                        ? (ENGINE_LABEL[strip.engine] ?? strip.engine)
                         : present
-                          ? ENGINE_LABEL[previews.data?.source ?? ""] ?? previews.data?.source ?? "—"
+                          ? (ENGINE_LABEL[previews.data?.source ?? ""] ??
+                            previews.data?.source ??
+                            "—")
                           : "—"}
                     </span>
                   </div>

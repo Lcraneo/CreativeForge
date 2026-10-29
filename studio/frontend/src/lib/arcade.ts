@@ -10,7 +10,10 @@ import type { PlaytestStrip } from "../types";
 
 export type ArcadeAction = "idle" | "walk" | "run" | "attack" | "jump";
 
-export const REQUIRED_ACTIONS: ArcadeAction[] = ["idle", "walk", "run", "jump", "attack"];
+// The playable vertical slice deliberately needs only movement. Idle falls
+// back to the first walk frame in the stage; attack is not a gate for running
+// through the level.
+export const REQUIRED_ACTIONS: ArcadeAction[] = ["walk", "run", "jump"];
 
 /** 关卡世界尺寸与基准地面线（世界坐标，y 向下）。 */
 export const WORLD_HEIGHT = 420;
@@ -230,17 +233,13 @@ export function collectCoins(
   const centerY = state.y - CHAR_HEIGHT / 2;
   const radius = Math.max(PLAYER_HALF_W, CHAR_HEIGHT / 2) * (2 / 3);
   return coins.filter(
-    (coin) =>
-      !taken.has(coin.id) && Math.hypot(coin.x - state.x, coin.y - centerY) <= radius,
+    (coin) => !taken.has(coin.id) && Math.hypot(coin.x - state.x, coin.y - centerY) <= radius,
   );
 }
 
 /** 动作优先级：空中一律跳跃（没有 jump-attack 条带，空中攻击会造成腿部串调），
  *  地面攻击 > 奔跑 > 行走 > 待机。 */
-export function pickAction(
-  state: PlayerState,
-  attacking: boolean,
-): ArcadeAction {
+export function pickAction(state: PlayerState, attacking: boolean): ArcadeAction {
   if (!state.onGround) return "jump";
   if (attacking) return "attack";
   if (Math.abs(state.vx) > 0) return state.vx >= RUN_SPEED ? "run" : "walk";
@@ -270,11 +269,11 @@ export function inspectCharacter(input: {
     status: missing.length === 0 ? "pass" : "fail",
     detail:
       missing.length === 0
-        ? "待机 / 行走 / 奔跑 / 跳跃 / 攻击 五个基础动作齐全"
+        ? "行走 / 奔跑 / 跳跃三个试玩基础动作齐全"
         : `缺少 ${missing.join("、")}，客户无法在关卡里检查对应动作`,
   });
 
-  const loopActions: ArcadeAction[] = ["idle", "walk", "run"];
+  const loopActions: ArcadeAction[] = ["walk", "run"];
   const thinFrames = loopActions.filter((action) => {
     const strip = strips[action];
     if (!strip) return false;
@@ -326,8 +325,7 @@ export function inspectCharacter(input: {
 
   if (runtime) {
     const cleanRun = runtime.reachedGoal && runtime.falls <= 1 && runtime.avgFps >= 45;
-    const nearMiss =
-      runtime.reachedGoal && (runtime.falls > 1 || runtime.avgFps < 45);
+    const nearMiss = runtime.reachedGoal && (runtime.falls > 1 || runtime.avgFps < 45);
     items.push({
       key: "runtime",
       label: "本轮运行",
