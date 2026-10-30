@@ -45,4 +45,28 @@ describe("toastStore", () => {
     vi.advanceTimersByTime(4300);
     expect(useToastStore.getState().items).toHaveLength(0);
   });
+
+  it("手动关闭后不会误删其他提示，剩余提示仍会自动消失", () => {
+    vi.useFakeTimers();
+    toast({ tone: "success", title: "任务开始" });
+    toast({ tone: "success", title: "任务结束" });
+    const [start] = useToastStore.getState().items;
+    useToastStore.getState().dismiss(start.id);
+    expect(useToastStore.getState().items.map((item) => item.title)).toEqual(["任务结束"]);
+    vi.advanceTimersByTime(4000);
+    expect(useToastStore.getState().items).toHaveLength(0);
+  });
+
+  it("后台计时器被节流时，回到前台按过期时间兜底清理", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-30T09:30:00"));
+    toast({ tone: "info", title: "任务开始" });
+    toast({ tone: "danger", title: "任务失败" });
+    // 模拟页面切到后台：Date 前进 5s，但定时器回调没有执行
+    vi.setSystemTime(new Date("2026-10-30T09:30:05"));
+    useToastStore.getState().dismissExpired();
+    const items = useToastStore.getState().items;
+    expect(items).toHaveLength(1);
+    expect(items[0].title).toBe("任务失败");
+  });
 });
