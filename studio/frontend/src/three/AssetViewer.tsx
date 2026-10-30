@@ -229,7 +229,7 @@ function AssetModel({ textureUrl, accent }: { textureUrl?: string; accent: strin
 }
 
 export default function AssetViewer({
-  accent = "#a9812f",
+  accent = "#93a9c4",
   textureUrl,
 }: {
   accent?: string;
@@ -250,11 +250,11 @@ export default function AssetViewer({
 
   return (
     <div className="relative h-full w-full">
-      <Canvas camera={{ position: [3.2, 2.2, 4.2], fov: 45 }} style={{ background: "#f1efe9" }}>
+      <Canvas camera={{ position: [3.2, 2.2, 4.2], fov: 45 }} style={{ background: "#f3f6fa" }}>
         <FpsProbe onFps={setFps} />
         <ambientLight intensity={0.65} />
         <directionalLight position={[4, 6, 3]} intensity={1.15} />
-        <pointLight position={[-3, 2, -2]} intensity={0.55} color="#a9812f" />
+        <pointLight position={[-3, 2, -2]} intensity={0.55} color="#93a9c4" />
         <ToonGroup params={params} enabled={toonEnabled && !textureUrl}>
           <AssetModel textureUrl={textureUrl} accent={accent} />
         </ToonGroup>

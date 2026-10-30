@@ -41,10 +41,11 @@ export function PlaytestCharacterPicker(props: PlaytestCharacterPickerProps) {
         role="dialog"
         aria-modal="true"
         aria-label="选择试玩人物"
-        className="w-full max-w-3xl rounded-2xl border border-line bg-canvas p-4 shadow-xl"
+        className="w-full max-w-3xl rounded-lg border border-line bg-paper p-4 shadow-e3"
       >
-        <div className="mb-3 flex items-center gap-2">
-          <span className="font-display text-[15px] font-semibold text-ink">选择试玩人物 · 近期生成</span>
+        <div className="mb-3 flex items-center gap-2 border-b border-line-subtle pb-3">
+          <span className="font-serif text-[17px] font-black text-ink">选择试玩人物</span>
+          <span className="cf-ref">近期生成</span>
           <Badge tone="neutral" icon="cube">
             {people.length} 位候选
           </Badge>
@@ -59,9 +60,9 @@ export function PlaytestCharacterPicker(props: PlaytestCharacterPickerProps) {
         </div>
         {loading ? (
           /* 骨架与最终网格同构，加载完不跳版 */
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
             {Array.from({ length: 6 }, (_, index) => (
-              <Skeleton key={index} className="h-[150px] rounded-xl" />
+              <Skeleton key={index} className="h-[132px] rounded-lg" />
             ))}
           </div>
         ) : people.length === 0 ? (
@@ -76,20 +77,22 @@ export function PlaytestCharacterPicker(props: PlaytestCharacterPickerProps) {
             }
           />
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
             {people.map((record) => (
               <button
                 key={record.id}
                 onClick={() => record.asset_id && onSelect(record.asset_id)}
                 className={cx(
-                  "flex flex-col overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
-                  selectedId === record.asset_id ? "border-primary/60" : "border-line-subtle hover:border-line",
+                  "flex flex-col overflow-hidden rounded-lg border bg-canvas text-left transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
+                  selectedId === record.asset_id
+                    ? "border-primary/60 shadow-e1"
+                    : "border-line-subtle hover:border-line",
                 )}
               >
                 <SafeImage
                   src={record.image?.url ?? undefined}
                   alt={String(record.name ?? record.asset_id ?? "")}
-                  className="h-[120px] w-full bg-paper object-contain"
+                  className="h-[104px] w-full bg-paper object-contain"
                 />
                 <span className="truncate px-2 py-1.5 text-[11px] text-ink-3">
                   {record.name || record.asset_id}

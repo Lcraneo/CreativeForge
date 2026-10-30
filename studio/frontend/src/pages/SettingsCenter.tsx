@@ -123,68 +123,157 @@ function UsageMeter() {
 
   const data = usage.data;
   const maxCost = Math.max(0.01, ...(data?.by_kind ?? []).map((row) => row.cost));
+  /** 近 30 天成功调用总数（by_kind 只统计 30 天窗口） */
+  const totalCalls = (data?.by_kind ?? []).reduce((sum, row) => sum + row.calls, 0);
+  const priceOf = (kind: string, model: string) =>
+    data?.prices[`${kind}|${model}`] ?? data?.prices[`${kind}|*`];
+  const timeOf = (at: number) =>
+    new Date(at * 1000).toLocaleString("zh-CN", {
+      month: "numeric",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
 
   return (
-    <Card
-      title="额度仪表（本地估算）"
-      icon="gauge"
-      right={
-        <Button variant="ghost" size="sm" icon="trash" loading={clearing} onClick={() => void clear()}>
-          清空
-        </Button>
-      }
-    >
-      {!data ? (
-        <p className="text-xs text-ink-3">读取用量台账…</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-3 gap-2.5">
-            {(
-              [
-                ["今日", data.totals.today],
-                ["近 7 天", data.totals.week],
-                ["近 30 天", data.totals.month],
-              ] as const
-            ).map(([label, value]) => (
-              <div
-                key={label}
-                className="rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5"
-              >
-                <div className="text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
-                  {label}
+    <>
+      <Card
+        title="用量概览（本地估算）"
+        icon="gauge"
+        right={
+          <Button variant="ghost" size="sm" icon="trash" loading={clearing} onClick={() => void clear()}>
+            清空
+          </Button>
+        }
+      >
+        {!data ? (
+          <p className="text-xs text-ink-3">读取用量台账…</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-2.5">
+              {(
+                [
+                  {
+                    label: "近 30 天请求",
+                    value: `${totalCalls}`,
+                    hint: "成功调用记账",
+                    icon: "activity" as IconName,
+                  },
+                  {
+                    label: "近 30 天消耗",
+                    value: `¥${data.totals.month.toFixed(2)}`,
+                    hint: "内置牌价估算",
+                    icon: "gauge" as IconName,
+                  },
+                  {
+                    label: "今日消耗",
+                    value: `¥${data.totals.today.toFixed(2)}`,
+                    hint: "本地当日",
+                    icon: "clock" as IconName,
+                  },
+                  {
+                    label: "近 7 天消耗",
+                    value: `¥${data.totals.week.toFixed(2)}`,
+                    hint: "含今日",
+                    icon: "clock" as IconName,
+                  },
+                ] as const
+              ).map((tile) => (
+                <div
+                  key={tile.label}
+                  className="rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-1.5 text-[10.5px] font-semibold tracking-[0.08em] text-ink-4">
+                    <Icon name={tile.icon} className="h-3.5 w-3.5" />
+                    {tile.label}
+                  </div>
+                  <div className="tabular mt-1 font-mono text-[18px] font-semibold leading-6 text-ink">
+                    {tile.value}
+                  </div>
+                  <div className="text-[10.5px] leading-4 text-ink-4">{tile.hint}</div>
                 </div>
-                <div className="mt-1 font-mono text-[15px] font-semibold text-ink">
-                  ¥{value.toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-          <ul className="mt-3 space-y-2">
-            {(data.by_kind ?? []).map((row) => (
-              <li key={row.kind}>
-                <div className="flex items-center justify-between text-[11.5px] text-ink-2">
-                  <span>
-                    {KIND_LABEL[row.kind] ?? row.kind}
-                    <span className="ml-1.5 font-mono text-[10.5px] text-ink-4">{row.calls} 次</span>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between">
+              <span className="text-[10.5px] font-semibold tracking-[0.08em] text-ink-4">
+                按能力拆分 · 30 天
+              </span>
+              <span className="cf-ref">{data.currency}</span>
+            </div>
+            <ul className="mt-2 space-y-2">
+              {(data.by_kind ?? []).map((row) => (
+                <li key={row.kind}>
+                  <div className="flex items-center justify-between text-[11.5px] text-ink-2">
+                    <span>
+                      {KIND_LABEL[row.kind] ?? row.kind}
+                      <span className="ml-1.5 font-mono text-[10.5px] text-ink-4">{row.calls} 次</span>
+                    </span>
+                    <span className="font-mono text-ink-3">¥{row.cost.toFixed(2)}</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/[.08]">
+                    <div
+                      className="h-full rounded-full bg-primary/70"
+                      style={{ width: `${Math.max(3, (row.cost / maxCost) * 100)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+              {(data.by_kind ?? []).length === 0 && (
+                <li className="text-[11.5px] text-ink-3">还没有调用记录——生成一次原画或动画后这里会出现估算。</li>
+              )}
+            </ul>
+            <p className="mt-3 border-t border-line-subtle pt-2.5 text-[10.5px] leading-[16px] text-ink-4">
+              {data.note}
+            </p>
+          </>
+        )}
+      </Card>
+
+      <Card title="最近请求记录" icon="clock">
+        {!data ? (
+          <p className="text-xs text-ink-3">读取用量台账…</p>
+        ) : data.recent.length === 0 ? (
+          <p className="text-[11.5px] text-ink-3">还没有调用记录——生成或增强一次后这里会出现。</p>
+        ) : (
+          <ul className="divide-y divide-line-subtle">
+            {data.recent.map((entry, index) => {
+              const price = priceOf(entry.kind, entry.model);
+              return (
+                <li
+                  key={`${entry.at}-${index}`}
+                  className="flex items-center gap-3 py-2 first:pt-0 last:pb-0"
+                >
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-primary-tint text-primary">
+                    <Icon
+                      name={
+                        entry.kind === "video"
+                          ? "film"
+                          : entry.kind === "chat"
+                            ? "terminal"
+                            : "image"
+                      }
+                      className="h-3.5 w-3.5"
+                    />
                   </span>
-                  <span className="font-mono text-ink-3">¥{row.cost.toFixed(2)}</span>
-                </div>
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/[.08]">
-                  <div
-                    className="h-full rounded-full bg-primary/70"
-                    style={{ width: `${Math.max(3, (row.cost / maxCost) * 100)}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-            {(data.by_kind ?? []).length === 0 && (
-              <li className="text-[11.5px] text-ink-3">还没有调用记录——生成一次原画或动画后这里会出现估算。</li>
-            )}
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-mono text-[11.5px] text-ink-2">
+                      {entry.model || "—"}
+                    </span>
+                    <span className="block text-[10.5px] text-ink-4">
+                      {KIND_LABEL[entry.kind] ?? entry.kind} · {timeOf(entry.at)}
+                    </span>
+                  </span>
+                  <span className="shrink-0 font-mono text-[11px] text-ink-3">
+                    {price === undefined ? "—" : `¥${price.toFixed(2)}`}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
-          <p className="mt-3 text-[10.5px] leading-[16px] text-ink-4">{data.note}</p>
-        </>
-      )}
-    </Card>
+        )}
+      </Card>
+    </>
   );
 }
 
@@ -225,16 +314,23 @@ function Capability(props: {
           <p className="mt-0.5 text-[11.5px] leading-[17px] text-ink-3">{props.purpose}</p>
           <p className="mt-0.5 text-[11px] leading-[16px] text-ink-4">{props.support}</p>
         </div>
-        {props.onEnabled && <Switch checked={props.enabled} onChange={props.onEnabled} />}
+        {props.onEnabled && (
+          <Switch
+            checked={props.enabled}
+            onChange={props.onEnabled}
+            label={`启用 ${props.modelKey} 模型`}
+          />
+        )}
       </div>
-      <label className="mt-3 block">
-        <span className="mb-1 block text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
+      <label className="mt-3 flex items-center gap-3">
+        <span className="w-[104px] shrink-0 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-ink-4">
           模型 {props.modelKey}
         </span>
         <Input
           value={props.modelValue}
           onChange={(event) => props.onModel(event.target.value)}
           placeholder={props.placeholder}
+          className="flex-1"
         />
       </label>
       {props.extra && <div className="mt-3">{props.extra}</div>}
@@ -261,9 +357,11 @@ export default function SettingsCenter() {
 
   const dirtyRef = useRef(false);
   useEffect(() => {
-    // 双向同步：工作台面板保存后共享缓存更新，此处（未编辑时）跟随刷新
-    if (settings.data && (!form || !dirtyRef.current)) setForm(toForm(settings.data));
-  }, [settings.data, form]);
+    // 双向同步：工作台面板保存后共享缓存更新，此处（未编辑时）跟随刷新。
+    // 使用函数式更新，避免把 form 放进依赖导致每次 toForm 都触发新一轮同步。
+    if (!settings.data) return;
+    setForm((previous) => (!previous || !dirtyRef.current ? toForm(settings.data!) : previous));
+  }, [settings.data]);
 
   async function persist(): Promise<ModelSettings> {
     if (!form) throw new Error("表单未就绪");
@@ -443,7 +541,7 @@ export default function SettingsCenter() {
       />
 
       <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-12 flex flex-col gap-5 lg:col-span-7">
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-7">
           {/* 连接（所有能力共用） */}
           <Card title="连接（所有能力共用）" icon="terminal">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5">
@@ -692,6 +790,7 @@ export default function SettingsCenter() {
                         <Switch
                           checked={form.prompt_extend}
                           onChange={(prompt_extend) => setForm({ ...form, prompt_extend })}
+                          label="平台改写提示词"
                         />
                       </label>
                       <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle px-3 py-2">
@@ -699,6 +798,7 @@ export default function SettingsCenter() {
                         <Switch
                           checked={form.watermark}
                           onChange={(watermark) => setForm({ ...form, watermark })}
+                          label="添加水印"
                         />
                       </label>
                     </div>
@@ -717,6 +817,7 @@ export default function SettingsCenter() {
                         onChange={(auto) =>
                           setForm({ ...form, image_fallback_policy: auto ? "degrade" : "strict" })
                         }
+                        label="生图失败时降级为离线示意"
                       />
                     </label>
                   </div>
@@ -766,6 +867,7 @@ export default function SettingsCenter() {
                         onChange={(video_prompt_extend) =>
                           setForm({ ...form, video_prompt_extend })
                         }
+                        label="视频平台改写提示词"
                       />
                     </label>
                     <label className="flex items-center justify-between gap-2 rounded-md border border-line-subtle px-3 py-2 md:col-span-2">
@@ -780,6 +882,7 @@ export default function SettingsCenter() {
                       <Switch
                         checked={form.video_ai_enhance}
                         onChange={(video_ai_enhance) => setForm({ ...form, video_ai_enhance })}
+                        label="AI 润色动作提示词"
                       />
                     </label>
                   </div>
@@ -790,48 +893,6 @@ export default function SettingsCenter() {
 
           {/* 云生成能力（3D / 图像 / 视频 / 音频）：与上面的 OpenAI 兼容连接互相独立 */}
           <CloudProviderPanel />
-        </div>
-
-        <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">
-          <UsageMeter />
-          <Card
-            title="能力 → 模型 对照"
-            icon="check"
-            right={
-              <Badge tone={data.enabled ? "primary" : "neutral"}>
-                {data.enabled ? "启用中" : "离线"}
-              </Badge>
-            }
-          >
-            <ul className="space-y-2.5">
-              {summary.map((row) => (
-                <li
-                  key={row.label}
-                  className="flex items-center gap-3 rounded-md border border-line-subtle bg-surface-1 px-3 py-2"
-                >
-                  <span
-                    className={cx(
-                      "h-2 w-2 shrink-0 rounded-full",
-                      row.on ? "bg-success" : "bg-ink-4/40",
-                    )}
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[12.5px] text-ink-2">{row.label}</span>
-                    <span className="block truncate font-mono text-[11px] text-ink-4">
-                      {row.on ? row.model : "使用离线内核"}
-                    </span>
-                  </span>
-                  {row.note && (
-                    <span className="shrink-0 text-[10.5px] text-ink-4">{row.note}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-3 border-t border-line-subtle pt-3 text-[11.5px] leading-[18px] text-ink-3">
-              provider <code className="font-mono">{data.provider || "—"}</code> · base_url{" "}
-              <code className="font-mono break-all">{data.base_url || "—"}</code>
-            </div>
-          </Card>
 
           <Card title="工作方式" icon="book">
             <ul className="space-y-2.5 text-[12.5px] leading-[19px] text-ink-2">
@@ -857,7 +918,7 @@ export default function SettingsCenter() {
           </Card>
 
           <Card title="文件位置 · 打开产物文件夹" icon="download">
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Button
                 variant="secondary"
                 size="sm"
@@ -907,6 +968,48 @@ export default function SettingsCenter() {
             <p className="mt-2.5 text-[11px] leading-[17px] text-ink-4">
               在资源管理器中直接打开生成产物的保存目录（图片与动画均已本地落盘，不依赖远程链接）。
             </p>
+          </Card>
+        </div>
+
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-5">
+          <UsageMeter />
+          <Card
+            title="能力 → 模型 对照"
+            icon="check"
+            right={
+              <Badge tone={data.enabled ? "primary" : "neutral"}>
+                {data.enabled ? "启用中" : "离线"}
+              </Badge>
+            }
+          >
+            <ul className="space-y-2.5">
+              {summary.map((row) => (
+                <li
+                  key={row.label}
+                  className="flex items-center gap-3 rounded-md border border-line-subtle bg-surface-1 px-3 py-2"
+                >
+                  <span
+                    className={cx(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      row.on ? "bg-success" : "bg-ink-4/40",
+                    )}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12.5px] text-ink-2">{row.label}</span>
+                    <span className="block truncate font-mono text-[11px] text-ink-4">
+                      {row.on ? row.model : "使用离线内核"}
+                    </span>
+                  </span>
+                  {row.note && (
+                    <span className="shrink-0 text-[10.5px] text-ink-4">{row.note}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 border-t border-line-subtle pt-3 text-[11.5px] leading-[18px] text-ink-3">
+              provider <code className="font-mono">{data.provider || "—"}</code> · base_url{" "}
+              <code className="font-mono break-all">{data.base_url || "—"}</code>
+            </div>
           </Card>
 
           <PreferencesSync />

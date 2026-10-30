@@ -223,8 +223,9 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
   }
 
   const preview = results[active];
+  const previewFrames = preview?.frame_urls ?? [];
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-4 py-5 md:px-6">
+    <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
         overline="Playable Motion"
         title="基础动作"
@@ -240,77 +241,169 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
         }
       />
 
-      <Card title="一句话动作提示词" icon="spark">
-        <Textarea
-          value={direction}
-          onChange={(event) => setDirection(event.target.value)}
-          placeholder="例如：轻快、有弹性，披风随步伐自然摆动"
-          className="min-h-24"
-        />
-        <p className="mt-2 text-xs text-ink-4">不填也可以：系统使用经过验证的基础运动模板。</p>
-      </Card>
-
-      <Card
-        title="生成试玩动作"
-        icon="play"
-        right={
-          task ? (
-            <Badge tone="primary">{ACTION_LABELS[task.action]}生成中，网络抖动会自动续轮询</Badge>
-          ) : undefined
-        }
-      >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {CORE_ACTIONS.map((action) => {
-            const result = results[action];
-            return (
-              <button
-                key={action}
-                disabled={Boolean(task)}
-                onClick={() => void start(action)}
-                className={cx(
-                  "rounded-xl border p-4 text-left transition-colors disabled:cursor-wait disabled:opacity-60",
-                  active === action
-                    ? "border-primary bg-primary-tint/40"
-                    : "border-line-subtle hover:border-primary/50",
-                )}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold text-ink">{ACTION_LABELS[action]}</span>
-                  {result && <Badge tone="success">已生成</Badge>}
-                </div>
-                <p className="mt-1 text-xs text-ink-3">{CORE_ACTION_HINTS[action]}</p>
-              </button>
-            );
-          })}
-        </div>
-        {error && (
-          <p className="mt-3 rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>
-        )}
-      </Card>
-
-      <Card title="当前动作预览" icon="image">
-        {preview ? (
-          <div className="flex flex-col items-center gap-3">
-            <img
-              src={preview.urls.gif}
-              alt={`${ACTION_LABELS[active]} animation`}
-              className="max-h-[420px] rounded-lg object-contain"
+      <div className="grid grid-cols-12 gap-5">
+        {/* 左：一句话生成 + 动作预设网格 */}
+        <div className="col-span-12 flex flex-col gap-5 xl:col-span-4">
+          <Card
+            title="一句话动作提示词"
+            icon="spark"
+            right={<span className="cf-ref">Direction</span>}
+          >
+            <Textarea
+              value={direction}
+              onChange={(event) => setDirection(event.target.value)}
+              placeholder="例如：轻快、有弹性，披风随步伐自然摆动"
+              className="min-h-[112px]"
             />
-            <div className="flex gap-3 text-xs">
-              <a className="text-primary underline" href={preview.urls.gif} download>
-                下载 GIF
-              </a>
-              {preview.urls.video && (
-                <a className="text-primary underline" href={preview.urls.video} download>
-                  下载 MP4
-                </a>
+            <p className="mt-2 text-[11.5px] leading-4 text-ink-4">
+              不填也可以：系统使用经过验证的基础运动模板。
+            </p>
+          </Card>
+
+          <Card
+            title="生成试玩动作"
+            icon="grid"
+            right={
+              task ? (
+                <Badge tone="primary">{ACTION_LABELS[task.action]}生成中</Badge>
+              ) : (
+                <span className="cf-ref">{CORE_ACTIONS.length} 种基础动作</span>
+              )
+            }
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {CORE_ACTIONS.map((action) => {
+                const result = results[action];
+                const running = task?.action === action;
+                return (
+                  <button
+                    key={action}
+                    disabled={Boolean(task)}
+                    onClick={() => void start(action)}
+                    className={cx(
+                      "flex flex-col gap-2 rounded-lg border p-4 text-left transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard disabled:cursor-wait disabled:opacity-60",
+                      active === action
+                        ? "border-primary/50 bg-primary-tint/40 shadow-e1"
+                        : "border-line-subtle bg-surface-1 hover:border-line-strong hover:bg-surface-2",
+                    )}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[14px] font-semibold text-ink">
+                        {ACTION_LABELS[action]}
+                      </span>
+                      {running ? (
+                        <Badge tone="primary">生成中</Badge>
+                      ) : result ? (
+                        <Badge tone="success">已生成</Badge>
+                      ) : (
+                        <span className="cf-ref">待生成</span>
+                      )}
+                    </div>
+                    <p className="text-[11.5px] leading-4 text-ink-3">{CORE_ACTION_HINTS[action]}</p>
+                    <span className="mt-auto inline-flex items-center gap-1.5 text-[11px] text-ink-4">
+                      <Icon name="play" className="h-3 w-3" />
+                      点击生成
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {task && (
+              <p className="mt-3 text-[11px] text-ink-4">生成中 · 网络抖动会自动续轮询</p>
+            )}
+            {error && (
+              <p className="mt-3 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[12.5px] text-danger">
+                {error}
+              </p>
+            )}
+          </Card>
+        </div>
+
+        {/* 右：动画预览 */}
+        <div className="col-span-12 xl:col-span-8">
+          <Card
+            className="h-full"
+            title="动画预览"
+            icon="image"
+            right={
+              preview ? (
+                <div className="flex items-center gap-3">
+                  <a className="text-[12px] text-ink-3 underline decoration-line" href={preview.urls.gif} download>
+                    下载 GIF
+                  </a>
+                  {preview.urls.video && (
+                    <a
+                      className="text-[12px] text-ink-3 underline decoration-line"
+                      href={preview.urls.video}
+                      download
+                    >
+                      下载 MP4
+                    </a>
+                  )}
+                </div>
+              ) : undefined
+            }
+          >
+            <div className="flex h-[340px] items-center justify-center rounded-lg border border-line-subtle bg-canvas sm:h-[440px] xl:h-[520px]">
+              {preview ? (
+                <img
+                  src={preview.urls.gif}
+                  alt={`${ACTION_LABELS[active]} animation`}
+                  className="max-h-full max-w-full object-contain"
+                />
+              ) : (
+                <p className="px-6 text-center text-sm text-ink-4">
+                  选择待机、行走、奔跑或跳跃生成预览。
+                </p>
               )}
             </div>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-subtle pt-3 text-[11px] text-ink-3">
+              <span>当前动作：{ACTION_LABELS[active]}</span>
+              {preview && (
+                <span>
+                  输出 {preview.size}px · {preview.fps}fps · {preview.frame_count} 帧 · {preview.duration}s
+                </span>
+              )}
+              {preview?.video_spec && (
+                <span>
+                  MP4 {preview.video_spec.width}×{preview.video_spec.height}@
+                  {Math.round(preview.video_spec.fps)}
+                </span>
+              )}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {previewFrames.length > 0 && (
+        <Card
+          title={`帧条 Frame Strip · ${preview?.frame_count ?? previewFrames.length} 帧`}
+          icon="film"
+          right={
+            <span className="cf-ref">
+              {preview?.fps} fps · {preview?.duration}s
+            </span>
+          }
+        >
+          <div className="cf-scroll flex gap-2 overflow-x-auto pb-1">
+            {previewFrames.map((url, index) => (
+              <figure key={url} className="shrink-0">
+                <div className="h-[104px] w-[104px] overflow-hidden rounded-md border border-line-subtle bg-canvas">
+                  <img
+                    src={url}
+                    alt={`frame ${index + 1}`}
+                    loading="lazy"
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+                <figcaption className="mt-1 text-center font-mono text-[10.5px] text-ink-4">
+                  #{index + 1}
+                </figcaption>
+              </figure>
+            ))}
           </div>
-        ) : (
-          <p className="py-16 text-center text-sm text-ink-4">选择待机、行走、奔跑或跳跃生成预览。</p>
-        )}
-      </Card>
+        </Card>
+      )}
     </div>
   );
 }
@@ -1219,7 +1312,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
               ) : undefined
             }
           >
-            <div className="flex h-[320px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),#f1efe9]">
+            <div className="flex h-[320px] items-center justify-center rounded-[10px] border border-line-subtle bg-[radial-gradient(300px_160px_at_50%_40%,rgba(124,92,196,.10),transparent_70%),var(--color-canvas)]">
               {frameUrl ? (
                 <img
                   src={frameUrl}
@@ -1868,7 +1961,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                     区，两区不交叉、不互相包含。 */}
                 <div className="flex items-center gap-3" aria-hidden>
                   <span className="h-px flex-1 bg-line-subtle" />
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember-ink">
                     自定义动作 · 功能区（创作与使用）
                   </span>
                   <span className="h-px flex-1 bg-line-subtle" />
@@ -2086,7 +2179,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
 
                 {editingName && (
                   <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-ember/40 bg-ember-tint/20 px-3 py-2">
-                    <span className="text-[11px] text-ember">
+                    <span className="text-[11px] text-ember-ink">
                       正在编辑「{editingName}
                       」——保存后覆盖该动作（保留创建时间并记入修改历史；改名则整卡迁移元数据）
                     </span>
@@ -2130,7 +2223,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                 {/* ── 动作库分界：创作台到此为止，下面是已保存动作的选择与生成 ── */}
                 <div className="flex items-center gap-3" aria-hidden>
                   <span className="h-px flex-1 bg-line-subtle" />
-                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember">
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-ember-ink">
                     自定义动作 · 动作库（选中后生成）
                   </span>
                   <span className="h-px flex-1 bg-line-subtle" />
@@ -2240,7 +2333,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                                   "shrink-0 rounded-md border px-2 py-1 text-[10.5px] transition-colors",
                                   active
                                     ? "border-ember bg-ember text-white hover:opacity-90"
-                                    : "border-line-subtle bg-surface-2 text-ink-2 hover:border-ember hover:text-ember",
+                                    : "border-line-subtle bg-surface-2 text-ink-2 hover:border-ember hover:text-ember-ink",
                                 )}
                               >
                                 {busy && active ? "生成中…" : "生成"}
@@ -2272,7 +2365,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                               <button
                                 onClick={() => startEdit(preset)}
                                 title="载入上方创作台，修改动作属性与参数后覆盖保存"
-                                className="shrink-0 text-[10.5px] text-ink-3 hover:text-ember"
+                                className="shrink-0 text-[10.5px] text-ink-3 hover:text-ember-ink"
                               >
                                 编辑
                               </button>
@@ -2374,7 +2467,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                       {seqFrames.map((frame, index) => (
                         <div
                           key={`${frame.name}-${index}`}
-                          className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-line-subtle bg-[#f1efe9]"
+                          className="group relative h-14 w-14 shrink-0 overflow-hidden rounded-md border border-line-subtle bg-canvas"
                           title={`${frame.name} · 第 ${index + 1} 帧`}
                         >
                           <img
@@ -2403,7 +2496,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
             )}
 
             {error && (
-              <p className="mt-3 border-l-2 border-danger pl-3 text-[12.5px] text-danger">
+              <p className="mt-3 border-t border-danger/40 pt-2 text-[12.5px] text-danger">
                 {error}
               </p>
             )}
@@ -2444,7 +2537,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
               <div className="cf-scroll flex gap-3 overflow-x-auto pb-1">
                 {result.frame_urls.map((url, index) => (
                   <figure key={url} className="shrink-0">
-                    <div className="h-[130px] w-[130px] overflow-hidden rounded-lg border border-line-subtle bg-[#f1efe9]">
+                    <div className="h-[130px] w-[130px] overflow-hidden rounded-lg border border-line-subtle bg-canvas">
                       <img
                         src={url}
                         alt={`frame ${index + 1}`}
@@ -2636,7 +2729,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           onClick={() => setPreview(false)}
         >
           <div
-            className="relative max-h-[90vh] max-w-[92vw] rounded-2xl border border-line-subtle bg-surface-1 p-4 shadow-2xl"
+            className="relative max-h-[90vh] max-w-[92vw] rounded-lg border border-line-subtle bg-surface-1 p-4 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -2680,7 +2773,7 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           onClick={() => setDetailName(null)}
         >
           <div
-            className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-line-subtle bg-surface-1 p-5 shadow-2xl"
+            className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg border border-line-subtle bg-surface-1 p-5 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
             <button

@@ -42,3 +42,8 @@ benchmark/mos_kit/clips/
 
 # IDE 配置
 .idea/
+
+# Impeccable 本地截图 / 构建证据（design.json 保留入库）
+.impeccable/review/
+.impeccable/build/
+.impeccable/config.local.json

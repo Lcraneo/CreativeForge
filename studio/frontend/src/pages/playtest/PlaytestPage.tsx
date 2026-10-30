@@ -12,7 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import { Badge, Button, PageHeader, cx } from "../../components/ui";
+import { Badge, Button, Card, KV, PageHeader, SafeImage, Skeleton, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
 import { useHeldKeys } from "../../lib/keyboard";
 import { toast } from "../../stores/toastStore";
@@ -255,6 +255,16 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   const goWorkbench = useCallback(() => {
     if (selectedAssetId) navigate(`/animation?asset=${encodeURIComponent(selectedAssetId)}`);
   }, [navigate, selectedAssetId]);
+  const selectPerson = useCallback(
+    (assetId: string) => {
+      setSearchParams((previous) => {
+        const next = new URLSearchParams(previous);
+        next.set("asset", assetId);
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
 
   const actionLabel = useMemo(() => {
     if (BASE_ACTION_LABEL[uiAction]) return BASE_ACTION_LABEL[uiAction];
@@ -279,6 +289,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
       : batchRunning
         ? `动作生成中 ${batchDoneCount}/${batchData?.total ?? 0}`
         : null;
+  const aiReadyCount = assets.metadataLoading ? 0 : BUILT_IN_ACTIONS.length - missingCount;
+
   const statusText = !selectedAssetId
     ? "未选择试玩人物"
     : assets.metadataError
@@ -303,9 +315,13 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         }
       />
 
-      {/* ── 验收舞台：顶栏 + 16:9 画布 ───────────────────────────── */}
-      <div className="overflow-hidden rounded-xl border border-line-subtle bg-paper">
-        <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle px-3 py-2">
+      {/* ── 主舞台 + 右侧角色/参数栏 ─────────────────────────────── */}
+      <div className="grid grid-cols-12 items-start gap-4">
+      <section
+        aria-label="试玩舞台"
+        className="col-span-12 min-w-0 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 xl:col-span-9"
+      >
+        <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle bg-surface-1/40 px-3 py-2">
           <span className="text-[12px] font-medium text-ink">{selected?.name ?? "未选择人物"}</span>
           <Badge tone="neutral">
             {bound
@@ -323,13 +339,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
             {uiMode === "live" ? "Live 实时控制" : "Preview 预览"}
           </Badge>
           <span className="ml-auto flex items-center gap-2">
-            <span
-              ref={fpsMeterRef}
-              aria-label="舞台帧率"
-              className="rounded-md border border-line bg-canvas px-2 py-1 font-mono text-[11px] text-ink-2"
-            >
-              — FPS
-            </span>
             <Button
               variant="secondary"
               size="sm"
@@ -394,17 +403,128 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
             ))}
           </div>
 
-          {/* 诊断抽屉开关（舞台右下） */}
-          <button
-            onClick={() => setDiagnosticsOpen((value) => !value)}
-            aria-expanded={diagnosticsOpen}
-            className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg border border-stage-line/40 bg-black/35 px-2.5 py-1.5 text-[11px] font-medium text-stage-text/90 backdrop-blur-sm hover:text-stage-text"
-          >
-            <Icon name="activity" className="h-3.5 w-3.5" />
-            诊断抽屉
-          </button>
+        </div>
+      </section>
 
-          {diagnosticsOpen && (
+      {/* ── 右侧栏：角色候选 + 舞台参数 + 诊断 ────────────────────── */}
+      <aside className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 xl:col-span-3 xl:grid-cols-1">
+        <Card
+          title="角色"
+          icon="cube"
+          bodyClassName="p-2.5"
+          right={
+            <Badge tone={bound ? "primary" : "neutral"}>{bound ? "已绑定" : "待选择"}</Badge>
+          }
+        >
+          <div className="flex items-center gap-2 border-b border-line-subtle pb-2">
+            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-line bg-surface-1 text-ink-3">
+              <Icon name="cube" className="h-4 w-4" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[12px] font-semibold text-ink">
+                {selected?.name ?? "未选择人物"}
+              </div>
+              <div className="cf-ref truncate">
+                条带 {assets.progress.ready}/{assets.progress.total} · AI {aiReadyCount}/5
+              </div>
+            </div>
+          </div>
+
+          {history.isLoading ? (
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
+              {Array.from({ length: 6 }, (_, index) => (
+                <Skeleton key={index} className="h-[74px] rounded-md" />
+              ))}
+            </div>
+          ) : people.length === 0 ? (
+            <p className="mt-2 py-3 text-center text-[11px] text-ink-4">
+              近期生成里还没有可用角色
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-3 gap-1.5">
+              {people.slice(0, 6).map((record) => (
+                <button
+                  key={record.id}
+                  onClick={() => record.asset_id && selectPerson(record.asset_id)}
+                  aria-pressed={selectedAssetId === record.asset_id}
+                  className={cx(
+                    "flex min-w-0 flex-col overflow-hidden rounded-md border bg-paper text-left transition-colors duration-(--motion-fast) ease-standard",
+                    selectedAssetId === record.asset_id
+                      ? "border-primary/60"
+                      : "border-line-subtle hover:border-line",
+                  )}
+                >
+                  <SafeImage
+                    src={record.image?.url ?? undefined}
+                    alt={String(record.name ?? record.asset_id ?? "")}
+                    className="h-[52px] w-full bg-surface-1 object-contain"
+                  />
+                  <span className="truncate px-1 py-0.5 text-[10px] text-ink-3">
+                    {record.name || record.asset_id}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {people.length > 6 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mt-1.5 w-full justify-center text-[11px]"
+              onClick={() => setPickerOpen(true)}
+            >
+              查看全部 {people.length} 位
+            </Button>
+          )}
+        </Card>
+
+        <Card
+          title="舞台参数"
+          icon="gauge"
+          bodyClassName="p-3"
+          right={
+            <Badge tone={uiMode === "live" ? "neutral" : "primary"}>
+              {uiMode === "live" ? "Live" : "Preview"}
+            </Badge>
+          }
+        >
+          <KV label="当前动作" value={actionLabel} mono={false} />
+          <KV label="渲染来源" value={meta.source ?? "—"} />
+          <KV
+            label="帧率"
+            value={<span ref={fpsMeterRef} aria-label="舞台帧率">— FPS</span>}
+          />
+          <KV label="条带进度" value={`${assets.progress.ready}/${assets.progress.total}`} />
+
+          <div
+            className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-3"
+            role="progressbar"
+            aria-label="条带加载进度"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={assets.progress.pct}
+          >
+            <div
+              className="h-full rounded-full bg-primary transition-[width] duration-(--motion-progress) ease-linear"
+              style={{ width: `${assets.progress.pct}%` }}
+            />
+          </div>
+
+          <Button
+            variant="secondary"
+            size="sm"
+            icon="activity"
+            aria-expanded={diagnosticsOpen}
+            onClick={() => setDiagnosticsOpen((value) => !value)}
+            className="mt-2.5 w-full justify-center"
+          >
+            {diagnosticsOpen ? "收起诊断信息" : "打开诊断信息"}
+          </Button>
+        </Card>
+
+        {diagnosticsOpen && (
+          <div className="min-w-0 sm:col-span-2 xl:col-span-1">
             <PlaytestDiagnostics
               source={meta.source}
               character={meta.character}
@@ -416,8 +536,9 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
               batchTasks={batchTasks}
               onClose={() => setDiagnosticsOpen(false)}
             />
-          )}
-        </div>
+          </div>
+        )}
+      </aside>
       </div>
 
       {/* ── 底部动作坞 ────────────────────────────────────────────── */}
@@ -436,7 +557,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         batchStartedAt={batchData?.created_at}
         batchSyncError={batch.error ? String(batch.error).slice(0, 140) : null}
         missingCount={assets.metadataLoading ? 0 : missingCount}
-        aiReadyCount={assets.metadataLoading ? 0 : BUILT_IN_ACTIONS.length - missingCount}
+        aiReadyCount={aiReadyCount}
         phase={assets.phase}
         customLoading={assets.customLoading}
         libraryOpen={libraryOpen}
@@ -481,11 +602,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         selectedId={selected?.id}
         onClose={() => setPickerOpen(false)}
         onSelect={(assetId) => {
-          setSearchParams((previous) => {
-            const next = new URLSearchParams(previous);
-            next.set("asset", assetId);
-            return next;
-          });
+          selectPerson(assetId);
           setPickerOpen(false);
         }}
         onGoWorkbench={() => navigate("/")}

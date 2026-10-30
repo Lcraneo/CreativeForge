@@ -21,6 +21,11 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
+import {
+  RococoDivider,
+  RococoFrame,
+  RococoRibbon,
+} from "../components/rococo/RococoOrnaments";
 import { EASE_STANDARD, MOTION } from "../lib/motion";
 import { NAV_GROUPS } from "../lib/navigation";
 import type { GenerationOverrides } from "../types";
@@ -302,7 +307,7 @@ export default function Workspace() {
 
   return (
     <motion.div
-      className="mx-auto flex w-full max-w-[1440px] flex-col gap-6 px-4 py-5 md:px-6"
+      className="mx-auto flex w-full max-w-[1440px] flex-col gap-7 px-4 py-6 md:px-7 md:py-8"
       initial={reduceMotion ? false : "hidden"}
       animate="show"
       variants={{ hidden: {}, show: { transition: { staggerChildren: MOTION.fast } } }}
@@ -311,29 +316,34 @@ export default function Workspace() {
       <div className="grid grid-cols-12 gap-5">
         <motion.section
           variants={RISE}
-          className="cf-sheen relative col-span-12 overflow-hidden rounded-2xl border border-line-subtle bg-[radial-gradient(620px_240px_at_88%_-30%,rgba(169,129,47,.12),transparent_70%),radial-gradient(420px_220px_at_6%_130%,rgba(62,125,90,.09),transparent_70%),linear-gradient(180deg,#f2efe9,#ece9e2)] p-6 xl:col-span-8"
+          className="cf-sheen cf-vellum relative col-span-12 overflow-hidden rounded-lg border border-line bg-[radial-gradient(720px_300px_at_92%_-28%,rgba(174,191,215,.42),transparent_70%),radial-gradient(520px_260px_at_0%_120%,rgba(255,255,255,.7),transparent_72%)] xl:col-span-7"
         >
+          <RococoFrame contentClassName="p-6 xl:p-8">
           {/* 右上角落款：朱印 + 竖排题字，不压正文 */}
           <div
             className="pointer-events-none absolute right-5 top-5 hidden select-none flex-col items-center gap-3 xl:flex"
             aria-hidden="true"
           >
-            <Stamp char="锻" tone="ember" size={24} />
-            <span className="cf-vertical font-display text-[11px] font-semibold text-ink-3">
-              入炉百炼
+            <Stamp char="造" tone="ember" size={24} />
+            <span className="cf-vertical font-serif text-[11px] font-semibold text-ink-3">
+              蓝雾工坊
             </span>
           </div>
 
-          <div className="xl:pr-20">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-2">
-              CreativeForge 工坊 · {dateLabel}
+          <div className="xl:pr-24">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+              <RococoRibbon className="cf-rococo-ribbon--mist">
+                Atelier des Assets · N° 01
+              </RococoRibbon>
+              <span className="cf-ref">{dateLabel}</span>
             </div>
-            <h1 className="mt-2 font-display text-[30px] font-black leading-[1.2] [text-wrap:balance] xl:text-[34px]">
+            <h1 className="mt-6 max-w-[15ch] font-serif text-[38px] font-black leading-[1.08] tracking-[-0.03em] [text-wrap:balance] xl:text-[48px]">
               {greeting}，今天锻造什么？
             </h1>
-            <p className="mt-1.5 text-[13px] text-ink-3">
+            <p className="mt-3 max-w-[52ch] text-[14px] leading-6 text-ink-3">
               写下目标，Supervisor 自动排开五段炉程，从一句话到可入引擎的资产。
             </p>
+            <RococoDivider className="mt-4 h-5 w-44 text-line-strong/85" />
           </div>
 
           <Textarea
@@ -343,20 +353,27 @@ export default function Workspace() {
               if ((event.metaKey || event.ctrlKey) && event.key === "Enter") generate();
             }}
             rows={5}
-            className="mt-4"
+            className="mt-6 min-h-[142px]"
             placeholder="创建一个像素风火焰法师Boss：需要 Idle 动画、Attack 动画、Unity 导出"
           />
 
-          <div className="mt-4">
-            <span className="text-[11px] text-ink-4">灵感签 · 点一张即可填入</span>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {EXAMPLES.map((example) => (
+          <div className="mt-5">
+            <span className="cf-ref">灵感签 · 点一张即可填入</span>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              {EXAMPLES.map((example, index) => (
                 <button
                   key={example}
                   onClick={() => setGoal(example)}
-                  className="cf-slip rounded-[6px] border border-line-subtle bg-paper px-3 py-1.5 text-xs text-ink-3 shadow-e2 transition-[color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-primary/45 hover:text-primary active:scale-[0.97]"
+                  title={example}
+                  className="cf-slip flex min-w-0 items-start gap-2.5 rounded-sm border border-line px-3 py-2.5 text-left text-xs leading-[18px] text-ink-3 shadow-e1 transition-[color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-line-strong hover:text-ink active:scale-[0.98]"
                 >
-                  {example.length > 26 ? `${example.slice(0, 26)}…` : example}
+                  <span
+                    className="cf-display-num shrink-0 pt-0.5 text-[13px] leading-none text-ember-ink-ink"
+                    aria-hidden="true"
+                  >
+                    0{index + 1}
+                  </span>
+                  <span className="line-clamp-2 min-w-0 [text-wrap:pretty]">{example}</span>
                 </button>
               ))}
             </div>
@@ -424,14 +441,14 @@ export default function Workspace() {
               >
                 增强提示词
               </Button>
-              <Button variant="ember" size="lg" icon="spark" loading={busy} onClick={generate}>
+              <Button variant="primary" size="lg" icon="spark" loading={busy} onClick={generate}>
                 {busy ? "创建中…" : "生成资产"}
               </Button>
             </div>
           </div>
 
           {advanced && (
-            <div className="mt-4 rounded-xl border border-line-subtle bg-canvas/40 p-4">
+            <div className="mt-5 border-t border-line pt-4">
               <div className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.08em] text-ink-4">
                 <Icon name="layers" className="h-3.5 w-3.5" />
                 生成参数覆盖 · 默认模型与自定义 API 均生效
@@ -461,11 +478,12 @@ export default function Workspace() {
               </p>
             </div>
           )}
+          </RococoFrame>
         </motion.section>
 
-        <motion.div variants={RISE} className="col-span-12 xl:col-span-4">
+        <motion.div variants={RISE} className="col-span-12 xl:col-span-5">
           <Card
-            className="flex h-full flex-col"
+            className="cf-dossier flex h-full flex-col"
             title="生产管线"
             icon="activity"
             bodyClassName="flex flex-1 flex-col p-[18px]"
@@ -476,10 +494,11 @@ export default function Workspace() {
               </Badge>
             }
           >
+            <RococoDivider className="mx-auto mb-3 h-4 w-36 text-line-strong/70" />
             {/* 纵向炉程：一条墨线贯穿五段，节点落在序号上，随任务进度点亮 */}
             <ol className="relative flex flex-1 flex-col justify-between gap-3 py-0.5">
               <span
-                className="absolute bottom-3 left-[13px] top-3 w-px bg-line-subtle"
+                className="absolute bottom-3 left-[13px] top-3 w-px bg-line"
                 aria-hidden="true"
               />
               {pipeline.map((step, index) => {
@@ -487,7 +506,7 @@ export default function Workspace() {
                   step.status === "done"
                     ? "border-success bg-success/10 text-success"
                     : step.status === "running"
-                      ? "border-primary bg-primary-tint text-primary shadow-[0_0_0_4px_rgba(26,24,20,.08)]"
+                      ? "border-primary bg-ember-tint text-primary shadow-[0_0_0_3px_rgba(174,191,215,.32)]"
                       : step.status === "failed"
                         ? "border-danger bg-danger/10 text-danger"
                         : "border-line bg-paper text-ink-4";
@@ -526,7 +545,7 @@ export default function Workspace() {
                     >
                       {step.label}
                     </span>
-                    <span className="h-px flex-1 bg-line-subtle/70" aria-hidden="true" />
+                    <span className="h-px flex-1 bg-line/70" aria-hidden="true" />
                     <span className="tabular cf-display-num text-[11px] text-ink-4">
                       0{index + 1}
                     </span>
@@ -534,8 +553,8 @@ export default function Workspace() {
                 );
               })}
             </ol>
-            <div className="mt-4 flex items-center gap-1.5 border-t border-ink/[.06] pt-3 text-[11px] text-ink-4">
-              <Icon name="spark" className="h-3 w-3 shrink-0 text-ember" />
+            <div className="mt-4 flex items-center gap-1.5 border-t border-line pt-3 text-[11px] text-ink-4">
+              <Icon name="spark" className="h-3 w-3 shrink-0 text-ember-ink" />
               五段炉程由 Supervisor 编排 · QA 质量门自动把关
             </div>
           </Card>
@@ -546,15 +565,15 @@ export default function Workspace() {
           导航不做延迟进场（不参与 stagger），即时呈现并保证后续区块动画不被卡住 */}
       <nav
         aria-label="四大工区导航"
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line-subtle bg-line-subtle shadow-e1 md:grid-cols-4"
+        className="grid grid-cols-2 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 md:grid-cols-4"
       >
         {JOURNEY.map((zone) => (
           <NavLink
             key={zone.label}
             to={zone.to}
-            className="group flex items-center gap-3 bg-surface-1 px-4 py-3.5 transition-colors duration-(--motion-fast) ease-standard hover:bg-surface-2"
+            className="group flex items-center gap-3 border-b border-line px-4 py-4 transition-colors duration-(--motion-fast) ease-standard last:border-b-0 odd:border-r hover:bg-ember-tint/55 md:border-b-0 md:border-r md:last:border-r-0"
           >
-            <span className="cf-display-num text-[22px] leading-none text-ember">
+            <span className="cf-display-num text-[23px] leading-none text-ember-ink-ink">
               {zone.numeral}
             </span>
             <span className="min-w-0 flex-1">
@@ -576,7 +595,7 @@ export default function Workspace() {
           description="PReCon、FAlign、GImport 三段领域智能体接力，完成像素重建、切帧对齐与引擎导入。"
         />
         <Card bodyClassName="p-0">
-          <div className="grid divide-y divide-ink/[.06] md:grid-cols-3 md:divide-y-0 md:divide-x">
+          <div className="grid divide-y divide-line md:grid-cols-3 md:divide-x md:divide-y-0">
             {[
               {
                 domain: "precon" as const,
@@ -605,7 +624,7 @@ export default function Workspace() {
             ].map((tech) => (
               <div
                 key={tech.mark}
-                className="group relative p-5 transition-colors duration-(--motion-base) ease-standard hover:bg-surface-2/40"
+                className="group relative p-5 transition-colors duration-(--motion-base) ease-standard hover:bg-ember-tint/45"
               >
                 <div className="flex items-center gap-2.5">
                   <Badge tone={tech.tone} icon={tech.icon}>

@@ -114,7 +114,7 @@ export default function ToonSettingsPanel({ params, fps, enabled, onToggle, onCh
               </span>
               <input
                 type="range"
-                className="h-1.5 w-full cursor-pointer accent-[#a9812f]"
+                className="h-1.5 w-full cursor-pointer accent-[#93a9c4]"
                 min={slider.min}
                 max={slider.max}
                 step={slider.step}

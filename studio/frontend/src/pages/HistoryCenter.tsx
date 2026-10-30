@@ -8,7 +8,10 @@ import {
   Badge,
   Button,
   Card,
+  Chip,
   EmptyState,
+  IconButton,
+  Input,
   KV,
   PageHeader,
   SafeImage,
@@ -18,7 +21,6 @@ import {
   cx,
 } from "../components/ui";
 import { CharacterArt } from "../components/CharacterArt";
-import { Icon } from "../components/icons";
 import type { HistorySummary } from "../types";
 
 const ENGINES = [
@@ -160,60 +162,48 @@ export default function HistoryCenter() {
         overline="History"
         title="历史记录"
         description="每次资产生产的完整档案：目标、角色规格、质量分数与导出引擎"
-        actions={
-          <>
-            <div className="flex gap-1">
-              {ENGINES.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setEngine(item.id)}
-                  className={cx(
-                    "h-8 rounded-md border px-3 text-[12.5px] transition-colors",
-                    engine === item.id
-                      ? "border-primary bg-primary-tint font-semibold text-primary"
-                      : "border-line-subtle bg-surface-1 text-ink-2 hover:border-line hover:text-ink",
-                  )}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <Icon
-                name="search"
-                className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-3"
-              />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="搜索目标 / 资产名"
-                className="h-8 w-44 rounded-md border border-line bg-surface-2 pl-8 pr-2.5 text-[12.5px] text-ink outline-none placeholder:text-ink-4 focus:border-primary"
-              />
-            </div>
-            {selected.size > 0 && (
-              <>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon="x"
-                  onClick={() => setSelected(new Set())}
-                >
-                  取消选择
-                </Button>
-                <Button
-                  variant="danger"
-                  size="sm"
-                  icon="trash"
-                  loading={deleting}
-                  onClick={deleteSelected}
-                >
-                  删除选中（{selected.size}）
-                </Button>
-              </>
-            )}
-          </>
-        }
       />
+
+      {/* 筛选条：搜索 + 引擎筛选 + 批量操作，独立于页头，贴近数据表 */}
+      <section
+        aria-label="筛选与批量操作"
+        className="flex flex-wrap items-center gap-2.5 rounded-lg border border-line bg-paper px-4 py-3 shadow-e1"
+      >
+        <Input
+          icon="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="搜索目标 / 资产名"
+          aria-label="搜索历史档案"
+          className="h-9 min-w-[200px] flex-1"
+        />
+        <div role="group" aria-label="按引擎筛选" className="flex flex-wrap gap-1.5">
+          {ENGINES.map((item) => (
+            <Chip key={item.id} active={engine === item.id} onClick={() => setEngine(item.id)}>
+              {item.label}
+            </Chip>
+          ))}
+        </div>
+        <span className="ml-auto hidden text-[11.5px] text-ink-3 sm:inline">
+          {records.data ? `共 ${records.data.total} 条档案` : "加载中…"}
+        </span>
+        {selected.size > 0 && (
+          <>
+            <Button variant="secondary" size="sm" icon="x" onClick={() => setSelected(new Set())}>
+              取消选择
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              icon="trash"
+              loading={deleting}
+              onClick={deleteSelected}
+            >
+              删除选中（{selected.size}）
+            </Button>
+          </>
+        )}
+      </section>
 
       <div className="grid grid-cols-12 gap-5">
         <Card
@@ -240,8 +230,9 @@ export default function HistoryCenter() {
               }
             />
           ) : (
-            <div className="cf-scroll overflow-x-auto">
-              <table className="w-full border-collapse text-[13px]">
+            <div>
+              <div className="cf-scroll overflow-x-auto">
+                <table className="w-full border-collapse text-[13px]">
                 <thead>
                   <tr className="bg-surface-2 text-left text-[10.5px] uppercase tracking-[0.08em] text-ink-4">
                     <th className="w-10 px-3 py-2.5">
@@ -262,6 +253,7 @@ export default function HistoryCenter() {
                     <th className="px-4 py-2.5 font-semibold">引擎</th>
                     <th className="px-4 py-2.5 font-semibold">QA</th>
                     <th className="px-4 py-2.5 text-right font-semibold">耗时</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -343,10 +335,35 @@ export default function HistoryCenter() {
                           ? `${record.elapsed_seconds.toFixed(1)}s`
                           : "—"}
                       </td>
+                      <td className="px-3 py-2.5" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <IconButton
+                            icon="image"
+                            label="查看档案详情"
+                            onClick={() => setSelectedId(record.id)}
+                          />
+                          {record.asset_id && (
+                            <IconButton
+                              icon="cube"
+                              label="打开资产"
+                              onClick={() => openAsset(record)}
+                            />
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line-subtle px-4 py-2.5 text-[11.5px] text-ink-4">
+              <span>
+                共 {records.data?.total ?? rows.length} 条档案
+                {rows.length < (records.data?.total ?? rows.length)
+                  ? ` · 当前显示 ${rows.length} 条`
+                  : ""}
+              </span>
+            </div>
             </div>
           )}
         </Card>

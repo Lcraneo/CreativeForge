@@ -13,12 +13,12 @@ import {
   Button,
   Card,
   EmptyState,
+  KV,
   PageHeader,
   SafeImage,
   ScoreBar,
   StatusDot,
   Tabs,
-  cx,
 } from "../components/ui";
 import { CharacterArt } from "../components/CharacterArt";
 import { Icon } from "../components/icons";
@@ -40,9 +40,9 @@ const DOMAIN_COLOR: Record<string, string> = {
   precon: "#0e8ea8",
   falign: "#7c5cc4",
   gimport: "#3e7d5a",
-  qa: "#a9812f",
+  qa: "#93a9c4",
   memory: "#6f7d8c",
-  default: "#1a1814",
+  default: "#25345a",
 };
 
 function domainOf(id: string) {
@@ -188,22 +188,22 @@ function nodeStyle(status: NodeStatus, active: boolean, domain: string): React.C
   const color = DOMAIN_COLOR[domain] ?? DOMAIN_COLOR.default;
   const base: React.CSSProperties = {
     borderRadius: 12,
-    border: "1px solid #d3cfc5",
-    background: "linear-gradient(180deg,#faf9f5,#f0ede6)",
-    color: "#1a1814",
+    border: "1px solid #cbd5e3",
+    background: "linear-gradient(180deg,#fbf9f4,#eaf0f6)",
+    color: "#25345a",
     padding: "10px 12px",
     fontSize: 12,
     width: 186,
-    boxShadow: "0 6px 18px -10px rgba(26,24,20,.25)",
+    boxShadow: "0 6px 18px -10px rgba(37,52,90,.25)",
   };
   if (status === "success" || status === "recovered")
-    return { ...base, borderColor: "rgba(62,125,90,.5)" };
-  if (status === "failed") return { ...base, borderColor: "rgba(169,79,61,.6)" };
+    return { ...base, borderColor: "rgba(75,116,98,.5)" };
+  if (status === "failed") return { ...base, borderColor: "rgba(142,70,87,.65)" };
   if (active || status === "running")
     return {
       ...base,
       borderColor: color,
-      boxShadow: `0 0 0 1px ${color}55, 0 0 26px -6px ${color}88`,
+      boxShadow: `0 12px 26px -20px ${color}aa`,
     };
   return { ...base, opacity: 0.78 };
 }
@@ -336,6 +336,11 @@ export default function AgentDashboard() {
   const qualityEvent = events.filter((event) => event.type === "QUALITY_REPORT").at(-1);
   const repairCount = events.filter((event) => event.repair).length;
   const runningNode = nodes.find((node) => node.id === currentNode);
+  const breakdown = plan?.tasks ?? [];
+  const breakdownDone = breakdown.filter((task) => {
+    const state = agentStatuses[task.id];
+    return state === "success" || state === "recovered";
+  }).length;
 
   if (!taskId) {
     return (
@@ -384,115 +389,161 @@ export default function AgentDashboard() {
       {status === "pass" && asset && <GenerationResult asset={asset} />}
 
       <div className="grid grid-cols-12 gap-5">
-        <Card
-          className="col-span-12 xl:col-span-8"
-          title="任务图 Task Graph"
-          icon="layers"
-          right={
-            <div className="flex gap-1.5">
-              <Badge tone="neutral">{nodes.length} 节点</Badge>
-              <Badge tone="neutral">{edges.length} 边</Badge>
+        {/* 左：任务图 + 质量/恢复诊断 */}
+        <div className="col-span-12 flex min-w-0 flex-col gap-5 xl:col-span-8">
+          <Card
+            title="任务图 Task Graph"
+            icon="layers"
+            right={
+              <div className="flex gap-1.5">
+                <Badge tone="neutral">{nodes.length} 节点</Badge>
+                <Badge tone="neutral">{edges.length} 边</Badge>
+              </div>
+            }
+            bodyClassName="p-3"
+          >
+            <div className="h-[480px] overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(420px_200px_at_50%_0%,rgba(74,111,138,.08),transparent_70%),#f3f6fa]">
+              <ReactFlow
+                nodes={graphNodes}
+                edges={graphEdges}
+                fitView
+                proOptions={{ hideAttribution: true }}
+                nodesDraggable={false}
+                nodesConnectable={false}
+              >
+                <Background color="#cbd5e3" gap={24} />
+                <Controls showInteractive={false} />
+              </ReactFlow>
             </div>
-          }
-          bodyClassName="p-3"
-        >
-          <div className="h-[430px] overflow-hidden rounded-xl border border-line-subtle bg-[radial-gradient(420px_200px_at_50%_0%,rgba(74,111,138,.08),transparent_70%),#f1efe9]">
-            <ReactFlow
-              nodes={graphNodes}
-              edges={graphEdges}
-              fitView
-              proOptions={{ hideAttribution: true }}
-              nodesDraggable={false}
-              nodesConnectable={false}
-            >
-              <Background color="#ddd9cf" gap={24} />
-              <Controls showInteractive={false} />
-            </ReactFlow>
-          </div>
-        </Card>
+          </Card>
 
-        <Card
-          className="col-span-12 xl:col-span-4"
-          title="执行记录"
-          icon="activity"
-          bodyClassName="p-0"
-        >
-          <RightPanel
-            events={events}
-            qualityEvent={qualityEvent}
-            progress={progress}
-            status={status}
-            streamNotice={streamNotice}
-            onRetryStream={() => setRetryKey((key) => key + 1)}
-          />
-        </Card>
-
-        <Card className="col-span-12 md:col-span-4" title="当前节点" icon="spark">
-          {runningNode ? (
-            <>
-              <div className="flex items-center gap-2">
-                <Badge tone="primary">{runningNode.label}</Badge>
-                <span className="text-xs text-ink-3">{runningNode.sublabel}</span>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <Card title="质量门" icon="gauge">
+              <div className="space-y-3.5">
+                <ScoreBar
+                  label="pixel · 阈值 0.80"
+                  value={qualityEvent?.scores?.pixel ?? 0}
+                  threshold={0.8}
+                />
+                <ScoreBar
+                  label="animation · 阈值 0.85"
+                  value={qualityEvent?.scores?.animation ?? 0}
+                  threshold={0.85}
+                />
+                <ScoreBar
+                  label="engine · 阈值 0.90"
+                  value={qualityEvent?.scores?.engine ?? 0}
+                  threshold={0.9}
+                />
               </div>
-              <div className="mt-3 space-y-0">
-                <div className="flex justify-between border-b border-ink/[.08] py-2 text-[12.5px]">
-                  <span className="text-ink-3">进度</span>
-                  <span className="tabular font-mono">{progress}%</span>
-                </div>
-                <div className="flex justify-between border-b border-ink/[.08] py-2 text-[12.5px]">
-                  <span className="text-ink-3">任务 ID</span>
-                  <span className="font-mono">{taskId}</span>
-                </div>
-                <div className="flex justify-between py-2 text-[12.5px]">
-                  <span className="text-ink-3">状态</span>
-                  <span className={cx(status === "failed" ? "text-danger" : "text-primary")}>
-                    {status}
+              <p className="mt-3 text-[11px] text-ink-3">
+                {qualityEvent ? `最新报告：${qualityEvent.status ?? "—"}` : "等待 QA Agent 验证…"}
+              </p>
+            </Card>
+
+            <Card title="修复与恢复" icon="refresh">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge tone={repairCount > 0 ? "warning" : "neutral"}>
+                  {repairCount > 0 ? `修复轮 ${repairCount}` : "0 轮修复"}
+                </Badge>
+                <Badge tone="neutral" icon="refresh">
+                  checkpoint
+                </Badge>
+              </div>
+              <p className="mt-3 text-xs leading-[19px] text-ink-3">
+                失败时自动降级：Unity → Cocos → 人工介入。检查点写入 Memory
+                Agent，可从任务图任意节点恢复。
+              </p>
+            </Card>
+          </div>
+        </div>
+
+        {/* 右：当前任务 + 事件流 */}
+        <div className="col-span-12 flex min-w-0 flex-col gap-5 xl:col-span-4">
+          <Card
+            title="当前任务"
+            icon="spark"
+            right={
+              <Badge tone={statusTone}>
+                <StatusDot
+                  tone={status === "pass" ? "success" : status === "failed" ? "failed" : "running"}
+                />
+                {status === "running" ? `运行中 ${progress}%` : status.toUpperCase()}
+              </Badge>
+            }
+          >
+            <p className="line-clamp-3 text-[12.5px] leading-5 text-ink-2 [text-wrap:pretty]">{goal}</p>
+            <div className="mt-3.5">
+              <ScoreBar label="整体进度" value={Math.min(1, progress / 100)} tone="primary" />
+            </div>
+            <div className="mt-3.5 flex items-center gap-2">
+              {runningNode ? (
+                <>
+                  <Badge tone="primary">{runningNode.label}</Badge>
+                  <span className="truncate text-xs text-ink-3">{runningNode.sublabel}</span>
+                </>
+              ) : (
+                <span className="text-xs text-ink-3">等待调度…</span>
+              )}
+            </div>
+            <div className="mt-2">
+              <KV label="task" value={taskId} />
+              <KV label="status" value={status} />
+            </div>
+
+            <div className="mt-3 border-t border-line-subtle pt-3">
+              <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-ink-4">
+                <span>任务分解</span>
+                {breakdown.length > 0 && (
+                  <span className="tabular font-mono">
+                    {breakdownDone}/{breakdown.length}
                   </span>
-                </div>
+                )}
               </div>
-            </>
-          ) : (
-            <p className="text-xs text-ink-3">等待调度…</p>
-          )}
-        </Card>
+              {breakdown.length === 0 ? (
+                <p className="mt-2 text-[11.5px] text-ink-3">规划生成后显示任务分解。</p>
+              ) : (
+                <ol className="cf-scroll mt-2 max-h-[168px] space-y-1.5 overflow-y-auto">
+                  {breakdown.map((task) => {
+                    const state = agentStatuses[task.id] ?? "idle";
+                    return (
+                      <li key={task.id} className="flex items-center gap-2 text-[12px]">
+                        <StatusDot
+                          tone={
+                            state === "success" || state === "recovered"
+                              ? "success"
+                              : state === "running"
+                                ? "running"
+                                : state === "failed"
+                                  ? "failed"
+                                  : "idle"
+                          }
+                        />
+                        <span className="w-14 shrink-0 truncate font-mono text-[10.5px] text-ink-4">
+                          {task.id}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-ink-2">
+                          {task.capability} · {task.agent}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </Card>
 
-        <Card className="col-span-12 md:col-span-4" title="质量门" icon="gauge">
-          <div className="space-y-3.5">
-            <ScoreBar
-              label="pixel · 阈值 0.80"
-              value={qualityEvent?.scores?.pixel ?? 0}
-              threshold={0.8}
+          <Card title="执行记录" icon="activity" bodyClassName="p-0">
+            <RightPanel
+              events={events}
+              qualityEvent={qualityEvent}
+              progress={progress}
+              status={status}
+              streamNotice={streamNotice}
+              onRetryStream={() => setRetryKey((key) => key + 1)}
             />
-            <ScoreBar
-              label="animation · 阈值 0.85"
-              value={qualityEvent?.scores?.animation ?? 0}
-              threshold={0.85}
-            />
-            <ScoreBar
-              label="engine · 阈值 0.90"
-              value={qualityEvent?.scores?.engine ?? 0}
-              threshold={0.9}
-            />
-          </div>
-          <p className="mt-3 text-[11px] text-ink-3">
-            {qualityEvent ? `最新报告：${qualityEvent.status ?? "—"}` : "等待 QA Agent 验证…"}
-          </p>
-        </Card>
-
-        <Card className="col-span-12 md:col-span-4" title="修复与恢复" icon="refresh">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge tone={repairCount > 0 ? "warning" : "neutral"}>
-              {repairCount > 0 ? `修复轮 ${repairCount}` : "0 轮修复"}
-            </Badge>
-            <Badge tone="neutral" icon="refresh">
-              checkpoint
-            </Badge>
-          </div>
-          <p className="mt-3 text-xs leading-[19px] text-ink-3">
-            失败时自动降级：Unity → Cocos → 人工介入。检查点写入 Memory
-            Agent，可从任务图任意节点恢复。
-          </p>
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );
@@ -536,8 +587,8 @@ function RightPanel({
             items={feed.items}
             notice={streamNotice}
             onRetry={onRetryStream}
-            height={392}
-            rowHeight={40}
+            height={300}
+            rowHeight={36}
           />
         )}
 

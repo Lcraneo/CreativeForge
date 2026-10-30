@@ -5,6 +5,7 @@ import { Icon, type IconName } from "./icons";
 import { NAV_GROUPS } from "../lib/navigation";
 import { useAssetNavigation } from "../lib/assetNavigation";
 import { cx } from "./ui";
+import { RococoDivider } from "./rococo/RococoOrnaments";
 import { MOTION, EASE_STANDARD } from "../lib/motion";
 
 interface Command {
@@ -125,7 +126,7 @@ export function CommandPalette({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-ink/25 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 bg-ink/20"
       onClick={() => onOpenChange(false)}
       onKeyDown={onKeyDown}
       ref={dialogRef}
@@ -137,7 +138,7 @@ export function CommandPalette({
         initial={{ opacity: 0, y: -10, scale: 0.985 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: MOTION.base, ease: EASE_STANDARD }}
-        className="mx-auto mt-[16vh] w-[560px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-[#faf9f5] shadow-e3"
+        className="cf-sheen mx-auto mt-[16vh] w-[560px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg border border-line bg-paper shadow-e3"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center gap-2.5 border-b border-line-subtle px-4">
@@ -153,10 +154,11 @@ export function CommandPalette({
             placeholder="搜索页面与操作…"
             className="h-12 w-full bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
           />
-          <kbd className="rounded-xs border border-line px-1.5 py-0.5 font-mono text-[10px] text-ink-3">
+          <kbd className="rounded-xs border border-line bg-canvas px-1.5 py-0.5 font-mono text-[10px] text-ink-3">
             ESC
           </kbd>
         </div>
+        <RococoDivider className="mx-auto h-4 w-44 text-line-strong/65" />
         <div className="cf-scroll max-h-[min(340px,60dvh)] overflow-y-auto p-1.5">
           {filtered.length === 0 && (
             <p className="px-3 py-6 text-center text-[13px] text-ink-3">没有匹配的结果</p>
@@ -168,7 +170,7 @@ export function CommandPalette({
               onMouseEnter={() => setActive(index)}
               className={cx(
                 "flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left text-[13.5px] transition-colors",
-                index === active ? "bg-ink/[.06] text-ink" : "text-ink-2",
+                index === active ? "bg-ember-tint text-ink" : "text-ink-2",
               )}
             >
               <Icon

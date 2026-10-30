@@ -42,7 +42,7 @@ function resolvePalette(): StagePalette {
   return {
     bg: read("--color-stage-bg", "#16120d"),
     ground: read("--color-stage-ground", "#1f1a12"),
-    groundLine: read("--color-stage-line", "#a9812f"),
+    groundLine: read("--color-stage-line", "#93a9c4"),
     debug: read("--color-stage-debug", "#2f9bb5"),
     text: read("--color-stage-text", "#f2ebdb"),
     shadow: "rgba(12, 9, 5, 0.5)",

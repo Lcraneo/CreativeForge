@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T18:45:00+08:00",
+  "title": "Design System: CreativeForge Studio",
+  "extensions": {
+    "colorMeta": {
+      "ink-blue": {
+        "role": "primary",
+        "displayName": "Ink Blue",
+        "canonical": "#25345a",
+        "tonalRamp": ["#e4e9f2", "#c8d2e2", "#9fadc7", "#7585a6", "#4d6087", "#334870", "#25345a", "#17213d"]
+      },
+      "mist-blue": {
+        "role": "secondary",
+        "displayName": "Mist Blue",
+        "canonical": "#aebfd7",
+        "tonalRamp": ["#f5f8fb", "#e9eff6", "#dbe5f0", "#cad8e8", "#b9cbe0", "#aebfd7", "#8fa5c1", "#6b829f"]
+      },
+      "ivory": {
+        "role": "neutral",
+        "displayName": "Vellum Ivory",
+        "canonical": "#fbf9f4",
+        "tonalRamp": ["#ffffff", "#fdfcf8", "#fbf9f4", "#f5f2e9", "#eae5da", "#d8d1c3", "#b9b09e", "#8d8371"]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Fog Canvas",
+        "canonical": "#f3f6fa",
+        "tonalRamp": ["#ffffff", "#f9fbfd", "#f3f6fa", "#edf2f7", "#e6edf4", "#dce5ee", "#ced9e5", "#b9c7d7"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Cool Dossier",
+        "canonical": "#eaf0f6",
+        "tonalRamp": ["#f8fafc", "#f2f6fa", "#eaf0f6", "#e1e8f1", "#d5dfeb", "#c4d1e0", "#aebccf", "#94a4bb"]
+      },
+      "wax-red": {
+        "role": "tertiary",
+        "displayName": "Wax Consequence",
+        "canonical": "#8e4657",
+        "tonalRamp": ["#f7edef", "#efd8dd", "#e1b8c1", "#d0909e", "#b96c7e", "#a45365", "#8e4657", "#6d3341"]
+      },
+      "success": {
+        "role": "success",
+        "displayName": "Patina Green",
+        "canonical": "#3e6553",
+        "tonalRamp": ["#eef5f1", "#d9e9e1", "#bed8cb", "#9fc2b1", "#7ba691", "#60917a", "#4b7462", "#345749"]
+      },
+      "warning": {
+        "role": "warning",
+        "displayName": "Aged Brass",
+        "canonical": "#765a2c",
+        "tonalRamp": ["#f7f2e8", "#ede3cf", "#ddcdab", "#c9b17f", "#b09158", "#9a7d49", "#866c3e", "#68522f"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Salon Display",
+        "purpose": "Opening wordmarks and one focal heading per surface."
+      },
+      "title": {
+        "displayName": "Chinese Title",
+        "purpose": "Page and section headings where Chinese must remain intentional."
+      },
+      "body": {
+        "displayName": "Operational Body",
+        "purpose": "Labels, controls, descriptions, and dense product data."
+      },
+      "code": {
+        "displayName": "Ledger Mono",
+        "purpose": "Paths, task IDs, logs, and numeric measurements."
+      }
+    },
+    "shadows": [
+      { "name": "e1", "value": "0 1px 2px rgba(37,52,90,.05), 0 6px 18px -14px rgba(37,52,90,.18)", "purpose": "Resting paper and small controls." },
+      { "name": "e2", "value": "0 2px 4px rgba(37,52,90,.06), 0 12px 26px -18px rgba(37,52,90,.3)", "purpose": "Raised cards and popovers." },
+      { "name": "e3", "value": "0 6px 12px -8px rgba(37,52,90,.18), 0 28px 60px -30px rgba(37,52,90,.4)", "purpose": "Dialogs, drawers, and command palette." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Default state and route transition easing." },
+      { "name": "ease-opening", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Opening-sequence typography and pull-back." },
+      { "name": "duration-fast", "value": "120ms", "purpose": "Hover, press, and immediate feedback." },
+      { "name": "duration-base", "value": "180ms", "purpose": "Routine state changes." },
+      { "name": "duration-slow", "value": "260ms", "purpose": "Drawers and spatial transitions." },
+      { "name": "opening-full", "value": "4500ms", "purpose": "First-launch authored sequence on desktop." },
+      { "name": "opening-short", "value": "1600ms", "purpose": "Mobile opening." },
+      { "name": "opening-reduced", "value": "1150ms", "purpose": "Reduced-motion fade." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink-blue action for the single most important next step.",
+      "html": "<button class=\"ds-btn-primary\">生成资产</button>",
+      "css": ".ds-btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:36px; padding:0 16px; border:1px solid var(--color-primary,#25345a); border-radius:var(--radius-sm,6px); background:var(--color-primary,#25345a); color:var(--color-paper,#fbf9f4); font-family:var(--font-sans,Outfit,sans-serif); font-size:13px; font-weight:600; transition:background .12s cubic-bezier(.22,1,.36,1), border-color .12s cubic-bezier(.22,1,.36,1), transform .12s cubic-bezier(.22,1,.36,1); } .ds-btn-primary:hover { background:var(--color-primary-hover,#344a78); border-color:var(--color-primary-hover,#344a78); } .ds-btn-primary:active { transform:scale(.98); } .ds-btn-primary:focus-visible { outline:none; box-shadow:0 0 0 2px var(--color-paper,#fbf9f4),0 0 0 4px rgba(37,52,90,.62); }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paper action for supporting choices that must stay visually quieter.",
+      "html": "<button class=\"ds-btn-secondary\">增强提示词</button>",
+      "css": ".ds-btn-secondary { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:36px; padding:0 16px; border:1px solid var(--color-line,#cbd5e3); border-radius:var(--radius-sm,6px); background:var(--color-paper,#fbf9f4); color:var(--color-ink,#25345a); font-family:var(--font-sans,Outfit,sans-serif); font-size:13px; font-weight:600; transition:background .12s ease, border-color .12s ease, transform .12s ease; } .ds-btn-secondary:hover { background:var(--color-surface-1,#eaf0f6); border-color:var(--color-line-strong,#aebccf); } .ds-btn-secondary:active { transform:scale(.98); } .ds-btn-secondary:focus-visible { outline:none; box-shadow:0 0 0 2px var(--color-paper,#fbf9f4),0 0 0 4px rgba(37,52,90,.62); }"
+    },
+    {
+      "name": "Paper Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Ivory field with a silver rule and visible focus treatment.",
+      "html": "<label class=\"ds-field\"><span>目标</span><input class=\"ds-input\" placeholder=\"描述要生成的游戏资产\" /></label>",
+      "css": ".ds-field { display:flex; flex-direction:column; gap:6px; color:var(--color-ink-2,#394968); font-family:var(--font-sans,Outfit,sans-serif); font-size:12px; font-weight:600; } .ds-input { height:36px; padding:0 12px; border:1px solid var(--color-line,#cbd5e3); border-radius:var(--radius-md,10px); background:var(--color-paper,#fbf9f4); color:var(--color-ink,#25345a); font:inherit; font-weight:400; outline:none; transition:border-color .12s ease, box-shadow .12s ease; } .ds-input::placeholder { color:var(--color-ink-4,#5e6b85); } .ds-input:focus { border-color:var(--color-primary,#25345a); box-shadow:0 0 0 3px rgba(174,191,215,.34); }"
+    },
+    {
+      "name": "Selected Chip",
+      "kind": "chip",
+      "refersTo": "chip-selected",
+      "description": "Compact stamp-like filter or engine selection.",
+      "html": "<button class=\"ds-chip\">Unity</button>",
+      "css": ".ds-chip { display:inline-flex; align-items:center; height:32px; padding:0 12px; border:1px solid rgba(37,52,90,.3); border-radius:var(--radius-sm,6px); background:var(--color-ember-tint,rgba(174,191,215,.26)); color:var(--color-ink,#25345a); font-family:var(--font-sans,Outfit,sans-serif); font-size:12.5px; font-weight:600; transition:background .12s ease, border-color .12s ease, transform .12s ease; } .ds-chip:hover { border-color:var(--color-primary,#25345a); } .ds-chip:active { transform:scale(.98); } .ds-chip:focus-visible { outline:none; box-shadow:0 0 0 2px var(--color-paper,#fbf9f4),0 0 0 4px rgba(37,52,90,.62); }"
+    },
+    {
+      "name": "Letter Card",
+      "kind": "card",
+      "refersTo": "letter-card",
+      "description": "Ivory work paper with a silver rule; the default readable container.",
+      "html": "<section class=\"ds-letter\"><header><span>生产管线</span><span>47%</span></header><p>Supervisor 正在编排五段炉程。</p></section>",
+      "css": ".ds-letter { overflow:hidden; border:1px solid var(--color-line,#cbd5e3); border-radius:var(--radius-lg,14px); background:var(--color-paper,#fbf9f4); color:var(--color-ink,#25345a); box-shadow:0 1px 2px rgba(37,52,90,.05),0 6px 18px -14px rgba(37,52,90,.18); font-family:var(--font-sans,Outfit,sans-serif); } .ds-letter header { display:flex; justify-content:space-between; gap:12px; padding:13px 18px; border-bottom:1px solid var(--color-line-subtle,#e0e7f0); background:linear-gradient(180deg,rgba(255,255,255,.48),transparent); font-size:13px; font-weight:600; } .ds-letter p { margin:0; padding:18px; color:var(--color-ink-3,#4e5d7b); font-size:13px; line-height:1.55; }"
+    },
+    {
+      "name": "Folio Navigation",
+      "kind": "nav",
+      "refersTo": "folio-navigation",
+      "description": "Grouped work index with an ink-blue active field and a wax-red bookmark.",
+      "html": "<nav class=\"ds-folio\"><span class=\"ds-folio-mark\">Workspace</span><a class=\"ds-folio-item is-active\" href=\"#\">工作台 <small>1</small></a><a class=\"ds-folio-item\" href=\"#\">资产检查 <small>3</small></a></nav>",
+      "css": ".ds-folio { width:240px; padding:12px; border-right:1px solid var(--color-line,#cbd5e3); background:linear-gradient(90deg,rgba(174,191,215,.26),transparent 42%),var(--color-surface-1,#eaf0f6); font-family:var(--font-sans,Outfit,sans-serif); } .ds-folio-mark { display:block; padding:8px 10px 14px; border-bottom:1px solid var(--color-line,#cbd5e3); color:var(--color-ink-4,#5e6b85); font-family:var(--font-mono,monospace); font-size:9px; letter-spacing:.12em; text-transform:uppercase; } .ds-folio-item { position:relative; display:flex; align-items:center; gap:10px; min-height:34px; padding:0 10px; border-radius:var(--radius-sm,6px); color:var(--color-ink-2,#394968); font-size:13px; text-decoration:none; } .ds-folio-item small { margin-left:auto; color:var(--color-ink-4,#5e6b85); font-family:var(--font-mono,monospace); font-size:10px; } .ds-folio-item:hover { background:rgba(251,249,244,.7); color:var(--color-ink,#25345a); } .ds-folio-item.is-active { background:var(--color-ember-tint,rgba(174,191,215,.26)); color:var(--color-ink,#25345a); font-weight:600; } .ds-folio-item.is-active::before { content:''; position:absolute; left:4px; top:50%; width:6px; height:6px; background:var(--color-danger,#8e4657); transform:translateY(-50%) rotate(45deg); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Mist-Blue Atelier",
+    "overview": "CreativeForge should feel like a working atelier rather than a control panel: ivory work surfaces, mist-blue air, ink-blue typography, silver rules, and a few wax-red moments reserved for consequence. The visual world borrows the poise and ceremony of a rococo salon, but translates it into a production tool where the asset, the agent's reasoning, and the next action remain immediately legible.",
+    "keyCharacteristics": [
+      "Paper and vellum surfaces with precise silver-blue rules.",
+      "Ink-blue type on warm ivory, with mist blue used as atmosphere rather than decoration.",
+      "One expressive opening sequence; routine product motion stays quiet.",
+      "Dossier-like secondary panels, ticket-like controls, and postmark-like metadata.",
+      "Dense work areas stay calm, rectangular, and scan-friendly.",
+      "Chinese typography is designed, not left to fallback."
+    ],
+    "rules": [
+      { "name": "The Consequence Rule", "body": "Wax red never decorates inactive content; it marks a decision, interruption, or irreversible action.", "section": "colors" },
+      { "name": "The Ink-on-Paper Rule", "body": "Body text and controls use ink blue on ivory or canvas, not gray on blue.", "section": "colors" },
+      { "name": "The Chinese Voice Rule", "body": "Latin display faces may set English and French accents, but Chinese display text always uses Noto Serif SC with its own weight and line-height tuning.", "section": "typography" },
+      { "name": "The Label Rule", "body": "Display and script faces never appear in buttons, form labels, table headers, or dense operational text.", "section": "typography" }
+    ],
+    "dos": [
+      "Use real product content and actual status vocabulary.",
+      "Pair every semantic color with text or shape.",
+      "Keep the center work area calm and concentrate decoration.",
+      "Test Chinese, English, mixed strings, long paths, and large numbers at every breakpoint."
+    ],
+    "donts": [
+      "Copy Kimi Code branding, copy, or page content.",
+      "Put display fonts in operational labels.",
+      "Nest cards or add ornament to every panel.",
+      "Use blur, gradients, or texture as a substitute for hierarchy.",
+      "Let the opening animation block access when assets or routes fail."
+    ]
+  }
+}

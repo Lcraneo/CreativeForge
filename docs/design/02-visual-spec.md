@@ -1,3 +1,5 @@
+> **历史说明（2026-10-30）**：本文件记录旧版 Forge UI 的审计或视觉方案，现已被仓库根目录的 `PRODUCT.md` 与 `DESIGN.md` 取代。新增界面请以新文档为准，本文件仅保留为历史决策证据。
+
 # 02 · 视觉系统规范 — Warm Paper 暖纸编辑风
 
 > 适用范围：CreativeForge 唯一正式前端 Studio（`studio/frontend`）。

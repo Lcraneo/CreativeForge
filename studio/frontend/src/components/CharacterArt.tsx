@@ -17,9 +17,9 @@ const DEFAULTS = {
   hair: "#8a5a3b",
   skin: "#e8b98a",
   eyes: "#4a6f8a",
-  outfit: "#1a1814",
-  accent: "#a9812f",
-  line: "#1a1814",
+  outfit: "#25345a",
+  accent: "#93a9c4",
+  line: "#25345a",
 };
 
 /**

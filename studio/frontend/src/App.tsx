@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Layout from "./components/Layout";
+import { OpeningSequence } from "./components/opening/OpeningSequence";
 
 // 路由级代码分割：每个页面独立 chunk，首屏只加载当前路由
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
@@ -28,6 +29,7 @@ function PageFallback() {
 export default function App() {
   return (
     <ErrorBoundary>
+      <OpeningSequence />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route element={<Layout />}>

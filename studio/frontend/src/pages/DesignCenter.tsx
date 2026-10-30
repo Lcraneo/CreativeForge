@@ -189,8 +189,8 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
       )}
 
       <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 flex flex-col gap-5 lg:col-span-8">
         <Card
-          className="col-span-12 lg:col-span-8"
           title="三视图 Turnaround"
           icon="image"
           right={
@@ -198,47 +198,63 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
           }
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(["front", "side", "back"] as const).map((view) => {
+            {(["front", "side", "back"] as const).map((view, index) => {
               const url = viewUrl(view);
+              const title = VIEWS.find((item) => item.id === view)?.label ?? view;
               return (
                 <button
                   key={view}
                   onClick={() => setPose(view)}
                   className={cx(
-                    "group flex flex-col items-center gap-3 rounded-xl border p-4 transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
+                    "group flex flex-col overflow-hidden rounded-lg border text-left transition-[border-color,background-color,box-shadow] duration-(--motion-fast) ease-standard",
                     pose === view
                       ? "border-primary/45 bg-primary-tint/50"
-                      : "border-line-subtle bg-[#f1efe9] hover:border-line",
+                      : "border-line-subtle bg-surface-1 hover:border-line-strong",
                   )}
                 >
-                  {url ? (
-                    <SafeImage
-                      src={url}
-                      alt={`character ${view} view`}
-                      sealChar={view === "front" ? "正" : view === "side" ? "侧" : "背"}
-                      className="h-[220px] w-full object-contain"
-                    />
-                  ) : (
-                    <CharacterArt
-                      spec={spec}
-                      palette={palette}
-                      view={view}
-                      className="h-[220px] w-auto"
-                    />
-                  )}
-                  <span
-                    className={cx(
-                      "text-[11px]",
-                      pose === view ? "font-semibold text-primary" : "text-ink-3",
+                  <div className="flex w-full items-baseline justify-between gap-2 border-b border-line-subtle px-3 py-2">
+                    <span
+                      className={cx(
+                        "text-[12px] font-semibold",
+                        pose === view ? "text-primary" : "text-ink",
+                      )}
+                    >
+                      {title}
+                    </span>
+                    <span className="cf-ref">0{index + 1}</span>
+                  </div>
+                  <div className="flex h-[240px] items-center justify-center bg-canvas px-3 py-3 xl:h-[300px]">
+                    {url ? (
+                      <SafeImage
+                        src={url}
+                        alt={`character ${view} view`}
+                        sealChar={view === "front" ? "正" : view === "side" ? "侧" : "背"}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <CharacterArt
+                        spec={spec}
+                        palette={palette}
+                        view={view}
+                        className="h-full w-auto"
+                      />
                     )}
-                  >
-                    {url
-                      ? VIEW_CAPTION[view]
-                      : view === "front"
-                        ? "未生成 AI 原画"
-                        : "未生成 · 点击生成三视图"}
-                  </span>
-                  {!url && <span className="text-[10px] text-ink-4">示意图 · 非 AI 结果</span>}
+                  </div>
+                  <div className="px-3 py-2">
+                    <span
+                      className={cx(
+                        "block text-[11px]",
+                        pose === view ? "font-semibold text-primary" : "text-ink-3",
+                      )}
+                    >
+                      {url
+                        ? VIEW_CAPTION[view]
+                        : view === "front"
+                          ? "未生成 AI 原画"
+                          : "未生成 · 点击生成三视图"}
+                    </span>
+                    {!url && <span className="mt-0.5 block text-[10px] text-ink-4">示意图 · 非 AI 结果</span>}
+                  </div>
                 </button>
               );
             })}
@@ -258,6 +274,33 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                   : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成三视图」手动触发生成。"}
           </p>
         </Card>
+
+          {palette && palette.length > 0 && (
+            <Card title="语义调色板" icon="grid" iconClassName="text-precon">
+              <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10 xl:grid-cols-12">
+                {palette.slice(0, 16).map((color, index) => (
+                  <button
+                    key={`${color}-${index}`}
+                    title={color}
+                    onClick={() => {
+                      navigator.clipboard?.writeText(color).catch(() => undefined);
+                      toast({ tone: "info", title: "已复制色值", description: color });
+                    }}
+                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-(--motion-fast) ease-standard hover:scale-110"
+                    style={{ background: color }}
+                  />
+                ))}
+              </div>
+              {spec.palette && (
+                <div className="mt-3 grid gap-x-7 md:grid-cols-2">
+                  <KV label="outline" value={spec.palette.outline ?? "—"} />
+                  <KV label="base / outfit" value={spec.palette.base ?? "—"} />
+                  <KV label="hair" value={spec.hair_color_hex ?? "—"} />
+                </div>
+              )}
+            </Card>
+          )}
+        </div>
 
         <div className="col-span-12 flex flex-col gap-5 lg:col-span-4">
           <Card title="角色档案 Identity" icon="cube">
@@ -328,7 +371,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             }
           >
             {asset.restyle?.url && (
-              <div className="mb-3 overflow-hidden rounded-[10px] border border-line-subtle bg-[#f1efe9]">
+              <div className="mb-3 overflow-hidden rounded-[10px] border border-line-subtle bg-canvas">
                 <p className="px-3 pt-2 text-[11px] text-ink-3">
                   风格迁移 · {asset.restyle.style}（点击放大另存）
                 </p>
@@ -390,32 +433,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
               </p>
             )}
           </Card>
-
-          {palette && palette.length > 0 && (
-            <Card title="语义调色板" icon="grid" iconClassName="text-precon">
-              <div className="grid grid-cols-8 gap-1.5">
-                {palette.slice(0, 16).map((color, index) => (
-                  <button
-                    key={`${color}-${index}`}
-                    title={color}
-                    onClick={() => {
-                      navigator.clipboard?.writeText(color).catch(() => undefined);
-                      toast({ tone: "info", title: "已复制色值", description: color });
-                    }}
-                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-(--motion-fast) ease-standard hover:scale-110"
-                    style={{ background: color }}
-                  />
-                ))}
-              </div>
-              {spec.palette && (
-                <div className="mt-3">
-                  <KV label="outline" value={spec.palette.outline ?? "—"} />
-                  <KV label="base / outfit" value={spec.palette.base ?? "—"} />
-                  <KV label="hair" value={spec.hair_color_hex ?? "—"} />
-                </div>
-              )}
-            </Card>
-          )}
         </div>
       </div>
     </div>

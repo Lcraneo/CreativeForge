@@ -1,6 +1,6 @@
-import { act, useEffect, type ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { createRoot, type Root } from "react-dom/client";
-import { MemoryRouter, useLocation, useNavigate, type NavigateFunction } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider, notifyManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { api, ApiError } from "../api/client";
@@ -16,11 +16,8 @@ vi.mock("./StorageApiConfig", () => ({ default: () => null }));
 let container: HTMLDivElement;
 let root: Root;
 let client: QueryClient;
-let navigate: NavigateFunction;
 const asset = (id: string) => ({ id, name: `角色 ${id}` }) as CreativeAsset;
 function LocationProbe() {
-  const routerNavigate = useNavigate();
-  useEffect(() => { navigate = routerNavigate; }, [routerNavigate]);
   const location = useLocation();
   return (
     <output data-location>
@@ -92,14 +89,14 @@ it("keeps explicit context even when the global asset differs; picker pages rema
   expect(navigationHref("/playtest", "?asset=chosen", "global")).toBe("/playtest?asset=chosen");
 });
 
-it("offers all 9 destinations in the mobile dialog and restores trigger focus", async () => {
+it("offers all 10 destinations in the mobile dialog and restores trigger focus", async () => {
   await render(<Layout />, "/asset?asset=chosen");
   const more = container.querySelector<HTMLButtonElement>('[aria-label="更多功能"]')!;
   more.focus();
   await act(async () => more.click());
   const dialog = container.querySelector("dialog")!;
   expect(dialog.open).toBe(true);
-  expect(dialog.querySelectorAll("a")).toHaveLength(9);
+  expect(dialog.querySelectorAll("a")).toHaveLength(10);
   expect(dialog.querySelector('a[href="/design?asset=chosen"]')).not.toBeNull();
   expect(dialog.querySelector('a[href="/animation?asset=chosen"]')).not.toBeNull();
   expect(dialog.querySelector('a[href="/arcade?asset=chosen"]')).not.toBeNull();
@@ -116,7 +113,7 @@ it("carries context through keyboard navigation and the complete command palette
   expect(container.querySelector("[data-location]")?.textContent).toBe("/asset?asset=chosen");
   await click("命令");
   const palette = container.querySelector('[role="dialog"]')!;
-  expect(palette.querySelectorAll("button")).toHaveLength(9);
+  expect(palette.querySelectorAll("button")).toHaveLength(10);
   const first = palette.querySelector("input")!;
   const buttons = Array.from(palette.querySelectorAll("button"));
   const last = buttons[buttons.length - 1];
@@ -148,27 +145,14 @@ it("blocks the animation editor and its preview requests when the explicit asset
   expect(latest).not.toHaveBeenCalled();
 });
 
-it("migrates legacy animation tasks only for the backend-confirmed asset", async () => {
-  const legacy = JSON.stringify({ id: "task-a", kind: "base" });
-  localStorage.setItem("cf:animation-video-task", legacy);
+it("renders the playable action workbench for a confirmed asset", async () => {
   vi.spyOn(api, "getAsset").mockImplementation(async (id) => asset(id));
   vi.spyOn(api, "listHistory").mockResolvedValue({ records: [], total: 0 } as never);
   vi.spyOn(api, "listCustomActions").mockResolvedValue({ actions: [] });
   vi.spyOn(api, "rigCheck").mockResolvedValue({ status: "ok" } as never);
-  vi.spyOn(api, "getVideoTask").mockResolvedValue({
-    id: "task-a",
-    asset_id: "a",
-    status: "running",
-    stage: "video",
-    progress: 35,
+  await render(<AnimationStudio />, "/animation?asset=a");
+  await vi.waitFor(() => {
+    expect(container.textContent).toContain("基础动作");
+    expect(container.textContent).toContain("生成试玩动作");
   });
-  await render(<AnimationStudio />, "/animation?asset=b");
-  expect(localStorage.getItem("cf:animation-video-task")).toBe(legacy);
-  expect(localStorage.getItem("cf:animation-video-task:b")).toBeNull();
-  await act(async () => navigate("/animation?asset=a"));
-  expect(localStorage.getItem("cf:animation-video-task")).toBeNull();
-  expect(localStorage.getItem("cf:animation-video-task:a")).toBe(legacy);
-  await act(async () => navigate("/animation?asset=b"));
-  expect(localStorage.getItem("cf:animation-video-task:a")).toBe(legacy);
-  expect(container.textContent).not.toContain("35%");
 });

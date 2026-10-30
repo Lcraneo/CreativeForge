@@ -12,6 +12,7 @@ import { CommandPalette } from "./CommandPalette";
 import { Toaster } from "./Toaster";
 import { Icon } from "./icons";
 import { Badge, Stamp, StatusDot, cx } from "./ui";
+import { RococoCorner, RococoCrest, RococoDivider, RococoFleuron } from "./rococo/RococoOrnaments";
 
 const AGENTS_NAV_KEY = "cf-nav-agents-open";
 
@@ -126,7 +127,7 @@ export default function Layout() {
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
-          "hidden shrink-0 flex-col border-r border-line-subtle bg-gradient-to-b from-[#f0ede6] to-[#ebe8e0] transition-[width] duration-(--motion-slow) ease-standard md:flex",
+          "cf-folio hidden shrink-0 flex-col border-r border-line transition-[width] duration-(--motion-slow) ease-standard md:flex",
           rail ? "w-16 px-2 py-3" : "w-60 p-3",
         )}
       >
@@ -136,32 +137,34 @@ export default function Layout() {
             rail ? "justify-center px-0" : "px-2",
           )}
         >
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[9px] bg-ink font-display text-[13px] font-black tracking-[-0.04em] text-canvas shadow-[0_6px_14px_-6px_rgba(26,24,20,.5)]">
-            CF
+          <span className="grid h-10 w-9 shrink-0 place-items-center">
+            <RococoCrest className="h-10 w-9" />
           </span>
           {!rail && (
             <div className="min-w-0 flex-1">
-              <div className="truncate font-display text-[14.5px] font-black">CreativeForge</div>
-              <div className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-ink-3">
-                AI 资产工坊
+              <div className="truncate font-display text-[17px] font-semibold leading-5">CreativeForge</div>
+              <div className="font-mono text-[8.5px] font-medium uppercase tracking-[0.16em] text-ink-4">
+                Atelier des Assets
               </div>
             </div>
           )}
-          {!rail && <Stamp char="锻" tone="ember" size={22} title="CreativeForge 纸上工坊" />}
+          {!rail && <Stamp char="造" tone="ember" size={22} title="CreativeForge 蓝雾工坊" />}
         </div>
 
+        <RococoDivider className="mx-auto mb-1 h-4 w-[78%] text-line-strong/65" />
         <nav className="cf-scroll flex-1 overflow-y-auto">
           {NAV_GROUPS.map((group) => (
             <div key={group.label} title={group.hint}>
               {!rail && (
                 <div className="flex items-baseline gap-1.5 px-2.5 pb-1.5 pt-4">
-                  <span className="cf-display-num text-[13px] leading-none text-ink-4">
+                  <span className="cf-display-num text-[14px] leading-none text-ember-ink-ink">
                     {group.numeral}
                   </span>
-                  <span className="text-[10.5px] font-semibold tracking-[0.14em] text-ink-4">
+                  <span className="font-mono text-[9px] font-medium uppercase tracking-[0.14em] text-ink-4">
                     {group.label}
                   </span>
-                  <span className="ml-1 h-px flex-1 bg-line-subtle" aria-hidden="true" />
+                  <RococoFleuron className="ml-0.5 h-3 w-6 shrink-0 text-line-strong/80" />
+                  <span className="ml-1 h-px flex-1 bg-line" aria-hidden="true" />
                 </div>
               )}
               {group.items.map((item) =>
@@ -175,15 +178,15 @@ export default function Layout() {
                           "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
                           rail ? "justify-center px-0" : "px-2.5 pr-7",
                           isActive
-                            ? "bg-primary-tint font-semibold text-ink"
-                            : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                            ? "bg-ember-tint font-semibold text-ink"
+                            : "text-ink-2 hover:bg-paper/70 hover:text-ink",
                         )
                       }
                     >
                       {({ isActive }) => (
                         <>
                           {isActive && (
-                            <span className="absolute -left-3 top-2 bottom-2 w-0.5 rounded-sm bg-primary" />
+                            <span className="absolute left-1 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rotate-45 bg-danger" />
                           )}
                           <Icon
                             name={item.icon}
@@ -263,8 +266,8 @@ export default function Layout() {
                                     cx(
                                       "relative ml-[15px] flex items-center gap-2 rounded-md py-1.5 pl-6 pr-2 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
                                       isActive
-                                        ? "bg-primary-tint font-semibold text-ink"
-                                        : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                                        ? "bg-ember-tint font-semibold text-ink"
+                                        : "text-ink-2 hover:bg-paper/70 hover:text-ink",
                                     )
                                   }
                                 >
@@ -272,8 +275,8 @@ export default function Layout() {
                                     <>
                                       <span
                                         className={cx(
-                                          "absolute top-1 bottom-1 w-0.5 rounded-sm",
-                                          isActive ? "-left-px bg-primary" : "bg-transparent",
+                                          "absolute left-2 top-1/2 h-1 w-1 -translate-y-1/2 rotate-45",
+                                          isActive ? "bg-danger" : "bg-transparent",
                                         )}
                                       />
                                       <Icon
@@ -306,15 +309,15 @@ export default function Layout() {
                         "relative flex items-center gap-2.5 rounded-md py-2 text-[13.5px] transition-colors duration-(--motion-fast) ease-standard",
                         rail ? "justify-center px-0" : "px-2.5",
                         isActive
-                          ? "bg-primary-tint font-semibold text-ink"
-                          : "text-ink-2 hover:bg-surface-2 hover:text-ink",
+                          ? "bg-ember-tint font-semibold text-ink"
+                          : "text-ink-2 hover:bg-paper/70 hover:text-ink",
                       )
                     }
                   >
                     {({ isActive }) => (
                       <>
                         {isActive && (
-                          <span className="absolute -left-3 top-2 bottom-2 w-0.5 rounded-sm bg-primary" />
+                          <span className="absolute left-1 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rotate-45 bg-danger" />
                         )}
                         <Icon
                           name={item.icon}
@@ -339,13 +342,14 @@ export default function Layout() {
           ))}
         </nav>
 
+        <RococoDivider className="mx-auto mt-3 h-4 w-[78%] text-line-strong/65" />
         <div
           className={cx(
-            "mt-auto flex items-center border-t border-line-subtle pt-3.5",
+            "flex items-center border-t border-line-subtle pt-3.5",
             rail ? "justify-center" : "justify-between px-2.5",
           )}
         >
-          {!rail && <span className="text-[11px] text-ink-3">v1.0 · 纸上工坊</span>}
+          {!rail && <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-ink-4">MMXXVI · Salon Bleu</span>}
           <span className="flex items-center gap-2" title="Unity · Cocos · Godot 引擎通道就绪">
             <span className="flex gap-1.5">
               <span
@@ -372,15 +376,14 @@ export default function Layout() {
 
       {/* Main column */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line-subtle bg-canvas/85 px-4 backdrop-blur-md md:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-paper/95 px-4 md:px-6">
           <span className="flex items-center gap-2 md:hidden">
-            <span className="grid h-6 w-6 place-items-center rounded-md bg-ink font-display text-[10px] font-black text-canvas">
-              CF
-            </span>
+            <RococoCrest className="h-7 w-6 shrink-0" />
             <b className="text-[13px]">{crumb.label}</b>
           </span>
 
           <div className="hidden items-center gap-2 text-[13px] text-ink-3 md:flex">
+            <RococoFleuron className="h-4 w-7 shrink-0 text-ember-ink/70" />
             <span>{crumb.group}</span>
             <span className="text-ink-4">/</span>
             <b className="font-semibold text-ink">{crumb.label}</b>
@@ -388,7 +391,7 @@ export default function Layout() {
 
           <NavLink
             to={href(taskId ? "/agents" : "/")}
-            className="mx-auto hidden max-w-md items-center gap-2 rounded-full border border-line-subtle bg-surface-1 px-3 py-1 text-xs text-ink-2 transition-colors hover:border-line hover:text-ink sm:flex"
+            className="mx-auto hidden max-w-md items-center gap-2 rounded-sm border border-line bg-canvas px-3 py-1.5 text-xs text-ink-2 transition-colors hover:border-line-strong hover:bg-surface-1 hover:text-ink sm:flex"
           >
             <StatusDot
               tone={
@@ -425,7 +428,7 @@ export default function Layout() {
 
           <button
             onClick={() => setPaletteOpen(true)}
-            className="ml-auto flex h-8 items-center gap-2 rounded-md border border-line-subtle bg-surface-1 px-2.5 text-xs text-ink-3 transition-colors hover:border-line hover:text-ink-2 md:ml-0"
+            className="ml-auto flex h-8 items-center gap-2 rounded-sm border border-line bg-paper px-2.5 text-xs text-ink-3 transition-colors hover:border-line-strong hover:bg-surface-1 hover:text-ink md:ml-0"
           >
             <Icon name="search" className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">命令</span>
@@ -438,7 +441,7 @@ export default function Layout() {
             aria-label={rail ? "展开侧栏" : "折叠侧栏"}
             title={rail ? "展开侧栏" : "折叠侧栏"}
             onClick={() => setRail((value) => !value)}
-            className="hidden h-8 w-8 place-items-center rounded-md border border-line-subtle bg-surface-1 text-ink-2 transition-colors hover:border-line hover:text-ink md:grid"
+            className="hidden h-8 w-8 place-items-center rounded-sm border border-line bg-paper text-ink-2 transition-colors hover:border-line-strong hover:bg-surface-1 hover:text-ink md:grid"
           >
             <Icon name="panel" className="h-4 w-4" />
           </button>
@@ -446,16 +449,21 @@ export default function Layout() {
 
         <main
           id="cf-main"
-          className="cf-scroll min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0"
+          tabIndex={-1}
+          className="cf-scroll relative min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
         >
+          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+            <RococoCorner className="absolute right-3 top-3 hidden h-36 w-36 rotate-90 text-line/35 lg:block" />
+            <RococoCorner className="absolute bottom-3 left-3 hidden h-32 w-32 rotate-180 text-line/25 lg:block" />
+          </div>
           {/* 路由进入过渡：CSS 动画（key 变化触发重放，query 变化不重挂载） */}
-          <div key={location.pathname} className="cf-page-enter">
+          <div key={location.pathname} className="relative z-10 cf-page-enter">
             <Outlet />
           </div>
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line-subtle bg-canvas/95 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line bg-paper/95 md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -464,7 +472,7 @@ export default function Layout() {
               className={({ isActive }) =>
                 cx(
                   "relative flex min-h-11 flex-col items-center gap-1 pb-3 pt-2 text-[10px] transition-colors duration-(--motion-fast) ease-standard",
-                  isActive ? "text-primary" : "text-ink-4",
+                  isActive ? "text-ink" : "text-ink-4",
                 )
               }
             >
@@ -473,7 +481,7 @@ export default function Layout() {
                   {/* 激活指示器：色觉之外的冗余状态线索 */}
                   <span
                     className={cx(
-                      "absolute top-0 h-0.5 w-7 rounded-full bg-primary transition-opacity duration-(--motion-fast) ease-standard",
+                      "absolute top-0 h-0.5 w-7 rounded-full bg-danger transition-opacity duration-(--motion-fast) ease-standard",
                       isActive ? "opacity-100" : "opacity-0",
                     )}
                     aria-hidden="true"

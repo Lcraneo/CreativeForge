@@ -9,6 +9,7 @@ import {
   Card,
   KV,
   PageHeader,
+  SafeImage,
   Segmented,
   Stepper,
 } from "../components/ui";
@@ -77,6 +78,7 @@ export default function ExportCenter() {
   if (!asset) return <AssetLoadState />;
 
   const stage = (done: boolean) => (done ? "done" : "pending") as "done" | "pending";
+  const cover = asset.source?.ai_image?.url;
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -84,7 +86,11 @@ export default function ExportCenter() {
         overline="Export Center"
         title="导出中心"
         description="打包当前角色的资源与引擎配置；包结构校验后，仍需在目标编辑器中验证导入与播放。"
-        actions={<Segmented options={ENGINES} value={engine} onChange={setEngine} />}
+        actions={
+          <Badge tone="neutral" icon="cube">
+            {asset.name ?? asset.id}
+          </Badge>
+        }
       />
 
       <div className="grid grid-cols-12 gap-5">
@@ -99,27 +105,38 @@ export default function ExportCenter() {
               </Badge>
             }
           >
-            <Stepper
-              steps={[
-                { id: "asset", label: "资产已选择", state: "done" },
-                {
-                  id: "package",
-                  label: "资源打包",
-                  state: busy ? "running" : stage(Boolean(latest)),
-                },
-                {
-                  id: "validation",
-                  label: "包结构校验",
-                  state: busy
-                    ? "pending"
-                    : latest
-                      ? latest.validation.status === "success"
-                        ? "done"
-                        : "failed"
-                      : "pending",
-                },
-              ]}
-            />
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5">
+              <div className="min-w-0">
+                <div className="text-[12.5px] font-semibold text-ink">导出引擎</div>
+                <p className="mt-0.5 text-[11px] leading-[16px] text-ink-3">
+                  当前资产 <span className="font-mono">{asset.id}</span> · 配置包与角色资产包都按所选引擎打包
+                </p>
+              </div>
+              <Segmented options={ENGINES} value={engine} onChange={setEngine} />
+            </div>
+            <div className="mt-4">
+              <Stepper
+                steps={[
+                  { id: "asset", label: "资产已选择", state: "done" },
+                  {
+                    id: "package",
+                    label: "资源打包",
+                    state: busy ? "running" : stage(Boolean(latest)),
+                  },
+                  {
+                    id: "validation",
+                    label: "包结构校验",
+                    state: busy
+                      ? "pending"
+                      : latest
+                        ? latest.validation.status === "success"
+                          ? "done"
+                          : "failed"
+                        : "pending",
+                  },
+                ]}
+              />
+            </div>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button
                 variant="primary"
@@ -202,7 +219,7 @@ export default function ExportCenter() {
 
           {latest && (
             <Card
-              title="包内容"
+              title="导出结果 · 包内容"
               icon="terminal"
               iconClassName="text-gimport"
               right={
@@ -215,7 +232,15 @@ export default function ExportCenter() {
               }
               bodyClassName="p-4"
             >
-              <pre className="cf-scroll overflow-x-auto rounded-md border border-line-subtle bg-[#faf9f5] p-4 font-mono text-[11.5px] leading-[21px] text-ink-2">
+              <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-ink-3">
+                <span className="min-w-0 truncate font-mono text-[11.5px] text-ink-2">
+                  {latest.package}
+                </span>
+                <span className="tabular">{(latest.size_bytes / 1024).toFixed(1)} KB</span>
+                <span className="tabular">{latest.files.length} files</span>
+                <span className="cf-ref">zip</span>
+              </div>
+              <pre className="cf-scroll overflow-x-auto rounded-md border border-line-subtle bg-paper p-4 font-mono text-[11.5px] leading-[21px] text-ink-2">
                 {renderTree(latest.files)}
               </pre>
             </Card>
@@ -224,6 +249,16 @@ export default function ExportCenter() {
 
         <div className="col-span-12 flex flex-col gap-5 xl:col-span-4">
           <Card title="资产摘要" icon="cube">
+            {cover && (
+              <div className="mb-3 flex h-[150px] items-center justify-center overflow-hidden rounded-[10px] border border-line-subtle bg-paper">
+                <SafeImage
+                  src={cover}
+                  alt={asset.name ?? "AI 原画"}
+                  sealChar="画"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            )}
             <KV label="id / name" value={`${asset.id} / ${asset.name ?? "—"}`} />
             <KV label="type / role" value={`${asset.type ?? "character"} / ${asset.role ?? "—"}`} />
             <KV
@@ -244,6 +279,13 @@ export default function ExportCenter() {
                 </Badge>
               }
             >
+              <div className="mb-2 flex items-center justify-between text-[11.5px] text-ink-3">
+                <span>
+                  通过 {latest.validation.checks.filter((check) => check.passed).length} /{" "}
+                  {latest.validation.checks.length} 项
+                </span>
+                <span className="cf-ref">{latest.files.length} files</span>
+              </div>
               {latest.validation.checks.map((check) => (
                 <div
                   key={check.name}

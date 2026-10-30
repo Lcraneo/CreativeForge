@@ -480,6 +480,8 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   );
 
   const verdict = runResult ? report.verdict : null;
+  const passCount = report.items.filter((item) => item.status === "pass").length;
+  const issueCount = report.items.length - passCount;
   const progressPct = Math.min(100, Math.max(0, (hud.x / level.goalX) * 100));
   const idleGeometry = images.idle ? geometryFor("idle") : null;
   const initial = initialPlayer(level);
@@ -491,39 +493,26 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
         title="关卡试玩场"
         description="把设计好的角色放进一条横向关卡：跑、跳、攻击，通关后自动生成可交付的角色检查报告"
         actions={
-          <>
-            <Badge tone={selected ? "primary" : "neutral"} icon="zap">
-              {selected ? `受检角色 · ${selected.name || selected.id}` : "未选择人物"}
-            </Badge>
-            <Button variant="secondary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
-              更换人物
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              icon="refresh"
-              onClick={restart}
-              disabled={!selected}
-            >
-              重新开始
-            </Button>
-          </>
+          <Badge tone={selected ? "primary" : "neutral"} icon="zap">
+            {selected ? `受检角色 · ${selected.name || selected.id}` : "未选择人物"}
+          </Badge>
         }
       />
 
-      <div className="grid grid-cols-12 gap-5">
+      <div className="grid grid-cols-12 items-start gap-4">
+        <div className="col-span-12 flex min-w-0 flex-col gap-3 xl:col-span-8">
         <Card
-          className="col-span-12 lg:col-span-8"
           title="关卡试玩 · 侧卷轴"
           icon="play"
+          bodyClassName="p-3"
           right={<Badge tone="neutral">{ACTION_LABEL[hud.action] ?? hud.action}</Badge>}
         >
           <div
             ref={stageBoxRef}
-            className="relative overflow-hidden rounded-xl border border-line-subtle bg-[#eef4ef]"
+            className="relative overflow-hidden rounded-xl border border-line-subtle bg-surface-1"
           >
             {(!selectedAssetId || previews.isLoading) && (
-              <div className="absolute inset-0 z-10 grid place-items-center bg-[#eef4ef]/92 backdrop-blur-[2px]">
+              <div className="absolute inset-0 z-10 grid place-items-center bg-surface-1/[.92] backdrop-blur-[2px]">
                 {!selectedAssetId ? (
                   <EmptyState
                     icon="play"
@@ -567,7 +556,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                   height={STAGE_H}
                   fillLinearGradientStartPoint={{ x: 0, y: 0 }}
                   fillLinearGradientEndPoint={{ x: 0, y: STAGE_H }}
-                  fillLinearGradientColorStops={[0, "#e8f1ec", 0.65, "#f2f1e8", 1, "#ece7d9"]}
+                  fillLinearGradientColorStops={[0, "#eef3f8", 0.65, "#f3f6fa", 1, "#e1e8f1"]}
                 />
                 <Group ref={parallaxRef}>
                   <Ellipse x={260} y={GROUND_Y + 30} radiusX={300} radiusY={150} fill="#dfe9dd" />
@@ -615,8 +604,8 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                       fill="#8a7a5c"
                       cornerRadius={2}
                     />
-                    <Rect x={2} y={4} width={56} height={34} fill="#c46a3a" cornerRadius={3} />
-                    <KonvaText x={10} y={13} text="终点" fontSize={14} fill="#fdf8ec" />
+                    <Rect x={2} y={4} width={56} height={34} fill="#7c8faa" cornerRadius={3} />
+                    <KonvaText x={10} y={13} text="终点" fontSize={14} fill="#fbf9f4" />
                   </Group>
 
                   <Ellipse
@@ -625,7 +614,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     y={initial.y + 3}
                     radiusX={40}
                     radiusY={7}
-                    fill="#1a1814"
+                    fill="#25345a"
                     opacity={0.16}
                   />
                   {idleGeometry ? (
@@ -645,7 +634,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
             </Stage>
 
             {runResult && (
-              <div className="absolute inset-0 z-20 grid place-items-center bg-[#f7f4ea]/86 backdrop-blur-[2px]">
+              <div className="absolute inset-0 z-20 grid place-items-center bg-canvas/[.86] backdrop-blur-[2px]">
                 <div className="w-[min(360px,88%)] rounded-xl border border-line bg-surface-1 p-5 text-center shadow-lg">
                   <span
                     className={cx(
@@ -682,32 +671,66 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
             )}
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-[11.5px] text-ink-3">
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">→</kbd> 移动
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">
-              Shift
-            </kbd>{" "}
-            奔跑
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">↑</kbd> 跳跃
-            <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">
-              空格
-            </kbd>{" "}
-            攻击
-            <span className="ml-auto">掉进坑里会回到最近落点，三次掉落本轮终止</span>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-ink/[.08]">
-            <div
-              className="h-full rounded-full bg-primary/70"
-              style={{ width: `${Math.max(2, progressPct)}%` }}
-            />
-          </div>
         </Card>
 
-        <div className="col-span-12 flex flex-col gap-5 lg:col-span-4">
+        {/* ── 关卡控制条 ────────────────────────────────────────────── */}
+        <section
+          aria-label="关卡控制"
+          className="overflow-hidden rounded-lg border border-line bg-paper shadow-e1"
+        >
+          <header className="flex flex-wrap items-center gap-2 border-b border-line-subtle bg-surface-1/40 px-3.5 py-2.5">
+            <h2 className="text-[13px] font-semibold text-ink">关卡控制</h2>
+            <span className="cf-ref">Run Control</span>
+            <span className="ml-auto font-mono text-[11px] text-ink-3">
+              进度 {Math.round(progressPct)}%
+            </span>
+          </header>
+          <div className="p-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                icon="refresh"
+                onClick={restart}
+                disabled={!selected}
+              >
+                重新开始
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon="cube"
+                onClick={() => setPickerOpen(true)}
+              >
+                选择受检人物
+              </Button>
+              <span className="text-[11px] text-ink-4">← → 移动 · Shift 奔跑 · ↑ 跳跃 · 空格 攻击</span>
+            </div>
+            <div
+              className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink/[.08]"
+              role="progressbar"
+              aria-label="关卡推进进度"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progressPct)}
+            >
+              <div
+                className="h-full rounded-full bg-primary/70"
+                style={{ width: `${Math.max(2, progressPct)}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-[10.5px] text-ink-4">
+              掉进坑里会回到最近落点，三次掉落本轮终止；通关后自动生成本轮检查报告。
+            </p>
+          </div>
+        </section>
+        </div>
+
+        <div className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
           <Card
             title="角色检查报告"
             icon="check"
+            bodyClassName="p-4"
             right={
               verdict ? (
                 <Badge tone={STATUS_STYLE[verdict].tone}>{STATUS_STYLE[verdict].label}</Badge>
@@ -716,6 +739,10 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
               )
             }
           >
+            <div className="mb-3 flex flex-wrap gap-1.5" aria-label="报告汇总">
+              <Badge tone="success" icon="check">通过 {passCount}</Badge>
+              {issueCount > 0 && <Badge tone="warning" icon="alert">待处理 {issueCount}</Badge>}
+            </div>
             <ul className="flex flex-col gap-2.5">
               {report.items.map((item) => {
                 const style = STATUS_STYLE[item.status];
@@ -799,11 +826,20 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
       </div>
 
       {pickerOpen && (
-        <Card title="选择受检人物 · 近期生成" icon="cube" bodyClassName="p-3">
+        <Card
+          title="选择受检人物 · 近期生成"
+          icon="cube"
+          bodyClassName="p-3"
+          right={
+            <Button variant="ghost" size="sm" onClick={() => setPickerOpen(false)}>
+              收起
+            </Button>
+          }
+        >
           {history.isLoading ? (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
               {Array.from({ length: 6 }, (_, index) => (
-                <Skeleton key={index} className="h-[150px] rounded-xl" />
+                <Skeleton key={index} className="h-[132px] rounded-lg" />
               ))}
             </div>
           ) : people.length === 0 ? (
@@ -818,7 +854,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
               }
             />
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-6">
               {people.map((record) => (
                 <button
                   key={record.id}
@@ -831,16 +867,16 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     setPickerOpen(false);
                   }}
                   className={cx(
-                    "flex flex-col overflow-hidden rounded-xl border transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
+                    "flex flex-col overflow-hidden rounded-lg border bg-canvas text-left transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
                     selected?.id === record.asset_id
-                      ? "border-primary/60"
+                      ? "border-primary/60 shadow-e1"
                       : "border-line-subtle hover:border-line",
                   )}
                 >
                   <SafeImage
                     src={record.image?.url ?? undefined}
                     alt={String(record.name ?? record.asset_id ?? "")}
-                    className="h-[120px] w-full bg-paper object-contain"
+                    className="h-[104px] w-full bg-paper object-contain"
                   />
                   <span className="truncate px-2 py-1.5 text-[11px] text-ink-3">
                     {record.name || record.asset_id}

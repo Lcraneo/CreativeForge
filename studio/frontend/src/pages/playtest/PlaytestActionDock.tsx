@@ -8,6 +8,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Badge, Button, Spinner, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
+import { RococoFleuron } from "../../components/rococo/RococoOrnaments";
 import type { ActionBatchTask, PlaytestCustomAction, PlaytestStrip } from "../../types";
 import type { PlaytestMode } from "./playtestEngine";
 import type { StripPhase } from "./usePlaytestAssets";
@@ -351,10 +352,12 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
     <section
       aria-label="动作坞"
       aria-busy={generationLocked || batchRunning}
-      className="rounded-xl border border-line-subtle bg-paper/60 p-3"
+      className="overflow-hidden rounded-lg border border-line bg-paper shadow-e1"
     >
-      <div className="mb-2.5 flex flex-wrap items-center gap-2">
-        <span className="text-[10.5px] uppercase tracking-[0.14em] text-ember">动作坞</span>
+      <header className="flex flex-wrap items-center gap-2 border-b border-line-subtle bg-surface-1/40 px-3.5 py-2.5">
+        <RococoFleuron className="h-4 w-7 shrink-0 text-ember-ink/75" />
+        <h2 className="text-[13px] font-semibold text-ink">动作与播放</h2>
+        <span className="cf-ref">Action Dock</span>
         {mode === "preview" ? (
           <Badge tone="primary">Preview · 正在预览「{BASE_ACTION_LABEL[currentAction] ?? currentAction}」</Badge>
         ) : (
@@ -399,9 +402,10 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
             </Button>
           )}
         </span>
-      </div>
+      </header>
 
-      <GenerationStatus
+      <div className="p-3">
+        <GenerationStatus
         tasks={batchTasks}
         submittingAction={submittingAction}
         batchRunning={batchRunning}
@@ -417,7 +421,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           选择人物后，这里会列出该角色的全部动作卡，点卡即切预览。
         </p>
       ) : (
-        <div className="flex gap-2.5 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {actions.map((name) => {
             const key = name;
             const strip = strips[name];
@@ -434,8 +438,10 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
               <div
                 key={key}
                 className={cx(
-                  "flex w-[176px] shrink-0 flex-col rounded-xl border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
-                  currentAction === key ? "border-primary/60 shadow-xs" : "border-line-subtle",
+                  "flex w-[176px] shrink-0 flex-col rounded-lg border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
+                  currentAction === key
+                    ? "border-primary/60 bg-paper shadow-xs"
+                    : "border-line-subtle bg-surface-1/25",
                 )}
               >
                 <button
@@ -498,7 +504,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           })}
 
           {customLoading && (
-            <div className="flex w-[176px] shrink-0 items-center justify-center rounded-xl border border-dashed border-line text-[11px] text-ink-4">
+            <div className="flex w-[176px] shrink-0 items-center justify-center rounded-lg border border-dashed border-line text-[11px] text-ink-4">
               正在加载自定义动作…
             </div>
           )}
@@ -510,8 +516,10 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                 <div
                   key={key}
                   className={cx(
-                    "flex w-[176px] shrink-0 flex-col rounded-xl border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
-                    currentAction === key ? "border-ember/60 shadow-xs" : "border-line-subtle",
+                    "flex w-[176px] shrink-0 flex-col rounded-lg border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
+                    currentAction === key
+                      ? "border-ember/60 bg-paper shadow-xs"
+                      : "border-line-subtle bg-surface-1/25",
                   )}
                 >
                   <button onClick={() => onSelect(key)} aria-pressed={currentAction === key} className="text-left">
@@ -547,7 +555,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                     item.engine !== "ai-video" && (
                       <button
                         onClick={onGoWorkbench}
-                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-ember underline-offset-2 hover:underline"
+                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-ember-ink underline-offset-2 hover:underline"
                       >
                         <Icon name="spark" className="h-3 w-3" />
                         到动画工作台生成 AI 版
@@ -560,7 +568,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           {!libraryOpen && (
             <button
               onClick={onOpenLibrary}
-              className="flex w-[176px] shrink-0 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-line text-ink-3 hover:border-line-strong"
+              className="flex w-[176px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line bg-surface-1/40 text-ink-3 hover:border-line-strong"
             >
               <Icon name="grid" className="h-4 w-4" />
               <span className="text-[11px]">打开自定义动作库</span>
@@ -568,6 +576,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           )}
         </div>
       )}
+      </div>
     </section>
   );
 }

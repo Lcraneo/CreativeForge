@@ -4,94 +4,85 @@
 @import "@fontsource/outfit/600.css";
 @import "@fontsource/noto-serif-sc/600.css";
 @import "@fontsource/noto-serif-sc/900.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 /* ============================================================
-   Forge UI · Warm Paper — Design Tokens
-   与 MVP 前端（frontend/src/index.css）同一套暖纸编辑风：
-   纸底 / 墨色 / 宋体展示大字 / 发丝线分隔，禁止在组件中硬编码色值
-   详细规范见 docs/design/02-visual-spec.md
+   Forge UI 3.0 · Salon Bleu — Design Tokens
+   Mist-blue atelier: ivory work surfaces, ink-blue typography,
+   silver rules, and wax-red moments reserved for consequence.
    ============================================================ */
 
 @theme {
-  /* base surfaces（由 Obsidian Arc 暗色映射为暖纸） */
-  --color-canvas: #f5f3ef;
-  --color-paper: #faf9f5; /* 输入框、灵感签等"更白一档"的纸面 */
-  --color-surface-1: #edebe5;
-  --color-surface-2: #e5e2da;
-  --color-surface-3: #dbd7cc;
-  --color-line-subtle: #e3e0d8;
-  --color-line: #d3cfc5;
-  --color-line-strong: #b9b3a5;
+  --color-canvas: #f3f6fa;
+  --color-paper: #fbf9f4;
+  --color-surface-1: #eaf0f6;
+  --color-surface-2: #e1e8f1;
+  --color-surface-3: #d5dfeb;
+  --color-line-subtle: #e0e7f0;
+  --color-line: #cbd5e3;
+  --color-line-strong: #aebccf;
 
-  /* text */
-  --color-ink: #1a1814;
-  --color-ink-2: #55514a;
-  --color-ink-3: #5f594f;
-  --color-ink-4: #625c52;
+  --color-ink: #25345a;
+  --color-ink-2: #394968;
+  --color-ink-3: #4e5d7b;
+  --color-ink-4: #526079;
 
-  /* brand + semantic（主色 = 墨色主按钮，与 MVP 一致） */
-  --color-primary: #1a1814;
-  --color-primary-hover: #3a352d;
-  --color-primary-active: #000000;
-  --color-primary-tint: rgba(26, 24, 20, 0.07);
-  --color-ember: #a9812f;
-  /* 小字号 ember 文字（徽章等）用加深档，纸底对比 ≥4.5:1 */
-  --color-ember-ink: #7c5c12;
-  --color-ember-tint: rgba(169, 129, 47, 0.14);
-  --color-success: #3e7d5a;
-  --color-warning: #a9812f;
-  --color-danger: #a94f3d;
-  --color-info: #4a6f8a;
+  --color-primary: #25345a;
+  --color-primary-hover: #344a78;
+  --color-primary-active: #17213d;
+  --color-primary-tint: rgba(37, 52, 90, 0.08);
+  --color-ember: #93a9c4;
+  --color-ember-ink: #4a627e;
+  --color-ember-tint: rgba(174, 191, 215, 0.26);
+  --color-success: #3e6553;
+  --color-warning: #765a2c;
+  --color-danger: #8e4657;
+  --color-info: #4f6d8b;
 
-  /* domain identities（加深以在纸底上保持对比） */
-  --color-supervisor: #4a6f8a;
-  --color-precon: #0e8ea8;
-  --color-falign: #7c5cc4;
-  --color-gimport: #3e7d5a;
-  --color-qa: #a9812f;
-  --color-memory: #6f7d8c;
+  --color-supervisor: #4f6d8b;
+  --color-precon: #3c6a78;
+  --color-falign: #5b5d88;
+  --color-gimport: #3e6553;
+  --color-qa: #765a2c;
+  --color-memory: #64748c;
 
-  /* playtest stage · 纸面工坊中的深色测试台（暖黑底 + 琥珀地面线 +
-   * precon 青调试层，Canvas 与 React 壳共用同一组令牌） */
-  --color-stage-bg: #16120d;
-  --color-stage-ground: #1f1a12;
-  --color-stage-line: #a9812f;
-  --color-stage-debug: #2f9bb5;
-  --color-stage-text: #f2ebdb;
+  --color-stage-bg: #111a2c;
+  --color-stage-ground: #18233a;
+  --color-stage-line: #b7c8dd;
+  --color-stage-debug: #78a8b8;
+  --color-stage-text: #f4f1e9;
 
-  /* fonts */
   --font-sans: "Outfit", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  --font-display: "Noto Serif SC", "Songti SC", "STSong", "SimSun", serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas,
+  --font-display: "Cormorant Garamond", "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas,
     "Cascadia Mono", monospace;
 
-  /* radius */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 10px;
-  --radius-xl: 12px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
 
-  /* elevation（暖色柔影：环境层 + 直接层双影，不用深色重投影） */
-  --shadow-e1: 0 1px 2px rgba(26, 24, 20, 0.04), 0 0 1px rgba(26, 24, 20, 0.03);
-  --shadow-e2: 0 1px 2px rgba(26, 24, 20, 0.06), 0 2px 8px -4px rgba(26, 24, 20, 0.05);
-  --shadow-e3: 0 2px 6px -2px rgba(26, 24, 20, 0.1), 0 16px 40px -16px rgba(26, 24, 20, 0.2);
-  --shadow-glow-primary: 0 0 0 1px rgba(26, 24, 20, 0.16),
-    0 0 24px -8px rgba(26, 24, 20, 0.2);
+  --shadow-e1: 0 1px 2px rgba(37, 52, 90, 0.05), 0 6px 18px -14px rgba(37, 52, 90, 0.18);
+  --shadow-e2: 0 2px 4px rgba(37, 52, 90, 0.06), 0 12px 26px -18px rgba(37, 52, 90, 0.3);
+  --shadow-e3: 0 6px 12px -8px rgba(37, 52, 90, 0.18), 0 28px 60px -30px rgba(37, 52, 90, 0.4);
+  --shadow-glow-primary: 0 0 0 1px rgba(37, 52, 90, 0.28),
+    0 10px 30px -18px rgba(37, 52, 90, 0.38);
 
-  /* motion · 缓动 + 时长阶梯（组件禁止裸写 ms/秒，一律走令牌；
-     framer-motion 侧用 lib/motion.ts 的 MOTION 常量，与此处同源） */
-  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-exit: cubic-bezier(0.4, 0, 1, 1);
   --motion-instant: 90ms;
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --motion-slow: 260ms;
-  --motion-deliberate: 280ms;
+  --motion-deliberate: 320ms;
   --motion-reveal: 600ms;
-  /* 进度条平滑爬升专用：两次 tick 之间的追赶过渡，比常规过渡长 */
   --motion-progress: 700ms;
-  --animate-pulse-run: pulse-run 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  --animate-pulse-run: pulse-run 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   --animate-shimmer: shimmer 1.4s linear infinite;
   --animate-flow: flow 1.2s linear infinite;
   --animate-spin-slow: spin 0.8s linear infinite;
@@ -100,10 +91,10 @@
 @keyframes pulse-run {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(26, 24, 20, 0.28);
+    box-shadow: 0 0 0 0 rgba(37, 52, 90, 0.24);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(26, 24, 20, 0);
+    box-shadow: 0 0 0 5px rgba(37, 52, 90, 0);
   }
 }
 
@@ -125,12 +116,10 @@
   }
 }
 
-/* 路由进入过渡：淡入 + 轻位移；元素仅在本轮动画期间带 transform，
-   结束后回归 none，不影响 fixed/sticky 子元素 */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
 }
 
@@ -138,13 +127,6 @@
   animation: page-enter var(--motion-deliberate) var(--ease-standard);
 }
 
-/* 悬停微抬升：纸片被"拈起"的物理感，位移克制在 1px */
-@keyframes raise-none {
-  from,
-  to {
-    transform: none;
-  }
-}
 .cf-raise {
   transition:
     transform var(--motion-base) var(--ease-standard),
@@ -153,7 +135,7 @@
 }
 .cf-raise:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-e3);
+  box-shadow: var(--shadow-e2);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -177,16 +159,17 @@
   html {
     color-scheme: light;
     scroll-behavior: smooth;
+    background: var(--color-canvas);
   }
 
   body {
     margin: 0;
     min-height: 100vh;
-    /* 纸面光感：顶部天光 + 右上极淡金晕，铺在纸底上，安静但有层次 */
-    background-image:
-      radial-gradient(1100px 480px at 50% -180px, rgba(255, 255, 255, 0.8), transparent 72%),
-      radial-gradient(900px 420px at 108% -60px, rgba(169, 129, 47, 0.05), transparent 70%);
     background-color: var(--color-canvas);
+    background-image:
+      radial-gradient(1000px 520px at 18% -14%, rgba(255, 255, 255, 0.9), transparent 68%),
+      radial-gradient(920px 520px at 92% -8%, rgba(174, 191, 215, 0.34), transparent 66%),
+      linear-gradient(180deg, #f7f9fc 0%, #f3f6fa 46%, #eef3f8 100%);
     background-attachment: fixed;
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -196,16 +179,20 @@
     text-rendering: optimizeLegibility;
   }
 
+  #root {
+    min-height: 100vh;
+  }
+
   ::selection {
-    background: #1a1814;
-    color: #f5f3ef;
+    background: var(--color-ink);
+    color: var(--color-paper);
   }
 
   :focus-visible {
     outline: none;
     box-shadow:
-      0 0 0 2px var(--color-canvas),
-      0 0 0 4px rgba(26, 24, 20, 0.45);
+      0 0 0 2px var(--color-paper),
+      0 0 0 4px rgba(37, 52, 90, 0.62);
     border-radius: var(--radius-sm);
   }
 
@@ -217,13 +204,13 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #ccc7bb;
+    background: #b9c5d5;
     border-radius: 8px;
     border: 3px solid transparent;
     background-clip: padding-box;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #b9b3a5;
+    background: #9eacc0;
     border: 3px solid transparent;
     background-clip: padding-box;
   }
@@ -237,18 +224,15 @@
   select {
     font: inherit;
     color: inherit;
-    /* 触屏：双击缩放禁用 + 点按高亮与纸面一致（移动端点击观感） */
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
   }
 
   input,
   textarea {
-    /* 光标也是设计的一部分：统一墨色插字符 */
     caret-color: var(--color-primary);
   }
 
-  /* 移动端输入 ≥16px，避免 iOS Safari 聚焦时自动放大页面 */
   @media (pointer: coarse) {
     input,
     textarea,
@@ -269,60 +253,35 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* 纸纹肌理：单色极低透明度噪声覆层，让纸面可感而几乎不改色 */
-  body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 60;
-    pointer-events: none;
-    opacity: 0.032;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
-    background-size: 160px 160px;
-  }
-
-  /* 竖排题字：英雄区侧缘的人文点缀 */
   .cf-vertical {
     writing-mode: vertical-rl;
     text-orientation: upright;
-    letter-spacing: 0.42em;
+    letter-spacing: 0.3em;
   }
 
-  /* 灵感签：略带手作歪斜的纸签 + 顶部一截和纸胶带，悬停回正 */
   .cf-slip {
     position: relative;
-    transform: rotate(-0.55deg);
+    transform: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.54), transparent 42%),
+      var(--color-paper);
   }
   .cf-slip::before {
     content: "";
     position: absolute;
-    top: -4px;
-    left: 50%;
-    width: 30px;
-    height: 9px;
-    transform: translateX(-50%) rotate(-2deg);
-    background: rgba(169, 129, 47, 0.14);
-    border-left: 1px dashed rgba(169, 129, 47, 0.28);
-    border-right: 1px dashed rgba(169, 129, 47, 0.28);
+    inset: 2px auto 2px 6px;
+    width: 1px;
+    background: var(--color-line);
     pointer-events: none;
-  }
-  .cf-slip:nth-child(even) {
-    transform: rotate(0.45deg);
-  }
-  .cf-slip:nth-child(even)::before {
-    transform: translateX(-50%) rotate(2.5deg);
-  }
-  .cf-slip:nth-child(3n) {
-    transform: rotate(-0.2deg);
   }
   .cf-slip:hover,
   .cf-slip:focus-visible {
-    transform: rotate(0deg) translateY(-1px);
+    transform: translateY(-1px);
   }
 
   .cf-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #ccc7bb transparent;
+    scrollbar-color: #b9c5d5 transparent;
   }
 
   .cf-sheen {
@@ -333,40 +292,80 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 44%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 36%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
   }
 
-  /* 展示级数字：编辑风大数字用宋体黑字重，配 .tabular 防跳动 */
   .cf-display-num {
     font-family: var(--font-display);
-    font-weight: 900;
+    font-weight: 600;
     letter-spacing: -0.01em;
   }
 
-  /* 斜纹底：空态/占位的"未凿"质感 */
   .cf-hatch {
-    background-image: repeating-linear-gradient(
-      45deg,
-      rgba(26, 24, 20, 0.028) 0 6px,
-      transparent 6px 12px
+    background-color: var(--color-paper);
+    background-image: radial-gradient(circle, rgba(37, 52, 90, 0.1) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+
+  .cf-vellum {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.58), transparent 52%),
+      var(--color-paper);
+  }
+
+  .cf-folio {
+    background:
+      linear-gradient(90deg, rgba(174, 191, 215, 0.26), transparent 42%),
+      var(--color-surface-1);
+  }
+
+  .cf-dossier {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.44), transparent 26%),
+      var(--color-surface-1);
+  }
+
+  .cf-ticket {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% 100%,
+      8px 100%,
+      0 calc(100% - 8px)
     );
+  }
+
+  .cf-ref {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-4);
+  }
+
+  .cf-rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-line), transparent);
   }
 }
 
 /* React Flow light theme */
 .react-flow__controls {
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 10px;
   box-shadow: var(--shadow-e2);
 }
 .react-flow__controls-button {
-  background: #edebe5;
-  border-bottom: 1px solid #e3e0d8;
-  color: #55514a;
+  background: #eaf0f6;
+  border-bottom: 1px solid #e0e7f0;
+  color: #394968;
 }
 .react-flow__controls-button:hover {
-  background: #e5e2da;
+  background: #e1e8f1;
 }
 .react-flow__controls-button svg {
   fill: currentColor;
