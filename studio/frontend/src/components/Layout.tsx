@@ -118,7 +118,7 @@ export default function Layout() {
   }, []);
 
   return (
-    <div className="flex h-dvh overflow-hidden bg-canvas text-ink">
+    <div className="flex h-dvh overflow-hidden text-ink">
       {/* 键盘用户跳过导航直达主内容 */}
       <a
         href="#cf-main"
