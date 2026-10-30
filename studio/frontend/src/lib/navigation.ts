@@ -25,11 +25,17 @@ export interface NavGroup {
  */
 export const NAV_GROUPS: NavGroup[] = [
   {
+    label: "总览",
+    numeral: "序",
+    hint: "从一个想法开始",
+    items: [{ to: "/", label: "首页", icon: "spark" }],
+  },
+  {
     label: "生成",
     numeral: "壹",
     hint: "从一句话到一条管线",
     items: [
-      { to: "/", label: "工作台", icon: "panel", kbd: "1" },
+      { to: "/workspace", label: "工作台", icon: "panel", kbd: "1" },
       {
         to: "/agents",
         label: "智能体",

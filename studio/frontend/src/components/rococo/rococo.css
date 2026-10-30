@@ -98,6 +98,77 @@
   color: var(--color-ink);
 }
 
+/* ---- 背景纸面元素（城堡 / 手账 / 首字母水印） ---------------------- */
+/* 纯装饰层：不承载信息、不拦截指针事件，只在纸面留白处可见 */
+
+.cf-backdrop__castle {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: clamp(220px, 26vw, 420px);
+  height: auto;
+  color: var(--color-primary);
+  opacity: 0.42;
+  pointer-events: none;
+}
+
+/* 首页卷首：同一座城堡线稿缩在画面底部中央，作雾中远景（完整形体，不裁屋顶） */
+.cf-home-castle .cf-backdrop__castle {
+  top: auto;
+  right: auto;
+  bottom: -2%;
+  left: 50%;
+  width: min(560px, 70%);
+  opacity: 0.24;
+  transform: translateX(-50%);
+}
+
+/* 线宽在小尺寸下过细会读不出形，统一略加粗 */
+.cf-backdrop__castle path,
+.cf-backdrop__journal path,
+.cf-backdrop__journal rect,
+.cf-backdrop__journal circle {
+  stroke-width: 1.7;
+}
+
+/* 侧栏留白处的花体首字母水印 */
+.cf-backdrop__letter {
+  position: absolute;
+  bottom: 9.5rem;
+  left: 0.4rem;
+  font-family: var(--font-display);
+  font-size: 6.5rem;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 0.8;
+  color: var(--color-primary);
+  opacity: 0.09;
+  transform: rotate(-5deg);
+  pointer-events: none;
+  user-select: none;
+}
+
+.cf-backdrop__journal {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--color-primary);
+  opacity: 0.34;
+  pointer-events: none;
+}
+
+@media (max-width: 1023px) {
+  .cf-backdrop__castle {
+    width: 240px;
+    opacity: 0.15;
+  }
+
+  .cf-backdrop__letter {
+    font-size: 6rem;
+    opacity: 0.055;
+  }
+}
+
 @keyframes cf-ornament-draw {
   to {
     stroke-dashoffset: 0;

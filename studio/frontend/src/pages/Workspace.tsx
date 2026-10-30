@@ -31,7 +31,7 @@ import { NAV_GROUPS } from "../lib/navigation";
 import type { GenerationOverrides } from "../types";
 
 /** 四大工区旅程条：章序/名称/副题直接取自导航信息架构，落点 = 各区块首站 */
-const JOURNEY = NAV_GROUPS.map((group) => ({
+const JOURNEY = NAV_GROUPS.filter((group) => group.label !== "总览").map((group) => ({
   numeral: group.numeral,
   label: group.label,
   hint: group.hint,

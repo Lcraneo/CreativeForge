@@ -848,7 +848,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
               title="还没有可用的人物"
               description="先去工作台生成一个角色，再回到这里进入关卡检查。"
               action={
-                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/")}>
+                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/workspace")}>
                   去工作台生成
                 </Button>
               }

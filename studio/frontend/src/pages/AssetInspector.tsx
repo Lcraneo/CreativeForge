@@ -82,7 +82,7 @@ export default function AssetInspector() {
               variant="secondary"
               icon="refresh"
               onClick={() => {
-                navigate("/");
+                navigate("/workspace");
                 toast({ tone: "info", title: "回到工作台", description: "可重新描述目标生成资产" });
               }}
             >
@@ -113,7 +113,7 @@ export default function AssetInspector() {
               icon="refresh"
               className="ml-auto"
               onClick={() => {
-                navigate("/");
+                navigate("/workspace");
                 toast({
                   tone: "info",
                   title: "回到工作台重新生成",

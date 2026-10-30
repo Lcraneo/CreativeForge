@@ -33,7 +33,7 @@ export function AssetLoadFeedback({
             >
               选择历史资产
             </Link>
-            <Link className="inline-flex min-h-11 items-center text-primary underline" to="/">
+            <Link className="inline-flex min-h-11 items-center text-primary underline" to="/workspace">
               去生成资产
             </Link>
           </div>

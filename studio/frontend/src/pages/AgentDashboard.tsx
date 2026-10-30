@@ -110,7 +110,7 @@ function RecentRuns() {
           title="还没有生产记录"
           description="回到工作台输入一个游戏创意，Supervisor 会规划任务图并调度 Art / Animation / Engine / QA 智能体。"
           action={
-            <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+            <Button variant="primary" icon="spark" onClick={() => navigate("/workspace")}>
               去创建任务
             </Button>
           }
@@ -350,7 +350,7 @@ export default function AgentDashboard() {
           title="智能体指挥中心"
           description="当前没有进行中的任务；下方为最近生成档案，点击可直接打开资产"
           actions={
-            <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+            <Button variant="primary" icon="spark" onClick={() => navigate("/workspace")}>
               去创建任务
             </Button>
           }

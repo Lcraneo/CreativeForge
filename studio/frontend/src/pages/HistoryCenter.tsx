@@ -224,7 +224,7 @@ export default function HistoryCenter() {
               title="暂无历史记录"
               description="完成一次资产生成后，档案会自动归档到这里，可随时回看与重跑。"
               action={
-                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/")}>
+                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/workspace")}>
                   去生成资产
                 </Button>
               }
@@ -518,7 +518,7 @@ export default function HistoryCenter() {
                     size="sm"
                     icon="refresh"
                     onClick={() => {
-                      navigate("/", { state: { goal: detail.goal } });
+                      navigate("/workspace", { state: { goal: detail.goal } });
                       toast({
                         tone: "info",
                         title: "已带回目标描述",

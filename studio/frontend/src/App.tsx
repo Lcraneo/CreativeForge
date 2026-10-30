@@ -5,6 +5,7 @@ import Layout from "./components/Layout";
 import { OpeningSequence } from "./components/opening/OpeningSequence";
 
 // 路由级代码分割：每个页面独立 chunk，首屏只加载当前路由
+const Home = lazy(() => import("./pages/Home"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
 const AnimationStudio = lazy(() => import("./pages/AnimationStudio"));
 const AssetInspector = lazy(() => import("./pages/AssetInspector"));
@@ -33,7 +34,8 @@ export default function App() {
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Workspace />} />
+            <Route index element={<Home />} />
+            <Route path="workspace" element={<Workspace />} />
             <Route path="agents" element={<AgentDashboard />} />
             <Route path="history" element={<HistoryCenter />} />
             <Route path="versions" element={<VersionCenter />} />
@@ -46,7 +48,6 @@ export default function App() {
             <Route path="arcade" element={<ArcadeStage />} />
             <Route path="export" element={<ExportCenter />} />
             {/* 旧书签兼容重定向 */}
-            <Route path="workspace" element={<Navigate to="/" replace />} />
             <Route path="batch" element={<Navigate to="/" replace />} />
             <Route path="benchmark" element={<Navigate to="/" replace />} />
             <Route path="technology" element={<Navigate to="/" replace />} />

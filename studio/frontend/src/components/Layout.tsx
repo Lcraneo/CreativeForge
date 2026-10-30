@@ -13,19 +13,21 @@ import { Toaster } from "./Toaster";
 import { Icon } from "./icons";
 import { Badge, Stamp, StatusDot, cx } from "./ui";
 import { RococoCorner, RococoCrest, RococoDivider, RococoFleuron } from "./rococo/RococoOrnaments";
+import { RococoBackdrop, RococoJournal, RococoLetterMark } from "./rococo/RococoBackdrop";
 
 const AGENTS_NAV_KEY = "cf-nav-agents-open";
 
 const MOBILE_TABS: NavItem[] = [
-  { to: "/", label: "工作台", icon: "panel" },
+  { to: "/", label: "首页", icon: "spark" },
+  { to: "/workspace", label: "工作台", icon: "panel" },
   { to: "/agents", label: "智能体", icon: "layers" },
   { to: "/asset", label: "资产", icon: "cube" },
   { to: "/playtest", label: "试玩", icon: "play" },
-  { to: "/arcade", label: "关卡", icon: "zap" },
 ];
 
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
-  "/": { group: "生成", label: "工作台" },
+  "/": { group: "CreativeForge", label: "首页" },
+  "/workspace": { group: "生成", label: "工作台" },
   "/agents": { group: "生成", label: "智能体" },
   "/history": { group: "生成 · 智能体", label: "历史记录" },
   "/playtest": { group: "试玩", label: "试玩舞台" },
@@ -96,7 +98,7 @@ export default function Layout() {
     return () => window.removeEventListener("keydown", onKey);
   }, [navigate, href, paletteOpen, mobileOpen]);
 
-  const crumb = BREADCRUMBS[location.pathname] ?? { group: "CreativeForge", label: "工作台" };
+  const crumb = BREADCRUMBS[location.pathname] ?? { group: "CreativeForge", label: "首页" };
 
   // 构建过期自检：后端 /health 报 dist 落后于 src 时页脚角标提示强刷
   // （dev server 5173 下 dist 不参与渲染，角标无意义故跳过）
@@ -127,7 +129,7 @@ export default function Layout() {
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
-          "cf-folio hidden shrink-0 flex-col border-r border-line transition-[width] duration-(--motion-slow) ease-standard md:flex",
+          "cf-folio relative hidden shrink-0 flex-col border-r border-line transition-[width] duration-(--motion-slow) ease-standard md:flex",
           rail ? "w-16 px-2 py-3" : "w-60 p-3",
         )}
       >
@@ -152,7 +154,7 @@ export default function Layout() {
         </div>
 
         <RococoDivider className="mx-auto mb-1 h-4 w-[78%] text-line-strong/65" />
-        <nav className="cf-scroll flex-1 overflow-y-auto">
+        <nav className="cf-scroll relative z-10 flex-1 overflow-y-auto">
           {NAV_GROUPS.map((group) => (
             <div key={group.label} title={group.hint}>
               {!rail && (
@@ -342,10 +344,18 @@ export default function Layout() {
           ))}
         </nav>
 
+        {/* 纸面角饰：手账信笺与旧书（仅展开态、纯装饰） */}
+        {!rail && <RococoLetterMark />}
+        {!rail && (
+          <div className="pointer-events-none absolute bottom-0 left-0 z-0 h-[168px] w-[132px] overflow-hidden" aria-hidden="true">
+            <RococoJournal />
+          </div>
+        )}
+
         <RococoDivider className="mx-auto mt-3 h-4 w-[78%] text-line-strong/65" />
         <div
           className={cx(
-            "flex items-center border-t border-line-subtle pt-3.5",
+            "relative z-10 flex items-center border-t border-line-subtle pt-3.5",
             rail ? "justify-center" : "justify-between px-2.5",
           )}
         >
@@ -375,7 +385,13 @@ export default function Layout() {
       </aside>
 
       {/* Main column */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative flex min-w-0 flex-1 flex-col">
+        {/* 纸面背景层：城堡 / 首字母水印 / 四角花饰（不随内容滚动） */}
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+          <RococoBackdrop />
+          <RococoCorner className="absolute right-3 top-14 hidden h-36 w-36 rotate-90 text-line/35 lg:block" />
+          <RococoCorner className="absolute bottom-3 left-3 hidden h-32 w-32 rotate-180 text-line/25 lg:block" />
+        </div>
         <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-paper/95 px-4 md:px-6">
           <span className="flex items-center gap-2 md:hidden">
             <RococoCrest className="h-7 w-6 shrink-0" />
@@ -390,7 +406,7 @@ export default function Layout() {
           </div>
 
           <NavLink
-            to={href(taskId ? "/agents" : "/")}
+            to={href(taskId ? "/agents" : "/workspace")}
             className="mx-auto hidden max-w-md items-center gap-2 rounded-sm border border-line bg-canvas px-3 py-1.5 text-xs text-ink-2 transition-colors hover:border-line-strong hover:bg-surface-1 hover:text-ink sm:flex"
           >
             <StatusDot
@@ -452,10 +468,6 @@ export default function Layout() {
           tabIndex={-1}
           className="cf-scroll relative min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
         >
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-            <RococoCorner className="absolute right-3 top-3 hidden h-36 w-36 rotate-90 text-line/35 lg:block" />
-            <RococoCorner className="absolute bottom-3 left-3 hidden h-32 w-32 rotate-180 text-line/25 lg:block" />
-          </div>
           {/* 路由进入过渡：CSS 动画（key 变化触发重放，query 变化不重挂载） */}
           <div key={location.pathname} className="relative z-10 cf-page-enter">
             <Outlet />

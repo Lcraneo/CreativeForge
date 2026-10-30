@@ -48,7 +48,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             title={asset ? "该资产未包含角色规格" : "还没有可查看的资产"}
             description="三视图基于 AI 原画与 CharacterSpec 生成。先在工作台生成一个角色资产，这里会展示其正 / 侧 / 背设计视图。"
             action={
-              <Button variant="primary" icon="spark" onClick={() => navigate("/")}>
+              <Button variant="primary" icon="spark" onClick={() => navigate("/workspace")}>
                 去生成资产
               </Button>
             }

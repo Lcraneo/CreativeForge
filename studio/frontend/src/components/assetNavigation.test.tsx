@@ -89,14 +89,14 @@ it("keeps explicit context even when the global asset differs; picker pages rema
   expect(navigationHref("/playtest", "?asset=chosen", "global")).toBe("/playtest?asset=chosen");
 });
 
-it("offers all 10 destinations in the mobile dialog and restores trigger focus", async () => {
+it("offers all 11 destinations in the mobile dialog and restores trigger focus", async () => {
   await render(<Layout />, "/asset?asset=chosen");
   const more = container.querySelector<HTMLButtonElement>('[aria-label="更多功能"]')!;
   more.focus();
   await act(async () => more.click());
   const dialog = container.querySelector("dialog")!;
   expect(dialog.open).toBe(true);
-  expect(dialog.querySelectorAll("a")).toHaveLength(10);
+  expect(dialog.querySelectorAll("a")).toHaveLength(11);
   expect(dialog.querySelector('a[href="/design?asset=chosen"]')).not.toBeNull();
   expect(dialog.querySelector('a[href="/animation?asset=chosen"]')).not.toBeNull();
   expect(dialog.querySelector('a[href="/arcade?asset=chosen"]')).not.toBeNull();
@@ -113,7 +113,7 @@ it("carries context through keyboard navigation and the complete command palette
   expect(container.querySelector("[data-location]")?.textContent).toBe("/asset?asset=chosen");
   await click("命令");
   const palette = container.querySelector('[role="dialog"]')!;
-  expect(palette.querySelectorAll("button")).toHaveLength(10);
+  expect(palette.querySelectorAll("button")).toHaveLength(11);
   const first = palette.querySelector("input")!;
   const buttons = Array.from(palette.querySelectorAll("button"));
   const last = buttons[buttons.length - 1];

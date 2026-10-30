@@ -605,7 +605,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
           selectPerson(assetId);
           setPickerOpen(false);
         }}
-        onGoWorkbench={() => navigate("/")}
+        onGoWorkbench={() => navigate("/workspace")}
       />
     </div>
   );

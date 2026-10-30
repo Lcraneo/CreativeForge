@@ -213,7 +213,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
             <p className="mt-2 text-sm text-ink-3">
               动画必须绑定真实角色原画，不能用演示角色替代。
             </p>
-            <Button className="mt-4" variant="primary" onClick={() => navigate("/")}>
+            <Button className="mt-4" variant="primary" onClick={() => navigate("/workspace")}>
               去生成角色
             </Button>
           </div>
