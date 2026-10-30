@@ -10,7 +10,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
 import { Badge, Button, PageHeader, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
@@ -23,6 +23,14 @@ import { PlaytestDiagnostics } from "./PlaytestDiagnostics";
 import { PlaytestCharacterPicker } from "./PlaytestCharacterPicker";
 import { usePlaytestAssets, BUILT_IN_ACTIONS } from "./usePlaytestAssets";
 import { PlaytestEngine, type PlaytestMode } from "./playtestEngine";
+
+const ACTION_VIEW_BY_ACTION: Record<string, "front" | "side"> = {
+  idle: "front",
+  walk: "side",
+  run: "side",
+  attack: "front",
+  jump: "side",
+};
 
 export function PlaytestContent({ selected }: { selected: CreativeAsset | null }) {
   const [, setSearchParams] = useSearchParams();
@@ -126,63 +134,99 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   }, [engine]);
 
   /* ── AI 动画补生成（单动作 / 一键全套 + 批次轮询） ──────────────── */
-  const [generatingAction, setGeneratingAction] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const generationLockRef = useRef(false);
+  const [submittingAction, setSubmittingAction] = useState<string | null>(null);
   const [batchId, setBatchId] = useState<string | null>(null);
   const batch = useQuery({
     queryKey: ["action-batch", batchId],
     queryFn: () => api.actionBatchStatus(batchId!),
     enabled: Boolean(batchId),
-    refetchInterval: (query) => (query.state.data?.status === "running" ? 2500 : false),
+    // 首次快照尚未返回时也继续重试，避免网络抖动把状态永久卡在“提交中”。
+    refetchInterval: (query) =>
+      query.state.data?.status === "running" || !query.state.data ? 2500 : false,
   });
   const batchData = batch.data;
   const batchTasks: ActionBatchTask[] = batchData?.tasks ?? [];
-  const batchDoneCount = batchTasks.filter(
-    (task) => task.status === "done" || task.status === "skipped",
-  ).length;
+  // total 只统计本轮待生成项，因此 skipped 不能计入完成数，否则进度会虚高。
+  const batchDoneCount = batchTasks.filter((task) => task.status === "done").length;
   const batchRunning = batchData?.status === "running";
 
-  // 生成中动作的进度条平滑爬升（2.5s 轮询之间补间）
-  const [tick, setTick] = useState(0);
-  useEffect(() => {
-    if (!generatingAction && !batchRunning) return;
-    const timer = setInterval(() => setTick((value) => value + 1), 400);
-    return () => clearInterval(timer);
-  }, [generatingAction, batchRunning]);
-
   const invalidateAll = assets.invalidateAll;
+  const announcedBatchRef = useRef<string | null>(null);
   useEffect(() => {
-    if ((batchData?.status === "done" || batchData?.status === "failed") && batchId) {
-      invalidateAll();
+    if (!batchId || !batchData || batchData.status === "running") return;
+    if (announcedBatchRef.current === batchId) return;
+    announcedBatchRef.current = batchId;
+    invalidateAll();
+
+    const failed = batchData.failed_count ?? 0;
+    if (batchData.status === "interrupted") {
+      toast({
+        tone: "warning",
+        title: "动作生成被中断",
+        description: "后端任务已中断，可在对应动作卡片上重新生成",
+      });
+    } else if (failed > 0) {
+      toast({
+        tone: "warning",
+        title: "动作生成结束，部分失败",
+        description: `${failed} 个动作未生成成功，请在卡片上查看原因并重试`,
+      });
+    } else {
+      toast({
+        tone: "success",
+        title: "动作生成完成",
+        description: "试玩条带已自动刷新",
+      });
     }
-  }, [batchData?.status, batchId, invalidateAll]);
+  }, [batchData, batchId, invalidateAll]);
+
+  const missingActions = BUILT_IN_ACTIONS.filter(
+    (name) => meta.strips[name]?.engine !== "ai-video",
+  );
+  const missingCount = missingActions.length;
 
   async function generateAiAnimation(name: string) {
-    if (!selected?.id || generatingAction) return;
-    setGeneratingAction(name);
+    if (!selected?.id || generationLockRef.current || batchRunning) return;
+    generationLockRef.current = true;
+    setSubmittingAction(name);
     try {
-      const result = await api.startActionBatch(selected.id, [name]);
+      const view = ACTION_VIEW_BY_ACTION[name] ?? "front";
+      const result = await api.startActionBatch(selected.id, [name], {
+        view,
+        viewsByAction: { [name]: view },
+      });
+      // API 已返回完整快照：先写入缓存，再切 batchId，首帧就能显示队列而不是空白。
+      queryClient.setQueryData(["action-batch", result.batch_id], result.snapshot);
       setBatchId(result.batch_id);
-      toast({ tone: "info", title: `「${name}」AI 动画生成中`, description: "约 90 秒，完成后自动刷新预览" });
+      toast({
+        tone: "info",
+        title: `「${name}」AI 动画生成中`,
+        description: "约 90 秒，完成后自动刷新预览",
+      });
     } catch (cause) {
       toast({ tone: "danger", title: "AI 动画生成失败", description: String(cause).slice(0, 160) });
     } finally {
-      setGeneratingAction(null);
+      generationLockRef.current = false;
+      setSubmittingAction(null);
     }
   }
 
-  const missingCount = BUILT_IN_ACTIONS.filter(
-    (name) => meta.strips[name]?.engine !== "ai-video",
-  ).length;
-
   async function generateAllActions() {
-    if (!selected?.id || generatingAction || batchRunning) return;
+    if (!selected?.id || generationLockRef.current || batchRunning) return;
     if (missingCount === 0) {
       toast({ tone: "info", title: "全部动作都已是 AI 动画帧" });
       return;
     }
-    setGeneratingAction("batch");
+    generationLockRef.current = true;
+    setSubmittingAction("batch");
     try {
-      const result = await api.startActionBatch(selected.id);
+      const viewsByAction = Object.fromEntries(
+        missingActions.map((name) => [name, ACTION_VIEW_BY_ACTION[name] ?? "front"]),
+      );
+      const result = await api.startActionBatch(selected.id, missingActions, { viewsByAction });
+      queryClient.setQueryData(["action-batch", result.batch_id], result.snapshot);
       setBatchId(result.batch_id);
       toast({
         tone: "info",
@@ -192,7 +236,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
     } catch (cause) {
       toast({ tone: "danger", title: "批量启动失败", description: String(cause).slice(0, 160) });
     } finally {
-      setGeneratingAction(null);
+      generationLockRef.current = false;
+      setSubmittingAction(null);
     }
   }
 
@@ -224,11 +269,21 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   // 仅渲染方式不同，界面统一按角色动画展示
   const bound = meta.source === "rigged" || meta.source === "sprite";
 
+  const activeBatchTask = batchTasks.find((task) => task.status === "generating");
+  const generationStatus = submittingAction
+    ? submittingAction === "batch"
+      ? "正在创建全套动作生成队列"
+      : `正在提交「${BASE_ACTION_LABEL[submittingAction] ?? submittingAction}」`
+    : activeBatchTask
+      ? `正在生成「${BASE_ACTION_LABEL[activeBatchTask.action] ?? activeBatchTask.action}」`
+      : batchRunning
+        ? `动作生成中 ${batchDoneCount}/${batchData?.total ?? 0}`
+        : null;
   const statusText = !selectedAssetId
     ? "未选择试玩人物"
     : assets.metadataError
       ? "动作数据加载失败，请稍后重试"
-      : `当前动作：${actionLabel}（${uiMode === "live" ? "实时控制" : "预览"}），条带 ${assets.progress.ready}/${assets.progress.total} 就绪`;
+      : `${generationStatus ? `${generationStatus} · ` : ""}当前动作：${actionLabel}（${uiMode === "live" ? "实时控制" : "预览"}），条带 ${assets.progress.ready}/${assets.progress.total} 就绪`;
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-4 py-5 md:px-6">
@@ -373,13 +428,15 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         thumbnails={meta.previews}
         currentAction={uiAction}
         mode={uiMode}
-        generatingAction={generatingAction}
+        submittingAction={submittingAction}
         batchTasks={batchTasks}
         batchRunning={batchRunning}
         batchDoneCount={batchDoneCount}
         batchTotal={batchData?.total ?? 0}
+        batchStartedAt={batchData?.created_at}
+        batchSyncError={batch.error ? String(batch.error).slice(0, 140) : null}
         missingCount={assets.metadataLoading ? 0 : missingCount}
-        tick={tick}
+        aiReadyCount={assets.metadataLoading ? 0 : BUILT_IN_ACTIONS.length - missingCount}
         phase={assets.phase}
         customLoading={assets.customLoading}
         libraryOpen={libraryOpen}
@@ -388,6 +445,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         onResumeLive={onResumeLive}
         onGenerateAi={(name) => void generateAiAnimation(name)}
         onGenerateAll={() => void generateAllActions()}
+        onRefreshBatch={() => void batch.refetch()}
         onOpenLibrary={() => setLibraryOpen(true)}
         onRetry={onRetry}
         onGoWorkbench={goWorkbench}

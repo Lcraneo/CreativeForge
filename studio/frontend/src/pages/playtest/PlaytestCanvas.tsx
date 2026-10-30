@@ -9,6 +9,7 @@
  * imageSmoothing 关闭保像素锐利。
  */
 import { useEffect, useRef } from "react";
+import { spriteScaleX } from "../../lib/animator";
 import { createFrameLoop, type PlaytestEngine, type PlaytestSnapshot } from "./playtestEngine";
 import type { PlaytestStrip } from "../../types";
 
@@ -59,6 +60,7 @@ export function PlaytestCanvas(props: PlaytestCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sizeRef = useRef({ w: 0, h: 0 });
   const paletteRef = useRef<StagePalette | null>(null);
+  const renderRef = useRef<(now: number) => void>(() => undefined);
 
   /* ── 尺寸：ResizeObserver 维护 backing size（dpr ≤ 2） ─────────── */
   useEffect(() => {
@@ -143,13 +145,15 @@ export function PlaytestCanvas(props: PlaytestCanvasProps) {
       );
       ctx.fill();
 
-      // 角色：切换淡入 + 朝向镜像 + 像素级裁剪当前帧
+      // 角色：切换淡入 + 朝向镜像 + 像素级裁剪当前帧。
+      // state.facing 表示运动方向；facing=left 的旧侧视素材需要先翻转，
+      // 才能保证向右移动时角色也面向右侧。新素材统一面向右侧。
       const fade = Math.min(1, (now - state.actionStartedAt) / ACTION_FADE_MS);
       const frameIdx = state.frame % cropFrames;
       ctx.save();
       ctx.globalAlpha = fade;
       ctx.translate(state.x, groundY);
-      ctx.scale(state.facing, 1);
+      ctx.scale(spriteScaleX(state.facing, strip?.facing), 1);
       ctx.drawImage(
         image,
         Math.round(frameIdx * cropW),
@@ -262,13 +266,16 @@ export function PlaytestCanvas(props: PlaytestCanvasProps) {
     lines.forEach((line, i) => ctx.fillText(line, 18, 28 + i * 16));
   };
 
-  /* ── rAF 循环：每渲染重建绘制闭包（父组件低频重渲染，成本可忽略）；
-   * 页面隐藏自动停、卸载即停 ──────────────────────────────────────── */
+  /* ── rAF 循环：始终调用最新绘制闭包，但不因父组件重渲染而重启循环。
+   * 页面隐藏自动停、卸载即停。────────────────────────────────────── */
   useEffect(() => {
-    const loop = createFrameLoop((now) => tick(now));
+    renderRef.current = tick;
+  });
+  useEffect(() => {
+    const loop = createFrameLoop((now) => renderRef.current(now));
     loop.start();
     return () => loop.dispose();
-  });
+  }, [engine]);
 
   return (
     <canvas

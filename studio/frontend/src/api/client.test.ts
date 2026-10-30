@@ -57,6 +57,29 @@ describe("request 错误通道", () => {
     await expect(api.health()).resolves.toEqual({ status: "ok" });
   });
 
+  it("batch generation forwards the source view for every action", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          batch_id: "batch-1",
+          snapshot: { id: "batch-1", asset_id: "a", status: "running", total: 1, tasks: [] },
+        }),
+        { status: 200 },
+      ),
+    );
+    await api.startActionBatch("a", ["walk"], {
+      viewsByAction: { walk: "side" },
+      forceActions: ["walk"],
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      asset_id: "a",
+      actions: ["walk"],
+      views_by_action: { walk: "side" },
+      force_actions: ["walk"],
+    });
+  });
+
   it("失败响应抛错并弹一次 toast", async () => {
     fetchMock.mockResolvedValue(new Response("boom", { status: 500 }));
     await expect(api.health()).rejects.toThrow("500: boom");

@@ -560,6 +560,8 @@ export interface RestyleInfo {
 
 export interface ActionBatchTask {
   action: string;
+  /** 本动作实际使用的生成视角：idle/attack=front，walk/run/jump=side */
+  view?: "front" | "side" | string;
   /** interrupted = 后端重启导致任务中断（终态，见后端 task_store） */
   status: "pending" | "generating" | "done" | "failed" | "skipped" | "interrupted";
   stage?: "prompt" | "video" | "sampling" | "composing" | "done" | "interrupted";
@@ -575,6 +577,8 @@ export interface ActionBatchTask {
 export interface ActionBatchSnapshot {
   id: string;
   asset_id: string;
+  /** mixed = 同一批包含正面与侧面动作 */
+  view?: string;
   /** failed = 全部动作生成失败（部分失败仍为 done，failed_count 记失败数）；
    * interrupted = 后端重启中断（终态，任务已落盘可追溯） */
   status: "running" | "done" | "failed" | "interrupted";
@@ -602,6 +606,10 @@ export interface PlaytestStrip {
   width: number;
   height: number;
   engine: string;
+  /** 条带对应的动作视角（诊断用） */
+  view?: "front" | "side" | string;
+  /** 侧视源图朝向；旧记录按历史左向兼容 */
+  facing?: "left" | "right";
 }
 
 export interface PlaytestCharacter {

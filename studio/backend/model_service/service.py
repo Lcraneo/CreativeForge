@@ -469,9 +469,9 @@ class ModelSettingsStore:
         "edit_model": "",  # 图像编辑（抠图 / 风格迁移 / 发层）；留空用服务商默认
         # 三视图是固定模型 TURNAROUND_EDIT_MODEL（qwen-image-2.1-turbo），不受此项控制
         "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
-        # 定稿档模型（V2 双档策略）：草稿走 video_model（flash 档确认动作），
-        # 前端「高清定稿」走这里（plus 档出片，成本 2.8×）
-        "video_model_final": "wan2.2-i2v-plus",
+        # 历史双档字段：视频模型已固定为 VIDEO_MODEL（flash 档），
+        # 本项仅为兼容旧配置保留，不参与实际请求
+        "video_model_final": "wan2.2-i2v-flash",
         "use_chat": True,
         "use_image": True,
         "use_video": True,
@@ -660,6 +660,12 @@ DEFAULT_VIDEO_NEGATIVE_PROMPT = (
     "重影, 残影, 拖影, 双重曝光, 鬼影, 肢体分裂, 多余肢体, 形变破碎, 画面闪烁"
 )
 
+# 动画工作台 / 试玩舞台（单动作 / 批量补齐）统一固定的视频模型。
+# video_model、video_model_final 与 model_override 一律不参与实际请求，
+# 也不做 plus / turbo 自动回退：保证请求、缓存 key、任务元数据与用量账单
+# 口径一致。
+VIDEO_MODEL = "wan2.2-i2v-flash"
+
 
 def _video_negative_prompt(settings) -> str:
     """最终负面提示词：用户配置优先，代码默认项去重后追加。"""
@@ -674,13 +680,12 @@ def _video_negative_prompt(settings) -> str:
 def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_override=None):
     """图生视频 (Windup 式 i2v 路线): source image + motion prompt -> mp4 bytes.
 
-    Tries the configured ``video_model`` first, then the known DashScope
-    i2v model names (naming changed across model generations). Returns
-    ``(video_bytes, model_name)``.
+    视频模型固定为 ``VIDEO_MODEL``（wan2.2-i2v-flash）：``model_override``、
+    ``settings['video_model']`` 与 ``settings['video_model_final']`` 均不再
+    影响实际请求，也不会自动回退到 plus / turbo。返回 ``(video_bytes,
+    model_name)``，model_name 恒为固定模型。
 
-    ``model_override``：定稿档（V2 双档策略）——由调用方传入
-    ``video_model_final``，强制走高质量模型；缓存 key 与回退链都以它
-    为首，避免 flash/plus 撞同一份缓存。"""
+    ``model_override``：仅为旧调用方兼容保留，已忽略。"""
     api_key = settings.get("api_key")
     if not api_key:
         raise RuntimeError("自定义模型未启用，无法使用 AI 视频驱动")
@@ -695,11 +700,9 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_o
     # 视频缓存：相同 提示词+模型+源图+负面词+生成参数 直接复用已生成的 mp4
     # （视频是额度大头）。负面提示词必须参与 key：同 prompt 不同 negative
     # 共用旧 key 会让新加的伪影抑制静默失效（命中未抑制的旧缓存），不同
-    # 配置间还会互相覆盖缓存。同理 size 与 prompt_extend 也必须入 key：
-    # 双档/分辨率/增强任一切换后命中旧缓存 = 新设置静默失效（V2 基准实测
-    # 教训：ext 组曾因此整组命中 flash_v2 缓存）。模型分量必须是"实际请求"
-    # 的模型（含定稿 override），否则 flash/plus 互相命中对方档位缓存。
-    requested_model = model_override or settings.get("video_model") or settings.get("model")
+    # 配置间还会互相覆盖缓存。同理 size 与 prompt_extend 也必须入 key。
+    # 模型分量取固定的 VIDEO_MODEL——配置怎么写都只有同一档缓存。
+    requested_model = VIDEO_MODEL
     video_key = _cache_key(
         prompt,
         requested_model,
@@ -714,17 +717,9 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_o
     if os.path.isfile(cached_path):
         with open(cached_path, "rb") as handle:
             return handle.read(), requested_model
-    # wan2.2-i2v-flash 为当前主线（实测可用）；wanx2.1-i2v-turbo 仍在线作回退。
-    # 早期候选 wan2.1-i2v-turbo / wanx-i2v 已下线（HTTP 400 Model not exist）。
-    # 画质优先：定稿 override → 配置的模型 → plus → flash → turbo 回退
-    chain = [model_override] if model_override else []
-    chain += [
-        settings.get("video_model"),
-        "wan2.2-i2v-plus",
-        "wan2.2-i2v-flash",
-        "wanx2.1-i2v-turbo",
-    ]
-    models = list(dict.fromkeys(m for m in chain if m))
+    # 单一模型链：不再按 video_model / video_model_final 回退到 plus / turbo，
+    # 额度或鉴权错误只换 Key（见下方 Key 池循环），不换模型。
+    models = [VIDEO_MODEL]
     encoded = base64.b64encode(image_bytes).decode()
     parameters = {
         "size": settings.get("video_size") or "1280*720",
@@ -734,23 +729,36 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_o
     }
 
     def _create(key, model, prompt_now):
-        return httpx.post(
-            DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
-            headers={
-                "Authorization": "Bearer " + key,
-                "Content-Type": "application/json",
-                "X-DashScope-Async": "enable",
-            },
-            json={
-                "model": model,
-                "input": {"prompt": prompt_now, "img_url": "data:image/png;base64," + encoded},
-                "parameters": parameters,
-            },
-            # Creating an async task should be quick, but gateways sometimes
-            # queue the acknowledgement.  Honour the configured network budget
-            # and never use a shorter-than-one-minute connect/read window.
-            timeout=max(60.0, float(settings.get("timeout", 60))),
-        )
+        # Async-task creation has no idempotency token. Retry transport blips a
+        # bounded number of times here instead of letting one DNS/reset error
+        # abort the whole model fallback chain.
+        delays = (1.0, 2.0, 4.0)
+        for attempt in range(len(delays) + 1):
+            try:
+                return httpx.post(
+                    DASHSCOPE_HOST + "/api/v1/services/aigc/video-generation/video-synthesis",
+                    headers={
+                        "Authorization": "Bearer " + key,
+                        "Content-Type": "application/json",
+                        "X-DashScope-Async": "enable",
+                    },
+                    json={
+                        "model": model,
+                        "input": {
+                            "prompt": prompt_now,
+                            "img_url": "data:image/png;base64," + encoded,
+                        },
+                        "parameters": parameters,
+                    },
+                    # Creating an async task should be quick, but gateways sometimes
+                    # queue the acknowledgement. Honour the configured network budget
+                    # and never use a shorter-than-one-minute connect/read window.
+                    timeout=max(60.0, float(settings.get("timeout", 60))),
+                )
+            except (httpx.TimeoutException, httpx.TransportError):
+                if attempt == len(delays):
+                    raise
+                time.sleep(delays[attempt])
 
     # 两轮策略：第 1 轮原始提示词；若被内容审核拦截，第 2 轮用安全改写
     # （高风险词中性化 + 合规尾缀）整体重试一遍——审核失败换 Key/换模型
@@ -783,7 +791,12 @@ def generate_video(settings, prompt, image_bytes, timeout_seconds=420.0, model_o
                         break
                     if kind in ("quota", "auth"):
                         last_error = err
-                        break
+                        # Auth failure applies to every model for this Key. Quota
+                        # is model-scoped on DashScope free tiers, so keep walking
+                        # the fallback chain before moving to another Key.
+                        if kind == "auth":
+                            break
+                        continue
                     last_error = err
                     continue
                 task_id = (create.json().get("output") or {}).get("task_id")
@@ -1208,8 +1221,9 @@ class ImageProvider:
 # 一次生成 side + back：以原画为参考，输出横向双栏转面设定图，本地裁切。
 TURNAROUND_SHEET_PROMPT = (
     "以参考图中的角色为唯一身份依据，生成一张双栏角色正交转面设定图。\n\n"
-    "左栏：同一个角色的正左侧 90° 全身侧面像，角色面朝画面左侧，单眼、侧脸轮廓、"
-    "鼻尖、下巴、身体厚度和背部轮廓清晰可见，双臂和双腿完整，双脚完整露出并朝左。\n\n"
+    "左栏：同一个角色的正右侧 90° 全身侧面像，角色面朝画面右侧，单眼、侧脸轮廓、"
+    "鼻尖、下巴、身体厚度和背部轮廓清晰可见，双臂和双腿完整，双脚完整露出并朝右；"
+    "鼻尖、面部和脚尖都明确指向画面右侧。\n\n"
     "右栏：同一个角色的正后方 180° 全身背面像，角色背对镜头，只可见后脑勺、发型背面、"
     "背部服装和背部结构，完全不可见眼睛、鼻子、嘴巴和面部。\n\n"
     "两栏必须是同一个角色，保持相同的发型、发色、服装、配色、武器、配饰、体型和身高比例。\n\n"
@@ -1645,6 +1659,9 @@ def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_
             "sheet_file": sheet_name,
             "bbox": crops[view]["bbox"],
         }
+        if view == "side":
+            # 试玩舞台的规范侧视朝向；旧记录缺少此字段时前端按历史左向兼容。
+            meta["facing"] = "right"
         views[view] = meta
         if on_result:
             on_result(view, meta)

@@ -114,15 +114,33 @@ interface SeqFrame {
   dataUrl: string;
 }
 
-const CORE_ACTIONS = ["walk", "run", "jump"] as const;
+const CORE_ACTIONS = ["idle", "walk", "run", "jump"] as const;
 type CoreAction = (typeof CORE_ACTIONS)[number];
 
+/** 基础动作的视角策略：待机用正面呼吸循环，移动/跳跃用侧面。
+ * attack 不在基础区；只产出一套面向右侧的侧面素材，向左移动由
+ * 试玩 Canvas 的水平镜像完成。 */
+const CORE_VIEW_BY_ACTION: Record<CoreAction, "front" | "side"> = {
+  idle: "front",
+  walk: "side",
+  run: "side",
+  jump: "side",
+};
+
+/** 基础动作卡片说明（idle 为正面待机，其余为移动动作） */
+const CORE_ACTION_HINTS: Record<CoreAction, string> = {
+  idle: "正面待机 / 呼吸循环",
+  walk: "常速移动",
+  run: "冲刺移动",
+  jump: "跨越平台",
+};
+
 /**
- * The production path deliberately exposes only the three actions consumed by
- * the arcade.  The older workbench remains below as implementation history,
- * but is no longer the user-facing first step: users should not need to learn
- * rig parameters, matrices, or custom-action namespaces just to get a
- * playable character.
+ * The production path deliberately exposes only the actions consumed by
+ * the playtest stage (idle / walk / run / jump).  The older workbench remains
+ * below as implementation history, but is no longer the user-facing first
+ * step: users should not need to learn rig parameters, matrices, or
+ * custom-action namespaces just to get a playable character.
  */
 function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
   const navigate = useNavigate();
@@ -146,7 +164,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           action,
           action_description: direction.trim(),
           use_video: true,
-          view: "side",
+          view: CORE_VIEW_BY_ACTION[action],
           fps: 12,
           duration: action === "jump" ? 1.2 : 1.0,
           size: 512,
@@ -210,7 +228,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
       <PageHeader
         overline="Playable Motion"
         title="基础动作"
-        description="一句动作提示词会作为风格方向叠加到行走、奔跑、跳跃的真实动作模板；生成结果可直接用于试玩场。"
+        description="一句动作提示词会作为风格方向叠加到待机、行走、奔跑、跳跃的真实动作模板；生成结果可直接用于试玩场。"
         actions={
           <Button
             variant="secondary"
@@ -241,7 +259,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
           ) : undefined
         }
       >
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {CORE_ACTIONS.map((action) => {
             const result = results[action];
             return (
@@ -260,9 +278,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                   <span className="font-semibold text-ink">{ACTION_LABELS[action]}</span>
                   {result && <Badge tone="success">已生成</Badge>}
                 </div>
-                <p className="mt-1 text-xs text-ink-3">
-                  {action === "walk" ? "常速移动" : action === "run" ? "冲刺移动" : "跨越平台"}
-                </p>
+                <p className="mt-1 text-xs text-ink-3">{CORE_ACTION_HINTS[action]}</p>
               </button>
             );
           })}
@@ -292,7 +308,7 @@ function CoreAnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
             </div>
           </div>
         ) : (
-          <p className="py-16 text-center text-sm text-ink-4">选择行走、奔跑或跳跃生成预览。</p>
+          <p className="py-16 text-center text-sm text-ink-4">选择待机、行走、奔跑或跳跃生成预览。</p>
         )}
       </Card>
     </div>
@@ -1618,14 +1634,14 @@ function AnimationWorkbench({ asset }: { asset: CreativeAsset | null }) {
                     {useVideo && (
                       <label
                         className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-ink-2"
-                        title="定稿档用更高质量的 i2v 模型（wan2.2-i2v-plus）出片，成本约 2.8×；草稿档确认动作后再开"
+                        title="视频模型固定为 wan2.2-i2v-flash；此开关仅标记定稿档，不改变实际模型"
                       >
                         <input
                           type="checkbox"
                           checked={finalQuality}
                           onChange={(event) => setFinalQuality(event.target.checked)}
                         />
-                        高清定稿（plus 档）
+                        高清定稿（模型固定 flash）
                       </label>
                     )}
                     {skeletal && (

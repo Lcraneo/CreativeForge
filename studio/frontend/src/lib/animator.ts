@@ -55,6 +55,15 @@ export function frameMsFor(table: ClipTable, name: string): number {
   return 1000 / Math.max(1, fps * boost);
 }
 
+/** 将运动方向与素材自身朝向合成 Canvas 水平缩放。
+ * 新侧视素材统一朝右；旧素材标记 facing=left 时需要先镜像一次。 */
+export function spriteScaleX(
+  direction: 1 | -1,
+  sourceFacing?: "left" | "right",
+): number {
+  return direction * (sourceFacing === "left" ? -1 : 1);
+}
+
 /** 一次性动作完整播完所需时长（动画本体 + 收尾余量）。 */
 export function clipDurationMs(table: ClipTable, name: string, tailMs = 0): number {
   return clipFor(table, name).frames * frameMsFor(table, name) + tailMs;

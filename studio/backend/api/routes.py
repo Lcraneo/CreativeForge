@@ -43,6 +43,32 @@ def _view_lock(asset_id: str) -> threading.Lock:
 # mask 是 256×256 单通道图，8 个角色约 0.5MB。
 _PLAYTEST_RIG_CACHE: dict[str, tuple] = {}
 
+# 试玩舞台动作视角策略：idle 用正面（呼吸待机），移动/跳跃用侧面。
+# attack 不在此表（保持旧行为：不按视角过滤，取最新记录）。
+# 只产出一套面向右侧的侧面素材，向左移动由 Canvas 水平镜像完成。
+PLAYTEST_VIEW_BY_ACTION = {
+    "idle": "front",
+    "walk": "side",
+    "run": "side",
+    "jump": "side",
+}
+
+
+def _side_source_facing(asset: dict | None) -> str:
+    """返回侧视源图朝向；新三视图显式写 right，旧记录按历史左向 prompt 推断。"""
+    if not isinstance(asset, dict):
+        return "left"
+    views = asset.get("design_views")
+    side = views.get("side") if isinstance(views, dict) else None
+    if not isinstance(side, dict):
+        return "left"
+    facing = side.get("facing")
+    if facing in ("left", "right"):
+        return facing
+    # 旧版 TURNAROUND_SHEET_PROMPT 明确要求“面朝画面左侧”；历史记录没有
+    # facing 字段，按左向兼容，Canvas 会在向右移动时做一次水平镜像。
+    return "left"
+
 # ── 前端构建过期自检 ────────────────────────────────────────────────
 # dist/index.html 落后于 src 最新 mtime → /health.frontend_stale=true →
 # 前端页脚角标提示「请重新构建并强刷」。60s TTL 缓存避免每次健康检查全量
@@ -199,7 +225,7 @@ class AnimationRequest(BaseModel):
     view: str = "front"  # walk/run 的视角：front 正面 / side 侧视横版
     pose_config: dict | None = None  # 动作自定义参数（幅度/滞后/周期等）
     use_video: bool = False  # AI 视频驱动（Windup 式 i2v）：让 AI 原画本身动起来
-    final_quality: bool = False  # V2 双档：定稿档走 video_model_final（plus）出片
+    final_quality: bool = False  # 定稿档标记；视频模型固定 wan2.2-i2v-flash
     deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
     secondary_motion: bool = False  # V3 次级运动：发层摆动（首次生成发层约 0.3 元，之后缓存免费）
     equipment_aware: bool = True  # V3.5 装备/服装识别：看图认出武器/服装并贴合动作（首次 ~0.002 元，之后缓存免费）
@@ -813,7 +839,7 @@ def build_router(runtime):
             )
         if request.use_video:
             # Windup 式 i2v：源图 + 动作提示词 → 图生视频 → 抽帧合成
-            source = image_bytes or service._asset_render(asset)
+            source = image_bytes or service._asset_render(asset, view=request.view)
             if not source:
                 raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
             settings = runtime.model_settings.effective()
@@ -840,6 +866,9 @@ def build_router(runtime):
                     action_description=(request.action_description or "").strip()[:500],
                     view=request.view,
                     custom_action=request.custom_action,
+                    source_facing=(
+                        _side_source_facing(asset) if request.view == "side" else None
+                    ),
                 )
             except RuntimeError as error:
                 raise HTTPException(status_code=502, detail=str(error))
@@ -902,7 +931,7 @@ def build_router(runtime):
                 status_code=404,
                 detail="没有可用资源：请先在工作台生成资产，或上传一张源图",
             )
-        source = image_bytes or service._asset_render(asset)
+        source = image_bytes or service._asset_render(asset, view=request.view)
         if not source:
             raise HTTPException(status_code=409, detail="该资产没有可用的 AI 原画")
         settings = runtime.model_settings.effective()
@@ -928,6 +957,7 @@ def build_router(runtime):
             action_description=(request.action_description or "").strip()[:500],
             view=request.view,
             custom_action=request.custom_action,
+            source_facing=(_side_source_facing(asset) if request.view == "side" else None),
         )
         payload = {"task_id": snapshot["id"], "snapshot": snapshot}
         if idem_key:
@@ -1054,10 +1084,14 @@ def build_router(runtime):
     def start_action_batch(request: dict):
         """一键补齐全套动作：为资产串行生成缺失动作的 AI 动画（视频驱动），
         已生成的自动跳过；``force_actions``（质检异常重试）强制重新生成。
-        ``view`` 决定本批视角与源图：side 用设计三视图的侧视图，front 用
-        AI 原画。返回 batch_id 供轮询。"""
+        ``views_by_action`` 可让同一批同时使用正面与侧面源图；旧请求的
+        ``view`` 仍作为整批默认视角。返回 batch_id 供轮询。"""
 
-        from studio.backend.animation_service.service import AnimationService
+        from studio.backend.animation_service.service import (
+            ACTIONS as ANIMATION_ACTIONS,
+            DEFAULT_BATCH_VIEW_BY_ACTION,
+            AnimationService,
+        )
 
         asset = _resolve_asset(runtime, request.get("asset_id") or "")
         if asset is None:
@@ -1065,29 +1099,68 @@ def build_router(runtime):
         settings = runtime.model_settings.effective()
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="AI 动画生成需要先启用自定义模型")
-        view = request.get("view") or "front"
-        source = AnimationService(ANIMATION_DIR)._asset_render(asset, view=view)
-        if not source:
-            art_meta = [asset.get("image"), (asset.get("source") or {}).get("ai_image")]
-            detail = "该资产没有可用的 AI 原画"
-            if view == "side":
-                detail = "该资产还没有侧视源图——先在「设计三视图」生成侧视图，再补侧视动作"
-            elif any(
-                isinstance(m, dict) and (m.get("file") or m.get("url") or m.get("path"))
-                for m in art_meta
-            ):
-                detail = "该资产的 AI 原画在本机缺失且远端链接已失效，无法生成动画"
-            raise HTTPException(status_code=409, detail=detail)
 
         service = AnimationService(ANIMATION_DIR)
+        requested_actions = request.get("actions")
+        actions = [
+            action
+            for action in (
+                requested_actions if requested_actions is not None else ANIMATION_ACTIONS
+            )
+            if action in ANIMATION_ACTIONS
+        ]
+        requested_views = request.get("views_by_action")
+        requested_views = requested_views if isinstance(requested_views, dict) else {}
+        fallback_view = request.get("view")
+        views_by_action = {}
+        for action in actions:
+            candidate = requested_views.get(action)
+            if candidate not in ("front", "side"):
+                candidate = (
+                    fallback_view
+                    if fallback_view in ("front", "side")
+                    else DEFAULT_BATCH_VIEW_BY_ACTION[action]
+                )
+            views_by_action[action] = candidate
+
+        force_actions = request.get("force_actions")
+        force_actions = force_actions if isinstance(force_actions, list) else []
+        forced = {action for action in force_actions if action in ANIMATION_ACTIONS}
+        done = service.existing_ai_actions(asset.get("id"), expected_views=views_by_action)
+        needed_actions = [action for action in actions if action not in done or action in forced]
+
+        labels = {"idle": "待机", "walk": "行走", "run": "奔跑", "attack": "攻击", "jump": "跳跃"}
+        sources_by_view = {}
+        for view in sorted({views_by_action[action] for action in needed_actions}):
+            source = service._asset_render(asset, view=view)
+            if source:
+                sources_by_view[view] = source
+                continue
+            action_names = "、".join(
+                labels.get(action, action)
+                for action, action_view in views_by_action.items()
+                if action_view == view
+            )
+            if view == "side":
+                detail = "侧视动作（{}）缺少侧视源图——先在「设计三视图」生成侧视图".format(
+                    action_names
+                )
+            else:
+                detail = "正面动作（{}）缺少可用 AI 原画，无法生成动画".format(action_names)
+            raise HTTPException(status_code=409, detail=detail)
+
+        facing_by_view = {
+            "side": _side_source_facing(asset),
+        } if "side" in sources_by_view else {}
         batch_id = service.start_action_batch(
             asset.get("id"),
-            source,
+            sources_by_view,
             settings,
-            actions=request.get("actions"),
+            actions=actions,
             enhance_context=_enhance_context_for(asset),
-            view=view,
-            force_actions=request.get("force_actions"),
+            views_by_action=views_by_action,
+            force_actions=force_actions,
+            facing_by_view=facing_by_view,
         )
         return {"batch_id": batch_id, "snapshot": service.action_batch_snapshot(batch_id)}
 
@@ -1905,7 +1978,11 @@ def build_router(runtime):
         ai_strips: dict[str, dict] = {}
         if asset_id:
             ai_strips = collect_ai_strips(
-                ANIMATION_DIR, asset_id, actions, custom_names=custom_names
+                ANIMATION_DIR,
+                asset_id,
+                actions,
+                custom_names=custom_names,
+                view_by_action=PLAYTEST_VIEW_BY_ACTION,
             )
 
         def _safe_label(value: str) -> str:
@@ -2051,7 +2128,12 @@ def build_router(runtime):
 
         def _pack_ai_strip(meta, label: str | None = None):
             """把 AI 动画的本地逐帧拼成条带 PNG（与 strips 结构统一，
-            前端播放器零改动），缓存于 play_cache。"""
+            前端播放器零改动），缓存于 play_cache。
+
+            白底帧在打包阶段本地抠成透明（cutout_white_background），原始
+            动画目录里的帧、GIF、MP4 一律不动；任一帧抠图失败则整条 AI
+            条带返回 None，由路由回退到透明程序化/骨骼条带——绝不让白底
+            条带进舞台。"""
 
             frame_files = []
             for url in meta.get("frame_urls") or []:
@@ -2061,10 +2143,12 @@ def build_router(runtime):
 
             import hashlib as _hashlib
 
+            # matte-v2：透明画布内仍带白底内容区的视频帧也需要抠图；
+            # digest + 文件名双写，旧 matte-v1 白底缓存自动作废。
             digest = _hashlib.sha1(
-                ("ai|{}|{}".format(meta.get("id"), len(frame_files))).encode()
+                ("ai|matte-v2|{}|{}".format(meta.get("id"), len(frame_files))).encode()
             ).hexdigest()[:10]
-            out_name = "play_ai_{}_{}.png".format(
+            out_name = "play_ai_{}_{}_matte-v2.png".format(
                 _safe_label(label or meta.get("requested_action")), digest
             )
             out_path = os.path.join(cache_dir, out_name)
@@ -2072,17 +2156,29 @@ def build_router(runtime):
             if len(samples) < 4:
                 return None
             if not os.path.isfile(out_path):
-                images = [PILImage.open(f).convert("RGBA") for f in samples]
+                from artgen.sourceanim import cutout_white_background
+
+                images = []
+                for path in samples:
+                    with PILImage.open(path) as handle:
+                        frame = cutout_white_background(handle)
+                    if frame is None:
+                        # 单帧抠图不可信（非白底/抠失败）→ 整条 AI 条带弃用
+                        return None
+                    images.append(frame)
                 # 条带帧宽封顶 288（模块衔接·内存契约）：30 帧 × 384px 的
                 # 解码内存会把五条条带推到 ~90MB；舞台展示高度 ~216px，
                 # 288px 视觉无损，内存回到 20 帧时代水平
                 if images and images[0].width > 288:
                     target_w = 288
                     images = [
-                        img.resize(
+                        # RGBa（预乘 alpha）缩放：透明边缘不混入白边
+                        img.convert("RGBa")
+                        .resize(
                             (target_w, max(1, int(img.height * target_w / img.width))),
                             PILImage.LANCZOS,
                         )
+                        .convert("RGBA")
                         for img in images
                     ]
                 frame_w = max(img.width for img in images)
@@ -2091,6 +2187,13 @@ def build_router(runtime):
                 for i, img in enumerate(images):
                     sheet.paste(img, (i * frame_w + (frame_w - img.width) // 2, frame_h - img.height))
                 sheet.save(out_path, "PNG")
+            effective_facing = meta.get("source_facing")
+            if meta.get("view") == "side" and effective_facing not in ("left", "right"):
+                # 本字段上线前的侧视动作均由旧“面朝左”prompt 生成；即使
+                # 之后重做了三视图，也不能用新朝向去解释旧动作。
+                effective_facing = "left"
+            if meta.get("view") != "side":
+                effective_facing = None
             with PILImage.open(out_path) as handle:
                 strip_w, strip_h = handle.size
             return {
@@ -2101,10 +2204,18 @@ def build_router(runtime):
                 "height": strip_h,
                 "fps": meta.get("fps", 12),
                 "engine": "ai-video",
+                # 实际视角/源图朝向（试玩 Canvas 据此归一化左右镜像）
+                "view": meta.get("view"),
+                **({"facing": effective_facing} if effective_facing else {}),
             }
 
         previews: dict[str, str] = {}
         strips: dict[str, dict] = {}
+        side_facing = _side_source_facing(asset)
+
+        def _facing_for(action: str) -> str | None:
+            return side_facing if PLAYTEST_VIEW_BY_ACTION.get(action) == "side" else None
+
         for action in actions:
             ai_meta = ai_strips.get(action)
             if ai_meta is not None:
@@ -2127,6 +2238,9 @@ def build_router(runtime):
                 "width": max(1, strip_w // PLAYTEST_FRAMES),
                 "height": strip_h,
                 "engine": engine,
+                # 回退条带的视角/源图朝向（attack 不在策略表内为 None）
+                "view": PLAYTEST_VIEW_BY_ACTION.get(action),
+                **({"facing": _facing_for(action)} if _facing_for(action) else {}),
             }
 
         # ── 自定义动作条带：AI 版优先，其次按保存的姿态参数渲染。

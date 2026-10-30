@@ -206,7 +206,7 @@ export interface AnimationRequestPayload {
   view?: string;
   pose_config?: PoseConfig;
   use_video?: boolean;
-  /** V2 双档：定稿档走 video_model_final（plus）出片，成本约 2.8× */
+  /** 定稿档标记；视频模型固定 wan2.2-i2v-flash，不再切换更高档模型 */
   final_quality?: boolean;
   /** V3 网格变形：膝/肘皮肤化开关；缺省跟随后端默认（mesh） */
   deform?: "mesh" | "rigid";
@@ -367,7 +367,11 @@ export const api = {
   startActionBatch: (
     assetId: string,
     actions?: string[],
-    opts?: { view?: string; forceActions?: string[] },
+    opts?: {
+      view?: string;
+      viewsByAction?: Record<string, string>;
+      forceActions?: string[];
+    },
   ) =>
     request<{ batch_id: string; snapshot: ActionBatchSnapshot }>("/api/animation/batch-actions", {
       method: "POST",
@@ -375,6 +379,7 @@ export const api = {
         asset_id: assetId,
         actions,
         view: opts?.view,
+        views_by_action: opts?.viewsByAction,
         force_actions: opts?.forceActions,
       }),
     }),

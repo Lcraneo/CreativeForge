@@ -15,6 +15,7 @@
 
 import logging
 import os
+import threading
 import time
 
 from studio.backend.persistence import atomic_write_json, read_json_recover
@@ -27,6 +28,7 @@ DATA_PATH = os.path.normpath(
 )
 
 _INTERRUPTED_NOTE = "后端已重启，任务中断——请重新发起生成"
+_SAVE_LOCK = threading.Lock()
 
 
 def _interrupt_video_task(task: dict) -> None:
@@ -76,12 +78,17 @@ def save(video_tasks: dict, action_batches: dict, *, path: str = DATA_PATH) -> N
     """快照落盘（每次状态迁移后调用）。写失败只告警——内存态任务继续运行，
     下一次迁移会再尝试覆盖。"""
 
-    payload = {
-        "saved_at": time.time(),
-        "video_tasks": {key: value for key, value in video_tasks.items() if isinstance(value, dict)},
-        "action_batches": {key: value for key, value in action_batches.items() if isinstance(value, dict)},
-    }
-    try:
-        atomic_write_json(path, payload)
-    except OSError:
-        logger.warning("Could not persist animation tasks; keeping in-memory state", exc_info=True)
+    with _SAVE_LOCK:
+        payload = {
+            "saved_at": time.time(),
+            "video_tasks": {
+                key: value for key, value in video_tasks.items() if isinstance(value, dict)
+            },
+            "action_batches": {
+                key: value for key, value in action_batches.items() if isinstance(value, dict)
+            },
+        }
+        try:
+            atomic_write_json(path, payload)
+        except OSError:
+            logger.warning("Could not persist animation tasks; keeping in-memory state", exc_info=True)

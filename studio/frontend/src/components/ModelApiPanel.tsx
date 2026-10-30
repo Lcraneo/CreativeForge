@@ -181,7 +181,7 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
   const summary =
     scope === "image"
       ? `图像模型 ${form?.model || "—"} · ${form?.size || "—"}`
-      : `视频模型 ${form?.video_model || "—"} · ${form?.video_size || "—"}`;
+      : `视频模型 固定 wan2.2-i2v-flash · ${form?.video_size || "—"}`;
 
   return (
     <Card
@@ -282,9 +282,14 @@ export function ModelApiPanel({ scope, title, contextNote, defaultCollapsed = tr
                       : { video_model: event.target.value },
                   )
                 }
-                placeholder={scope === "image" ? "wanx2.1-t2i-turbo" : "wan2.2-i2v-flash"}
+                placeholder={scope === "image" ? "wanx2.1-t2i-turbo" : "固定 wan2.2-i2v-flash"}
                 className={errors.model || errors.video_model ? "border-danger" : ""}
               />
+              {scope === "video" && (
+                <span className="mt-1 block text-[11px] text-ink-4">
+                  实际生成固定使用 wan2.2-i2v-flash，此项不参与选型
+                </span>
+              )}
               {(scope === "image" ? errors.model : errors.video_model) && (
                 <span className="mt-1 block text-[11px] text-danger">
                   {scope === "image" ? errors.model : errors.video_model}

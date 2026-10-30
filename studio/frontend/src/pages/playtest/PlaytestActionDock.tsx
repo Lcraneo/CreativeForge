@@ -5,7 +5,8 @@
  * 次级按钮（生成 AI 动画 / 重试 / 到工作台）是同级元素——禁止 button
  * 嵌套 button。自定义动作只在用户打开动作库后出现（渐进式加载）。
  */
-import { Badge, Button, cx } from "../../components/ui";
+import { useEffect, useState, type ReactNode } from "react";
+import { Badge, Button, Spinner, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
 import type { ActionBatchTask, PlaytestCustomAction, PlaytestStrip } from "../../types";
 import type { PlaytestMode } from "./playtestEngine";
@@ -34,14 +35,44 @@ export const ERROR_KIND_LABEL: Record<string, string> = {
   auth: "Key 鉴权失败",
   network: "网络超时",
   fatal: "生成失败",
+  interrupted: "任务已中断",
 };
 
 const STAGE_LABEL: Record<string, string> = {
-  prompt: "提交生成任务…",
-  video: "AI 视频生成中…（约 60~90 秒）",
-  sampling: "抽帧与稳定处理…",
-  composing: "合成动作条带…",
+  prompt: "正在准备动作提示词…",
+  video: "AI 视频生成中（约 60~90 秒）",
+  sampling: "正在抽帧并稳定画面…",
+  composing: "正在合成动作条带…",
 };
+
+const TASK_STATUS_LABEL: Record<ActionBatchTask["status"], string> = {
+  pending: "排队",
+  generating: "生成中",
+  done: "已生成",
+  failed: "失败",
+  skipped: "已有",
+  interrupted: "已中断",
+};
+
+function actionLabel(action: string): string {
+  return BASE_ACTION_LABEL[action] ?? action;
+}
+
+function formatElapsed(startedAt?: number): string {
+  if (!startedAt) return "";
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - startedAt));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
+}
+
+/** 只让状态条和当前进度卡订阅时钟，父页面与 Canvas 不再每 400ms 重渲染。 */
+function useElapsedTick(active: boolean) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const timer = window.setInterval(() => setTick((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [active]);
+}
 
 /** 阶段映射进度：i2v 是大头（90s 预估线性爬升至 80%），后段快速走完 */
 function stageProgressPct(task?: ActionBatchTask): number {
@@ -51,7 +82,7 @@ function stageProgressPct(task?: ActionBatchTask): number {
   const base: Record<string, number> = { prompt: 5, video: 10, sampling: 84, composing: 93 };
   let pct = base[task.stage ?? "video"] ?? 10;
   if (task.stage === "video" && task.started_at) {
-    // 进度条动画启发式：页面本就 2.5s 轮询重渲染，每次重渲染取新时刻
+    // 进度条动画启发式：卡片内的秒级 tick 会触发重渲染，每次取新时刻
     // 即可平滑爬升——这里的"不纯"是有意为之
     const elapsed = Date.now() / 1000 - task.started_at;
     pct = Math.min(80, base.video + Math.round((elapsed / 90) * 70));
@@ -73,21 +104,181 @@ function PhaseBadge({ phase }: { phase: StripPhase }) {
   return null;
 }
 
-function GenerationProgress({ task, tick }: { task?: ActionBatchTask; tick: number }) {
-  void tick;
-  const pct = stageProgressPct(task);
+function GenerationProgress({
+  task,
+  submitting = false,
+}: {
+  task?: ActionBatchTask;
+  submitting?: boolean;
+}) {
+  const pending = task?.status === "pending";
+  const active = task?.status === "generating";
+  useElapsedTick(active);
+
+  const label = submitting
+    ? "正在提交生成任务…"
+    : pending
+      ? "已加入队列，等待生成…"
+      : STAGE_LABEL[task?.stage ?? "prompt"];
+  const pct = submitting ? 0 : stageProgressPct(task);
+  const elapsed = active ? formatElapsed(task?.started_at) : "";
+
   return (
-    <div className="mt-1.5" data-tick={tick}>
+    <div className="mt-1.5">
       <div className="flex justify-between text-[10px] text-ink-4">
-        <span>{STAGE_LABEL[task?.stage ?? "prompt"]}</span>
-        <span className="font-mono">{pct}%</span>
+        <span>{label}</span>
+        <span className="font-mono">{elapsed || (submitting ? "" : `${pct}%`)}</span>
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10">
+      <div
+        className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/10"
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={submitting ? undefined : pct}
+      >
         <div
-          className="h-full rounded-full bg-primary transition-[width] duration-(--motion-progress) ease-linear"
-          style={{ width: `${pct}%` }}
+          className={cx(
+            "h-full rounded-full bg-primary transition-[width] duration-(--motion-progress) ease-linear",
+            submitting && "w-1/3 animate-pulse-run",
+          )}
+          style={submitting ? undefined : { width: `${Math.max(pending ? 4 : 0, pct)}%` }}
         />
       </div>
+    </div>
+  );
+}
+
+function TaskChip({ task }: { task: ActionBatchTask }) {
+  const status = task.status;
+  const icon: ReactNode =
+    status === "done" ? (
+      <Icon name="check" className="h-3 w-3" />
+    ) : status === "generating" ? (
+      <Spinner className="h-3 w-3" />
+    ) : status === "pending" ? (
+      <Icon name="clock" className="h-3 w-3" />
+    ) : status === "failed" || status === "interrupted" ? (
+      <Icon name="alert" className="h-3 w-3" />
+    ) : null;
+  return (
+    <span
+      className={cx(
+        "inline-flex h-6 items-center gap-1 rounded-sm px-2 text-[10.5px] font-medium",
+        status === "generating" && "bg-primary/15 text-primary",
+        status === "done" && "bg-success/15 text-success",
+        status === "pending" && "bg-ink/[.06] text-ink-3",
+        (status === "failed" || status === "interrupted") && "bg-danger/15 text-danger",
+      )}
+      title={task.note || task.error || undefined}
+    >
+      {icon}
+      {actionLabel(task.action)}
+      <span className="font-normal opacity-70">{TASK_STATUS_LABEL[status]}</span>
+    </span>
+  );
+}
+
+function GenerationStatus({
+  tasks,
+  submittingAction,
+  batchRunning,
+  batchDoneCount,
+  batchTotal,
+  batchStartedAt,
+  syncError,
+  onRefreshBatch,
+}: {
+  tasks: ActionBatchTask[];
+  submittingAction: string | null;
+  batchRunning: boolean;
+  batchDoneCount: number;
+  batchTotal: number;
+  batchStartedAt?: number;
+  syncError: string | null;
+  onRefreshBatch: () => void;
+}) {
+  const activeTask = tasks.find((task) => task.status === "generating");
+  const pendingCount = tasks.filter((task) => task.status === "pending").length;
+  const failedTasks = tasks.filter(
+    (task) => task.status === "failed" || task.status === "interrupted",
+  );
+  const visible = Boolean(
+    submittingAction || activeTask || pendingCount || failedTasks.length || syncError,
+  );
+  useElapsedTick(Boolean(activeTask || batchRunning || submittingAction));
+  if (!visible) return null;
+
+  const title = submittingAction
+    ? submittingAction === "batch"
+      ? "正在创建全套动作生成队列"
+      : `正在提交「${actionLabel(submittingAction)}」`
+    : activeTask
+      ? `正在生成「${actionLabel(activeTask.action)}」`
+      : pendingCount
+        ? "动作生成队列"
+        : failedTasks.length
+          ? "本轮生成已结束，部分动作失败"
+          : syncError
+            ? "生成状态同步暂时中断"
+            : "动作生成队列";
+  const detail = submittingAction
+    ? "已收到点击，正在连接生成服务，请勿重复操作"
+    : activeTask
+      ? STAGE_LABEL[activeTask.stage ?? "prompt"]
+      : pendingCount
+        ? `${pendingCount} 个动作正在排队`
+        : failedTasks.length
+          ? "失败动作可在对应卡片上重新生成"
+          : syncError
+            ? "任务可能仍在后台继续，恢复连接后会更新进度"
+            : "失败动作可在对应卡片上重新生成";
+  const elapsed = activeTask?.started_at ? formatElapsed(activeTask.started_at) : "";
+  const showClock = Boolean(activeTask || batchRunning || submittingAction);
+  const queue = tasks.filter((task) => task.status !== "skipped");
+
+  return (
+    <div className="mb-2.5 rounded-lg border border-primary/25 bg-primary-tint/55 px-3 py-2.5">
+      <div role="status" aria-live="polite" className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {showClock ? (
+          <Spinner className="text-primary" />
+        ) : (
+          <Icon name="alert" className="h-4 w-4 text-warning" />
+        )}
+        <span className="text-[12px] font-semibold text-ink">{title}</span>
+        <span className="text-[10.5px] text-ink-3">{detail}</span>
+        <span className="ml-auto flex items-center gap-2 font-mono text-[10.5px] text-ink-3">
+          {batchTotal > 0 && (
+            <span>
+              {batchDoneCount}/{batchTotal}
+            </span>
+          )}
+          {elapsed && <span>{elapsed}</span>}
+          {!activeTask && batchStartedAt && batchRunning && (
+            <span>{formatElapsed(batchStartedAt)}</span>
+          )}
+        </span>
+      </div>
+      {queue.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1.5" aria-label="动作生成队列">
+          {queue.map((task) => (
+            <TaskChip key={task.action} task={task} />
+          ))}
+        </div>
+      )}
+      {syncError && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10.5px] text-danger">
+          <Icon name="alert" className="h-3.5 w-3.5" />
+          <span>{syncError}</span>
+          <button
+            type="button"
+            onClick={onRefreshBatch}
+            className="font-semibold underline underline-offset-2 hover:text-ink"
+          >
+            立即重试
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -99,13 +290,15 @@ export interface PlaytestActionDockProps {
   thumbnails: Record<string, string>;
   currentAction: string;
   mode: PlaytestMode;
-  generatingAction: string | null;
+  submittingAction: string | null;
   batchTasks: ActionBatchTask[];
   batchRunning: boolean;
   batchDoneCount: number;
   batchTotal: number;
+  batchStartedAt?: number;
+  batchSyncError: string | null;
   missingCount: number;
-  tick: number;
+  aiReadyCount: number;
   phase: (key: string) => StripPhase;
   customLoading: boolean;
   libraryOpen: boolean;
@@ -114,6 +307,7 @@ export interface PlaytestActionDockProps {
   onResumeLive: () => void;
   onGenerateAi: (name: string) => void;
   onGenerateAll: () => void;
+  onRefreshBatch: () => void;
   onOpenLibrary: () => void;
   onRetry: (key: string) => void;
   onGoWorkbench: () => void;
@@ -127,13 +321,15 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
     thumbnails,
     currentAction,
     mode,
-    generatingAction,
+    submittingAction,
     batchTasks,
     batchRunning,
     batchDoneCount,
     batchTotal,
+    batchStartedAt,
+    batchSyncError,
     missingCount,
-    tick,
+    aiReadyCount,
     phase,
     customLoading,
     libraryOpen,
@@ -142,16 +338,19 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
     onResumeLive,
     onGenerateAi,
     onGenerateAll,
+    onRefreshBatch,
     onOpenLibrary,
     onRetry,
     onGoWorkbench,
   } = props;
 
   const batchTaskFor = (name: string) => batchTasks.find((task) => task.action === name);
+  const generationLocked = Boolean(submittingAction) || batchRunning;
 
   return (
     <section
       aria-label="动作坞"
+      aria-busy={generationLocked || batchRunning}
       className="rounded-xl border border-line-subtle bg-paper/60 p-3"
     >
       <div className="mb-2.5 flex flex-wrap items-center gap-2">
@@ -161,12 +360,19 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
         ) : (
           <Badge tone="neutral">Live · 实时控制</Badge>
         )}
+        {assetSelected && (
+          <span title="AI 动画按角色独立保存；切换角色后需要为该角色补齐">
+            <Badge tone={missingCount === 0 ? "success" : "warning"}>
+              本角色 AI {aiReadyCount}/5
+            </Badge>
+          </span>
+        )}
         {mode === "preview" && (
           <Button variant="secondary" size="sm" onClick={onResumeLive}>
             恢复实时控制
           </Button>
         )}
-        <span className="ml-auto flex items-center gap-2">
+        <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
           <Button
             variant="secondary"
             size="sm"
@@ -181,14 +387,30 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
               variant="primary"
               size="sm"
               icon="spark"
-              loading={batchRunning}
+              loading={batchRunning || submittingAction === "batch"}
+              disabled={generationLocked}
               onClick={onGenerateAll}
             >
-              {batchRunning ? `补齐全套动作中…（${batchDoneCount}/${batchTotal}）` : `一键生成全部动作（缺 ${missingCount} 个）`}
+              {submittingAction === "batch"
+                ? "正在创建生成队列…"
+                : batchRunning
+                  ? `生成中 ${batchDoneCount}/${batchTotal}`
+                  : `补齐当前角色动作（缺 ${missingCount} 个）`}
             </Button>
           )}
         </span>
       </div>
+
+      <GenerationStatus
+        tasks={batchTasks}
+        submittingAction={submittingAction}
+        batchRunning={batchRunning}
+        batchDoneCount={batchDoneCount}
+        batchTotal={batchTotal}
+        batchStartedAt={batchStartedAt}
+        syncError={batchSyncError}
+        onRefreshBatch={onRefreshBatch}
+      />
 
       {!assetSelected ? (
         <p className="py-4 text-center text-[11.5px] text-ink-4">
@@ -201,9 +423,13 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
             const strip = strips[name];
             const isAi = strip?.engine === "ai-video";
             const itemPhase = phase(key);
-            const generating = generatingAction === name || batchTaskFor(name)?.status === "generating";
-            const failedTask = batchTaskFor(name)?.status === "failed";
-            const canGenerate = !isAi && !generatingAction && !batchRunning;
+            const task = batchTaskFor(name);
+            const submitting = submittingAction === name;
+            const generating =
+              submitting || task?.status === "pending" || task?.status === "generating";
+            const problemTask = task?.status === "failed" || task?.status === "interrupted";
+            const batchDone = task?.status === "done";
+            const canGenerate = !isAi && !batchDone && !generationLocked;
             return (
               <div
                 key={key}
@@ -217,12 +443,15 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                   aria-pressed={currentAction === key}
                   className="text-left"
                 >
-                  <span className="flex items-center gap-1.5">
+                  <span className="flex flex-wrap items-center gap-1.5">
                     <span className="text-[12.5px] font-medium text-ink">
                       {BASE_ACTION_LABEL[name] ?? name}
                     </span>
                     <EngineBadge engine={strip?.engine} />
                     <PhaseBadge phase={itemPhase} />
+                    {task?.status === "pending" && <Badge tone="neutral">排队</Badge>}
+                    {task?.status === "generating" && <Badge tone="primary">生成中</Badge>}
+                    {batchDone && <Badge tone="success">已生成</Badge>}
                   </span>
                   <span className="block truncate text-[10.5px] text-ink-3">
                     {ACTION_HINT[name] ?? ""}
@@ -256,14 +485,14 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                     </button>
                   )
                 )}
-                {failedTask && (
+                {problemTask && (
                   <span className="mt-1 text-[10px] text-danger">
-                    {ERROR_KIND_LABEL[batchTaskFor(name)?.error_kind ?? ""] ||
-                      batchTaskFor(name)?.error ||
-                      "生成失败"}
+                    {ERROR_KIND_LABEL[task?.error_kind ?? ""] ||
+                      task?.error ||
+                      (task?.status === "interrupted" ? "任务已中断" : "生成失败")}
                   </span>
                 )}
-                {generating && <GenerationProgress task={batchTaskFor(name)} tick={tick} />}
+                {generating && <GenerationProgress task={task} submitting={submitting} />}
               </div>
             );
           })}

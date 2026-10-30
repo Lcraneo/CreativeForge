@@ -10,6 +10,7 @@ import hashlib
 import io
 import json
 import os
+import threading
 import time
 import uuid
 from typing import Any
@@ -18,6 +19,16 @@ from artgen import ACTIONS, STYLE_LABELS, create_animation
 from artgen.character2d import asset_params
 from artgen.gif import decode_image
 from artgen.style import analyze_rgba, dominant_palette, extract_character
+
+# 一键补齐的默认视角：待机/攻击用正面，移动/跳跃用侧面。
+# 批次任务以每个动作的 view 为准，不再让整批共享一个视角。
+DEFAULT_BATCH_VIEW_BY_ACTION = {
+    "idle": "front",
+    "walk": "side",
+    "run": "side",
+    "attack": "front",
+    "jump": "side",
+}
 
 # 构图约束（借鉴 Windup _framing.py：代码统一追加、只写正向句——该类接口没有
 # negative_prompt，否定句里的名词会被 latch 进画面）
@@ -355,7 +366,11 @@ def sanitize_custom_action(name: str | None) -> str | None:
 
 
 def collect_ai_strips(
-    directory: str, asset_id: str | None, actions: list[str], custom_names: list[str] | None = None
+    directory: str,
+    asset_id: str | None,
+    actions: list[str],
+    custom_names: list[str] | None = None,
+    view_by_action: dict[str, str] | None = None,
 ) -> dict[str, dict]:
     """试玩舞台 AI 条带收集：按「资产 + 动作身份」取最新 AI 视频动画。
 
@@ -363,12 +378,18 @@ def collect_ai_strips(
     walk）与 ``custom_names`` 对应的 custom:<名称> 身份。自定义记录若未
     经身份请求绝不混入内置槽位（修复「自定义动作以基础动作词入账后抢占
     walk 等条带」的历史缺陷）。同身份多条时取 created_at 最新，返回键为
-    动作身份（内置=动作词，自定义=custom:<名称>）。"""
+    动作身份（内置=动作词，自定义=custom:<名称>）。
+
+    ``view_by_action``（可选，向后兼容）：动作 → 期望视角（front/side）。
+    设置了期望视角的动作只接受 ``meta.view`` 完全匹配的记录——正面记录
+    再新也不能顶替 side 的 walk/jump；未设置的动作（attack/自定义）保持
+    旧行为（不按视角过滤）。"""
 
     import glob as _glob
 
     wanted = {value for value in (actions or []) if value}
     wanted |= {custom_action_identity(name) for name in (custom_names or [])}
+    expected_views = view_by_action or {}
     strips: dict[str, dict] = {}
     if not asset_id:
         return strips
@@ -382,6 +403,9 @@ def collect_ai_strips(
             continue
         identity = meta.get("requested_action")
         if identity not in wanted:
+            continue
+        expected_view = expected_views.get(identity)
+        if expected_view is not None and meta.get("view") != expected_view:
             continue
         frame_urls = meta.get("frame_urls") or []
         if len(frame_urls) < 4:
@@ -407,6 +431,7 @@ _SEGMENT_CACHE_TTL = 600.0
 # 批次状态若挂在实例上会跨请求丢失（轮询永远 404）。
 _ACTION_BATCHES: dict[str, dict] = {}
 _ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会误删运行中批次
+_BATCH_START_LOCK = threading.Lock()
 
 # 单次视频生成任务（生成任务化）：与批次同款「模块级内存态 + TTL」——
 # POST /api/animation/tasks 立即返回 task_id 供轮询，前端刷新后凭
@@ -479,15 +504,13 @@ class VideoGenerationError(RuntimeError):
         self.kind = kind
 
 
-def generate_video_with_policy(
-    settings, prompt, source_bytes, timeout_seconds=420.0, model_override=None
-):
+def generate_video_with_policy(settings, prompt, source_bytes, timeout_seconds=420.0):
     """视频驱动生成入口：mp4 缓存 + 网络类失败自动退避重试 + 错误分类。
 
     成功返回 ``(video_bytes, model)``；最终失败抛 VideoGenerationError，
     message 为面向用户的中文描述，kind 供批次徽章/前端提示分类展示。
     审核拦截与 Key 池切换由 generate_video 内部处理（安全改写重试轮）。
-    ``model_override``：定稿档模型（V2 双档策略），直通 generate_video。"""
+    视频模型由 generate_video 固定为 wan2.2-i2v-flash，配置项不参与选型。"""
 
     from studio.backend.model_service.service import (
         classify_error,
@@ -503,7 +526,6 @@ def generate_video_with_policy(
                 prompt,
                 source_bytes,
                 timeout_seconds=timeout_seconds,
-                model_override=model_override,
             )
         except Exception as exc:  # noqa: BLE001 - 分类后决定重试或上抛
             last_exc = exc
@@ -590,14 +612,20 @@ class AnimationService:
 
     # -- 一键补齐全套动作（串行队列，跳过已生成） --------------------------
 
-    def existing_ai_actions(self, asset_id: str | None) -> set:
+    def existing_ai_actions(
+        self,
+        asset_id: str | None,
+        expected_views: dict[str, str] | None = None,
+    ) -> set:
         """该资产已生成过 **AI 视频驱动** 动画的动作集合（扫描动画 meta）。
 
-        判定三条件（缺一不可，修复"补齐 0 个/永远不完成"的双口径 bug）：
+        判定四条件（缺一不可，修复"补齐 0 个/永远不完成"的双口径 bug）：
         1. ``source == "video"`` —— 源图摆动（asset）等确定性动画不算 AI 动画，
            否则旧动画会永久阻塞同类动作的 AI 生成；
         2. 本地帧文件实存 ≥ 4 —— 坏 meta/文件被清理的记录不算，避免永久跳过；
-        3. 动作名可识别。
+        3. 动作名可识别；
+        4. 若调用方给了期望视角，meta.view 必须完全匹配。正面 walk 不能
+           让侧面 walk 被误判为已完成。
         """
 
         import glob as _glob
@@ -605,6 +633,7 @@ class AnimationService:
         done = set()
         if not asset_id:
             return done
+        expected = expected_views or {}
         for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
             try:
                 with open(meta_path, "r", encoding="utf-8") as handle:
@@ -626,6 +655,9 @@ class AnimationService:
             # （否则自定义动作会以基础动作词入账，让批次补齐错误跳过）
             kind, name = parse_action_identity(action)
             if kind == "base" and name:
+                expected_view = expected.get(name)
+                if expected_view is not None and meta.get("view") != expected_view:
+                    continue
                 done.add(name)
         return done
 
@@ -728,77 +760,171 @@ class AnimationService:
     def start_action_batch(
         self,
         asset_id: str,
-        source_bytes: bytes,
+        source_bytes: bytes | dict[str, bytes],
         settings: dict[str, Any],
         actions: list[str] | None = None,
         enhance_context: str | None = None,
         view: str = "front",
+        views_by_action: dict[str, str] | None = None,
         force_actions: list[str] | None = None,
+        facing_by_view: dict[str, str] | None = None,
     ) -> str:
         """为资产串行补齐缺失动作的 AI 动画（视频驱动）。已生成的动作自动
         跳过；``force_actions``（质检异常重试）绕过跳过逻辑强制重新生成。
-        ``view`` 记录本批次的视角（源图即该视角），写入批次任务与产物 meta。
-        批次状态存内存供前端轮询。``enhance_context`` 传给动作描述
-        AI 增强（角色名/简介上下文）。"""
+        ``views_by_action`` 让同一批同时使用正面与侧面源图；``view`` 仅作为
+        旧调用方的整批默认值。批次状态存内存供前端轮询。
+        ``enhance_context`` 传给动作描述 AI 增强（角色名/简介上下文）。"""
 
-        import threading
         import uuid as _uuid
 
         _prune_action_batches()
 
-        wanted = [a for a in (actions or ["idle", "walk", "run", "attack", "jump"]) if a in ACTIONS]
-        forced = {a for a in (force_actions or []) if a in ACTIONS}
-        done = self.existing_ai_actions(asset_id)
-        pending = [a for a in wanted if a not in done or a in forced]
-
-        batch_id = _uuid.uuid4().hex[:8]
-        tasks = []
-        for a in wanted:
-            if a in pending:
-                tasks.append(
-                    {
-                        "action": a,
-                        "status": "pending",
-                        "view": view,
-                        "note": "重试质检异常" if a in forced and a in done else None,
-                    }
-                )
-            else:
-                tasks.append(
-                    {"action": a, "status": "skipped", "view": view, "note": "已有 AI 动画"}
-                )
-        self.action_batches[batch_id] = {
-            "id": batch_id,
-            "asset_id": asset_id,
-            "status": "running" if pending else "done",
-            "view": view,
-            "total": len(pending),
-            "created_at": time.time(),
-            "tasks": tasks,
-        }
-        if pending:
-            thread = threading.Thread(
-                target=self._run_action_batch,
-                args=(batch_id, asset_id, source_bytes, settings, pending, enhance_context, view),
-                name="cf-action-batch-{}".format(batch_id),
-                daemon=True,
+        wanted = [
+            action
+            for action in (
+                actions if actions is not None else ["idle", "walk", "run", "attack", "jump"]
             )
-            thread.start()
-        _persist_tasks()
-        return batch_id
+            if action in ACTIONS
+        ]
+        forced = {a for a in (force_actions or []) if a in ACTIONS}
+        requested_views = views_by_action or {}
+        effective_views: dict[str, str] = {}
+        for action in wanted:
+            candidate = requested_views.get(action)
+            if candidate not in ("front", "side"):
+                candidate = view if view in ("front", "side") else DEFAULT_BATCH_VIEW_BY_ACTION[action]
+            effective_views[action] = candidate
+
+        sources_by_view = (
+            {str(name): payload for name, payload in source_bytes.items()}
+            if isinstance(source_bytes, dict)
+            else {(view if view in ("front", "side") else "front"): source_bytes}
+        )
+        done = self.existing_ai_actions(asset_id, expected_views=effective_views)
+        pending = [a for a in wanted if a not in done or a in forced]
+        requested_keys = {(action, effective_views[action]) for action in pending}
+
+        with _BATCH_START_LOCK:
+            # 同一批动作已在运行时直接复用，避免双击/双标签页重复扣费。
+            for existing in self.action_batches.values():
+                if existing.get("status") != "running" or existing.get("asset_id") != asset_id:
+                    continue
+                active_keys = {
+                    (task.get("action"), task.get("view"))
+                    for task in existing.get("tasks", [])
+                    if task.get("status") in ("pending", "generating")
+                }
+                if requested_keys and requested_keys <= active_keys:
+                    return str(existing.get("id"))
+
+            batch_id = _uuid.uuid4().hex[:8]
+            tasks = []
+            for action in wanted:
+                task_view = effective_views[action]
+                if action in pending:
+                    tasks.append(
+                        {
+                            "action": action,
+                            "status": "pending",
+                            "view": task_view,
+                            "note": "重试质检异常" if action in forced and action in done else None,
+                        }
+                    )
+                else:
+                    tasks.append(
+                        {
+                            "action": action,
+                            "status": "skipped",
+                            "view": task_view,
+                            "note": "已有同视角 AI 动画",
+                        }
+                    )
+
+            batch_view = (
+                next(iter(set(effective_views.values())))
+                if len(set(effective_views.values())) == 1
+                else ("mixed" if effective_views else "front")
+            )
+            self.action_batches[batch_id] = {
+                "id": batch_id,
+                "asset_id": asset_id,
+                "status": "running" if pending else "done",
+                "view": batch_view,
+                "total": len(pending),
+                "created_at": time.time(),
+                "tasks": tasks,
+            }
+            if pending:
+                thread = threading.Thread(
+                    target=self._run_action_batch,
+                    args=(
+                        batch_id,
+                        asset_id,
+                        sources_by_view,
+                        settings,
+                        pending,
+                        enhance_context,
+                        effective_views,
+                        facing_by_view,
+                    ),
+                    name="cf-action-batch-{}".format(batch_id),
+                    daemon=True,
+                )
+                thread.start()
+            _persist_tasks()
+            return batch_id
 
     def _run_action_batch(
         self,
         batch_id,
         asset_id,
-        source_bytes,
+        sources_by_view,
         settings,
         pending,
         enhance_context=None,
-        view: str = "front",
+        views_by_action=None,
+        facing_by_view=None,
     ):
-        import random as _random
+        """批次线程兜底：队列外异常也必须把批次落到终态，不能永久 running。"""
 
+        try:
+            self._run_action_batch_impl(
+                batch_id,
+                asset_id,
+                sources_by_view,
+                settings,
+                pending,
+                enhance_context,
+                views_by_action,
+                facing_by_view,
+            )
+        except Exception as error:  # noqa: BLE001 - 线程边界必须兜底
+            batch = self.action_batches.get(batch_id) or {}
+            for entry in batch.get("tasks", []):
+                if entry.get("status") in ("pending", "generating"):
+                    entry["status"] = "failed"
+                    entry["stage"] = "failed"
+                    entry["error"] = str(error)[:160]
+                    entry["error_kind"] = "fatal"
+            batch["status"] = "failed"
+            batch["failed_count"] = sum(
+                1 for entry in batch.get("tasks", []) if entry.get("status") == "failed"
+            )
+            batch["error"] = str(error)[:160]
+            batch["completed_at"] = time.time()
+            _persist_tasks()
+
+    def _run_action_batch_impl(
+        self,
+        batch_id,
+        asset_id,
+        sources_by_view,
+        settings,
+        pending,
+        enhance_context=None,
+        views_by_action=None,
+        facing_by_view=None,
+    ):
         from studio.backend.animation_service.equipment import (
             context_line as _equipment_context_line,
         )
@@ -810,21 +936,46 @@ class AnimationService:
         )
 
         batch = self.action_batches.get(batch_id) or {}
-        # V3.5 装备识别（批次共享一次调用，之后走源图哈希缓存）：
-        # 上下文并入润色，attack+持械追加武器保持子句（与单条链路同语义）
-        equipment = None
-        if settings.get("equipment_aware", True):
-            equipment = _equipment_recognize(source_bytes, settings)
-        batch_context = enhance_context
-        equipment_line = _equipment_context_line(equipment) if equipment else None
-        if equipment_line:
-            batch_context = (
-                "{}；{}".format(enhance_context, equipment_line)[:200]
-                if enhance_context
-                else equipment_line
-            )
+        sources_by_view = {str(key): value for key, value in (sources_by_view or {}).items()}
+        views_by_action = views_by_action or {action: "front" for action in pending}
+        facing_by_view = facing_by_view or {}
+
+        # 装备识别按视角各执行一次（正面与侧面源图不同），失败只降级上下文，
+        # 不能让它把整个批次线程带崩。之后各动作共享同视角的识别结果。
+        equipment_by_view = {}
+        context_by_view = {}
+        for source_view, source in sources_by_view.items():
+            equipment = None
+            if settings.get("equipment_aware", True):
+                try:
+                    equipment = _equipment_recognize(source, settings)
+                except Exception:  # noqa: BLE001 - 装备识别是可降级增强
+                    equipment = None
+            equipment_by_view[source_view] = equipment
+            batch_context = enhance_context
+            equipment_line = _equipment_context_line(equipment) if equipment else None
+            if equipment_line:
+                batch_context = (
+                    "{}；{}".format(enhance_context, equipment_line)[:200]
+                    if enhance_context
+                    else equipment_line
+                )
+            context_by_view[source_view] = batch_context
+
         for action in pending:
             entry = next((t for t in batch.get("tasks", []) if t.get("action") == action), None)
+            action_view = views_by_action.get(action, "front")
+            action_source = sources_by_view.get(action_view)
+            if not action_source:
+                if entry:
+                    entry["status"] = "failed"
+                    entry["stage"] = "failed"
+                    entry["error"] = "缺少{}视角源图".format(action_view)
+                    entry["error_kind"] = "fatal"
+                    _persist_tasks()
+                continue
+            equipment = equipment_by_view.get(action_view)
+            batch_context = context_by_view.get(action_view)
             if entry:
                 entry["status"] = "generating"
                 entry["stage"] = "prompt"
@@ -841,13 +992,13 @@ class AnimationService:
                 if entry:
                     entry["stage"] = "video"  # i2v 生成是 60~90s 的大头
                 video_bytes, video_model = generate_video_with_policy(
-                    settings, prompt, source_bytes, timeout_seconds=420.0
+                    settings, prompt, action_source, timeout_seconds=420.0
                 )
                 if entry:
                     entry["stage"] = "sampling"
                 frames_rgba = self._slice_video(
                     video_bytes,
-                    source_bytes,
+                    action_source,
                     12,
                     VIDEO_SAMPLE_DURATION,
                     384,
@@ -866,13 +1017,18 @@ class AnimationService:
                 meta["video_model"] = video_model
                 meta["asset_id"] = asset_id
                 meta["requested_action"] = action
-                meta["view"] = view  # 动作×视角矩阵：批次产物同样记录视角
+                meta["view"] = action_view  # 动作×视角矩阵：批次产物记录真实视角
+                source_facing = facing_by_view.get(action_view)
+                if action_view == "side" and source_facing in ("left", "right"):
+                    # 条带播放时按生成当时的侧视朝向归一化，后续重做三视图
+                    # 不会反向污染已经生成的动作。
+                    meta["source_facing"] = source_facing
                 # V3.5 生成后自动质检（批次链）：同单条链路语义
                 try:
                     from studio.backend.animation_service.motion_qa import post_validate
 
                     _qa = post_validate(
-                        frames_rgba, source_bytes=source_bytes, action=action, chain="video"
+                        frames_rgba, source_bytes=action_source, action=action, chain="video"
                     )
                     if _qa:
                         meta["qa"] = _qa
@@ -896,18 +1052,22 @@ class AnimationService:
                 # 分类失败：审核拦截/额度不足/Key 无效…前端按 error_kind 出徽章
                 if entry:
                     entry["status"] = "failed"
+                    entry["stage"] = "failed"
                     entry["error"] = str(error)[:160]
                     entry["error_kind"] = error.kind
                     _persist_tasks()
             except Exception as error:  # noqa: BLE001 - 单动作失败不拖垮批次
                 if entry:
                     entry["status"] = "failed"
+                    entry["stage"] = "failed"
                     entry["error"] = str(error)[:160]
+                    entry["error_kind"] = "fatal"
                     _persist_tasks()
         # 收尾分级：全部动作失败标 failed（前端可提示异常），部分失败仍算 done
         failed = sum(1 for t in batch.get("tasks", []) if t.get("status") == "failed")
         batch["failed_count"] = failed
         batch["status"] = "failed" if failed and failed == len(pending) else "done"
+        batch["completed_at"] = time.time()
         _persist_tasks()
 
     def action_batch_snapshot(self, batch_id: str) -> dict | None:
@@ -933,6 +1093,7 @@ class AnimationService:
         action_description: str,
         view: str = "front",
         custom_action: str | None = None,
+        source_facing: str | None = None,
     ) -> dict:
         """单次 AI 视频生成入队（生成任务化）：立即返回初始快照，后台线程
         跑 create_video（progress_cb 汇报 prompt/video/sampling/composing
@@ -972,6 +1133,7 @@ class AnimationService:
                 action_description=action_description,
                 view=view,
                 custom_action=custom_action,
+                source_facing=source_facing,
             ),
             name="cf-video-task-{}".format(task_id),
             daemon=True,
@@ -1444,6 +1606,7 @@ class AnimationService:
         action_description: str | None = None,
         view: str = "front",
         custom_action: str | None = None,
+        source_facing: str | None = None,
         progress_cb=None,
     ) -> dict[str, Any]:
         """Windup 式 AI 视频驱动：源图（自动裁白边）+ 动作提示词 → 图生视频
@@ -1459,9 +1622,8 @@ class AnimationService:
         时内置路径字节级不变。FRAMING_CLAUSE/装备子句/循环收尾始终由
         代码追加，不交给模型发挥。
 
-        ``final_quality``：V2 双档策略的定稿档——用 settings
-        ``video_model_final``（默认 wan2.2-i2v-plus）出片；草稿档走
-        ``video_model``（默认 flash），成本 1/2.8。meta 记 quality_tier。
+        ``final_quality``：定稿档标记——视频模型已固定为 wan2.2-i2v-flash，
+        本项不再影响实际模型，仅用于 meta 记 quality_tier。
 
         ``equipment_aware``：V3.5 装备/服装识别——看图认出武器/服装后
         并入润色上下文；attack+持械时代码级追加「武器保持在手」子句
@@ -1538,17 +1700,14 @@ class AnimationService:
         extra_clauses = _equipment_motion_clauses(equipment, action) if equipment else []
         clause_text = (" " + " ".join(extra_clauses)) if extra_clauses else ""
         prompt = enhanced_prompt + clause_text + " " + FRAMING_CLAUSE
-        # 双档策略：定稿档强制走 video_model_final（缓存 key 含实际模型，
-        # 与草稿档互不命中）；草稿档保持现有回退链
-        model_override = None
-        if final_quality:
-            model_override = (settings or {}).get("video_model_final") or None
+        # 视频模型固定为 wan2.2-i2v-flash（见 model_service.VIDEO_MODEL），
+        # final_quality 仅保留为定稿档标记，不参与模型选择
         if progress_cb:
             progress_cb("video")  # i2v 生成是 60~90s 的大头（进度按已等待时间爬升）
         video_bytes, video_model = generate_video_with_policy(
             # 视频异步任务创建成功后，服务端渲染偶尔超过 7 分钟；任务化 UI
             # 会持续轮询，因此给远端足够预算而不是过早标成“网络超时”。
-            settings, prompt, work_bytes, timeout_seconds=600.0, model_override=model_override
+            settings, prompt, work_bytes, timeout_seconds=600.0
         )
         if progress_cb:
             progress_cb("sampling")
@@ -1626,6 +1785,8 @@ class AnimationService:
         else:
             meta["requested_action"] = action
         meta["view"] = view
+        if view == "side" and source_facing in ("left", "right"):
+            meta["source_facing"] = source_facing
         if enhanced_prompt != base_prompt:
             meta["prompt_enhanced"] = True
             meta["motion_prompt"] = prompt[:400]

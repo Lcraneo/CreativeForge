@@ -739,10 +739,10 @@ export default function SettingsCenter() {
                 icon="film"
                 name="视频 · 图生视频（i2v）"
                 purpose="让当前角色原画动起来，再抽帧合成为动画。"
-                support={`当前仅支持阿里百炼 DashScope（wanx2.1-i2v-turbo / wan2.2-i2v-flash）${videoProviderOk ? "" : "，当前服务商不是百炼，将不可用"}。`}
+                support={`视频生成固定使用 wan2.2-i2v-flash（阿里百炼 DashScope）${videoProviderOk ? "" : "；当前服务商不是百炼，将不可用"}。模型填写项仅为兼容保留，不影响实际选型。`}
                 modelKey="video_model"
                 modelValue={form.video_model}
-                placeholder="留空 = wanx2.1-i2v-turbo"
+                placeholder="固定 wan2.2-i2v-flash"
                 enabled={form.use_video}
                 onEnabled={(use_video) => setForm({ ...form, use_video })}
                 onModel={(value) => setForm({ ...form, video_model: value })}

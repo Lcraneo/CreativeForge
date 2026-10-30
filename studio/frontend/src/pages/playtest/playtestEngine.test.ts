@@ -374,13 +374,14 @@ describe("PlaytestActionDock structure", () => {
       thumbnails: {},
       currentAction: "idle",
       mode: "live" as PlaytestMode,
-      generatingAction: null,
+      submittingAction: null,
       batchTasks: [],
       batchRunning: false,
       batchDoneCount: 0,
       batchTotal: 0,
+      batchSyncError: null,
       missingCount: 2,
-      tick: 0,
+      aiReadyCount: 3,
       phase: (() => "ready") as (key: string) => StripPhase,
       customLoading: false,
       libraryOpen: true,
@@ -389,6 +390,7 @@ describe("PlaytestActionDock structure", () => {
       onResumeLive: vi.fn(),
       onGenerateAi: vi.fn(),
       onGenerateAll: vi.fn(),
+      onRefreshBatch: vi.fn(),
       onOpenLibrary: vi.fn(),
       onRetry: vi.fn(),
       onGoWorkbench: vi.fn(),
@@ -406,6 +408,7 @@ describe("PlaytestActionDock structure", () => {
       expect(button.querySelector("button")).toBeNull();
     }
     const labels = buttons.map((button) => button.textContent ?? "");
+    expect(container.textContent).toContain("本角色 AI 3/5");
     expect(labels.some((text) => text.includes("待机"))).toBe(true);
     expect(labels.some((text) => text.includes("攻击"))).toBe(true);
     expect(labels.some((text) => text.includes("旋风踢"))).toBe(true);
@@ -424,5 +427,25 @@ describe("PlaytestActionDock structure", () => {
     expect(text).toContain("Preview");
     expect(text).toContain("恢复实时控制");
     expect(text).toContain("重试");
+  });
+
+  it("names the active action and keeps the whole queue visible during a batch", async () => {
+    await renderDock({
+      batchRunning: true,
+      batchDoneCount: 1,
+      batchTotal: 3,
+      batchTasks: [
+        { action: "idle", status: "done" },
+        { action: "walk", status: "generating", stage: "video", started_at: Date.now() / 1000 },
+        { action: "run", status: "pending" },
+      ],
+    });
+
+    const text = container.textContent ?? "";
+    expect(text).toContain("正在生成「行走」");
+    expect(text).toContain("待机");
+    expect(text).toContain("已生成");
+    expect(text).toContain("排队");
+    expect(text).toContain("1/3");
   });
 });

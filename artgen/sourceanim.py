@@ -18,6 +18,14 @@ CANVAS_BG = (0, 0, 0, 0)
 ALPHA_THRESHOLD = 16
 BG_DIFF_THRESHOLD = 48
 FEATHER_RADIUS = 1.0
+# 白底抠图（试玩条带）判定阈值：背景须接近纯白，结果须可信
+WHITE_BG_MIN_RGB = 235  # 四边背景色三通道下限
+WHITE_BG_MAX_SPREAD = 12  # 通道最大差值上限（容忍偏灰的白底）
+MATTE_MIN_COVERAGE = 0.02  # 主体覆盖率下限（低于=分割失败/角色丢失）
+MATTE_MAX_COVERAGE = 0.85  # 主体覆盖率上限（高于=背景没抠掉）
+MATTE_CORNER_ALPHA = 8  # 四角 alpha 上限（近似透明）
+MATTE_VIDEO_OCCUPANCY = 0.92  # 透明视频内容区占 bbox 比例（识别白底视频画布）
+MATTE_VIDEO_BORDER_WHITE = 0.85  # 内容区边缘近白像素比例
 
 
 def edge_smoothness(mask):
@@ -284,6 +292,101 @@ def _subject_mask(canvas):
     rgb = canvas.convert("RGB")
     bg = _border_bg(rgb)
     return _flood_subject(rgb), False, bg
+
+
+def cutout_white_background(image):
+    """白底视频帧 → 真透明 RGBA（试玩条带打包专用）。
+
+    AI 视频帧可能是 alpha 恒 255 的白底图，也可能是视频被 ``_fit`` 放进
+    透明画布后形成的“透明左右边栏 + 白底内容区”。后者不能因为存在透明
+    像素就原样返回，否则白底内容区仍会贴到深色试玩舞台。本函数复用现有
+    洪泛抠图 + 封闭洞回收 + 边缘 alpha 反解得到真透明 RGBA：
+
+    1. 全不透明图从四边取背景；透明图只在内容区呈矩形视频画布、且边缘
+       接近纯白时继续处理，正常透明精灵原样返回；
+    2. 背景须接近纯白（三通道 ≥235 且差值 ≤12），复杂/彩色背景返回
+       None（调用方回退，绝不硬抠）；
+    3. 封闭白洞（两腿之间、脚边）用 riganim 的回收逻辑清掉；
+    4. refine_edge_alpha 反解边缘 alpha 与前景色，避免白边；
+    5. 覆盖率 2%~85%、bbox 非空、四角近似透明三项校验，失败返回 None。
+
+    纯图像函数：无 I/O、无全局状态，便于离线单测。"""
+    import numpy as np
+    from PIL import Image as PILImage
+
+    rgba = image.convert("RGBA")
+    arr = np.asarray(rgba)
+    alpha = arr[..., 3]
+    transparent = alpha <= ALPHA_THRESHOLD
+    rgb = arr[..., :3].copy()
+
+    if transparent.any():
+        # 视频 _fit 后的常见形态：透明边栏包住一个接近满 bbox 的矩形内容区。
+        # 正常透明精灵通常占用 bbox 的椭圆/人形面积，不满足矩形占用和近白
+        # 边框两个条件，直接保持原 alpha。
+        content = ~transparent
+        bbox = PILImage.fromarray((content * 255).astype(np.uint8), "L").getbbox()
+        if bbox is None:
+            return rgba
+        x0, y0, x1, y1 = bbox
+        occupied = int(content[y0:y1, x0:x1].sum())
+        area = max(1, (x1 - x0) * (y1 - y0))
+        if occupied / float(area) < MATTE_VIDEO_OCCUPANCY:
+            return rgba
+        border = np.zeros_like(content)
+        border[y0, x0:x1] = True
+        border[y1 - 1, x0:x1] = True
+        border[y0:y1, x0] = True
+        border[y0:y1, x1 - 1] = True
+        border_pixels = rgb[border & content]
+        if border_pixels.size == 0:
+            return rgba
+        near_white = np.all(border_pixels >= WHITE_BG_MIN_RGB, axis=1) & (
+            border_pixels.max(axis=1) - border_pixels.min(axis=1) <= WHITE_BG_MAX_SPREAD
+        )
+        if float(near_white.mean()) < MATTE_VIDEO_BORDER_WHITE:
+            return rgba
+        bg = tuple(
+            int(np.median(border_pixels[near_white, channel])) for channel in range(3)
+        )
+        rgb[transparent] = bg
+    else:
+        bg = _border_bg(PILImage.fromarray(rgb, "RGB"))
+    if min(bg) < WHITE_BG_MIN_RGB or max(bg) - min(bg) > WHITE_BG_MAX_SPREAD:
+        return None  # 非白底：本地抠图不可信
+
+    work = PILImage.fromarray(rgb, "RGB")
+    mask = _flood_subject(work)
+    # 延迟导入避免循环依赖：riganim 在模块级 import 本模块
+    from artgen.riganim import _absorb_enclosed_background
+
+    mask = _absorb_enclosed_background(mask, work, bg_color=bg)
+    result = refine_edge_alpha(rgba, mask, bg=bg)
+    # refine_edge_alpha 的二值 mask 距离分级在“画布大面积透明”时会把
+    # 远处像素也纳入反解；这里以洪泛 mask 为唯一所有权边界，硬清掉边界外
+    # alpha，既保留边缘反解，又保证透明边栏真正为空。
+    from PIL import ImageChops
+
+    safe_zone = mask.point(lambda value: 255 if value > ALPHA_THRESHOLD else 0)
+    result.putalpha(ImageChops.multiply(result.getchannel("A"), safe_zone))
+
+    result_alpha = np.asarray(result)[..., 3]
+    subject = result_alpha >= 128
+    coverage = float(subject.mean())
+    if not MATTE_MIN_COVERAGE <= coverage <= MATTE_MAX_COVERAGE:
+        return None
+    if not result.getbbox():
+        return None
+    patch = max(1, min(rgba.width, rgba.height) // 32)
+    corners = (
+        result_alpha[:patch, :patch],
+        result_alpha[:patch, -patch:],
+        result_alpha[-patch:, :patch],
+        result_alpha[-patch:, -patch:],
+    )
+    if max(int(corner.max()) for corner in corners) > MATTE_CORNER_ALPHA:
+        return None
+    return result
 
 
 def _transform(sub, anchor, move):

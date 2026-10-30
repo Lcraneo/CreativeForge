@@ -7,6 +7,7 @@ import {
   clipFor,
   clipTable,
   frameMsFor,
+  spriteScaleX,
 } from "./animator";
 
 const strip = (frames: number, fps?: number): PlaytestStrip => ({
@@ -34,6 +35,15 @@ describe("clipTable", () => {
   it("空表回到 8 帧 / 10 fps 的旧响应契约", () => {
     expect(clipFor(clipTable(undefined, 10), "walk")).toEqual({ frames: 8, fps: 10 });
     expect(clipFor(clipTable({ walk: strip(0) }, 10), "walk").frames).toBe(1);
+  });
+});
+
+describe("spriteScaleX", () => {
+  it("右侧素材按运动方向镜像，旧左向素材先归一化", () => {
+    expect(spriteScaleX(1, "right")).toBe(1);
+    expect(spriteScaleX(-1, "right")).toBe(-1);
+    expect(spriteScaleX(1, "left")).toBe(-1);
+    expect(spriteScaleX(-1, "left")).toBe(1);
   });
 });
 
