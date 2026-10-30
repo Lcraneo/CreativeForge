@@ -2143,12 +2143,12 @@ def build_router(runtime):
 
             import hashlib as _hashlib
 
-            # matte-v2：透明画布内仍带白底内容区的视频帧也需要抠图；
-            # digest + 文件名双写，旧 matte-v1 白底缓存自动作废。
+            # matte-v3：透明画布内仍带白底内容区的视频帧也需要抠图；
+            # digest + 文件名双写，旧 matte-v1/v2 白底缓存自动作废。
             digest = _hashlib.sha1(
-                ("ai|matte-v2|{}|{}".format(meta.get("id"), len(frame_files))).encode()
+                ("ai|matte-v3|{}|{}".format(meta.get("id"), len(frame_files))).encode()
             ).hexdigest()[:10]
-            out_name = "play_ai_{}_{}_matte-v2.png".format(
+            out_name = "play_ai_{}_{}_matte-v3.png".format(
                 _safe_label(label or meta.get("requested_action")), digest
             )
             out_path = os.path.join(cache_dir, out_name)

@@ -86,6 +86,17 @@ class CutoutWhiteBackgroundTests(unittest.TestCase):
         self.assertLessEqual(result.getchannel("A").getpixel((34, 64)), 8)
         self.assertLessEqual(result.getchannel("A").getpixel((94, 64)), 8)
 
+    def test_letterboxed_white_content_with_subject_touching_border_is_matted(self):
+        # 跳跃/大动作帧里角色可能贴到视频内容框边缘，使边缘近白比例下降；
+        # 不能因此把整帧当作“已有透明素材”原样返回。
+        image = Image.new("RGBA", (128, 128), (0, 0, 0, 0))
+        image.paste(Image.new("RGBA", (64, 128), (255, 255, 255, 255)), (32, 0))
+        ImageDraw.Draw(image).ellipse((28, 12, 82, 124), fill=(190, 50, 60, 255))
+        result = cutout_white_background(image)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.getchannel("A").getpixel((50, 64)), 255)
+        self.assertLessEqual(result.getchannel("A").getpixel((92, 64)), 8)
+
     def test_enclosed_white_hole_in_lower_body_is_absorbed(self):
         # 下半身白色环形（两腿之间/脚边的封闭白洞）必须被回收为透明
         image = _white_canvas()

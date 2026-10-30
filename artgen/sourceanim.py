@@ -25,7 +25,7 @@ MATTE_MIN_COVERAGE = 0.02  # 主体覆盖率下限（低于=分割失败/角色�
 MATTE_MAX_COVERAGE = 0.85  # 主体覆盖率上限（高于=背景没抠掉）
 MATTE_CORNER_ALPHA = 8  # 四角 alpha 上限（近似透明）
 MATTE_VIDEO_OCCUPANCY = 0.92  # 透明视频内容区占 bbox 比例（识别白底视频画布）
-MATTE_VIDEO_BORDER_WHITE = 0.85  # 内容区边缘近白像素比例
+MATTE_VIDEO_BORDER_WHITE = 0.50  # 角色贴近内容框边缘时仍可识别的白底比例下限
 
 
 def edge_smoothness(mask):
