@@ -13,6 +13,7 @@ const ExportCenter = lazy(() => import("./pages/ExportCenter"));
 const HistoryCenter = lazy(() => import("./pages/HistoryCenter"));
 const DesignCenter = lazy(() => import("./pages/DesignCenter"));
 const SettingsCenter = lazy(() => import("./pages/SettingsCenter"));
+const SceneStudio = lazy(() => import("./pages/SceneStudio"));
 const PlaytestStage = lazy(() => import("./pages/PlaytestStage"));
 const Playtest3DPage = lazy(() => import("./pages/playtest3d/Playtest3DPage"));
 const ArcadeStage = lazy(() => import("./pages/ArcadeStage"));
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="design" element={<DesignCenter />} />
             <Route path="settings" element={<SettingsCenter />} />
             <Route path="animation" element={<AnimationStudio />} />
+            <Route path="scenes" element={<SceneStudio />} />
             <Route path="playtest" element={<PlaytestStage />} />
             <Route path="playtest-3d" element={<Playtest3DPage />} />
             <Route path="arcade" element={<ArcadeStage />} />

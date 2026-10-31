@@ -28,9 +28,11 @@ const MOBILE_TABS: NavItem[] = [
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/": { group: "CreativeForge", label: "首页" },
   "/workspace": { group: "生成", label: "工作台" },
+  "/scenes": { group: "生成", label: "场景工坊" },
   "/agents": { group: "生成", label: "智能体" },
   "/history": { group: "生成 · 智能体", label: "历史记录" },
   "/playtest": { group: "试玩", label: "试玩舞台" },
+  "/arcade": { group: "试玩", label: "关卡试玩场" },
   "/versions": { group: "资产库", label: "版本控制" },
   "/asset": { group: "资产库", label: "资产检查" },
   "/design": { group: "资产库", label: "设计三视图" },

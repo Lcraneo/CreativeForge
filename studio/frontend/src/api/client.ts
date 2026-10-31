@@ -13,7 +13,9 @@ import type {
   StorageTestResult,
   ActionBatchSnapshot,
   CharacterPackageResult,
+  GameScene,
   RollbackRecord,
+  SceneSummary,
   TaskEvent,
   TaskSummary,
   VersionDiff,
@@ -430,6 +432,35 @@ export const api = {
       `/api/playtest/previews${query ? `?${query}` : ""}`,
     );
   },
+
+  createScene: (prompt: string, difficulty: "easy" | "normal" | "hard") =>
+    request<{ scene_id: string; status: string; stage: string }>("/api/scenes", {
+      method: "POST",
+      body: JSON.stringify({ prompt, difficulty, gameplay: "parkour" }),
+    }),
+
+  listScenes: (limit = 20) =>
+    request<{ scenes: SceneSummary[] }>(`/api/scenes?limit=${limit}`, {
+      timeoutMs: 15_000,
+    }),
+
+  getScene: (sceneId: string, options?: { signal?: AbortSignal; silent?: boolean }) =>
+    request<GameScene>(`/api/scenes/${encodeURIComponent(sceneId)}`, {
+      timeoutMs: 15_000,
+      ...options,
+    }),
+
+  deleteScene: (sceneId: string) =>
+    request<{ status: string; removed: string }>(
+      `/api/scenes/${encodeURIComponent(sceneId)}`,
+      { method: "DELETE" },
+    ),
+
+  retrySceneBackground: (sceneId: string) =>
+    request<{ scene_id: string; status: string; stage: string }>(
+      `/api/scenes/${encodeURIComponent(sceneId)}/background`,
+      { method: "POST" },
+    ),
 
   exportCharacterPackage: (assetId: string, engine: string) =>
     request<CharacterPackageResult>("/api/export/character-package", {

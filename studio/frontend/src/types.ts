@@ -630,6 +630,101 @@ export interface PlaytestPreviews {
   custom_actions?: PlaytestCustomAction[];
 }
 
+export interface ScenePalette {
+  skyTop: string;
+  skyBottom: string;
+  ground: string;
+  floating: string;
+  accent: string;
+}
+
+export interface ScenePlatform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  kind: "ground" | "floating";
+}
+
+export interface SceneCoin {
+  id: string;
+  x: number;
+  y: number;
+}
+
+export interface SceneLevel {
+  seed: string;
+  width: number;
+  groundY: number;
+  spawnX: number;
+  goalX: number;
+  platforms: ScenePlatform[];
+  coins: SceneCoin[];
+}
+
+export interface GameScene {
+  schema_version: number;
+  id: string;
+  title: string;
+  prompt: string;
+  status: "generating" | "ready" | "failed";
+  gameplay: {
+    type: "parkour";
+    difficulty: "easy" | "normal" | "hard";
+    length?: "short" | "medium" | "long";
+    features?: string[];
+    level: SceneLevel | null;
+    validation?: {
+      ok: boolean;
+      issues: string[];
+      max_gap: number;
+      max_rise: number;
+    };
+  };
+  theme: {
+    summary: string;
+    palette: Partial<ScenePalette>;
+    background_url: string | null;
+    background_urls?: string[];
+  };
+  generation: {
+    stage: string;
+    warnings: string[];
+    attempts: number;
+    duration_ms: number;
+    background_total?: number;
+    background_done?: number;
+    chat_model?: string;
+    image_model?: string;
+  };
+  intent?: {
+    title: string;
+    summary: string;
+    environment: string;
+    difficulty: string;
+    length: string;
+    features: string[];
+    palette: ScenePalette;
+  };
+  created_at: number;
+  updated_at: number;
+  error: string | null;
+}
+
+export interface SceneSummary {
+  id: string;
+  title: string;
+  prompt: string;
+  status: GameScene["status"];
+  stage: string;
+  difficulty: GameScene["gameplay"]["difficulty"];
+  background_url: string | null;
+  background_count?: number;
+  coin_count: number;
+  created_at: number;
+  error: string | null;
+}
+
 /** 试玩舞台自定义动作条目 */
 export interface PlaytestCustomAction {
   name: string;

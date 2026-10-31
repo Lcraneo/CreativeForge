@@ -20,6 +20,13 @@ const ENTRIES: Array<{ to: string; title: string; kicker: string; icon: IconName
     text: "用一句话描述角色与风格，生成立绘，并自动进入像素重建、切帧对齐与引擎导入炉程。",
   },
   {
+    to: "/scenes",
+    title: "构建场景",
+    kicker: "Scène",
+    icon: "grid",
+    text: "描述想去的世界，生成经过连通性检查的横版跑酷路线；场景完成后可任选角色直接开玩。",
+  },
+  {
     to: "/asset",
     title: "资产档案",
     kicker: "Dossier",
@@ -123,8 +130,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 工坊入口：与卷首同一纸面语言，四项已存在的能力 */}
-      <section aria-label="工坊入口" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* 工坊入口：与卷首同一纸面语言，五项已存在的能力 */}
+      <section aria-label="工坊入口" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {ENTRIES.map((entry) => (
           <NavLink
             key={entry.to}

@@ -36,6 +36,7 @@ export const NAV_GROUPS: NavGroup[] = [
     hint: "从一句话到一条管线",
     items: [
       { to: "/workspace", label: "工作台", icon: "panel", kbd: "1" },
+      { to: "/scenes", label: "场景工坊", icon: "grid" },
       {
         to: "/agents",
         label: "智能体",

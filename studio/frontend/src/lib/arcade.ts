@@ -163,6 +163,17 @@ function supportTop(level: ArcadeLevel, x: number, feetY: number): number | null
   return top;
 }
 
+function surfaceAt(level: ArcadeLevel, x: number): number | null {
+  let top: number | null = null;
+  for (const platform of level.platforms) {
+    const withinX =
+      x + PLAYER_HALF_W > platform.x && x - PLAYER_HALF_W < platform.x + platform.width;
+    if (!withinX) continue;
+    top = top === null ? platform.y : Math.min(top, platform.y);
+  }
+  return top;
+}
+
 /** 固定步长物理解算：水平即时速度、竖直重力、单向平台落地。 */
 export function stepPlayer(
   state: PlayerState,
@@ -221,7 +232,14 @@ export function isFallen(state: PlayerState): boolean {
 /** 掉落复活：回到最近一次安全落点，保留位置记忆但重置速度。 */
 export function respawn(level: ArcadeLevel, checkpointX: number): PlayerState {
   const x = clamp(checkpointX, PLAYER_HALF_W + 2, level.width - PLAYER_HALF_W - 2);
-  return { x, y: level.groundY, vx: 0, vy: 0, onGround: true, facing: 1 };
+  return {
+    x,
+    y: surfaceAt(level, x) ?? level.groundY,
+    vx: 0,
+    vy: 0,
+    onGround: true,
+    facing: 1,
+  };
 }
 
 /** 金币拾取：以角色身体中心为圆心做圆形判定。 */

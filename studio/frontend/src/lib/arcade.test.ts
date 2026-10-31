@@ -108,6 +108,13 @@ describe("respawn / coins / action", () => {
     expect(state.vy).toBe(0);
   });
 
+  it("复活到高台检查点的实际支撑面", () => {
+    const level = buildLevel("a");
+    const state = respawn(level, 900);
+    expect(state.y).toBe(276);
+    expect(state.onGround).toBe(true);
+  });
+
   it("只拾取半径内且未吃过的金币", () => {
     const level = buildLevel("a");
     const state: PlayerState = {

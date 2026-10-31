@@ -27,6 +27,12 @@ import {
 import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import {
+  backgroundSequenceAt,
+  coverBackgroundRect,
+  createPlatformTexture,
+  platformMaterialFor,
+} from "../lib/sceneVisuals";
+import {
   characterGeometry,
   clipDurationMs,
   clipFor,
@@ -65,6 +71,7 @@ const ATTACK_TAIL_MS = 120;
 const MAX_HEARTS = 3;
 const HUD_INTERVAL_MS = 100;
 const MAX_TICK_S = 0.05;
+const BACKGROUND_TILE_INDEXES = [-1, 0, 1, 2] as const;
 
 const ACTION_LABEL: Record<string, string> = {
   idle: "待机",
@@ -118,22 +125,73 @@ interface PlayerGeometry {
 }
 
 export default function ArcadeStage() {
+  const [params] = useSearchParams();
+  const sceneId = params.get("scene");
   return (
     <SelectedAssetBoundary>
-      {(asset) => <ArcadeContent key={asset?.id ?? "unselected"} selected={asset} />}
+      {(asset) => (
+        <ArcadeContent
+          key={`${asset?.id ?? "unselected"}:${sceneId ?? "classic"}`}
+          selected={asset}
+        />
+      )}
     </SelectedAssetBoundary>
   );
 }
 
 function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
-  const [, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const selectedAssetId = selected?.id ?? null;
-  const level = useMemo(() => buildLevel(selectedAssetId ?? "arcade"), [selectedAssetId]);
+  const sceneId = searchParams.get("scene");
+  const sceneQuery = useQuery({
+    queryKey: ["arcade-scene", sceneId],
+    queryFn: ({ signal }) => api.getScene(sceneId!, { signal, silent: true }),
+    enabled: Boolean(sceneId),
+    retry: false,
+  });
+  const scene = sceneQuery.data;
+  const level = useMemo(
+    () =>
+      scene?.status === "ready" && scene.gameplay.level
+        ? scene.gameplay.level
+        : buildLevel(selectedAssetId ?? sceneId ?? "arcade"),
+    [scene, selectedAssetId, sceneId],
+  );
+  const colors = useMemo(
+    () => ({
+      skyTop: scene?.theme.palette.skyTop ?? "#eef3f8",
+      skyBottom: scene?.theme.palette.skyBottom ?? "#e1e8f1",
+      ground: scene?.theme.palette.ground ?? "#d7cfbc",
+      floating: scene?.theme.palette.floating ?? "#c8d0b6",
+      accent: scene?.theme.palette.accent ?? "#d3a13c",
+    }),
+    [scene],
+  );
+  const backgroundUrls = useMemo(() => {
+    const sequenced = (scene?.theme.background_urls ?? []).filter(Boolean);
+    if (sequenced.length > 0) return sequenced;
+    return scene?.theme.background_url ? [scene.theme.background_url] : [];
+  }, [scene]);
+  const materials = useMemo(() => {
+    const environment = scene?.intent?.environment ?? "castle";
+    const features = scene?.gameplay.features ?? [];
+    return {
+      ground: platformMaterialFor("ground", colors, environment, features),
+      floating: platformMaterialFor("floating", colors, environment, features),
+    };
+  }, [colors, scene?.gameplay.features, scene?.intent?.environment]);
+  const platformTextures = useMemo(
+    () => ({
+      ground: createPlatformTexture(materials.ground),
+      floating: createPlatformTexture(materials.floating),
+    }),
+    [materials],
+  );
 
   const stageBoxRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<Konva.Group | null>(null);
-  const parallaxRef = useRef<Konva.Group | null>(null);
+  const backgroundRef = useRef<Konva.Group | null>(null);
   const charRef = useRef<Konva.Image | null>(null);
   const shadowRef = useRef<Konva.Ellipse | null>(null);
   const stageWRef = useRef(DEFAULT_STAGE_W);
@@ -157,6 +215,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
 
   const [stageW, setStageW] = useState(DEFAULT_STAGE_W);
   const [images, setImages] = useState<Record<string, HTMLImageElement>>({});
+  const [backgroundImages, setBackgroundImages] = useState<HTMLImageElement[]>([]);
   const [loadErrors, setLoadErrors] = useState<string[]>([]);
   const [coinsTaken, setCoinsTaken] = useState<Set<string>>(new Set());
   const [runResult, setRunResult] = useState<RunResult | null>(null);
@@ -226,6 +285,28 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   }, [previews.data, customActions]);
 
   const stripList = useMemo(() => Object.entries(stripUrls), [stripUrls]);
+
+  useEffect(() => {
+    if (backgroundUrls.length === 0) {
+      setBackgroundImages([]);
+      return;
+    }
+    let cancelled = false;
+    Promise.all(
+      backgroundUrls.map((url, index) =>
+        preloadImage(url, index === 0 ? "high" : "low").catch(() => null),
+      ),
+    ).then((loaded) => {
+      if (!cancelled) {
+        setBackgroundImages(
+          loaded.filter((image): image is HTMLImageElement => image !== null),
+        );
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [backgroundUrls]);
 
   // 全部条带一次性预载并 decode：动作切换零网络请求、零空帧
   useEffect(() => {
@@ -439,7 +520,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
         frameCountRef.current += 1;
         const camera = cameraX(next.x, stageWRef.current, level.width);
         worldRef.current?.x(-camera);
-        parallaxRef.current?.x(-camera * 0.35);
+        backgroundRef.current?.x(-((camera * 0.35) % stageWRef.current));
 
         if (time - hudAtRef.current >= HUD_INTERVAL_MS) {
           hudAtRef.current = time;
@@ -485,17 +566,67 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   const progressPct = Math.min(100, Math.max(0, (hud.x / level.goalX) * 100));
   const idleGeometry = images.idle ? geometryFor("idle") : null;
   const initial = initialPlayer(level);
+  const goalPlatform = level.platforms.find(
+    (platform) => platform.x <= level.goalX && level.goalX <= platform.x + platform.width,
+  );
+  const goalTop = goalPlatform?.y ?? level.groundY;
+  const backgroundFrame = backgroundSequenceAt(
+    hud.x / Math.max(1, level.goalX),
+    backgroundImages.length,
+  );
+  const backgroundLayers = backgroundImages.length
+    ? [
+        {
+          key: "from",
+          image: backgroundImages[backgroundFrame.from],
+          opacity:
+            backgroundFrame.to === backgroundFrame.from ? 1 : 1 - backgroundFrame.mix,
+        },
+        ...(backgroundFrame.to !== backgroundFrame.from
+          ? [
+              {
+                key: "to",
+                image: backgroundImages[backgroundFrame.to],
+                opacity: backgroundFrame.mix,
+              },
+            ]
+          : []),
+      ].map((layer) => ({
+        ...layer,
+        tile: coverBackgroundRect(
+          layer.image.naturalWidth,
+          layer.image.naturalHeight,
+          stageW,
+          STAGE_H,
+        ),
+      }))
+    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
         overline="Arcade"
-        title="关卡试玩场"
-        description="把设计好的角色放进一条横向关卡：跑、跳、攻击，通关后自动生成可交付的角色检查报告"
+        title={scene?.title || "关卡试玩场"}
+        description={
+          scene
+            ? `${scene.theme.summary} · 跑、跳、收集金币并抵达终点`
+            : "把设计好的角色放进一条横向关卡：跑、跳、攻击，通关后自动生成可交付的角色检查报告"
+        }
         actions={
-          <Badge tone={selected ? "primary" : "neutral"} icon="zap">
-            {selected ? `受检角色 · ${selected.name || selected.id}` : "未选择人物"}
-          </Badge>
+          <>
+            {scene && (
+              <Badge tone="success" icon="grid">
+                {scene.gameplay.difficulty === "hard"
+                  ? "挑战"
+                  : scene.gameplay.difficulty === "easy"
+                    ? "轻松"
+                    : "标准"}
+              </Badge>
+            )}
+            <Badge tone={selected ? "primary" : "neutral"} icon="zap">
+              {selected ? `受检角色 · ${selected.name || selected.id}` : "未选择人物"}
+            </Badge>
+          </>
         }
       />
 
@@ -511,9 +642,37 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
             ref={stageBoxRef}
             className="relative overflow-hidden rounded-xl border border-line-subtle bg-surface-1"
           >
-            {(!selectedAssetId || previews.isLoading) && (
+            {(!selectedAssetId ||
+              previews.isLoading ||
+              sceneQuery.isLoading ||
+              sceneQuery.isError) && (
               <div className="absolute inset-0 z-10 grid place-items-center bg-surface-1/[.92] backdrop-blur-[2px]">
-                {!selectedAssetId ? (
+                {sceneQuery.isError ? (
+                  <EmptyState
+                    icon="alert"
+                    title="场景加载失败"
+                    description={
+                      sceneQuery.error instanceof Error
+                        ? sceneQuery.error.message
+                        : "无法读取该场景"
+                    }
+                    action={
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="refresh"
+                        onClick={() => void sceneQuery.refetch()}
+                      >
+                        重新读取
+                      </Button>
+                    }
+                  />
+                ) : sceneQuery.isLoading ? (
+                  <div className="flex flex-col items-center gap-2 text-xs text-ink-3">
+                    <Icon name="clock" className="h-4 w-4" />
+                    正在载入场景路线…
+                  </div>
+                ) : !selectedAssetId ? (
                   <EmptyState
                     icon="play"
                     title="选一位受检人物"
@@ -556,32 +715,124 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                   height={STAGE_H}
                   fillLinearGradientStartPoint={{ x: 0, y: 0 }}
                   fillLinearGradientEndPoint={{ x: 0, y: STAGE_H }}
-                  fillLinearGradientColorStops={[0, "#eef3f8", 0.65, "#f3f6fa", 1, "#e1e8f1"]}
+                  fillLinearGradientColorStops={[
+                    0,
+                    colors.skyTop,
+                    0.68,
+                    scene?.theme.palette.skyBottom ?? "#f3f6fa",
+                    1,
+                    colors.skyBottom,
+                  ]}
                 />
-                <Group ref={parallaxRef}>
-                  <Ellipse x={260} y={GROUND_Y + 30} radiusX={300} radiusY={150} fill="#dfe9dd" />
-                  <Ellipse x={720} y={GROUND_Y + 50} radiusX={260} radiusY={120} fill="#e4ecdf" />
-                  <Ellipse x={1180} y={GROUND_Y + 20} radiusX={320} radiusY={160} fill="#d9e5d8" />
-                  <Ellipse x={1680} y={GROUND_Y + 46} radiusX={280} radiusY={130} fill="#e1e9dc" />
-                  <Ellipse x={2180} y={GROUND_Y + 28} radiusX={300} radiusY={150} fill="#dbe6d9" />
+                <Group ref={backgroundRef}>
+                  {backgroundLayers.map((layer) =>
+                    BACKGROUND_TILE_INDEXES.map((index) => {
+                      const mirrored = Math.abs(index) % 2 === 1;
+                      return (
+                        <KonvaImage
+                          key={`background-${layer.key}-${index}`}
+                          image={layer.image}
+                          x={
+                            mirrored
+                              ? (index + 1) * layer.tile.width
+                              : index * layer.tile.width
+                          }
+                          y={0}
+                          width={layer.tile.width}
+                          height={layer.tile.height}
+                          scaleX={mirrored ? -1 : 1}
+                          opacity={layer.opacity}
+                          crop={{
+                            x: layer.tile.cropX,
+                            y: layer.tile.cropY,
+                            width: layer.tile.cropWidth,
+                            height: layer.tile.cropHeight,
+                          }}
+                        />
+                      );
+                    }),
+                  )}
+                  {backgroundLayers.length === 0 && (
+                    <>
+                      <Ellipse
+                        x={260}
+                        y={GROUND_Y + 30}
+                        radiusX={300}
+                        radiusY={150}
+                        fill={colors.ground}
+                        opacity={0.28}
+                      />
+                      <Ellipse
+                        x={720}
+                        y={GROUND_Y + 50}
+                        radiusX={260}
+                        radiusY={120}
+                        fill={colors.floating}
+                        opacity={0.24}
+                      />
+                      <Ellipse
+                        x={1180}
+                        y={GROUND_Y + 20}
+                        radiusX={320}
+                        radiusY={160}
+                        fill={colors.ground}
+                        opacity={0.24}
+                      />
+                      <Ellipse
+                        x={1680}
+                        y={GROUND_Y + 46}
+                        radiusX={280}
+                        radiusY={130}
+                        fill={colors.floating}
+                        opacity={0.22}
+                      />
+                      <Ellipse
+                        x={2180}
+                        y={GROUND_Y + 28}
+                        radiusX={300}
+                        radiusY={150}
+                        fill={colors.ground}
+                        opacity={0.2}
+                      />
+                    </>
+                  )}
                 </Group>
                 <Group ref={worldRef}>
                   {level.platforms.map((platform, index) => (
                     <Group key={`platform-${index}`}>
+                      {platform.kind === "floating" && (
+                        <Rect
+                          x={platform.x + 8}
+                          y={platform.y + platform.height + 3}
+                          width={Math.max(0, platform.width - 16)}
+                          height={10}
+                          fill="#08111f"
+                          opacity={0.2}
+                          cornerRadius={8}
+                        />
+                      )}
                       <Rect
                         x={platform.x}
                         y={platform.y}
                         width={platform.width}
                         height={platform.height}
-                        fill={platform.kind === "ground" ? "#d7cfbc" : "#c8d0b6"}
+                        fill={materials[platform.kind].base}
+                        fillPriority="pattern"
+                        fillPatternImage={
+                          platformTextures[platform.kind] as unknown as HTMLImageElement
+                        }
+                        fillPatternRepeat="repeat"
                         cornerRadius={platform.kind === "floating" ? 4 : 0}
+                        stroke={materials[platform.kind].joint}
+                        strokeWidth={platform.kind === "floating" ? 1 : 0}
                       />
                       <Rect
                         x={platform.x}
                         y={platform.y}
                         width={platform.width}
-                        height={platform.kind === "ground" ? 7 : 5}
-                        fill={platform.kind === "ground" ? "#93a97a" : "#7f9868"}
+                        height={platform.kind === "ground" ? 8 : 5}
+                        fill={materials[platform.kind].cap}
+                        opacity={0.78}
                         cornerRadius={2}
                       />
                     </Group>
@@ -590,21 +841,21 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                   {level.coins.map((coin) =>
                     coinsTaken.has(coin.id) ? null : (
                       <Group key={coin.id} x={coin.x} y={coin.y}>
-                        <Circle radius={9} fill="#d3a13c" stroke="#a97a25" strokeWidth={1.5} />
+                        <Circle radius={9} fill={colors.accent} stroke="#a97a25" strokeWidth={1.5} />
                         <Circle radius={3.4} fill="#f6d98a" />
                       </Group>
                     ),
                   )}
 
-                  <Group x={level.goalX} y={226}>
+                  <Group x={level.goalX} y={goalTop - 122}>
                     <Rect
                       x={-3}
                       width={6}
-                      height={GROUND_Y - 226}
-                      fill="#8a7a5c"
+                      height={122}
+                      fill={colors.ground}
                       cornerRadius={2}
                     />
-                    <Rect x={2} y={4} width={56} height={34} fill="#7c8faa" cornerRadius={3} />
+                    <Rect x={2} y={4} width={56} height={34} fill={colors.accent} cornerRadius={3} />
                     <KonvaText x={10} y={13} text="终点" fontSize={14} fill="#fbf9f4" />
                   </Group>
 
@@ -645,16 +896,21 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     <Icon name={runResult.reached ? "check" : "x"} className="h-5 w-5" />
                   </span>
                   <h3 className="mt-2.5 text-[15px] font-semibold text-ink">
-                    {runResult.reached ? "检查完成" : "本轮终止"}
+                    {runResult.reached ? (scene ? "闯关完成" : "检查完成") : "本轮终止"}
                   </h3>
                   <p className="mt-1 text-[11.5px] leading-[18px] text-ink-3">
                     金币 {runResult.coins}/{level.coins.length} · 掉落 {runResult.falls} 次 · 用时{" "}
                     {runResult.seconds.toFixed(1)}s · 平均 {Math.round(runResult.avgFps)} fps
                   </p>
-                  <div className="mt-3 flex items-center justify-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
                     <Button variant="primary" size="sm" icon="refresh" onClick={restart}>
                       再跑一次
                     </Button>
+                    {scene && (
+                      <Button variant="secondary" size="sm" icon="grid" onClick={() => navigate("/scenes")}>
+                        返回场景工坊
+                      </Button>
+                    )}
                     <Button
                       variant="secondary"
                       size="sm"
@@ -722,6 +978,11 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
             <p className="mt-1.5 text-[10.5px] text-ink-4">
               掉进坑里会回到最近落点，三次掉落本轮终止；通关后自动生成本轮检查报告。
             </p>
+            {scene?.generation.warnings.length ? (
+              <p className="mt-1.5 text-[10.5px] leading-4 text-warning">
+                {scene.generation.warnings.join("；")}
+              </p>
+            ) : null}
           </div>
         </section>
         </div>

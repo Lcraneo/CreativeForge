@@ -21,6 +21,8 @@ FRONTEND_DIST = os.path.join(REPO_ROOT, "studio", "frontend", "dist")
 def create_app():
     from studio.backend.agent_runtime.runtime import AgentRuntime
     from studio.backend.api.routes import build_router
+    from studio.backend.api.scene_routes import build_scene_router
+    from studio.backend.scene_service import SceneService
     from studio.backend.security import (
         AuthMiddleware,
         RateLimitMiddleware,
@@ -49,6 +51,9 @@ def create_app():
     runtime = AgentRuntime()
     app.state.runtime = runtime
     app.include_router(build_router(runtime))
+    scene_service = SceneService(settings_provider=runtime.model_settings.effective)
+    app.state.scene_service = scene_service
+    app.include_router(build_scene_router(scene_service))
     app.include_router(build_ws_router(runtime))
 
     # 云生成能力（A 部分）：配置面与生成面各挂一组路由，共用同一份加密存储，
