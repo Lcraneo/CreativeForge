@@ -41,7 +41,7 @@ import {
   type ClipTable,
 } from "../lib/animator";
 import { useHeldKeys } from "../lib/keyboard";
-import type { CreativeAsset, PlaytestCustomAction } from "../types";
+import type { CreativeAsset, ParkourScene, PlaytestCustomAction } from "../types";
 import {
   CHAR_HEIGHT,
   CHAR_MAX_WIDTH,
@@ -149,7 +149,10 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     enabled: Boolean(sceneId),
     retry: false,
   });
-  const scene = sceneQuery.data;
+  const scene =
+    sceneQuery.data?.gameplay.type === "parkour"
+      ? (sceneQuery.data as ParkourScene)
+      : undefined;
   const level = useMemo(
     () =>
       scene?.status === "ready" && scene.gameplay.level
@@ -247,7 +250,10 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   const people = useMemo(
     () =>
       (history.data?.records ?? []).filter(
-        (record) => record.asset_id && (record.image?.url || (record.asset ?? {}).image?.url),
+        (record) =>
+          record.asset_id &&
+          !record.asset?.pve_enemy &&
+          (record.image?.url || (record.asset ?? {}).image?.url),
       ),
     [history.data],
   );

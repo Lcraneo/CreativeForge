@@ -2082,10 +2082,31 @@ def build_router(runtime):
                 sheet = sheet.crop((x0, y0, x1, y1))
             return sheet
 
+        expected_views = dict(PLAYTEST_VIEW_BY_ACTION)
+        if isinstance(asset, dict) and asset.get("pve_enemy"):
+            # PVE enemy forge generates its compact action set from the front
+            # source; reuse those AI strips instead of rebuilding procedural
+            # walk/run bands on first play.
+            for action in ("walk", "run", "jump"):
+                expected_views[action] = "front"
+
+        from studio.backend.animation_service.service import collect_ai_strips
+
+        available_ai_strips = (
+            collect_ai_strips(
+                ANIMATION_DIR,
+                asset_id,
+                actions,
+                view_by_action=expected_views,
+            )
+            if asset_id
+            else {}
+        )
         pending = [
             action
             for action in actions
-            if not os.path.isfile(
+            if action not in available_ai_strips
+            and not os.path.isfile(
                 os.path.join(
                     cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
                 )
@@ -2109,10 +2130,7 @@ def build_router(runtime):
 
         # AI 动画帧收集（内置 + 自定义身份一次完成；只读磁盘，需在骨架
         # 准备前完成——自定义条带是否要渲染取决于它有没有 AI 版）
-        from studio.backend.animation_service.service import (
-            collect_ai_strips,
-            custom_action_identity,
-        )
+        from studio.backend.animation_service.service import custom_action_identity
 
         ai_strips: dict[str, dict] = {}
         if asset_id:
@@ -2121,7 +2139,7 @@ def build_router(runtime):
                 asset_id,
                 actions,
                 custom_names=custom_names,
-                view_by_action=PLAYTEST_VIEW_BY_ACTION,
+                view_by_action=expected_views,
             )
 
         def _safe_label(value: str) -> str:

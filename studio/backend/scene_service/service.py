@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import re
@@ -16,8 +17,10 @@ import httpx
 from studio.backend.model_service.service import ImageProvider, safe_generated_path
 from studio.backend.persistence import atomic_write_json, read_json_recover
 from studio.backend.scene_service.compiler import (
+    compile_pve,
     compile_parkour,
     normalize_intent,
+    validate_pve,
     validate_parkour,
 )
 
@@ -117,7 +120,8 @@ class SceneStore:
             )[:limit]
         summaries = []
         for record in records:
-            level = ((record.get("gameplay") or {}).get("level") or {})
+            gameplay = record.get("gameplay") or {}
+            level = gameplay.get("level") or {}
             theme = record.get("theme") or {}
             background_urls = theme.get("background_urls") or (
                 [theme["background_url"]] if theme.get("background_url") else []
@@ -129,10 +133,12 @@ class SceneStore:
                     "prompt": record.get("prompt"),
                     "status": record.get("status"),
                     "stage": (record.get("generation") or {}).get("stage"),
-                    "difficulty": (record.get("gameplay") or {}).get("difficulty"),
+                    "gameplay_type": gameplay.get("type") or "parkour",
+                    "difficulty": gameplay.get("difficulty"),
                     "background_url": theme.get("background_url"),
                     "background_count": len(background_urls),
                     "coin_count": len(level.get("coins") or []),
+                    "enemy_count": len(level.get("enemies") or []),
                     "created_at": record.get("created_at"),
                     "error": record.get("error"),
                 }
@@ -173,13 +179,17 @@ class SceneService:
         settings_provider: Callable[[], dict] | None = None,
         chat_fn: Callable[[str, dict], str] | None = None,
         image_fn: Callable[[str, dict], dict] | None = None,
+        pve_enemy_provider: Callable[[], list[dict]] | None = None,
     ):
         self.store = store or SceneStore()
         self._settings_provider = settings_provider or (lambda: {})
         self._chat_fn = chat_fn or self._chat
         self._image_fn = image_fn or self._generate_background
+        self._pve_enemy_provider = pve_enemy_provider or (lambda: [])
 
-    def start(self, prompt: str, difficulty: str = "normal") -> dict:
+    def start(
+        self, prompt: str, difficulty: str = "normal", gameplay: str = "parkour"
+    ) -> dict:
         now = time.time()
         scene_id = "scene_" + uuid.uuid4().hex[:12]
         record = {
@@ -189,7 +199,7 @@ class SceneService:
             "prompt": prompt.strip()[:2000],
             "status": "generating",
             "gameplay": {
-                "type": "parkour",
+                "type": gameplay,
                 "difficulty": difficulty,
                 "level": None,
             },
@@ -212,14 +222,20 @@ class SceneService:
         self.store.upsert(record)
         thread = threading.Thread(
             target=self._run,
-            args=(scene_id, prompt, difficulty, now),
+            args=(scene_id, prompt, difficulty, gameplay, now),
             name=f"creativeforge-scene-{scene_id}",
             daemon=True,
         )
         thread.start()
         return {"scene_id": scene_id, "status": "generating", "stage": "interpreting"}
 
-    def create_sync(self, prompt: str, difficulty: str = "normal", seed: int | None = None) -> dict:
+    def create_sync(
+        self,
+        prompt: str,
+        difficulty: str = "normal",
+        seed: int | None = None,
+        gameplay: str = "parkour",
+    ) -> dict:
         now = time.time()
         scene_id = "scene_" + uuid.uuid4().hex[:12]
         self.store.upsert(
@@ -229,7 +245,7 @@ class SceneService:
                 "title": "正在构建场景",
                 "prompt": prompt.strip()[:2000],
                 "status": "generating",
-                "gameplay": {"type": "parkour", "difficulty": difficulty, "level": None},
+                "gameplay": {"type": gameplay, "difficulty": difficulty, "level": None},
                 "theme": {
                     "summary": "",
                     "palette": {},
@@ -242,12 +258,14 @@ class SceneService:
                 "error": None,
             }
         )
-        self._generate(scene_id, prompt, difficulty, now, seed)
+        self._generate(scene_id, prompt, difficulty, gameplay, now, seed)
         return self.store.get(scene_id) or {}
 
-    def _run(self, scene_id: str, prompt: str, difficulty: str, started: float) -> None:
+    def _run(
+        self, scene_id: str, prompt: str, difficulty: str, gameplay: str, started: float
+    ) -> None:
         try:
-            self._generate(scene_id, prompt, difficulty, started)
+            self._generate(scene_id, prompt, difficulty, gameplay, started)
         except Exception as exc:  # noqa: BLE001 - persist every pipeline failure for polling UI
             current = self.store.get(scene_id) or {}
             generation = dict(current.get("generation") or {})
@@ -267,7 +285,9 @@ class SceneService:
         return BACKGROUND_COUNT_BY_LENGTH.get(length, BACKGROUND_COUNT_BY_LENGTH["medium"])
 
     @classmethod
-    def _background_prompts(cls, prompt: str, intent: dict) -> list[str]:
+    def _background_prompts(
+        cls, prompt: str, intent: dict, gameplay: str = "parkour"
+    ) -> list[str]:
         count = cls.background_count(str(intent.get("length") or "medium"))
         if count == 1:
             shot_indexes = [0]
@@ -278,10 +298,20 @@ class SceneService:
             ]
         palette = intent["palette"]
         prompts = []
+        composition = (
+            "2D side-scrolling PVE battle background, wide 16:9 composition, "
+            "no characters, no creatures, no monsters, no text, no UI, "
+            "no gameplay obstacles, no floating platforms, no ledges, "
+            "clear continuous ground-level combat lane. "
+            if gameplay == "pve"
+            else "2D side-scrolling platformer background, wide 16:9 composition, "
+            "no characters, no creatures, no monsters, no text, no UI, "
+            "no gameplay obstacles, clear foreground lane. "
+        )
         for index, shot_index in enumerate(shot_indexes):
             prompts.append(
-                "2D side-scrolling platformer background, wide 16:9 composition, "
-                "no characters, no text, no UI, no gameplay obstacles, clear foreground lane. "
+                composition
+                +
                 f"Same continuous world and art direction across the sequence. "
                 f"Shot {index + 1} of {count}: {_BACKGROUND_SHOTS[shot_index]}. "
                 f"Theme: {intent['summary']}. Environment: {intent['environment']}. "
@@ -297,8 +327,9 @@ class SceneService:
         prompt: str,
         intent: dict,
         settings: dict,
+        gameplay: str = "parkour",
     ) -> tuple[list[str], list[str], int]:
-        prompts = self._background_prompts(prompt, intent)
+        prompts = self._background_prompts(prompt, intent, gameplay)
         total = len(prompts)
         warnings: list[str] = []
         urls: list[str] = []
@@ -384,7 +415,11 @@ class SceneService:
             intent = normalize_intent({}, scene.get("prompt") or "", "normal")
         try:
             background_urls, warning, total = self._generate_background_sequence(
-                scene_id, scene.get("prompt") or "", intent, settings
+                scene_id,
+                scene.get("prompt") or "",
+                intent,
+                settings,
+                (scene.get("gameplay") or {}).get("type") or "parkour",
             )
         except Exception as exc:  # noqa: BLE001 - retry must reach a terminal state
             background_urls = []
@@ -411,11 +446,82 @@ class SceneService:
             },
         )
 
+    def update_pve_enemy_sequence(
+        self, scene_id: str, profile_ids: list[str]
+    ) -> dict | None:
+        scene = self.store.get(scene_id)
+        if scene is None:
+            return None
+        if scene.get("status") != "ready":
+            raise ValueError("场景尚未生成完成")
+        gameplay = scene.get("gameplay") or {}
+        level = gameplay.get("level")
+        if gameplay.get("type") != "pve" or not isinstance(level, dict):
+            raise ValueError("该场景不是 PVE 关卡")
+
+        updated = copy.deepcopy(scene)
+        updated_level = updated["gameplay"]["level"]
+        enemies = updated_level.get("enemies") or []
+        if len(profile_ids) != len(enemies):
+            raise ValueError("敌人序列与关卡槽位数量不一致")
+
+        profiles = {
+            str(profile.get("id")): profile
+            for profile in self._pve_enemy_provider()
+            if profile.get("status") == "ready" and profile.get("asset_id")
+        }
+        for enemy, profile_id in zip(enemies, profile_ids):
+            profile = profiles.get(str(profile_id))
+            role = "boss" if enemy.get("kind") == "boss" else "minion"
+            if profile is None:
+                raise ValueError("所选敌人不在可用敌人池中")
+            if profile.get("role") != role:
+                raise ValueError("所选敌人与关卡槽位类型不匹配")
+            stats = profile.get("stats") or {}
+            if stats.get("max_hp", 0) <= 0:
+                raise ValueError("所选敌人生命值无效")
+            enemy.update(
+                {
+                    "profile_id": profile_id,
+                    "asset_id": profile["asset_id"],
+                    "name": profile.get("name") or enemy.get("name"),
+                    "behavior": profile.get("behavior") or enemy.get("behavior"),
+                    "element": profile.get("element") or enemy.get("element"),
+                    "projectile_color": profile.get("projectile_color")
+                    or enemy.get("projectile_color"),
+                    "tags": profile.get("tags") or [],
+                    "max_hp": stats.get("max_hp", enemy.get("max_hp")),
+                    "speed": stats.get("speed", enemy.get("speed")),
+                    "damage": stats.get("damage", enemy.get("damage")),
+                    "attack_interval": stats.get(
+                        "attack_interval", enemy.get("attack_interval")
+                    ),
+                    "display_height": stats.get(
+                        "display_height", enemy.get("display_height")
+                    ),
+                }
+            )
+            if role == "boss":
+                for encounter in updated_level.get("encounters") or []:
+                    if (
+                        encounter.get("kind") == "boss"
+                        and enemy.get("id") in (encounter.get("enemy_ids") or [])
+                    ):
+                        encounter["title"] = "守关战 · {}".format(profile["name"])
+
+        validation = validate_pve(updated_level, gameplay.get("difficulty") or "normal")
+        if not validation["ok"]:
+            raise ValueError("敌人序列校验失败：" + "；".join(validation["issues"]))
+        updated["gameplay"]["validation"] = validation
+        updated["updated_at"] = time.time()
+        return self.store.upsert(updated)
+
     def _generate(
         self,
         scene_id: str,
         prompt: str,
         difficulty: str,
+        gameplay: str,
         started: float,
         seed: int | None = None,
     ) -> None:
@@ -426,7 +532,7 @@ class SceneService:
         if not model:
             raise RuntimeError("未配置对话模型")
 
-        intent_prompt = self._intent_prompt(prompt, difficulty)
+        intent_prompt = self._intent_prompt(prompt, difficulty, gameplay)
         try:
             raw_intent = _json_object(self._chat_fn(intent_prompt, settings))
         except Exception as first_error:
@@ -450,7 +556,7 @@ class SceneService:
                     "background_urls": [],
                 },
                 "gameplay": {
-                    "type": "parkour",
+                    "type": gameplay,
                     "difficulty": intent["difficulty"],
                     "length": intent["length"],
                     "features": intent["features"],
@@ -472,8 +578,17 @@ class SceneService:
         validation = {"ok": False, "issues": ["尚未编译"]}
         attempts = 0
         for attempts in range(1, 4):
-            level = compile_parkour(intent, base_seed + attempts - 1)
-            validation = validate_parkour(level, intent["difficulty"])
+            if gameplay == "pve":
+                level = compile_pve(
+                    intent,
+                    base_seed + attempts - 1,
+                    prompt=prompt,
+                    enemy_pool=self._pve_enemy_provider(),
+                )
+                validation = validate_pve(level, intent["difficulty"])
+            else:
+                level = compile_parkour(intent, base_seed + attempts - 1)
+                validation = validate_parkour(level, intent["difficulty"])
             if validation["ok"]:
                 break
         if level is None or not validation["ok"]:
@@ -497,7 +612,7 @@ class SceneService:
             },
         )
         background_urls, warning, background_total = self._generate_background_sequence(
-            scene_id, prompt, intent, settings
+            scene_id, prompt, intent, settings, gameplay
         )
 
         current = self.store.get(scene_id) or {}
@@ -524,9 +639,12 @@ class SceneService:
         )
 
     @staticmethod
-    def _intent_prompt(prompt: str, difficulty: str) -> str:
+    def _intent_prompt(
+        prompt: str, difficulty: str, gameplay: str = "parkour"
+    ) -> str:
+        runtime_label = "横版战斗关卡" if gameplay == "pve" else "横版跑酷游戏"
         return (
-            "你是 2D 横版跑酷游戏关卡策划。根据用户提示词生成关卡语义，"
+            f"你是 2D {runtime_label}关卡策划。根据用户提示词生成关卡语义，"
             "不要生成坐标、代码、平台列表或碰撞数据。只返回一个 JSON 对象。\n"
             "字段：title(中文短标题)、environment(castle/snow/forest/lava/desert/city)、"
             "mood(中文场景氛围)、difficulty(easy/normal/hard)、length(short/medium/long)、"

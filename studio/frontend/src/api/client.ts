@@ -246,10 +246,14 @@ export const api = {
     );
   },
 
-  createScene: (prompt: string, difficulty: "easy" | "normal" | "hard") =>
+  createScene: (
+    prompt: string,
+    difficulty: "easy" | "normal" | "hard",
+    gameplay: "parkour" | "pve" = "parkour",
+  ) =>
     request<{ scene_id: string; status: string; stage: string }>("/api/scenes", {
       method: "POST",
-      body: JSON.stringify({ prompt, difficulty, gameplay: "parkour" }),
+      body: JSON.stringify({ prompt, difficulty, gameplay }),
     }),
 
   listScenes: (limit = 20) =>
@@ -269,11 +273,43 @@ export const api = {
       { method: "DELETE" },
     ),
 
+  updatePveEnemySequence: (sceneId: string, profileIds: string[]) =>
+    request<GameScene>(`/api/scenes/${encodeURIComponent(sceneId)}/pve/enemy-sequence`, {
+      method: "PUT",
+      body: JSON.stringify({ profile_ids: profileIds }),
+    }),
+
   retrySceneBackground: (sceneId: string) =>
     request<{ scene_id: string; status: string; stage: string }>(
       `/api/scenes/${encodeURIComponent(sceneId)}/background`,
       { method: "POST" },
     ),
+
+  listPveEnemies: () =>
+    request<{ enemies: import("../types").PveEnemyProfile[] }>("/api/pve/enemies", {
+      timeoutMs: 15_000,
+    }),
+
+  getPveEnemy: (enemyId: string) =>
+    request<import("../types").PveEnemyProfile>(`/api/pve/enemies/${encodeURIComponent(enemyId)}`, {
+      timeoutMs: 15_000,
+    }),
+
+  deletePveEnemy: (enemyId: string) =>
+    request<{ status: string; removed: string }>(
+      `/api/pve/enemies/${encodeURIComponent(enemyId)}`,
+      { method: "DELETE" },
+    ),
+
+  generatePveEnemy: (
+    prompt: string,
+    role: "minion" | "boss",
+    difficulty: "easy" | "normal" | "hard",
+  ) =>
+    request<import("../types").PveEnemyProfile>("/api/pve/enemies/generate", {
+      method: "POST",
+      body: JSON.stringify({ prompt, role, difficulty }),
+    }),
 
   exportCharacterPackage: (assetId: string, engine: string) =>
     request<CharacterPackageResult>("/api/export/character-package", {

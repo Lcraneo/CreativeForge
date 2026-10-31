@@ -64,6 +64,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/playtest", label: "试玩舞台", icon: "play" },
       { to: "/arcade", label: "关卡试玩场", icon: "zap" },
+      { to: "/pve", label: "PVE 关卡", icon: "shield" },
     ],
   },
 ];

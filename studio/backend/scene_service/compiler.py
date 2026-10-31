@@ -20,6 +20,11 @@ FEATURES = {
     "ice_theme",
 }
 
+PVE_ENEMY_ASSETS = {
+    "slime": {"asset_id": "ast64960", "name": "森林史莱姆"},
+    "boss": {"asset_id": "ast60574", "name": "冰霜巨龙"},
+}
+
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _PALETTES = {
     "castle": {
@@ -332,3 +337,227 @@ def compile_parkour(intent: dict, seed: int) -> dict:
         "coins": coins,
     }
     return level
+
+
+def validate_pve(level: dict, difficulty: str) -> dict:
+    """Validate the first PVE slice: a connected combat lane with one boss."""
+
+    issues: list[str] = []
+    platforms = level.get("platforms") or []
+    enemies = level.get("enemies") or []
+    encounters = level.get("encounters") or []
+    enemy_ids = {str(enemy.get("id")) for enemy in enemies}
+    if len(platforms) < 1:
+        issues.append("战斗路线缺少地面")
+    if not _supports(level, level.get("spawnX", -1)):
+        issues.append("出生点没有落点")
+    if not enemies:
+        issues.append("没有配置敌人")
+    if not any(enemy.get("kind") == "boss" for enemy in enemies):
+        issues.append("缺少 Boss")
+    if not encounters:
+        issues.append("缺少遭遇战序列")
+    for encounter in encounters:
+        if encounter.get("trigger_x", 0) >= encounter.get("lock_x", 0):
+            issues.append("遭遇战触发点越过了封锁点")
+        missing = set(encounter.get("enemy_ids") or []) - enemy_ids
+        if missing:
+            issues.append("遭遇战引用了不存在的敌人")
+    if encounters and encounters[-1].get("kind") != "boss":
+        issues.append("最后一个遭遇战必须是 Boss")
+    for enemy in enemies:
+        if not _supports(level, enemy.get("x", -1)):
+            issues.append("{} 没有落点".format(enemy.get("name") or enemy.get("id")))
+        if enemy.get("max_hp", 0) <= 0:
+            issues.append("{} 生命值无效".format(enemy.get("name") or enemy.get("id")))
+    if difficulty not in DIFFICULTIES:
+        issues.append("难度无效")
+    return {
+        "ok": not issues,
+        "issues": issues,
+        "max_gap": 0,
+        "max_rise": 0,
+    }
+
+
+def _select_pve_profile(
+    prompt: str, role: str, enemy_pool: list[dict] | None
+) -> dict:
+    fallback = PVE_ENEMY_ASSETS["slime" if role == "minion" else "boss"]
+    candidates = [
+        item
+        for item in (enemy_pool or [])
+        if item.get("role") == role
+        and item.get("status") == "ready"
+        and item.get("asset_id")
+    ]
+    if not candidates:
+        return fallback
+    lowered = prompt.lower()
+    keywords = {
+        "fast": ("快速", "迅捷", "轻巧", "fast", "swift"),
+        "ranged": ("远程", "射击", "法术", "ranged", "shoot"),
+        "flying": ("飞行", "翼", "龙", "flying", "wing", "dragon"),
+        "armored": ("重甲", "盔甲", "机械", "armored", "armor"),
+        "ice": ("冰", "霜", "雪", "ice", "frost"),
+        "fire": ("火", "熔岩", "fire", "lava"),
+        "toxic": ("毒", "酸", "toxic", "acid"),
+        "beast": ("兽", "狼", "虫", "史莱姆", "beast", "wolf", "slime"),
+        "undead": ("亡灵", "骷髅", "幽魂", "undead", "skeleton", "ghost"),
+        "construct": ("机械", "魔像", "构装", "construct", "golem"),
+    }
+
+    def score(profile: dict) -> int:
+        text = "{} {} {}".format(
+            profile.get("name") or "",
+            profile.get("prompt") or "",
+            " ".join(profile.get("tags") or []),
+        ).lower()
+        value = 12 if profile.get("name") and str(profile["name"]).lower() in lowered else 0
+        value += sum(3 if tag in text else 0 for tag in profile.get("tags") or [])
+        value += sum(
+            2
+            for tag, words in keywords.items()
+            if tag in (profile.get("tags") or [])
+            and any(word in lowered for word in words)
+        )
+        element = profile.get("element")
+        value += 2 if element and element in lowered else 0
+        return value
+
+    best = max(candidates, key=score)
+    if score(best) <= 0 and not any(item.get("builtin") for item in candidates):
+        return fallback
+    return best
+
+
+def compile_pve(
+    intent: dict,
+    seed: int,
+    prompt: str = "",
+    enemy_pool: list[dict] | None = None,
+) -> dict:
+    """Compile a lightweight side-scrolling combat lane without collectibles."""
+
+    difficulty = intent["difficulty"]
+    base_slimes = {"short": 2, "medium": 3, "long": 5}[intent["length"]]
+    slime_count = max(1, base_slimes + {"easy": -1, "normal": 0, "hard": 1}[difficulty])
+    width = 2200 + slime_count * 520
+    ground_y = GROUND_Y
+    platforms = [
+        {
+            "x": 0,
+            "y": ground_y,
+            "width": width,
+            "height": 72,
+            "kind": "ground",
+        }
+    ]
+
+    minion_profile = _select_pve_profile(prompt, "minion", enemy_pool)
+    boss_profile = _select_pve_profile(prompt, "boss", enemy_pool)
+    minion_stats = minion_profile.get("stats") or {
+        "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
+        "speed": {"easy": 58, "normal": 72, "hard": 88}[difficulty],
+        "damage": 1,
+        "attack_interval": 2.4,
+        "display_height": 92,
+    }
+    boss_stats = boss_profile.get("stats") or {
+        "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty],
+        "speed": 42,
+        "damage": 2,
+        "attack_interval": 1.35,
+        "display_height": 224,
+    }
+    enemies = []
+    boss_x = width - 420
+    room1_lock = min(1380, boss_x - 1300)
+    room2_start = room1_lock + 180
+    room2_lock = boss_x - 640
+    half = max(1, (slime_count + 1) // 2)
+    rooms = [
+        (620, room1_lock, list(range(half))),
+        (room2_start, room2_lock, list(range(half, slime_count))),
+    ]
+    room_encounters = []
+    for room_index, (room_start, room_lock, indexes) in enumerate(rooms, start=1):
+        if not indexes:
+            continue
+        enemy_ids = []
+        lane_start = room_start + 180
+        lane_end = max(lane_start, room_lock - 240)
+        for offset, enemy_index in enumerate(indexes):
+            ratio = (offset + 1) / (len(indexes) + 1)
+            x = round(lane_start + (lane_end - lane_start) * ratio)
+            enemy_id = "slime_{}".format(enemy_index + 1)
+            enemy_ids.append(enemy_id)
+            enemies.append(
+                {
+                    "id": enemy_id,
+                    "profile_id": minion_profile.get("id"),
+                    "asset_id": minion_profile.get("asset_id")
+                    or PVE_ENEMY_ASSETS["slime"]["asset_id"],
+                    "name": minion_profile.get("name")
+                    or PVE_ENEMY_ASSETS["slime"]["name"],
+                    "kind": "slime",
+                    "x": x,
+                    "y": ground_y,
+                    "behavior": minion_profile.get("behavior") or "chaser",
+                    "element": minion_profile.get("element") or "physical",
+                    "projectile_color": minion_profile.get("projectile_color")
+                    or "#e8d49d",
+                    "tags": minion_profile.get("tags") or [],
+                    **minion_stats,
+                }
+            )
+        room_encounters.append(
+            {
+                "id": "encounter_{}".format(room_index),
+                "title": "战斗区域 {}".format(room_index),
+                "kind": "combat",
+                "trigger_x": room_start,
+                "lock_x": room_lock,
+                "enemy_ids": enemy_ids,
+            }
+        )
+
+    enemies.append(
+        {
+            "id": "boss_1",
+            "profile_id": boss_profile.get("id"),
+            "asset_id": boss_profile.get("asset_id")
+            or PVE_ENEMY_ASSETS["boss"]["asset_id"],
+            "name": boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"],
+            "kind": "boss",
+            "x": boss_x,
+            "y": ground_y,
+            "behavior": boss_profile.get("behavior") or "guardian",
+            "element": boss_profile.get("element") or "ice",
+            "projectile_color": boss_profile.get("projectile_color") or "#8feaff",
+            "tags": boss_profile.get("tags") or [],
+            **boss_stats,
+        }
+    )
+    room_encounters.append(
+        {
+            "id": "encounter_boss",
+            "title": "守关战 · {}".format(
+                boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"]
+            ),
+            "kind": "boss",
+            "trigger_x": boss_x - 520,
+            "lock_x": boss_x - 105,
+            "enemy_ids": ["boss_1"],
+        }
+    )
+    return {
+        "seed": str(seed),
+        "width": width,
+        "groundY": ground_y,
+        "spawnX": 120,
+        "goalX": width - 420,
+        "platforms": platforms,
+        "enemies": enemies,
+        "encounters": room_encounters,
+    }

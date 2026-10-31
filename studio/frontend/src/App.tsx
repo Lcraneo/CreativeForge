@@ -16,6 +16,7 @@ const SceneStudio = lazy(() => import("./pages/SceneStudio"));
 const PlaytestStage = lazy(() => import("./pages/PlaytestStage"));
 const Playtest3DPage = lazy(() => import("./pages/playtest3d/Playtest3DPage"));
 const ArcadeStage = lazy(() => import("./pages/ArcadeStage"));
+const PveStage = lazy(() => import("./pages/PveStage"));
 const VersionCenter = lazy(() => import("./pages/VersionCenter"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="playtest" element={<PlaytestStage />} />
             <Route path="playtest-3d" element={<Playtest3DPage />} />
             <Route path="arcade" element={<ArcadeStage />} />
+            <Route path="pve" element={<PveStage />} />
             <Route path="export" element={<ExportCenter />} />
             {/* 旧书签兼容重定向 */}
             <Route path="batch" element={<Navigate to="/" replace />} />

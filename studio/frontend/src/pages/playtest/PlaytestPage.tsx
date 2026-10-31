@@ -45,7 +45,10 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   const people = useMemo(
     () =>
       (history.data?.records ?? []).filter(
-        (record) => record.asset_id && (record.image?.url || (record.asset ?? {}).image?.url),
+        (record) =>
+          record.asset_id &&
+          !record.asset?.pve_enemy &&
+          (record.image?.url || (record.asset ?? {}).image?.url),
       ),
     [history.data],
   );

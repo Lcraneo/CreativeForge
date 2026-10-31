@@ -24,7 +24,7 @@ const ENTRIES: Array<{ to: string; title: string; kicker: string; icon: IconName
     title: "构建场景",
     kicker: "Scène",
     icon: "grid",
-    text: "描述想去的世界，生成经过连通性检查的横版跑酷路线；场景完成后可任选角色直接开玩。",
+    text: "描述想去的世界，生成经过校验的横版跑酷路线或 PVE 战斗场景；完成后可任选角色直接开玩。",
   },
   {
     to: "/asset",

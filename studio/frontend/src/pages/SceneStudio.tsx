@@ -8,6 +8,7 @@ import {
   Button,
   Card,
   EmptyState,
+  IconButton,
   PageHeader,
   SafeImage,
   Skeleton,
@@ -15,6 +16,7 @@ import {
 } from "../components/ui";
 import { platformMaterialFor, type PlatformMaterial } from "../lib/sceneVisuals";
 import type { GameScene, ScenePalette, SceneSummary } from "../types";
+import { toast } from "../stores/toastStore";
 
 const EXAMPLES = [
   "雪夜古堡，冰面高台和长距离跳跃，中等难度",
@@ -22,9 +24,15 @@ const EXAMPLES = [
   "熔岩工厂，狭窄断桥，高难度短关卡",
 ];
 
+const PVE_EXAMPLES = [
+  "月光古堡庭院，史莱姆巡逻，尽头由冰霜巨龙守关",
+  "覆雪森林战场，成群史莱姆和一只强化的冰霜巨龙",
+  "熔岩遗迹，短兵相接的连续战斗场地，高难度",
+];
+
 const STAGE_LABEL: Record<string, string> = {
   interpreting: "理解场景主题",
-  compiling: "搭建跑酷路线",
+  compiling: "编译关卡",
   background: "绘制场景背景",
   ready: "场景已就绪",
   failed: "生成失败",
@@ -43,6 +51,7 @@ export default function SceneStudio() {
   const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const [difficulty, setDifficulty] = useState<"easy" | "normal" | "hard">("normal");
+  const [gameplay, setGameplay] = useState<"parkour" | "pve">("parkour");
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const scenes = useQuery({
@@ -59,7 +68,7 @@ export default function SceneStudio() {
   });
 
   const create = useMutation({
-    mutationFn: () => api.createScene(prompt.trim(), difficulty),
+    mutationFn: () => api.createScene(prompt.trim(), difficulty, gameplay),
     onSuccess: (result) => {
       setActiveId(result.scene_id);
       void queryClient.invalidateQueries({ queryKey: ["scenes"] });
@@ -69,6 +78,22 @@ export default function SceneStudio() {
     mutationFn: (sceneId: string) => api.retrySceneBackground(sceneId),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["scene", result.scene_id] });
+    },
+  });
+  const removeScene = useMutation({
+    mutationFn: (sceneId: string) => api.deleteScene(sceneId),
+    onSuccess: (result) => {
+      queryClient.removeQueries({ queryKey: ["scene", result.removed] });
+      if (activeId === result.removed) setActiveId(null);
+      void queryClient.invalidateQueries({ queryKey: ["scenes"] });
+      toast({ tone: "success", title: "场景已删除", description: result.removed });
+    },
+    onError: (error) => {
+      toast({
+        tone: "danger",
+        title: "删除场景失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+      });
     },
   });
 
@@ -87,12 +112,22 @@ export default function SceneStudio() {
     create.mutate();
   }
 
+  function deleteScene(item: SceneSummary) {
+    if (item.status === "generating") {
+      toast({ tone: "warning", title: "场景仍在生成中", description: "请等待生成结束后再删除。" });
+      return;
+    }
+    if (window.confirm(`删除场景“${item.title}”？场景配置与背景图会一并移除。`)) {
+      removeScene.mutate(item.id);
+    }
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
       <PageHeader
         overline="Scene Atelier"
         title="场景工坊"
-        description="描述想去的世界，生成一条可玩的横版跑酷路线。场景完成后选择已有角色，直接从场景工坊进入关卡。"
+        description="描述想去的世界，生成可玩的横版跑酷路线或 PVE 战斗关卡。场景完成后选择已有角色，直接进入对应试玩模式。"
         actions={
           <Badge tone="primary" icon="spark">
             百炼 · 场景策划 + 背景生成
@@ -112,7 +147,11 @@ export default function SceneStudio() {
               onChange={(event) => setPrompt(event.target.value)}
               maxLength={2000}
               rows={6}
-              placeholder="例如：月光下的漂浮城堡，连续上升平台和长距离跳跃，中等难度"
+              placeholder={
+                gameplay === "pve"
+                  ? "例如：月光古堡庭院，史莱姆巡逻，尽头由冰霜巨龙守关"
+                  : "例如：月光下的漂浮城堡，连续上升平台和长距离跳跃，中等难度"
+              }
               className="mt-2 w-full resize-y rounded-md border border-line bg-canvas px-3 py-2.5 text-[13px] leading-6 text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-primary/60"
               onKeyDown={(event) => {
                 if ((event.ctrlKey || event.metaKey) && event.key === "Enter") submit();
@@ -147,19 +186,56 @@ export default function SceneStudio() {
               </div>
             </fieldset>
 
-            <div className="mt-4 rounded-md border border-line-subtle bg-surface-1/55 p-3">
-              <div className="flex items-center gap-2 text-[11.5px] font-medium text-ink-2">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-primary/10 text-primary">
-                  <Icon name="play" className="h-3 w-3" />
-                </span>
-                跑酷
-                <Badge tone="success">首版可用</Badge>
-                <span className="ml-auto text-[10.5px] text-ink-4">PVE 即将开放</span>
+            <fieldset className="mt-4">
+              <legend className="text-[12px] font-medium text-ink-2">玩法</legend>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                {(
+                  [
+                    {
+                      value: "parkour",
+                      label: "跑酷",
+                      note: "跳跃、金币与终点",
+                    },
+                    {
+                      value: "pve",
+                      label: "PVE",
+                      note: "史莱姆与冰霜巨龙",
+                    },
+                  ] as const
+                ).map((mode) => (
+                  <button
+                    key={mode.value}
+                    type="button"
+                    aria-pressed={gameplay === mode.value}
+                    onClick={() => {
+                      setGameplay(mode.value);
+                      create.reset();
+                    }}
+                    className={cx(
+                      "rounded-md border px-3 py-2.5 text-left transition-colors",
+                      gameplay === mode.value
+                        ? "border-primary/60 bg-primary-tint text-primary"
+                        : "border-line bg-canvas text-ink-2 hover:border-line-strong hover:bg-surface-1",
+                    )}
+                  >
+                    <span className="block text-[12px] font-semibold">{mode.label}</span>
+                    <span
+                      className={cx(
+                        "mt-0.5 block text-[10.5px]",
+                        gameplay === mode.value ? "text-primary/75" : "text-ink-4",
+                      )}
+                    >
+                      {mode.note}
+                    </span>
+                  </button>
+                ))}
               </div>
-              <p className="mt-1.5 text-[10.5px] leading-4 text-ink-4">
-                生成奔跑、跳跃、金币与终点路线；平台坐标由确定性编译器生成并经过连通性检查。
+              <p className="mt-2 text-[10.5px] leading-4 text-ink-4">
+                {gameplay === "pve"
+                  ? "生成分段遭遇战，不包含金币；会从 PVE 敌人工坊的完成资产中按提示词语义匹配小怪与 Boss。"
+                  : "生成奔跑、跳跃、金币与终点路线；平台坐标由确定性编译器生成并经过连通性检查。"}
               </p>
-            </div>
+            </fieldset>
 
             <Button
               variant="primary"
@@ -169,7 +245,7 @@ export default function SceneStudio() {
               onClick={submit}
               className="mt-4 w-full"
             >
-              {generating ? "正在构建场景" : "生成跑酷场景"}
+              {generating ? "正在构建场景" : gameplay === "pve" ? "生成 PVE 场景" : "生成跑酷场景"}
             </Button>
             {create.error && (
               <p className="mt-2 text-[11px] leading-4 text-danger">
@@ -180,7 +256,7 @@ export default function SceneStudio() {
             <div className="mt-4 border-t border-line-subtle pt-3">
               <div className="cf-ref">试试这些</div>
               <div className="mt-2 flex flex-col gap-1.5">
-                {EXAMPLES.map((example) => (
+                {(gameplay === "pve" ? PVE_EXAMPLES : EXAMPLES).map((example) => (
                   <button
                     key={example}
                     type="button"
@@ -217,12 +293,17 @@ export default function SceneStudio() {
           ) : scene ? (
             <ScenePreview
               scene={scene}
-              onPlay={() => navigate(`/arcade?scene=${encodeURIComponent(scene.id)}`)}
+              onPlay={() =>
+                navigate(
+                  `/${scene.gameplay.type === "pve" ? "pve" : "arcade"}?scene=${encodeURIComponent(scene.id)}`,
+                )
+              }
               onRetryBackground={() => retryBackground.mutate(scene.id)}
               retryingBackground={retryBackground.isPending}
               onRetry={() => {
                 setPrompt(scene.prompt);
                 setDifficulty(scene.gameplay.difficulty);
+                setGameplay(scene.gameplay.type);
                 create.reset();
               }}
             />
@@ -231,7 +312,11 @@ export default function SceneStudio() {
               <EmptyState
                 icon="grid"
                 title="还没有生成场景"
-                description="在左侧写下场景主题和玩法偏好。生成期间会依次解析主题、编译路线、绘制背景并检查连通性。"
+                description={
+                  gameplay === "pve"
+                    ? "在左侧写下战场主题。生成期间会依次解析主题、布置敌人、绘制背景并检查战斗路线。"
+                    : "在左侧写下场景主题和玩法偏好。生成期间会依次解析主题、编译路线、绘制背景并检查连通性。"
+                }
               />
             </Card>
           )}
@@ -264,6 +349,8 @@ export default function SceneStudio() {
                 scene={item}
                 active={item.id === activeId}
                 onOpen={() => setActiveId(item.id)}
+                onDelete={() => deleteScene(item)}
+                deleting={removeScene.isPending && removeScene.variables === item.id}
               />
             ))}
           </div>
@@ -287,6 +374,9 @@ function ScenePreview({
   onRetry: () => void;
 }) {
   const palette = paletteFor(scene);
+  const isPve = scene.gameplay.type === "pve";
+  const enemyCount =
+    scene.gameplay.type === "pve" ? (scene.gameplay.level?.enemies.length ?? 0) : 0;
   const backgroundUrls = scene.theme.background_urls?.length
     ? scene.theme.background_urls
     : scene.theme.background_url
@@ -375,7 +465,12 @@ function ScenePreview({
         />
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <Badge tone="neutral">{DIFFICULTY_LABEL[scene.gameplay.difficulty]}</Badge>
-          <Badge tone="neutral">金币 {scene.gameplay.level?.coins.length ?? 0}</Badge>
+          <Badge tone="neutral">{isPve ? "PVE 战斗" : "跑酷"}</Badge>
+          <Badge tone="neutral">
+            {scene.gameplay.type === "pve"
+              ? `敌人 ${enemyCount}`
+              : `金币 ${scene.gameplay.level?.coins.length ?? 0}`}
+          </Badge>
           <Badge tone="neutral">背景 {backgroundUrls.length} 张</Badge>
           <Badge tone="neutral">{(scene.generation.duration_ms / 1000).toFixed(1)}s</Badge>
         </div>
@@ -420,7 +515,9 @@ function ScenePreview({
           </Badge>
         ))}
         <Badge tone="success" icon="check">
-          路线连通 · 最大间隙 {scene.gameplay.validation?.max_gap ?? 0}px
+          {isPve
+            ? `战斗路线可玩 · ${enemyCount} 个敌人`
+            : `路线连通 · 最大间隙 ${scene.gameplay.validation?.max_gap ?? 0}px`}
         </Badge>
       </div>
       {scene.generation.warnings.length > 0 && (
@@ -430,7 +527,7 @@ function ScenePreview({
       )}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         <Button variant="primary" icon="play" onClick={onPlay}>
-          选择人物开始闯关
+          {isPve ? "选择人物进入 PVE" : "选择人物开始闯关"}
         </Button>
         {backgroundUrls.length <
           EXPECTED_BACKGROUNDS[scene.gameplay.length ?? "medium"] && (
@@ -445,7 +542,8 @@ function ScenePreview({
           </Button>
         )}
         <span className="text-[10.5px] text-ink-4">
-          {scene.generation.chat_model ?? "对话模型"} · 路线已通过可玩性检查
+          {scene.generation.chat_model ?? "对话模型"} ·{" "}
+          {isPve ? "战斗配置已通过检查" : "路线已通过可玩性检查"}
         </span>
       </div>
     </Card>
@@ -456,44 +554,59 @@ function SceneCard({
   scene,
   active,
   onOpen,
+  onDelete,
+  deleting,
 }: {
   scene: SceneSummary;
   active: boolean;
   onOpen: () => void;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onOpen}
+    <div
       className={cx(
-        "overflow-hidden rounded-lg border bg-canvas text-left transition-[border-color,box-shadow,transform] duration-(--motion-fast) hover:-translate-y-0.5 hover:shadow-e1",
+        "relative overflow-hidden rounded-lg border bg-canvas text-left transition-[border-color,box-shadow,transform] duration-(--motion-fast) hover:-translate-y-0.5 hover:shadow-e1",
         active ? "border-primary/60 shadow-e1" : "border-line-subtle hover:border-line",
       )}
     >
-      <SafeImage
-        src={scene.background_url}
-        alt={`${scene.title} 场景缩略图`}
-        className="h-28 w-full bg-surface-1 object-contain"
+      <button type="button" onClick={onOpen} className="block w-full text-left">
+        <SafeImage
+          src={scene.background_url}
+          alt={`${scene.title} 场景缩略图`}
+          className="h-28 w-full bg-surface-1 object-contain"
+        />
+        <div className="p-2.5">
+          <div className="flex items-center gap-2 pr-8">
+            <strong className="truncate text-[12.5px] text-ink">{scene.title}</strong>
+            <span className="ml-auto shrink-0">
+              <Badge tone={scene.status === "ready" ? "success" : "neutral"}>
+                {scene.status === "ready" ? "可玩" : (STAGE_LABEL[scene.stage] ?? scene.status)}
+              </Badge>
+            </span>
+          </div>
+          <p className="mt-1 line-clamp-2 text-[10.5px] leading-4 text-ink-4">{scene.prompt}</p>
+          <div className="mt-2 flex items-center gap-2 text-[10px] text-ink-4">
+            <span>{DIFFICULTY_LABEL[scene.difficulty]}</span>
+            <span>·</span>
+            <span>
+              {scene.gameplay_type === "pve"
+                ? `${scene.enemy_count ?? 0} 敌人`
+                : `${scene.coin_count} 金币`}
+            </span>
+            <span>·</span>
+            <span>{scene.background_count ?? 1} 背景</span>
+          </div>
+        </div>
+      </button>
+      <IconButton
+        icon="trash"
+        label={`删除场景 ${scene.title}`}
+        disabled={deleting || scene.status === "generating"}
+        onClick={onDelete}
+        className="absolute right-2 top-2 z-[2] bg-paper/90 shadow-sm backdrop-blur-sm"
       />
-      <div className="p-2.5">
-        <div className="flex items-center gap-2">
-          <strong className="truncate text-[12.5px] text-ink">{scene.title}</strong>
-          <span className="ml-auto shrink-0">
-            <Badge tone={scene.status === "ready" ? "success" : "neutral"}>
-              {scene.status === "ready" ? "可玩" : STAGE_LABEL[scene.stage] ?? scene.status}
-            </Badge>
-          </span>
-        </div>
-        <p className="mt-1 line-clamp-2 text-[10.5px] leading-4 text-ink-4">{scene.prompt}</p>
-        <div className="mt-2 flex items-center gap-2 text-[10px] text-ink-4">
-          <span>{DIFFICULTY_LABEL[scene.difficulty]}</span>
-          <span>·</span>
-          <span>{scene.coin_count} 金币</span>
-          <span>·</span>
-          <span>{scene.background_count ?? 1} 背景</span>
-        </div>
-      </div>
-    </button>
+    </div>
   );
 }
 
@@ -506,6 +619,7 @@ function SceneRoutePreview({
 }) {
   const level = scene.gameplay.level;
   if (!level) return null;
+  const isPve = scene.gameplay.type === "pve";
   const environment = scene.intent?.environment ?? "castle";
   const features = scene.gameplay.features ?? [];
   const groundMaterial = platformMaterialFor("ground", palette, environment, features);
@@ -525,7 +639,10 @@ function SceneRoutePreview({
         <PlatformTexturePattern id={floatingPattern} material={floatingMaterial} />
       </defs>
       <rect width={level.width} height="420" fill={palette.skyBottom} opacity="0.16" />
-      {level.platforms.map((platform, index) => (
+      {(isPve
+        ? level.platforms.filter((platform) => platform.kind === "ground")
+        : level.platforms
+      ).map((platform, index) => (
         <g key={`p-${index}`}>
           {platform.kind === "floating" && (
             <rect
@@ -565,17 +682,40 @@ function SceneRoutePreview({
           />
         </g>
       ))}
-      {level.coins.map((coin) => (
-        <circle key={coin.id} cx={coin.x} cy={coin.y} r="11" fill={palette.accent} />
-      ))}
-      <line
-        x1={level.goalX}
-        x2={level.goalX}
-        y1={170}
-        y2={level.groundY}
-        stroke={palette.accent}
-        strokeWidth="10"
-      />
+      {scene.gameplay.type === "parkour"
+        ? scene.gameplay.level?.coins.map((coin) => (
+            <circle key={coin.id} cx={coin.x} cy={coin.y} r="11" fill={palette.accent} />
+          ))
+        : scene.gameplay.level?.enemies.map((enemy) => (
+            <g key={enemy.id}>
+              <circle
+                cx={enemy.x}
+                cy={enemy.y - (enemy.kind === "boss" ? 42 : 18)}
+                r={enemy.kind === "boss" ? 13 : 8}
+                fill={enemy.kind === "boss" ? palette.accent : "#65764b"}
+                stroke="#25345a"
+                strokeWidth="3"
+              />
+              {enemy.kind === "boss" && (
+                <path
+                  d={`M${enemy.x - 26} ${enemy.y - 78}l8-18 10 12 10-18 10 18 10-12 8 18`}
+                  fill="none"
+                  stroke={palette.accent}
+                  strokeWidth="5"
+                />
+              )}
+            </g>
+          ))}
+      {!isPve && (
+        <line
+          x1={level.goalX}
+          x2={level.goalX}
+          y1={170}
+          y2={level.groundY}
+          stroke={palette.accent}
+          strokeWidth="10"
+        />
+      )}
     </svg>
   );
 }

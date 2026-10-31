@@ -20,8 +20,10 @@ FRONTEND_DIST = os.path.join(REPO_ROOT, "studio", "frontend", "dist")
 
 def create_app():
     from studio.backend.agent_runtime.runtime import AgentRuntime
+    from studio.backend.api.pve_routes import build_pve_router
     from studio.backend.api.routes import build_router
     from studio.backend.api.scene_routes import build_scene_router
+    from studio.backend.pve_service import PveEnemyService
     from studio.backend.scene_service import SceneService
     from studio.backend.security import (
         AuthMiddleware,
@@ -51,7 +53,13 @@ def create_app():
     runtime = AgentRuntime()
     app.state.runtime = runtime
     app.include_router(build_router(runtime))
-    scene_service = SceneService(settings_provider=runtime.model_settings.effective)
+    pve_enemy_service = PveEnemyService(runtime)
+    app.state.pve_enemy_service = pve_enemy_service
+    app.include_router(build_pve_router(pve_enemy_service))
+    scene_service = SceneService(
+        settings_provider=runtime.model_settings.effective,
+        pve_enemy_provider=pve_enemy_service.ready_profiles,
+    )
     app.state.scene_service = scene_service
     app.include_router(build_scene_router(scene_service))
     app.include_router(build_ws_router(runtime))

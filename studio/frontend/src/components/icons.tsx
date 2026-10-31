@@ -3,6 +3,24 @@ import type { SVGProps } from "react";
 /** Inline stroke icon set (feather-style, 24 viewBox, currentColor). */
 const ICON_PATHS = {
   activity: <path d="M3 12h4l2.5-7 4.5 14 2.5-7H21" />,
+  "arrow-left": (
+    <>
+      <path d="M19 12H5" />
+      <path d="m11 6-6 6 6 6" />
+    </>
+  ),
+  "arrow-right": (
+    <>
+      <path d="M5 12h14" />
+      <path d="m13 6 6 6-6 6" />
+    </>
+  ),
+  "arrow-up": (
+    <>
+      <path d="M12 19V5" />
+      <path d="m6 11 6-6 6 6" />
+    </>
+  ),
   alert: (
     <>
       <path d="M12 4 21 19H3L12 4z" />
@@ -37,6 +55,12 @@ const ICON_PATHS = {
       <path d="M12 7.5V12l3 2" />
     </>
   ),
+  crosshair: (
+    <>
+      <circle cx="12" cy="12" r="7.5" />
+      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" />
+    </>
+  ),
   cube: (
     <>
       <path d="M21 8.2 12 3 3 8.2v7.6L12 21l9-5.2V8.2z" />
@@ -55,6 +79,12 @@ const ICON_PATHS = {
     <>
       <rect x="3.5" y="4" width="17" height="16" rx="2" />
       <path d="M7 4v16M17 4v16M3.5 9H7M3.5 15H7M17 9h3.5M17 15h3.5" />
+    </>
+  ),
+  flame: (
+    <>
+      <path d="M12.5 21c4.1 0 6.5-2.9 6.5-6.3 0-2.6-1.5-4.7-3.2-6.4-.5 1.5-1.3 2.4-2.4 3.1.2-3.1-1.3-5.7-3.9-7.4.2 3-1.1 4.8-2.8 6.6-1.3 1.4-1.7 2.8-1.7 4.1C5 18.1 7.4 21 12.5 21z" />
+      <path d="M9.5 17.5c0-1.8 1.4-3 2.5-4.5 1 1.5 2.5 2.7 2.5 4.5a2.5 2.5 0 0 1-5 0z" />
     </>
   ),
   gauge: (
@@ -125,12 +155,24 @@ const ICON_PATHS = {
       <path d="M3.5 17.5 9 12.5l4 3.5 3-2.5 4.5 4" />
     </>
   ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 11v5M12 8v.01" />
+    </>
+  ),
   key: (
     <>
       <circle cx="7.5" cy="16.5" r="3.8" />
       <path d="M10.2 13.8 20 4" />
       <path d="M15.5 8.5 18 11" />
       <path d="M18.5 5.5 21 8" />
+    </>
+  ),
+  shield: (
+    <>
+      <path d="M12 3 19 6v5c0 4.4-2.8 7.7-7 10-4.2-2.3-7-5.6-7-10V6l7-3z" />
+      <path d="M9 12.5 11 15l4-5" />
     </>
   ),
   zap: <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />,

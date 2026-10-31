@@ -223,6 +223,8 @@ export interface CreativeAsset {
   /** A 失败透明化：AI 生图失败（内容审核/额度/网络等）后的降级原因，
    *  此时 pixel 资产为离线示意产物；前端据此展示失败徽章 */
   model_fallback?: { kind: string; detail: string } | null;
+  pve_enemy?: boolean;
+  pve_role?: "minion" | "boss";
 }
 
 /** 用户上传的人物正面图：文件与代理 URL 均指向本地持久化产物 */
@@ -612,25 +614,113 @@ export interface SceneLevel {
   coins: SceneCoin[];
 }
 
+export interface PveEnemy {
+  id: string;
+  profile_id?: string | null;
+  asset_id: string;
+  name: string;
+  kind: "slime" | "boss";
+  x: number;
+  y: number;
+  max_hp: number;
+  speed: number;
+  damage: number;
+  attack_interval: number;
+  display_height: number;
+  behavior?: "chaser" | "shooter" | "charger" | "guardian" | string;
+  element?: string;
+  projectile_color?: string;
+  tags?: string[];
+}
+
+export interface PveEncounter {
+  id: string;
+  title: string;
+  kind: "combat" | "boss";
+  trigger_x: number;
+  lock_x: number;
+  enemy_ids: string[];
+}
+
+export interface PveLevel {
+  seed: string;
+  width: number;
+  groundY: number;
+  spawnX: number;
+  goalX: number;
+  platforms: ScenePlatform[];
+  enemies: PveEnemy[];
+  encounters?: PveEncounter[];
+}
+
+export interface PveEnemyProfile {
+  id: string;
+  name: string;
+  role: "minion" | "boss";
+  prompt: string;
+  summary: string;
+  tags: string[];
+  behavior: "chaser" | "shooter" | "charger" | "guardian";
+  element: string;
+  projectile_color: string;
+  asset_id: string | null;
+  status:
+    | "analyzing"
+    | "generating_model"
+    | "generating_actions"
+    | "ready"
+    | "failed";
+  builtin: boolean;
+  difficulty?: "easy" | "normal" | "hard";
+  stats: {
+    max_hp: number;
+    speed: number;
+    damage: number;
+    attack_interval: number;
+    display_height: number;
+  };
+  task_id?: string;
+  action_batch_id?: string;
+  action_warning?: string | null;
+  error?: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface SceneValidation {
+  ok: boolean;
+  issues: string[];
+  max_gap: number;
+  max_rise: number;
+}
+
+export interface ParkourGameplay {
+  type: "parkour";
+  difficulty: "easy" | "normal" | "hard";
+  length?: "short" | "medium" | "long";
+  features?: string[];
+  level: SceneLevel | null;
+  validation?: SceneValidation;
+}
+
+export interface PveGameplay {
+  type: "pve";
+  difficulty: "easy" | "normal" | "hard";
+  length?: "short" | "medium" | "long";
+  features?: string[];
+  level: PveLevel | null;
+  validation?: SceneValidation;
+}
+
+export type SceneGameplay = ParkourGameplay | PveGameplay;
+
 export interface GameScene {
   schema_version: number;
   id: string;
   title: string;
   prompt: string;
   status: "generating" | "ready" | "failed";
-  gameplay: {
-    type: "parkour";
-    difficulty: "easy" | "normal" | "hard";
-    length?: "short" | "medium" | "long";
-    features?: string[];
-    level: SceneLevel | null;
-    validation?: {
-      ok: boolean;
-      issues: string[];
-      max_gap: number;
-      max_rise: number;
-    };
-  };
+  gameplay: SceneGameplay;
   theme: {
     summary: string;
     palette: Partial<ScenePalette>;
@@ -661,16 +751,22 @@ export interface GameScene {
   error: string | null;
 }
 
+export type ParkourScene = Omit<GameScene, "gameplay"> & {
+  gameplay: ParkourGameplay;
+};
+
 export interface SceneSummary {
   id: string;
   title: string;
   prompt: string;
   status: GameScene["status"];
   stage: string;
+  gameplay_type?: "parkour" | "pve";
   difficulty: GameScene["gameplay"]["difficulty"];
   background_url: string | null;
   background_count?: number;
   coin_count: number;
+  enemy_count?: number;
   created_at: number;
   error: string | null;
 }

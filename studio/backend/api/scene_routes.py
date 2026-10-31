@@ -14,6 +14,10 @@ class CreateSceneRequest(BaseModel):
     difficulty: str = "normal"
 
 
+class UpdatePveSequenceRequest(BaseModel):
+    profile_ids: list[str]
+
+
 def build_scene_router(service: SceneService) -> APIRouter:
     router = APIRouter(prefix="/api")
 
@@ -24,11 +28,11 @@ def build_scene_router(service: SceneService) -> APIRouter:
             raise HTTPException(status_code=422, detail="prompt is required")
         if len(prompt) > 2000:
             raise HTTPException(status_code=422, detail="prompt must be <= 2000 characters")
-        if request.gameplay != "parkour":
-            raise HTTPException(status_code=422, detail="当前仅支持 parkour")
+        if request.gameplay not in ("parkour", "pve"):
+            raise HTTPException(status_code=422, detail="gameplay must be parkour or pve")
         if request.difficulty not in DIFFICULTIES:
             raise HTTPException(status_code=422, detail="difficulty must be easy/normal/hard")
-        return service.start(prompt, request.difficulty)
+        return service.start(prompt, request.difficulty, request.gameplay)
 
     @router.get("/scenes")
     def list_scenes(limit: int = 20):
@@ -43,9 +47,24 @@ def build_scene_router(service: SceneService) -> APIRouter:
 
     @router.delete("/scenes/{scene_id}")
     def delete_scene(scene_id: str):
+        scene = service.store.get(scene_id)
+        if scene is None:
+            raise HTTPException(status_code=404, detail="unknown scene")
+        if scene.get("status") == "generating":
+            raise HTTPException(status_code=409, detail="scene is still generating")
         if not service.store.delete(scene_id):
             raise HTTPException(status_code=404, detail="unknown scene")
         return {"status": "deleted", "removed": scene_id}
+
+    @router.put("/scenes/{scene_id}/pve/enemy-sequence")
+    def update_pve_enemy_sequence(scene_id: str, request: UpdatePveSequenceRequest):
+        try:
+            scene = service.update_pve_enemy_sequence(scene_id, request.profile_ids)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        if scene is None:
+            raise HTTPException(status_code=404, detail="unknown scene")
+        return scene
 
     @router.get("/scenes/{scene_id}/background.png")
     def scene_background(scene_id: str):

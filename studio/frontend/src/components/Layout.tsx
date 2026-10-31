@@ -33,6 +33,7 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/history": { group: "生成 · 智能体", label: "历史记录" },
   "/playtest": { group: "试玩", label: "试玩舞台" },
   "/arcade": { group: "试玩", label: "关卡试玩场" },
+  "/pve": { group: "试玩", label: "PVE 关卡" },
   "/versions": { group: "资产库", label: "版本控制" },
   "/asset": { group: "资产库", label: "资产检查" },
   "/design": { group: "资产库", label: "设计三视图" },
