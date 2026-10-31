@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import { assetHref, useAssetStore } from "../stores/assetStore";
 
-const ASSET_PAGES = new Set(["/asset", "/design", "/animation", "/export"]);
+const ASSET_PAGES = new Set(["/asset", "/design", "/export"]);
 
 export function navigationHref(path: string, search: string, currentId?: string | null) {
   const explicitId = new URLSearchParams(search).get("asset");

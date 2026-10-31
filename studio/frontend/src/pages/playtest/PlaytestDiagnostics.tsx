@@ -83,8 +83,7 @@ export function PlaytestDiagnostics(props: PlaytestDiagnosticsProps) {
         )}
         {chibi && source === "rigged" && (
           <p className="mt-1.5 rounded-md border border-line bg-surface-1 p-1.5 text-[10.5px] leading-relaxed text-ink-3">
-            检测到 Q 版头身比，骨骼分区拟合度较低，动作可能出现轻微错位；完整动画建议在动画工作台使用
-            AI 视频驱动。
+            检测到 Q 版头身比，骨骼分区拟合度较低，动作可能出现轻微错位；可在动作坞使用 AI 视频驱动。
           </p>
         )}
       </section>

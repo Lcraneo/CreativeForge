@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   backgroundSequenceAt,
   containRect,
   coverBackgroundRect,
+  createScrollingBackgroundTexture,
   platformMaterialFor,
 } from "./sceneVisuals";
 
@@ -15,6 +16,8 @@ const palette = {
 };
 
 describe("scene visuals", () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it("contains a 16:9 image without cropping or distortion", () => {
     const fit = containRect(1280, 720, 800, 400);
     expect(fit.width).toBeCloseTo(711.111, 2);
@@ -39,6 +42,35 @@ describe("scene visuals", () => {
     expect(backgroundSequenceAt(0.625, 5)).toEqual({ from: 2, to: 3, mix: 0.5 });
     expect(backgroundSequenceAt(1, 5)).toEqual({ from: 4, to: 4, mix: 0 });
     expect(backgroundSequenceAt(0.8, 1)).toEqual({ from: 0, to: 0, mix: 0 });
+  });
+
+  it("turns a covered background into one mirrored scrolling texture", () => {
+    const drawImage = vi.fn();
+    const translate = vi.fn();
+    const scale = vi.fn();
+    const context = {
+      imageSmoothingEnabled: false,
+      drawImage,
+      save: vi.fn(),
+      translate,
+      scale,
+      restore: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+    const texture = {
+      width: 0,
+      height: 0,
+      getContext: () => context,
+    } as unknown as HTMLCanvasElement;
+    vi.spyOn(document, "createElement").mockReturnValue(texture);
+    const image = { naturalWidth: 1280, naturalHeight: 720 } as HTMLImageElement;
+
+    createScrollingBackgroundTexture(image, 760, 420);
+
+    expect(texture.width).toBe(1520);
+    expect(texture.height).toBe(420);
+    expect(drawImage).toHaveBeenCalledTimes(2);
+    expect(translate).toHaveBeenCalledWith(1520, 0);
+    expect(scale).toHaveBeenCalledWith(-1, 1);
   });
 
   it("uses distinct snow and ice materials for ground and floating platforms", () => {

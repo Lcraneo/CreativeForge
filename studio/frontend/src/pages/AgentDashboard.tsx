@@ -25,7 +25,7 @@ import { Icon } from "../components/icons";
 import { GenerationResult } from "../components/GenerationResult";
 import { LiveStream } from "../components/live/LiveStream";
 import { useTaskFeed } from "../hooks/useTaskFeed";
-import type { CreativeAsset, Plan, TaskEvent, HistorySummary } from "../types";
+import type { Plan, TaskEvent, HistorySummary } from "../types";
 
 const KIND_LABEL: Record<string, string> = {
   supervisor: "规划",

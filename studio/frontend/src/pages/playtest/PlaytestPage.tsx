@@ -252,9 +252,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   );
   const onResumeLive = useCallback(() => engine.resumeLive(), [engine]);
   const onRetry = assets.retry;
-  const goWorkbench = useCallback(() => {
-    if (selectedAssetId) navigate(`/animation?asset=${encodeURIComponent(selectedAssetId)}`);
-  }, [navigate, selectedAssetId]);
   const selectPerson = useCallback(
     (assetId: string) => {
       setSearchParams((previous) => {
@@ -569,7 +566,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         onRefreshBatch={() => void batch.refetch()}
         onOpenLibrary={() => setLibraryOpen(true)}
         onRetry={onRetry}
-        onGoWorkbench={goWorkbench}
       />
 
       {/* ── 脚注：键位 · 进度 · 状态（aria-live） ──────────────────── */}

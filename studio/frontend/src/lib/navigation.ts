@@ -54,7 +54,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { to: "/asset", label: "资产检查", icon: "cube", kbd: "3" },
       { to: "/design", label: "设计三视图", icon: "brush" },
-      { to: "/animation", label: "动画工作台", icon: "film" },
       { to: "/versions", label: "版本控制", icon: "clock" },
     ],
   },

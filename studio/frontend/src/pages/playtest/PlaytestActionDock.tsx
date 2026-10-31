@@ -2,7 +2,7 @@
  * 试玩舞台 V2 · 底部动作坞
  *
  * 旧版右侧"长画廊"压缩为横向动作卡坞：主按钮（选择动作/Preview）与
- * 次级按钮（生成 AI 动画 / 重试 / 到工作台）是同级元素——禁止 button
+ * 次级按钮（生成 AI 动画 / 重试）是同级元素——禁止 button
  * 嵌套 button。自定义动作只在用户打开动作库后出现（渐进式加载）。
  */
 import { useEffect, useState, type ReactNode } from "react";
@@ -311,7 +311,6 @@ export interface PlaytestActionDockProps {
   onRefreshBatch: () => void;
   onOpenLibrary: () => void;
   onRetry: (key: string) => void;
-  onGoWorkbench: () => void;
 }
 
 export function PlaytestActionDock(props: PlaytestActionDockProps) {
@@ -342,7 +341,6 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
     onRefreshBatch,
     onOpenLibrary,
     onRetry,
-    onGoWorkbench,
   } = props;
 
   const batchTaskFor = (name: string) => batchTasks.find((task) => task.action === name);
@@ -553,13 +551,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                     </button>
                   ) : (
                     item.engine !== "ai-video" && (
-                      <button
-                        onClick={onGoWorkbench}
-                        className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-ember-ink underline-offset-2 hover:underline"
-                      >
-                        <Icon name="spark" className="h-3 w-3" />
-                        到动画工作台生成 AI 版
-                      </button>
+                      <span className="mt-1 text-[10.5px] text-ink-3">可使用上方生成 AI 动画</span>
                     )
                   )}
                 </div>

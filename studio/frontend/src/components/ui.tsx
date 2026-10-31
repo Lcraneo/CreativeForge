@@ -691,47 +691,6 @@ export function KV({
   );
 }
 
-export function Stat({
-  label,
-  value,
-  hint,
-  tone,
-  icon,
-  chart,
-  display = false,
-  className,
-}: {
-  label: ReactNode;
-  value: ReactNode;
-  hint?: ReactNode;
-  tone?: string;
-  icon?: IconName;
-  chart?: ReactNode;
-  /** 展示级数字：宋体黑字重，编辑风大数字观感 */
-  display?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={cx("flex min-w-0 flex-col gap-0.5", className)}>
-      <div className="flex items-center gap-1.5 text-xs text-ink-3">
-        {icon && <Icon name={icon} className="h-3.5 w-3.5" />}
-        <span className="truncate">{label}</span>
-      </div>
-      <div
-        className={cx(
-          "tabular text-[32px] font-semibold leading-10 tracking-[-0.02em]",
-          display && "cf-display-num",
-          tone,
-        )}
-      >
-        {value}
-      </div>
-      {chart}
-      {hint && <div className="text-[11px] text-ink-3">{hint}</div>}
-    </div>
-  );
-}
-
 export function Stepper({
   steps,
   className,

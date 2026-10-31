@@ -13,7 +13,7 @@ import logging
 import threading
 import time
 
-from agent.generation.external import build_image_prompt
+from agent.generation.external import build_image_prompt, build_reference_image_prompt
 from agent.generation.spec import apply_overrides, parse_prompt
 from agents.supervisor.supervisor import SupervisorAgent
 
@@ -44,21 +44,23 @@ class AgentRuntime:
         self.model_settings = model_settings or ModelSettingsStore()
         self._supervisor = supervisor or SupervisorAgent()
 
-    def start_task(self, goal, overrides=None, turbo=False, asset=None):
+    def start_task(self, goal, overrides=None, turbo=False, asset=None, reference_image=None):
         task_id = self.tasks.create(goal)
         thread = threading.Thread(
             target=self._run,
-            args=(task_id, goal, overrides, turbo, asset),
+            args=(task_id, goal, overrides, turbo, asset, reference_image),
             name="creativeforge-task-{}".format(task_id),
             daemon=True,
         )
         thread.start()
         return task_id
 
-    def _run(self, task_id, goal, overrides=None, turbo=False, asset=None):
+    def _run(self, task_id, goal, overrides=None, turbo=False, asset=None, reference_image=None):
         started = time.time()
         spec = apply_overrides(parse_prompt(goal), overrides)
-        enhanced, image, image_error = self._call_external(task_id, goal, overrides, spec)
+        enhanced, image, image_error = self._call_external(
+            task_id, goal, overrides, spec, reference_image=reference_image
+        )
 
         # 生图失败策略（image_fallback_policy）：
         #   strict（默认）——自救轮（IP 预替换 + 审核安全改写）之后仍失败，
@@ -76,10 +78,14 @@ class AgentRuntime:
                 policy,
                 goal,
             )
-            if policy != "degrade":
+            if policy != "degrade" or image_error.get("kind") == "reference-model-missing":
                 from studio.backend.model_service.service import image_failure_guidance
 
-                message = image_failure_guidance(image_error)
+                message = (
+                    image_error.get("detail") or "已上传人物正面图，但图片模型不可用"
+                    if image_error.get("kind") == "reference-model-missing"
+                    else image_failure_guidance(image_error)
+                )
                 error = RuntimeError(message)
                 self.tasks.fail(task_id, error)
                 self._record(task_id, goal, None, error, started, image_error)
@@ -126,10 +132,20 @@ class AgentRuntime:
             # 「AI 生图失败，已用离线示意替代」徽章（含一键重试）
             asset["model_fallback"] = image_error
 
+        views_event = None
         if isinstance(asset, dict):
-            # 重新生成的角色原画已更新，旧三视图与新原画不匹配，随本次任务失效；
-            # 新三视图只能由用户在设计中心手动点击生成。
-            asset.pop("design_views", None)
+            if reference_image:
+                # 用户上传的正面图与角色绑定持久化，后续流程/编辑页仍可取用。
+                # 即使生图降级失败也必须保留原图，否则无法重试。
+                asset["reference_image"] = reference_image
+            if reference_image and isinstance(image, dict):
+                # 参考图驱动的角色在生成阶段直接产出三视图；失败只记录原因，
+                # 原画与原始正面图都保留，用户可在设计中心重试。
+                views_event = self._design_views(task_id, asset, image)
+            else:
+                # 纯文本流程：重新生成的角色原画已更新，旧三视图与新原画不匹配，
+                # 随本次任务失效；新三视图只能由用户在设计中心手动点击生成。
+                asset.pop("design_views", None)
 
         # 先落库再发事件（P0 修复）：此前 ASSET_UPDATE 先于 assets.save 发出，
         # 前端收到事件立即 GET /api/assets/{id} 会 404（"unknown asset"），
@@ -148,10 +164,72 @@ class AgentRuntime:
                     "image": (image or {}).get("url"),
                 },
             )
+        if views_event:
+            status, payload = views_event
+            if status == "views":
+                self.tasks.append_event(
+                    task_id, {"type": "MODEL_VIEWS", "design_views": payload}
+                )
+            else:
+                self.tasks.append_event(
+                    task_id,
+                    {
+                        "type": "MODEL_FALLBACK",
+                        "stage": "views",
+                        "kind": payload.get("kind"),
+                        "detail": payload.get("detail"),
+                    },
+                )
         self.tasks.finish(task_id, result)
         self._record(task_id, goal, result, None, started, image_error)
 
-    def _call_external(self, task_id, goal, overrides, spec=None):
+    def _design_views(self, task_id, asset, image):
+        """Derive side / back views from the reference-driven front artwork.
+
+        Returns ``("views", views)`` on success or ``("failed", failure)`` when
+        the turnaround model fails. The caller still saves the asset, so a
+        failure never loses the original artwork or the uploaded photo.
+        """
+
+        from studio.backend.model_service.service import (
+            TURNAROUND_EDIT_MODEL,
+            classify_error,
+            describe_error,
+            generate_turnaround,
+        )
+
+        self.tasks.append_event(
+            task_id,
+            {
+                "type": "MODEL_START",
+                "stage": "views",
+                "model": TURNAROUND_EDIT_MODEL,
+                "detail": "正在基于正面图生成侧面与背面",
+            },
+        )
+        try:
+            views, _failures = generate_turnaround(
+                self.model_settings.effective(),
+                image.get("url"),
+                front_image=image,
+                deadline=time.time() + 240.0,
+            )
+        except Exception as error:  # noqa: BLE001 - 失败原因随资产持久化
+            failure = {"kind": classify_error(error), "detail": describe_error(error)}
+            asset["design_views_error"] = failure
+            logger.warning(
+                "design views failed task=%s kind=%s detail=%s",
+                task_id,
+                failure["kind"],
+                failure["detail"],
+            )
+            return "failed", failure
+
+        asset["design_views"] = views
+        asset.pop("design_views_error", None)
+        return "views", views
+
+    def _call_external(self, task_id, goal, overrides, spec=None, reference_image=None):
         """Runs the configured model API: optional image generation. Every
         failure degrades gracefully — and the REASON travels with the task
         (event stream + return value) instead of being swallowed, so the
@@ -159,7 +237,28 @@ class AgentRuntime:
         shipping an unrelated seeded sprite."""
         spec = spec or {}
         settings = self.model_settings.effective()
-        if not (settings.get("enabled") and settings.get("base_url") and settings.get("api_key")):
+        configured = bool(
+            settings.get("enabled") and settings.get("base_url") and settings.get("api_key")
+        )
+        can_generate = bool(settings.get("use_image") and settings.get("model"))
+        if reference_image and not (configured and can_generate):
+            # 上传了正面图却不能用模型 → 绝不静默退回纯文本，否则参考图没被
+            # 实际使用，与用户预期不符。
+            detail = (
+                "已上传人物正面图，但图片模型未启用或配置不完整："
+                "请在「模型设置」启用并填写 Base URL、API Key 与图像模型后重试"
+            )
+            self.tasks.append_event(
+                task_id,
+                {
+                    "type": "MODEL_FALLBACK",
+                    "stage": "reference",
+                    "kind": "reference-model-missing",
+                    "detail": detail,
+                },
+            )
+            return None, None, {"kind": "reference-model-missing", "detail": detail}
+        if not configured:
             if settings.get("enabled"):
                 # switch is on but the configuration is incomplete — surface why
                 self.tasks.append_event(
@@ -190,12 +289,21 @@ class AgentRuntime:
                 },
             )
             try:
-                prompt = build_image_prompt(
-                    goal,
-                    overrides,
-                    enhanced.get("prompt") if enhanced else None,
-                    style=spec.get("style"),
-                )
+                if reference_image:
+                    # 正面图是身份唯一来源：锁定身份后再拼现有构图/风格约束。
+                    prompt = build_reference_image_prompt(
+                        goal,
+                        overrides,
+                        enhanced.get("prompt") if enhanced else None,
+                        style=spec.get("style"),
+                    )
+                else:
+                    prompt = build_image_prompt(
+                        goal,
+                        overrides,
+                        enhanced.get("prompt") if enhanced else None,
+                        style=spec.get("style"),
+                    )
                 # D 主动 IP 中性化：现代版权角色名（哆啦A梦/皮卡丘等）平台基本
                 # 必拦，送模型前直接替换为视觉特征——不浪费一轮拦截，主题不丢。
                 # 古典人物（孙悟空等）保留原文，审核拦截后由安全改写轮兜底。
@@ -219,7 +327,17 @@ class AgentRuntime:
                             "prompt_used": prompt,
                         },
                     )
-                image = ImageProvider(settings).generate(prompt)
+                if reference_image:
+                    from studio.backend.model_service.service import generate_from_reference
+
+                    image = generate_from_reference(
+                        settings,
+                        reference_image.get("url"),
+                        prompt,
+                        deadline=time.time() + 240.0,
+                    )
+                else:
+                    image = ImageProvider(settings).generate(prompt)
                 self.tasks.append_event(
                     task_id,
                     {

@@ -1,110 +1,127 @@
 # CreativeForge Studio
 
-**面向游戏开发的 AI 资产生产工作台**：输入一句自然语言，由多智能体自主规划，经自研技术链（PReCon / FAlign / GImport / 3D 管线）产出可直接导入 Unity / Cocos / Godot 的游戏角色、动画与工程资产。
+CreativeForge Studio 是一个面向游戏开发的 AI 资产生产工作台。用户可以输入自然语言创意，由多智能体完成规划与调度，再通过像素重建、动画对齐、引擎导入和 3D 试玩等管线，生成可导入 Unity、Cocos 或 Godot 的游戏角色、动画及工程资产。
 
-> CreativeForge 不是单一的模型调用工具，而是一套开放式游戏资产生成系统：统一 `CreativeAsset` 资产协议连接像素重建、动画切帧对齐、引擎自动导入与 3D 试玩，实现从创意描述到可运行资源的一体化闭环。
+项目以 `CreativeAsset` 资产协议串联设计、生成、检查、动效、试玩和导出流程，目标是把「创意描述」转化为可直接进入游戏引擎的可用资源。
 
 ## 技术栈
 
-- **前端** — `studio/frontend`：React 18 + TypeScript + Vite + Tailwind CSS
-- **后端** — `studio/backend`：FastAPI（REST + WebSocket 事件流）
-- **智能体** — `agent/` + `agents/`：Supervisor 规划调度
-- **自研引擎** — `precon/`（像素重建）、`falign/`（动画对齐）、`gimport/`（引擎导入）、`artgen/` `sprite/`（2D 生成链路）、`three_d/`（3D 管线）
-- **外部能力** — `adapters/`（云生成 / 模型服务商适配）
-- **契约层** — `core/` `protocol/` `schemas/` `packages/`
+- 前端：React 18、TypeScript、Vite、Tailwind CSS
+- 后端：FastAPI、REST API、WebSocket
+- 智能体：Supervisor 规划与多 Agent 调度
+- 资产管线：PReCon、FAlign、GImport、2D 动画、3D 管线
+- 外部能力：模型服务与云生成适配层
 
-## 目录结构
+## 环境要求
 
-```text
-creative-forge/
-├── studio/
-│   ├── frontend/            # React + Vite 前端（工作台 / 资产库 / 试玩舞台）
-│   └── backend/             # FastAPI 后端（REST + WebSocket）
-├── agent/  agents/          # 智能体层（单 Agent + 多 Agent 编排）
-├── precon/  falign/  gimport/  # 自研引擎层
-├── artgen/  sprite/         # 2D 角色 / 精灵生成链路
-├── three_d/                 # 3D 资产管线
-├── adapters/                # 外部能力 / 模型服务商适配层
-├── core/  protocol/  schemas/  packages/  # CreativeAsset 契约层
-├── benchmark/               # 质量验证与评测
-├── examples/  games/        # 演示与内置小游戏
-├── tests/  tests/release/   # 测试体系
-└── docs/                    # 架构与设计文档
-```
+- Python 3.11+
+- Node.js 18+（推荐 20+）
+- npm
 
-## 快速启动
+以下命令均从仓库根目录执行。
 
-> 环境要求：Python 3.11+、Node.js 18+（推荐 20+）。以下命令均在**仓库根目录**执行。
+## 安装依赖
 
-### 1. 安装依赖
-
-```bash
-# 虚拟环境
+```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1        # Windows PowerShell；macOS/Linux 用: source .venv/bin/activate
-
-# 后端依赖
+.\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-
-# 前端依赖
 npm --prefix studio/frontend install
 ```
 
-### 2. 启动后端
+macOS / Linux 激活虚拟环境：
 
 ```bash
-python -m studio.backend.main      # http://127.0.0.1:8600
+source .venv/bin/activate
 ```
 
-可选参数：`--host`、`--port`、`--reload`（开发热重载）。
+## 通过 8600 端口启动
 
-### 3. 启动前端（开发模式）
+`8600` 模式由后端托管 `studio/frontend/dist` 中已构建的前端，适合本地完整运行或演示。首次启动前需要先构建前端：
 
-另开一个终端：
-
-```bash
-npm --prefix studio/frontend run dev   # http://127.0.0.1:5173（自动代理 /api、/ws 到 8600）
+```powershell
+npm --prefix studio/frontend run build
+python -m studio.backend.main --host 127.0.0.1 --port 8600
 ```
 
-### 4. 生产 / 单进程模式（后端托管前端）
+启动后访问：
 
-```bash
-npm --prefix studio/frontend run build   # 构建到 studio/frontend/dist
-python -m studio.backend.main            # 后端自动托管前端，访问 http://127.0.0.1:8600
+- 有开屏动画：<http://127.0.0.1:8600/#opening>
+- 没有开屏动画：<http://127.0.0.1:8600/#noopening>
+
+## 通过 5173 端口启动
+
+`5173` 是 Vite 开发服务器，支持前端热更新；后端仍需运行在 `8600`。
+
+终端一，启动后端：
+
+```powershell
+python -m studio.backend.main --host 127.0.0.1 --port 8600
 ```
 
-## 常用命令
+终端二，启动前端：
 
-### 测试
-
-```bash
-# 后端单元测试（示例）
-python -m unittest studio.backend.tests.test_design_views -v
-
-# 契约 / 发布测试
-python tests/run_tests.py
-python tests/release/run_release_tests.py
+```powershell
+npm --prefix studio/frontend run dev
 ```
 
-### 前端检查
+启动后访问：
 
-```bash
-npm --prefix studio/frontend run typecheck   # 类型检查
-npm --prefix studio/frontend run lint        # ESLint
-npm --prefix studio/frontend run test        # Vitest
+- 有开屏动画：<http://127.0.0.1:5173/#opening>
+- 没有开屏动画：<http://127.0.0.1:5173/#noopening>
+
+Vite 会将 `/api` 和 `/ws` 请求代理到 `http://127.0.0.1:8600`。如需连接其他后端地址，可设置 `VITE_BACKEND`。
+
+## 开屏动画说明
+
+启动命令本身相同，是否显示开屏动画由访问地址中的哈希片段决定：
+
+| 访问方式 | 行为 |
+| --- | --- |
+| `/#opening` | 强制显示开屏动画 |
+| `/#noopening` | 强制跳过开屏动画 |
+| 无上述片段 | 按本地存储记录判断，默认每天显示一次 |
+
+开屏播放期间可按 `Esc`、`Enter` 或点击页面跳过。
+
+## 前端构建过期
+
+如果页面出现「前端构建已过期」提示，说明前端源码比 `studio/frontend/dist` 中的构建产物新。请从仓库根目录重新构建：
+
+```powershell
+npm --prefix studio/frontend run build
 ```
 
-### 构建
+构建完成后，在浏览器中执行强制刷新（Windows 通常为 `Ctrl+F5`）。
 
-```bash
-npm --prefix studio/frontend run build       # tsc -b && vite build
+仅在使用 `8600` 的单进程模式时需要处理此提示；`5173` 开发模式直接读取源码，不依赖 `dist`。
+
+## 常用检查
+
+```powershell
+npm --prefix studio/frontend run typecheck
+npm --prefix studio/frontend run lint
+npm --prefix studio/frontend run test
 ```
 
-## 模型配置（可选）
+## 项目结构
 
-后端默认以内置确定性管线运行；接入自定义大模型后可使用 AI 原画、三视图、图生视频等能力。启动后在「设置 → 模型设置」填写 Base URL 与 API Key 即可，密钥仅读取环境变量 / `.env`，不落库。
+```text
+creative-forge/
+├── studio/frontend/       # React 工作台
+├── studio/backend/        # FastAPI 后端
+├── agent/  agents/        # 智能体与多 Agent 编排
+├── precon/                # 像素重建
+├── falign/                # 动画对齐
+├── gimport/               # 引擎导入
+├── artgen/  sprite/       # 2D 生成管线
+├── three_d/               # 3D 资产管线
+├── adapters/              # 模型与云服务适配
+├── core/  protocol/       # CreativeAsset 协议与契约
+├── benchmark/             # 质量评测
+└── tests/                 # 测试
+```
 
-## 文档
+## 模型配置
 
-- [架构设计](docs/architecture.md)
-- 更多设计与决策记录见 [docs/](docs/)
+后端默认可使用内置确定性管线。需要 AI 原画、图生视频等能力时，可在「设置 → 模型设置」中填写模型服务地址与密钥；密钥通过环境变量或本地 `.env` 提供，不写入仓库。

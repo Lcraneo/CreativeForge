@@ -7,13 +7,10 @@ import type {
   ModelSettings,
   ModelTestResult,
   ModelUsage,
-  MultipartSession,
-  StorageConfigList,
-  StorageConfigPublic,
-  StorageTestResult,
   ActionBatchSnapshot,
   CharacterPackageResult,
   GameScene,
+  ReferenceImage,
   RollbackRecord,
   SceneSummary,
   TaskEvent,
@@ -72,174 +69,6 @@ export interface TaskDetail {
   asset_id: string | null;
   error: string | null;
   events: TaskEvent[];
-}
-
-export interface StyleProfile {
-  style: string;
-  style_label: string;
-  confidence: number;
-  palette_size: number;
-  edge_density: number;
-  flat_ratio: number;
-  saturation: number;
-  luminance_std: number;
-}
-
-export interface ConsistencyReport {
-  palette: number;
-  color: number;
-  line: number;
-  hash: number;
-  overall: number;
-  passed: boolean;
-  floor: number;
-  frames_checked: number;
-}
-
-export interface AnimationResult {
-  id: string;
-  source: string;
-  action: string;
-  fps: number;
-  duration: number;
-  frame_count: number;
-  size: number;
-  loop: boolean;
-  style: StyleProfile;
-  style_label: string;
-  character: {
-    bbox: number[];
-    size: number[];
-    aspect: number;
-    head_ratio: number;
-    center: number[];
-    palette: string[];
-  };
-  consistency: ConsistencyReport;
-  sheet_size: number[];
-  frames: number;
-  frame_urls?: string[];
-  urls: { gif: string; sheet: string; thumb: string; video?: string };
-  /** i2v 直通 mp4 的交付规格（分辨率/帧率/时长/码率）；GIF 兜底路径无此字段 */
-  video_spec?: {
-    width: number;
-    height: number;
-    fps: number;
-    duration: number;
-    bytes: number;
-    bitrate_kbps?: number;
-  };
-  /** V3.5 装备/服装识别（看图认出武器/甲胄/裙装/披风/发长/饰物，labels 为中文徽章文案） */
-  equipment?: EquipmentInfo;
-  /** V3.5 流畅度：walk/run 帧混合（伪运动模糊）已应用 */
-  motion_blend?: boolean;
-  /** V3.5 生成后自动质检：三维量化指标分级（pass/warn/fail）+ 可读问题列表 */
-  qa?: { grade: "pass" | "warn" | "fail"; metrics?: Record<string, number>; issues?: string[] };
-  created_at: number;
-}
-
-/** V3.5 装备/服装识别结果。labels 为中文标签（前端徽章直接渲染），
- * summary_* 为拼好的中/英摘要（i2v 润色上下文用）。 */
-export interface EquipmentInfo {
-  weapon?: string | null;
-  weapon_label?: string | null;
-  armor?: string;
-  skirt?: boolean;
-  skirt_length?: string;
-  cape?: boolean;
-  hair?: string;
-  outfit?: string;
-  accessories?: string[];
-  labels?: string[];
-  summary_zh?: string;
-  summary_en?: string;
-}
-
-/** 多段编排段（AI 解读「先…然后…」类描述生成）：action 为该段基元，
- * weight 为时长比重，turn 为该段转身幅度（度）。 */
-export interface MotionPhase {
-  action: string;
-  weight: number;
-  turn?: number;
-}
-
-/** 姿态参数：数值键为滑杆参数（bob/stride/arm/lift/lean/lag/cycles/turn），
- * phases 为可选多段编排（非数值，保存/生成链路透传）。 */
-export type PoseConfig = { [key: string]: number } & { phases?: MotionPhase[] };
-
-export interface CustomActionPreset {
-  name: string;
-  action: string;
-  view: string;
-  pose_config: PoseConfig;
-  created_at: number;
-  updated_at: number;
-  /** 动作完整描述（自然语言创作时用户输入的原文，可空） */
-  description?: string;
-  /** 修改次数：创建=1，每次覆盖保存/改名 +1 */
-  revision?: number;
-}
-
-/** 修改历史快照：一次覆盖保存前的旧版本（最新在前，后端封顶 12 条） */
-export interface CustomActionHistoryEntry {
-  time: number;
-  /** edit=编辑覆盖 / import=动作包导入覆盖 */
-  trigger: string;
-  revision: number;
-  action: string;
-  view: string;
-  pose_config: PoseConfig;
-  description?: string;
-}
-
-/** 动作详情（GET /api/animation/custom-actions/{name}）：列表字段 + 修改历史 */
-export interface CustomActionDetail extends CustomActionPreset {
-  history: CustomActionHistoryEntry[];
-}
-
-export interface AnimationRequestPayload {
-  asset_id?: string;
-  image?: string;
-  action?: string;
-  fps?: number;
-  duration?: number;
-  size?: number;
-  skeletal?: boolean;
-  view?: string;
-  pose_config?: PoseConfig;
-  use_video?: boolean;
-  /** 定稿档标记；视频模型固定 wan2.2-i2v-flash，不再切换更高档模型 */
-  final_quality?: boolean;
-  /** V3 网格变形：膝/肘皮肤化开关；缺省跟随后端默认（mesh） */
-  deform?: "mesh" | "rigid";
-  /** V3 次级运动：发层摆动（首次对该源图花约 0.3 元提取发层，之后缓存免费） */
-  secondary_motion?: boolean;
-  /** V3.5 装备/服装识别：骨骼链姿态自适应 + i2v 提示词贴合（按源图缓存，约 0.002 元/角色） */
-  equipment_aware?: boolean;
-  /** 自定义动作的用户描述：仅 i2v 链消费（独立润色通道，词表外动作的
-   * 表达通道）；基础动作不带，内置词表路径保持原样 */
-  action_description?: string;
-  /** 自定义动作名称（命名空间隔离）：后端以此把产物记为 "custom:<名称>"，
-   * 与内置动作槽位严格分离；基础动作不带 */
-  custom_action?: string;
-}
-
-/** 生成任务快照（任务化轮询）：running 带 stage/progress；终态带 result
- * （done）或 error/error_kind（failed，与批次同款失败分类）；interrupted =
- * 后端重启导致任务中断（终态，落盘任务恢复标记） */
-export interface VideoTaskSnapshot {
-  id: string;
-  status: "running" | "done" | "failed" | "interrupted";
-  stage: "queued" | "prompt" | "video" | "sampling" | "composing" | "done" | "interrupted";
-  progress: number;
-  asset_id?: string;
-  requested_action?: string;
-  /** 自定义动作名称（命名空间隔离）：有值时 requested_action 为运动族，
-   * 播放归属以 custom_action 为准 */
-  custom_action?: string | null;
-  result?: AnimationResult;
-  error?: string;
-  error_kind?: string;
 }
 
 let lastToastKey = "";
@@ -311,6 +140,18 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
     throw error;
   }
   return response.json() as Promise<T>;
+}
+
+/** FastAPI 错误响应是 JSON {detail}；上传接口直接读取文本并还原可读原因。 */
+async function errorDetail(response: Response): Promise<string> {
+  const raw = await response.text().catch(() => response.statusText);
+  try {
+    const parsed = JSON.parse(raw) as { detail?: unknown };
+    if (typeof parsed?.detail === "string") return parsed.detail;
+  } catch {
+    /* 非 JSON 错误体按原文返回 */
+  }
+  return raw;
 }
 
 export const api = {
@@ -389,34 +230,6 @@ export const api = {
     request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`, {
       timeoutMs: 15_000,
     }),
-  /** 动作×视角矩阵：每个 (动作, 视角) 的最新交付状态与运行中批次 */
-  animationMatrix: (assetId?: string | null) =>
-    request<import("../types").ActionMatrix>(
-      `/api/animation/matrix${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
-      { timeoutMs: 15_000 },
-    ),
-  rigCheck: (assetId?: string | null) =>
-    request<{
-      proportion: string;
-      head_ratio: number;
-      head_height: number;
-      confidence: number;
-      recommendation: string;
-      message: string;
-    }>(
-      `/api/animation/rig-check${assetId ? `?asset_id=${encodeURIComponent(assetId)}` : ""}`,
-      { timeoutMs: 15_000 },
-    ),
-  enhanceActionText: (text: string) =>
-    request<{ text: string }>("/api/animation/custom-actions/enhance", {
-      method: "POST",
-      body: JSON.stringify({ text }),
-    }),
-  interpretActionText: (text: string, assetId?: string) =>
-    request<import("../types").InterpretedAction>("/api/animation/custom-actions/interpret", {
-      method: "POST",
-      body: JSON.stringify({ text, asset_id: assetId }),
-    }),
   /** 试玩舞台预览。V2 渐进式加载：actions 过滤内置动作（缺省=全部），
    * includeCustom=false 跳过自定义动作条带渲染——两者均向后兼容 */
   playtestPreviews: (
@@ -469,11 +282,43 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
-  createTask: (goal: string, overrides?: GenerationOverrides, turbo?: boolean) =>
+  createTask: (
+    goal: string,
+    overrides?: GenerationOverrides,
+    turbo?: boolean,
+    referenceImage?: string,
+  ) =>
     request<{ task_id: string; status: string; stream_url: string }>("/api/tasks", {
       method: "POST",
-      body: JSON.stringify({ goal, overrides, turbo }),
+      body: JSON.stringify({ goal, overrides, turbo, reference_image: referenceImage }),
     }),
+
+  /** 人物正面图上传：multipart 必须绕开 request() 的 JSON Content-Type。 */
+  uploadCharacterReference: async (file: File): Promise<ReferenceImage> => {
+    const form = new FormData();
+    form.append("file", file);
+    let response: Response;
+    try {
+      response = await fetch("/api/character/reference", {
+        method: "POST",
+        body: form,
+        headers: authHeaders(),
+      });
+    } catch (cause) {
+      throw new ApiError(0, `图片上传失败：${cause instanceof Error ? cause.message : String(cause)}`);
+    }
+    if (!response.ok) {
+      throw new ApiError(response.status, await errorDetail(response));
+    }
+    return (await response.json()) as ReferenceImage;
+  },
+
+  /** 删除未被角色引用的正面图；被引用时后端返回 409。 */
+  deleteCharacterReference: (name: string) =>
+    request<{ status: string; file: string }>(
+      `/api/character/reference/${encodeURIComponent(name)}`,
+      { method: "DELETE", silent: true },
+    ),
 
   enhancePrompt: (goal: string, overrides?: GenerationOverrides) =>
     request<{ model: string; prompt: string }>("/api/prompt/enhance", {
@@ -508,85 +353,6 @@ export const api = {
   latestAsset: (options?: { signal?: AbortSignal }) =>
     // 后端已经解析持久化历史；404 表示暂无资产，其余错误由页面提供重试。
     request<CreativeAsset>("/api/assets/latest", { timeoutMs: 15_000, ...options, silent: true }),
-
-  createAnimation: (payload: AnimationRequestPayload) =>
-    request<AnimationResult>("/api/animation", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  // 生成任务化（体验优化）：AI 视频链入队立即返回，轮询阶段进度；
-  // 刷新后凭 localStorage 里的 task_id 续接。idempotencyKey 由调用方在
-  // 「一次用户提交」内生成——同键且任务仍在运行时后端复用，不重复扣费
-  startVideoTask: (payload: AnimationRequestPayload, opts?: { idempotencyKey?: string }) =>
-    request<{ task_id: string; snapshot: VideoTaskSnapshot }>("/api/animation/tasks", {
-      method: "POST",
-      body: JSON.stringify(payload),
-      headers: opts?.idempotencyKey
-        ? { "Idempotency-Key": opts.idempotencyKey }
-        : undefined,
-    }),
-
-  getVideoTask: (taskId: string) =>
-    request<VideoTaskSnapshot>(`/api/animation/tasks/${encodeURIComponent(taskId)}`, {
-      timeoutMs: 15_000,
-    }),
-
-  createAnimationSequence: (payload: { frames: string[]; fps?: number; size?: number }) =>
-    request<AnimationResult>("/api/animation/sequence", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  previewAnimationFrame: async (payload: {
-    asset_id?: string;
-    action: string;
-    view: string;
-    phase: number;
-    size?: number;
-    pose_config?: PoseConfig;
-    skeletal?: boolean;
-    image?: string;
-  }): Promise<string> => {
-    const response = await fetch("/api/animation/preview-frame", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify(payload),
-    });
-    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
-    return URL.createObjectURL(await response.blob());
-  },
-
-  listCustomActions: () =>
-    request<{ actions: CustomActionPreset[] }>("/api/animation/custom-actions"),
-
-  saveCustomAction: (payload: {
-    name: string;
-    action: string;
-    view: string;
-    pose_config: PoseConfig;
-    description?: string;
-    /** 编辑保存时指向被编辑的旧动作名（改名=旧名；就地修改=同名） */
-    original_name?: string;
-  }) =>
-    request<CustomActionPreset>("/api/animation/custom-actions", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  getCustomAction: (name: string) =>
-    request<CustomActionDetail>(`/api/animation/custom-actions/${encodeURIComponent(name)}`),
-
-  deleteCustomAction: (name: string) =>
-    request<{ status: string }>(`/api/animation/custom-actions/${encodeURIComponent(name)}`, {
-      method: "DELETE",
-    }),
-
-  analyzeAnimationSource: (image: string) =>
-    request<{ style: StyleProfile; character: AnimationResult["character"]; palette: string[] }>(
-      "/api/animation/analyze",
-      { method: "POST", body: JSON.stringify({ image }) },
-    ),
 
   exportAsset: (assetId: string, engine: string) =>
     request<ExportResult>("/api/export", {
@@ -642,90 +408,6 @@ export const api = {
 
   clearModelUsage: () =>
     request<{ status: string }>("/api/settings/model/usage", { method: "DELETE" }),
-
-  // ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ─────────────────────
-  // 凭证本地加密存储、界面脱敏；新增/编辑时提交明文，后端落盘加密。
-  listStorageConfigs: () => request<StorageConfigList>("/api/storage/configs"),
-
-  createStorageConfig: (payload: Record<string, unknown>) =>
-    request<StorageConfigPublic>("/api/storage/configs", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  updateStorageConfig: (id: string, payload: Record<string, unknown>) =>
-    request<StorageConfigPublic>(`/api/storage/configs/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(payload),
-    }),
-
-  deleteStorageConfig: (id: string) =>
-    request<{ status: string; removed: string }>(`/api/storage/configs/${id}`, {
-      method: "DELETE",
-    }),
-
-  setDefaultStorageConfig: (id: string) =>
-    request<StorageConfigPublic>(`/api/storage/configs/${id}/default`, {
-      method: "POST",
-    }),
-
-  testStorageConfig: (payload: {
-    config_id?: string;
-    provider?: string;
-    access_key?: string;
-    secret_key?: string;
-    region?: string;
-    bucket?: string;
-    endpoint?: string;
-    name?: string;
-  }) =>
-    request<StorageTestResult>("/api/storage/configs/test", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  // ── 对象存储：大文件分片上传（断点续传 / 失败重试） ─────────────────────
-  startMultipart: (payload: {
-    key: string;
-    total_size: number;
-    part_size?: number;
-    content_type?: string;
-    config_id?: string;
-  }) =>
-    request<MultipartSession>("/api/storage/multipart/start", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-
-  getMultipartStatus: (sessionId: string) =>
-    request<MultipartSession>(`/api/storage/multipart/${sessionId}`),
-
-  resumeMultipart: (sessionId: string) =>
-    request<MultipartSession>(`/api/storage/multipart/${sessionId}/resume`, {
-      method: "POST",
-    }),
-
-  uploadMultipartPart: async (sessionId: string, partNumber: number, data: Blob) => {
-    const form = new FormData();
-    form.append("file", data, `part-${partNumber}`);
-    const response = await fetch(`/api/storage/multipart/${sessionId}/${partNumber}`, {
-      method: "PUT",
-      body: form,
-      headers: { ...authHeaders() },
-    });
-    if (!response.ok) throw new Error(`${response.status}: ${await response.text()}`);
-    return (await response.json()) as MultipartSession;
-  },
-
-  completeMultipart: (sessionId: string) =>
-    request<MultipartSession>(`/api/storage/multipart/${sessionId}/complete`, {
-      method: "POST",
-    }),
-
-  abortMultipart: (sessionId: string) =>
-    request<MultipartSession>(`/api/storage/multipart/${sessionId}/abort`, {
-      method: "POST",
-    }),
 
   /* ── 云生成能力（A 部分）── */
   cloudProviders: () =>

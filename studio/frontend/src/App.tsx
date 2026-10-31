@@ -7,7 +7,6 @@ import { OpeningSequence } from "./components/opening/OpeningSequence";
 // 路由级代码分割：每个页面独立 chunk，首屏只加载当前路由
 const Home = lazy(() => import("./pages/Home"));
 const AgentDashboard = lazy(() => import("./pages/AgentDashboard"));
-const AnimationStudio = lazy(() => import("./pages/AnimationStudio"));
 const AssetInspector = lazy(() => import("./pages/AssetInspector"));
 const ExportCenter = lazy(() => import("./pages/ExportCenter"));
 const HistoryCenter = lazy(() => import("./pages/HistoryCenter"));
@@ -43,7 +42,7 @@ export default function App() {
             <Route path="asset" element={<AssetInspector />} />
             <Route path="design" element={<DesignCenter />} />
             <Route path="settings" element={<SettingsCenter />} />
-            <Route path="animation" element={<AnimationStudio />} />
+            <Route path="animation" element={<Navigate to="/workspace" replace />} />
             <Route path="scenes" element={<SceneStudio />} />
             <Route path="playtest" element={<PlaytestStage />} />
             <Route path="playtest-3d" element={<Playtest3DPage />} />

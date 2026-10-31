@@ -90,14 +90,6 @@ export function GenerationResult({ asset }: Props) {
             <Button variant="primary" size="sm" icon="cube" onClick={() => navigate(assetHref("/asset", asset.id))}>
               查看资产
             </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon="film"
-              onClick={() => navigate(assetHref("/animation", asset.id))}
-            >
-              动画工作台
-            </Button>
             {!review && (
               <>
                 <Button

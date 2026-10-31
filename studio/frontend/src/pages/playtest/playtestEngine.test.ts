@@ -393,7 +393,6 @@ describe("PlaytestActionDock structure", () => {
       onRefreshBatch: vi.fn(),
       onOpenLibrary: vi.fn(),
       onRetry: vi.fn(),
-      onGoWorkbench: vi.fn(),
       ...overrides,
     };
     await act(async () => root.render(createElement(PlaytestActionDock, props)));
@@ -412,9 +411,9 @@ describe("PlaytestActionDock structure", () => {
     expect(labels.some((text) => text.includes("待机"))).toBe(true);
     expect(labels.some((text) => text.includes("攻击"))).toBe(true);
     expect(labels.some((text) => text.includes("旋风踢"))).toBe(true);
-    // 选择按钮与「生成 AI 动画」/「到动画工作台」次级按钮同级存在
+    // 选择按钮与「生成 AI 动画」次级按钮同级存在
     expect(labels.some((text) => text.includes("生成 AI 动画"))).toBe(true);
-    expect(labels.some((text) => text.includes("到动画工作台"))).toBe(true);
+    expect(labels.some((text) => text.includes("到动画工作台"))).toBe(false);
   });
 
   it("shows a retry entry for failed strips and reports preview mode", async () => {

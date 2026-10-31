@@ -78,6 +78,58 @@ export function coverBackgroundRect(
   };
 }
 
+/** 生成“原图 + 水平镜像”的横向可平铺背景。
+ *
+ * 贴图每隔一个视口宽重复一次，既保留场景替换时的完整构图，也让滚动
+ * 接缝落在相同像素边上，避免平铺纹理的硬切。
+ */
+export function createScrollingBackgroundTexture(
+  image: HTMLImageElement,
+  viewportWidth: number,
+  viewportHeight: number,
+): HTMLCanvasElement {
+  const tile = coverBackgroundRect(
+    image.naturalWidth,
+    image.naturalHeight,
+    viewportWidth,
+    viewportHeight,
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(tile.width * 2));
+  canvas.height = Math.max(1, Math.round(tile.height));
+  const context = canvas.getContext("2d");
+  if (!context || tile.width <= 0 || tile.height <= 0) return canvas;
+
+  context.imageSmoothingEnabled = true;
+  context.drawImage(
+    image,
+    tile.cropX,
+    tile.cropY,
+    tile.cropWidth,
+    tile.cropHeight,
+    0,
+    0,
+    tile.width,
+    tile.height,
+  );
+  context.save();
+  context.translate(tile.width * 2, 0);
+  context.scale(-1, 1);
+  context.drawImage(
+    image,
+    tile.cropX,
+    tile.cropY,
+    tile.cropWidth,
+    tile.cropHeight,
+    0,
+    0,
+    tile.width,
+    tile.height,
+  );
+  context.restore();
+  return canvas;
+}
+
 export function backgroundSequenceAt(progress: number, count: number) {
   if (count <= 0) return { from: 0, to: 0, mix: 0 };
   if (count === 1) return { from: 0, to: 0, mix: 0 };

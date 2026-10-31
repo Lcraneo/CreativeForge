@@ -24,10 +24,6 @@ export const STANDARD_CLIPS: Playtest3DClip[] = [
 /** GLB 加载/校验失败原因（由 Canvas 在加载后裁定）。 */
 export type Playtest3DLoadError = "download_failed" | "parse_failed" | "no_skeleton" | "no_animations";
 
-export function isStandardAction(value: string): value is StandardAction {
-  return (STANDARD_ACTIONS as readonly string[]).includes(value);
-}
-
 export function isLoopAction(action: string): boolean {
   return LOOP_ACTIONS.has(action as StandardAction);
 }

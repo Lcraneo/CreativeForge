@@ -3,15 +3,11 @@ import { createRoot, type Root } from "react-dom/client";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider, notifyManager } from "@tanstack/react-query";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { api, ApiError } from "../api/client";
+import { api } from "../api/client";
 import { navigationHref } from "../lib/assetNavigation";
 import { useAssetStore } from "../stores/assetStore";
 import type { CreativeAsset } from "../types";
 import Layout from "./Layout";
-import AnimationStudio from "../pages/AnimationStudio";
-
-vi.mock("./ModelApiPanel", () => ({ ModelApiPanel: () => null }));
-vi.mock("./StorageApiConfig", () => ({ default: () => null }));
 
 let container: HTMLDivElement;
 let root: Root;
@@ -89,17 +85,17 @@ it("keeps explicit context even when the global asset differs; picker pages rema
   expect(navigationHref("/playtest", "?asset=chosen", "global")).toBe("/playtest?asset=chosen");
 });
 
-it("offers all 12 destinations in the mobile dialog and restores trigger focus", async () => {
+it("offers all 11 destinations in the mobile dialog and restores trigger focus", async () => {
   await render(<Layout />, "/asset?asset=chosen");
   const more = container.querySelector<HTMLButtonElement>('[aria-label="更多功能"]')!;
   more.focus();
   await act(async () => more.click());
   const dialog = container.querySelector("dialog")!;
   expect(dialog.open).toBe(true);
-  expect(dialog.querySelectorAll("a")).toHaveLength(12);
+  expect(dialog.querySelectorAll("a")).toHaveLength(11);
   expect(dialog.querySelector('a[href="/scenes?asset=chosen"]')).not.toBeNull();
   expect(dialog.querySelector('a[href="/design?asset=chosen"]')).not.toBeNull();
-  expect(dialog.querySelector('a[href="/animation?asset=chosen"]')).not.toBeNull();
+  expect(dialog.querySelector('a[href^="/animation"]')).toBeNull();
   expect(dialog.querySelector('a[href="/arcade?asset=chosen"]')).not.toBeNull();
   await act(async () =>
     dialog.dispatchEvent(new Event("cancel", { bubbles: true, cancelable: true })),
@@ -114,7 +110,7 @@ it("carries context through keyboard navigation and the complete command palette
   expect(container.querySelector("[data-location]")?.textContent).toBe("/asset?asset=chosen");
   await click("命令");
   const palette = container.querySelector('[role="dialog"]')!;
-  expect(palette.querySelectorAll("button")).toHaveLength(12);
+  expect(palette.querySelectorAll("button")).toHaveLength(11);
   const first = palette.querySelector("input")!;
   const buttons = Array.from(palette.querySelectorAll("button"));
   const last = buttons[buttons.length - 1];
@@ -133,27 +129,4 @@ it("carries context through keyboard navigation and the complete command palette
   expect(document.activeElement).toBe(first);
   await click("版本控制");
   expect(container.querySelector("[data-location]")?.textContent).toBe("/versions?asset=chosen");
-});
-
-it("blocks the animation editor and its preview requests when the explicit asset fails", async () => {
-  vi.spyOn(api, "getAsset").mockRejectedValue(new ApiError(404, "missing"));
-  const preview = vi.spyOn(api, "previewAnimationFrame");
-  const latest = vi.spyOn(api, "latestAsset");
-  await render(<AnimationStudio />, "/animation?asset=missing");
-  expect(container.querySelector('[role="alert"]')?.textContent).toContain("不存在");
-  expect(container.textContent).not.toContain("动作预览 Motion Preview");
-  expect(preview).not.toHaveBeenCalled();
-  expect(latest).not.toHaveBeenCalled();
-});
-
-it("renders the playable action workbench for a confirmed asset", async () => {
-  vi.spyOn(api, "getAsset").mockImplementation(async (id) => asset(id));
-  vi.spyOn(api, "listHistory").mockResolvedValue({ records: [], total: 0 } as never);
-  vi.spyOn(api, "listCustomActions").mockResolvedValue({ actions: [] });
-  vi.spyOn(api, "rigCheck").mockResolvedValue({ status: "ok" } as never);
-  await render(<AnimationStudio />, "/animation?asset=a");
-  await vi.waitFor(() => {
-    expect(container.textContent).toContain("基础动作");
-    expect(container.textContent).toContain("生成试玩动作");
-  });
 });

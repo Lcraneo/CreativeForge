@@ -36,6 +36,7 @@ export interface TaskEvent {
     | "MODEL_START"
     | "MODEL_ENHANCE"
     | "MODEL_IMAGE"
+    | "MODEL_VIEWS"
     | "MODEL_FALLBACK"
     | "STREAM_END"
     | "ERROR";
@@ -210,6 +211,10 @@ export interface CreativeAsset {
     side?: DesignViewImage;
     back?: DesignViewImage;
   };
+  /** 用户上传的人物正面图（强身份参考），与角色资产一同持久化 */
+  reference_image?: ReferenceImage;
+  /** 参考图流程中三视图生成失败的原因（原画与正面图仍保留，可重试） */
+  design_views_error?: { kind: string; detail: string } | null;
   restyle?: RestyleInfo;
   cutout_png?: string;
   review?: ReviewInfo;
@@ -218,6 +223,16 @@ export interface CreativeAsset {
   /** A 失败透明化：AI 生图失败（内容审核/额度/网络等）后的降级原因，
    *  此时 pixel 资产为离线示意产物；前端据此展示失败徽章 */
   model_fallback?: { kind: string; detail: string } | null;
+}
+
+/** 用户上传的人物正面图：文件与代理 URL 均指向本地持久化产物 */
+export interface ReferenceImage {
+  file: string;
+  url: string;
+  mime: string;
+  width: number;
+  height: number;
+  bytes: number;
 }
 
 export interface GeneratedImage {
@@ -412,61 +427,6 @@ export interface HistoryRecord extends HistorySummary {
   asset?: CreativeAsset | null;
 }
 
-// ── 对象存储（三渲二改造 · 第二/三项） ─────────────────────────────────────
-
-export interface StorageProviderPreset {
-  id: string;
-  label: string;
-  addressing: string;
-  regions: string[];
-  endpoint_template: string;
-  credential_hint: string;
-}
-
-/** 对象存储配置的脱敏视图（后端永不回显明文凭证） */
-export interface StorageConfigPublic {
-  id: string;
-  name: string;
-  provider: string;
-  access_key: string; // 脱敏，如 R8oG****D_Qu
-  secret_key: string; // 脱敏
-  has_secret: boolean;
-  region: string;
-  bucket: string;
-  endpoint: string;
-  is_default: boolean;
-  created_at: number;
-  updated_at: number;
-}
-
-export interface StorageConfigList {
-  configs: StorageConfigPublic[];
-  presets: Record<string, StorageProviderPreset>;
-  default_id: string | null;
-}
-
-export interface StorageTestResult {
-  ok: boolean;
-  latency_ms?: number;
-  detail?: string;
-}
-
-export interface MultipartSession {
-  session_id: string;
-  config_id: string;
-  key: string;
-  total_size: number;
-  part_size: number;
-  total_parts: number;
-  uploaded_parts: number[];
-  missing_parts: number[];
-  bytes_done: number;
-  progress: number;
-  status: string;
-  created_at: number;
-  updated_at: number;
-}
-
 /* ── P1-A 资产版本控制 ─────────────────────────────────────────── */
 
 export interface VersionView {
@@ -586,16 +546,6 @@ export interface ActionBatchSnapshot {
   failed_count?: number;
   tasks: ActionBatchTask[];
   created_at?: number;
-}
-
-export interface InterpretedAction {
-  label: string;
-  base_action: string;
-  view: string;
-  pose_config: Record<string, number>;
-  source_text?: string;
-  /** 词表外动作标记：骨骼引擎只能给近似姿态，建议切换 AI 视频驱动 */
-  suggest_video?: boolean;
 }
 
 export interface PlaytestStrip {
@@ -734,42 +684,6 @@ export interface PlaytestCustomAction {
   /** ai-video = AI 动画帧；rigged = 骨骼按保存参数渲染；procedural = 姿态引擎 */
   engine: string;
   strip: PlaytestStrip;
-}
-
-/** 动作×视角矩阵：单个 (动作, 视角) 的最新 AI 动画交付 */
-export interface ActionMatrixCell {
-  action: string;
-  view: string;
-  state: "success" | "qa-warn" | "qa-fail";
-  animation_id: string;
-  qa_grade?: string | null;
-  source?: string | null;
-  created_at?: number | null;
-  thumb_url?: string | null;
-}
-
-export interface ActionMatrixBatchTask {
-  action: string;
-  view: string;
-  status: string;
-  stage?: string | null;
-  note?: string | null;
-}
-
-export interface ActionMatrixBatch {
-  id: string;
-  status: string;
-  view: string;
-  total: number;
-  tasks: ActionMatrixBatchTask[];
-}
-
-export interface ActionMatrix {
-  asset_id: string | null;
-  actions: string[];
-  views: string[];
-  cells: ActionMatrixCell[];
-  batches: ActionMatrixBatch[];
 }
 
 /* ── 云生成能力（A 部分）─────────────────────────────────────────────── */

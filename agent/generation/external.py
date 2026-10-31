@@ -81,6 +81,33 @@ def _is_chinese(text):
     return any("\u4e00" <= ch <= "\u9fff" for ch in str(text or ""))
 
 
+_IDENTITY_LOCK_ZH = (
+    "严格以参考图人物为唯一身份来源，保持脸型、五官、发型、发色、肤色、体型比例、"
+    "服装款式与配色、配饰和标志性细节完全一致；禁止重新设计人物、禁止换脸、"
+    "禁止改变服装；只允许按下方描述调整动作、姿态与画面呈现。"
+)
+_IDENTITY_LOCK_EN = (
+    "Use the reference person as the sole identity source. Keep face shape, facial features, "
+    "hairstyle, hair color, skin tone, body proportions, costume design and colors, accessories "
+    "and signature details exactly consistent with the reference image. Do not redesign the "
+    "character, do not change the face, do not change the costume; only adjust pose, gesture "
+    "and presentation as described below."
+)
+
+
+def build_reference_image_prompt(goal, overrides=None, enhanced_prompt=None, style=None):
+    """Identity-locked prompt for image-edit models driven by a user photo.
+
+    The user photo is the only identity source; the existing composition and
+    style constraints are appended unchanged so the output still matches the
+    front-view contract downstream.
+    """
+
+    base = build_image_prompt(goal, overrides, enhanced_prompt, style)
+    lock = _IDENTITY_LOCK_ZH if _is_chinese(base) else _IDENTITY_LOCK_EN
+    return "{} {}".format(lock, base)
+
+
 def build_image_prompt(goal, overrides=None, enhanced_prompt=None, style=None):
     """Compose a style-aware image prompt.
 

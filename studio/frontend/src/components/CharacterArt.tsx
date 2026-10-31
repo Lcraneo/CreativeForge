@@ -86,7 +86,7 @@ function buildCells(
 ): Cell[] {
   const cells: Cell[] = [];
   const push = (x: number, y: number, fill: string) => cells.push([x, y, fill]);
-  const { bald, longHair, ponytail, bulky, simple } = traits;
+  const { bald, longHair, ponytail, simple } = traits;
 
   if (view === "bust") {
     // hair cap

@@ -11,6 +11,7 @@ The chat / image calls speak the OpenAI-compatible ``/chat/completions`` and
 
 import base64
 import hashlib
+import io
 import json
 import os
 import threading
@@ -1245,6 +1246,16 @@ TURNAROUND_EDIT_MODEL = "qwen-image-2.1-turbo"
 TURNAROUND_VIEW_MIN_SIDE = 96  # 单侧裁切图最小宽高（px）
 TURNAROUND_VIEW_BLANK_RATIO = 0.003  # 非白像素占比低于该值视为空白图
 
+# 用户上传的人物正面图：复用生图产物目录与 /api/generated 代理。文件名前缀
+# reference_ 用于区分模型产物，并让孤儿文件清理只处理本功能自己的文件。
+REFERENCE_EDIT_MODEL = TURNAROUND_EDIT_MODEL
+MAX_REFERENCE_BYTES = 10 * 1024 * 1024
+_REFERENCE_MIMES = {
+    "PNG": ("image/png", "png"),
+    "JPEG": ("image/jpeg", "jpg"),
+    "WEBP": ("image/webp", "webp"),
+}
+
 
 class ImageEditProvider:
     """Image edit for the turnaround views (side / back of the same character).
@@ -1478,8 +1489,16 @@ def _resolve_cloud_image(url):
     if isinstance(url, str) and url.startswith(prefix):
         path = safe_generated_path(url[len(prefix):])
         if path:
+            ext = os.path.splitext(path)[1].lower()
+            mime = {
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg",
+                ".webp": "image/webp",
+            }.get(ext, "image/png")
             with open(path, "rb") as handle:
-                return "data:image/png;base64," + base64.b64encode(handle.read()).decode("ascii")
+                return "data:{};base64,{}".format(
+                    mime, base64.b64encode(handle.read()).decode("ascii")
+                )
     return url
 
 
@@ -1577,6 +1596,122 @@ def _validate_view_image(path, view, front_path, other_path=None):
         if duplicate:
             return "{} 与{}几乎一致（{}），未执行视角变换".format(view, label, detail or "?")
     return None
+
+
+def validate_reference_image(data):
+    """Validate an uploaded front-view photo; returns its normalized metadata.
+
+    Raises ``ValueError`` with a user-actionable message for empty, oversized
+    or unsupported files. The real format comes from PIL, never the filename.
+    """
+
+    if not data:
+        raise ValueError("图片内容为空，请重新选择文件")
+    if len(data) > MAX_REFERENCE_BYTES:
+        raise ValueError("图片超过 10MB 限制，请压缩后重新上传")
+
+    from PIL import Image
+
+    try:
+        with Image.open(io.BytesIO(data)) as image:
+            image_format = (image.format or "").upper()
+            image.load()
+            width, height = image.size
+    except Exception as error:  # noqa: BLE001 - 坏文件按格式错误处理
+        raise ValueError("无法识别图片内容，请上传 JPG / PNG / WebP 图片") from error
+
+    if image_format not in _REFERENCE_MIMES:
+        raise ValueError("仅支持 JPG / PNG / WebP 图片")
+    mime, ext = _REFERENCE_MIMES[image_format]
+    return {
+        "mime": mime,
+        "ext": ext,
+        "width": width,
+        "height": height,
+        "bytes": len(data),
+    }
+
+
+def save_reference_image(data, *, sha=None):
+    """Persist a validated front-view photo under ``GENERATED_DIR``.
+
+    The ``reference_`` prefix keeps these files distinguishable from model
+    output so orphan cleanup can never touch unrelated generated assets.
+    """
+
+    meta = validate_reference_image(data)
+    digest = (sha or hashlib.sha256(data).hexdigest())[:8]
+    name = "reference_{}_{}.{}".format(int(time.time() * 1000), digest, meta.pop("ext"))
+    os.makedirs(GENERATED_DIR, exist_ok=True)
+    with open(os.path.join(GENERATED_DIR, name), "wb") as handle:
+        handle.write(data)
+    return {"file": name, "url": "/api/generated/" + name, **meta}
+
+
+def generate_from_reference(settings, reference_url, prompt, deadline=None):
+    """Generate the character art from the user's photo via the edit model.
+
+    Reuses the turnaround edit model (qwen multimodal, single reference image)
+    and refuses silent model fallbacks: when the reference path is chosen the
+    upload must actually drive the output. The result is decoded and checked
+    for blank/broken output before it is handed to the runtime.
+    """
+
+    if not reference_url:
+        raise ValueError("reference image url missing")
+    editor = ImageEditProvider({**(settings or {}), "edit_model": REFERENCE_EDIT_MODEL})
+    remaining = None
+    if deadline is not None:
+        remaining = deadline - time.time()
+        if remaining <= 0:
+            raise TurnaroundError("参考图生图超时，请稍后重试")
+
+    result = editor.edit(
+        reference_url,
+        prompt,
+        poll_timeout=max(30.0, remaining) if remaining is not None else 180.0,
+        allow_wanx_fallback=False,
+    )
+    meta = result if isinstance(result, dict) else {}
+    file_name = meta.get("file")
+    path = safe_generated_path(file_name)
+    if not path:
+        raise TurnaroundError("参考图生图未返回可读取的图片")
+
+    reason = None
+    width = height = 0
+    try:
+        from PIL import Image
+
+        with Image.open(path) as image:
+            image.load()
+            width, height = image.size
+            histogram = image.convert("L").histogram()
+        if width < TURNAROUND_VIEW_MIN_SIDE or height < TURNAROUND_VIEW_MIN_SIDE:
+            reason = "生成图尺寸过小（{}×{}）".format(width, height)
+        else:
+            blank_ratio = sum(histogram[:245]) / float(width * height)
+            if blank_ratio < TURNAROUND_VIEW_BLANK_RATIO:
+                reason = "生成图接近纯白/空白（非白像素 {:.2%}）".format(blank_ratio)
+    except Exception as error:  # noqa: BLE001 - 坏图按失败处理
+        reason = "生成图无法解码（{}）".format(error)
+
+    if reason:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+        raise TurnaroundError(reason)
+
+    return {
+        "file": file_name,
+        "url": "/api/generated/" + file_name,
+        "model": meta.get("model") or REFERENCE_EDIT_MODEL,
+        "provider": "dashscope",
+        "size": {"width": width, "height": height},
+        "prompt": prompt,
+        "reference_url": reference_url,
+    }
 
 
 def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):

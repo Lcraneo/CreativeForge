@@ -33,6 +33,7 @@ const EVENT_META: Record<string, { kind: StreamKind; title: string; tone: Stream
   MODEL_START: { kind: "generate", title: "模型开工", tone: "primary" },
   MODEL_ENHANCE: { kind: "generate", title: "提示词增强", tone: "precon" },
   MODEL_IMAGE: { kind: "generate", title: "原画出图", tone: "success" },
+  MODEL_VIEWS: { kind: "generate", title: "三视图出图", tone: "success" },
   MODEL_FALLBACK: { kind: "generate", title: "模型降级", tone: "danger" },
   ASSET_UPDATE: { kind: "engine", title: "资产更新", tone: "precon" },
   QUALITY_REPORT: { kind: "quality", title: "质量报告", tone: "warning" },

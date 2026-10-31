@@ -36,7 +36,6 @@ const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/versions": { group: "资产库", label: "版本控制" },
   "/asset": { group: "资产库", label: "资产检查" },
   "/design": { group: "资产库", label: "设计三视图" },
-  "/animation": { group: "资产库", label: "动画工作台" },
   "/export": { group: "资产库", label: "导出中心" },
   "/settings": { group: "生成", label: "模型设置" },
 };

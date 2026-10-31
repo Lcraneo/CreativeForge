@@ -34,13 +34,6 @@ const ENTRIES: Array<{ to: string; title: string; kicker: string; icon: IconName
     text: "统一的 CreativeAsset 档案：原画、调色板、动画、引擎配置与质量评估在一页读完。",
   },
   {
-    to: "/animation",
-    title: "制作动画",
-    kicker: "Animer",
-    icon: "film",
-    text: "为角色生成待机、行走、奔跑、攻击等动作，逐帧预览后直接用于试玩舞台。",
-  },
-  {
     to: "/playtest",
     title: "试玩舞台",
     kicker: "Jouer",

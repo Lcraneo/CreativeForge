@@ -28,7 +28,7 @@ import { Icon } from "../components/icons";
 import { preloadImage } from "../lib/preload";
 import {
   backgroundSequenceAt,
-  coverBackgroundRect,
+  createScrollingBackgroundTexture,
   createPlatformTexture,
   platformMaterialFor,
 } from "../lib/sceneVisuals";
@@ -71,7 +71,6 @@ const ATTACK_TAIL_MS = 120;
 const MAX_HEARTS = 3;
 const HUD_INTERVAL_MS = 100;
 const MAX_TICK_S = 0.05;
-const BACKGROUND_TILE_INDEXES = [-1, 0, 1, 2] as const;
 
 const ACTION_LABEL: Record<string, string> = {
   idle: "待机",
@@ -191,7 +190,11 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
 
   const stageBoxRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<Konva.Group | null>(null);
-  const backgroundRef = useRef<Konva.Group | null>(null);
+  const backgroundFallbackRef = useRef<Konva.Group | null>(null);
+  const backgroundFromRef = useRef<Konva.Rect | null>(null);
+  const backgroundToRef = useRef<Konva.Rect | null>(null);
+  const backgroundFromIndexRef = useRef(-1);
+  const backgroundToIndexRef = useRef(-1);
   const charRef = useRef<Konva.Image | null>(null);
   const shadowRef = useRef<Konva.Ellipse | null>(null);
   const stageWRef = useRef(DEFAULT_STAGE_W);
@@ -228,6 +231,13 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     fps: 0,
   });
   const [pickerOpen, setPickerOpen] = useState(!selected);
+  const backgroundTextures = useMemo(
+    () =>
+      backgroundImages.map((image) =>
+        createScrollingBackgroundTexture(image, stageW, STAGE_H),
+      ),
+    [backgroundImages, stageW],
+  );
 
   const history = useQuery({
     queryKey: ["arcade-people"],
@@ -293,9 +303,16 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     }
     let cancelled = false;
     Promise.all(
-      backgroundUrls.map((url, index) =>
-        preloadImage(url, index === 0 ? "high" : "low").catch(() => null),
-      ),
+      backgroundUrls.map(async (url, index) => {
+        const image = await preloadImage(url, index === 0 ? "high" : "low").catch(
+          () => null,
+        );
+        if (!image) return null;
+        // 贴图会在开始滚动前合成为 canvas；先等 decode 完成，
+        // 避免第一次绘制或背景替换时同步解码造成掉帧。
+        await image.decode?.().catch(() => undefined);
+        return image;
+      }),
     ).then((loaded) => {
       if (!cancelled) {
         setBackgroundImages(
@@ -423,7 +440,43 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   // 主循环：rAF 内只写 ref 与 Konva 节点，HUD 每 100ms 同步一次 React
   useEffect(() => {
     if (!images.idle) return;
+    backgroundFromIndexRef.current = -1;
+    backgroundToIndexRef.current = -1;
     let raf = 0;
+
+    const drawBackground = (playerX: number, camera: number) => {
+      if (backgroundTextures.length === 0) {
+        backgroundFallbackRef.current?.x(-((camera * 0.35) % stageWRef.current));
+        return;
+      }
+      const frame = backgroundSequenceAt(
+        playerX / Math.max(1, level.goalX),
+        backgroundTextures.length,
+      );
+      const tileWidth = Math.max(1, stageW * 2);
+      const x = -((camera * 0.35) % tileWidth) - tileWidth;
+      const from = backgroundFromRef.current;
+      const to = backgroundToRef.current;
+      const crossing = frame.to !== frame.from;
+
+      if (from) {
+        if (backgroundFromIndexRef.current !== frame.from) {
+          from.fillPatternImage(backgroundTextures[frame.from]);
+          backgroundFromIndexRef.current = frame.from;
+        }
+        from.x(x);
+        from.opacity(crossing ? 1 - frame.mix : 1);
+      }
+      if (to) {
+        if (crossing && backgroundToIndexRef.current !== frame.to) {
+          to.fillPatternImage(backgroundTextures[frame.to]);
+          backgroundToIndexRef.current = frame.to;
+        }
+        to.x(x);
+        to.opacity(crossing ? frame.mix : 0);
+      }
+    };
+
     const loop = (time: number) => {
       raf = requestAnimationFrame(loop);
       if (finishedRef.current) {
@@ -520,7 +573,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
         frameCountRef.current += 1;
         const camera = cameraX(next.x, stageWRef.current, level.width);
         worldRef.current?.x(-camera);
-        backgroundRef.current?.x(-((camera * 0.35) % stageWRef.current));
+        drawBackground(next.x, camera);
 
         if (time - hudAtRef.current >= HUD_INTERVAL_MS) {
           hudAtRef.current = time;
@@ -538,7 +591,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [images, level, clips]);
+  }, [images, level, clips, backgroundTextures]);
 
   const previewsData = previews.data;
   const report = useMemo(
@@ -570,37 +623,6 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     (platform) => platform.x <= level.goalX && level.goalX <= platform.x + platform.width,
   );
   const goalTop = goalPlatform?.y ?? level.groundY;
-  const backgroundFrame = backgroundSequenceAt(
-    hud.x / Math.max(1, level.goalX),
-    backgroundImages.length,
-  );
-  const backgroundLayers = backgroundImages.length
-    ? [
-        {
-          key: "from",
-          image: backgroundImages[backgroundFrame.from],
-          opacity:
-            backgroundFrame.to === backgroundFrame.from ? 1 : 1 - backgroundFrame.mix,
-        },
-        ...(backgroundFrame.to !== backgroundFrame.from
-          ? [
-              {
-                key: "to",
-                image: backgroundImages[backgroundFrame.to],
-                opacity: backgroundFrame.mix,
-              },
-            ]
-          : []),
-      ].map((layer) => ({
-        ...layer,
-        tile: coverBackgroundRect(
-          layer.image.naturalWidth,
-          layer.image.naturalHeight,
-          stageW,
-          STAGE_H,
-        ),
-      }))
-    : [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-5 px-4 py-5 md:px-6">
@@ -724,79 +746,81 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                     colors.skyBottom,
                   ]}
                 />
-                <Group ref={backgroundRef}>
-                  {backgroundLayers.map((layer) =>
-                    BACKGROUND_TILE_INDEXES.map((index) => {
-                      const mirrored = Math.abs(index) % 2 === 1;
-                      return (
-                        <KonvaImage
-                          key={`background-${layer.key}-${index}`}
-                          image={layer.image}
-                          x={
-                            mirrored
-                              ? (index + 1) * layer.tile.width
-                              : index * layer.tile.width
-                          }
-                          y={0}
-                          width={layer.tile.width}
-                          height={layer.tile.height}
-                          scaleX={mirrored ? -1 : 1}
-                          opacity={layer.opacity}
-                          crop={{
-                            x: layer.tile.cropX,
-                            y: layer.tile.cropY,
-                            width: layer.tile.cropWidth,
-                            height: layer.tile.cropHeight,
-                          }}
-                        />
-                      );
-                    }),
-                  )}
-                  {backgroundLayers.length === 0 && (
-                    <>
-                      <Ellipse
-                        x={260}
-                        y={GROUND_Y + 30}
-                        radiusX={300}
-                        radiusY={150}
-                        fill={colors.ground}
-                        opacity={0.28}
-                      />
-                      <Ellipse
-                        x={720}
-                        y={GROUND_Y + 50}
-                        radiusX={260}
-                        radiusY={120}
-                        fill={colors.floating}
-                        opacity={0.24}
-                      />
-                      <Ellipse
-                        x={1180}
-                        y={GROUND_Y + 20}
-                        radiusX={320}
-                        radiusY={160}
-                        fill={colors.ground}
-                        opacity={0.24}
-                      />
-                      <Ellipse
-                        x={1680}
-                        y={GROUND_Y + 46}
-                        radiusX={280}
-                        radiusY={130}
-                        fill={colors.floating}
-                        opacity={0.22}
-                      />
-                      <Ellipse
-                        x={2180}
-                        y={GROUND_Y + 28}
-                        radiusX={300}
-                        radiusY={150}
-                        fill={colors.ground}
-                        opacity={0.2}
-                      />
-                    </>
-                  )}
-                </Group>
+                {backgroundTextures.length > 0 ? (
+                  <>
+                    <Rect
+                      ref={backgroundFromRef}
+                      x={-stageW * 2}
+                      y={0}
+                      width={stageW * 5}
+                      height={STAGE_H}
+                      fillPriority="pattern"
+                      fillPatternImage={
+                        backgroundTextures[0] as unknown as HTMLImageElement
+                      }
+                      fillPatternRepeat="repeat"
+                      opacity={1}
+                    />
+                    <Rect
+                      ref={backgroundToRef}
+                      x={-stageW * 2}
+                      y={0}
+                      width={stageW * 5}
+                      height={STAGE_H}
+                      fillPriority="pattern"
+                      fillPatternImage={
+                        backgroundTextures[
+                          Math.min(1, backgroundTextures.length - 1)
+                        ] as unknown as HTMLImageElement
+                      }
+                      fillPatternRepeat="repeat"
+                      opacity={0}
+                    />
+                  </>
+                ) : (
+                  <Group ref={backgroundFallbackRef}>
+                    <Ellipse
+                      x={260}
+                      y={GROUND_Y + 30}
+                      radiusX={300}
+                      radiusY={150}
+                      fill={colors.ground}
+                      opacity={0.28}
+                    />
+                    <Ellipse
+                      x={720}
+                      y={GROUND_Y + 50}
+                      radiusX={260}
+                      radiusY={120}
+                      fill={colors.floating}
+                      opacity={0.24}
+                    />
+                    <Ellipse
+                      x={1180}
+                      y={GROUND_Y + 20}
+                      radiusX={320}
+                      radiusY={160}
+                      fill={colors.ground}
+                      opacity={0.24}
+                    />
+                    <Ellipse
+                      x={1680}
+                      y={GROUND_Y + 46}
+                      radiusX={280}
+                      radiusY={130}
+                      fill={colors.floating}
+                      opacity={0.22}
+                    />
+                    <Ellipse
+                      x={2180}
+                      y={GROUND_Y + 28}
+                      radiusX={300}
+                      radiusY={150}
+                      fill={colors.ground}
+                      opacity={0.2}
+                    />
+                  </Group>
+                )}
                 <Group ref={worldRef}>
                   {level.platforms.map((platform, index) => (
                     <Group key={`platform-${index}`}>
