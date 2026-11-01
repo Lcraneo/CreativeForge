@@ -2207,9 +2207,9 @@ class AnimationService:
             metas.append(source.get("ai_image"))
         if view == "side":
             design_views = asset.get("design_views")
-            if isinstance(design_views, dict):
-                # 侧视源图置顶：同链路解析（path/file/url + 远端落地）
-                metas.insert(0, design_views.get("side"))
+            # Never relabel a front image as a side source. Callers must expose
+            # the missing-view prerequisite rather than generate invalid strips.
+            metas = [design_views.get("side")] if isinstance(design_views, dict) else []
         for meta in metas:
             if not isinstance(meta, dict):
                 continue
@@ -2220,7 +2220,7 @@ class AnimationService:
             if meta.get("url"):
                 candidates.append(str(meta["url"]))
         content = asset.get("content") or {}
-        if isinstance(content, dict) and content.get("image_render"):
+        if view != "side" and isinstance(content, dict) and content.get("image_render"):
             candidates.append(os.path.join(base, os.path.basename(str(content["image_render"]))))
 
         # 远端图落地时优先用资产记录的 file 名：与 file/path 候选同链路，

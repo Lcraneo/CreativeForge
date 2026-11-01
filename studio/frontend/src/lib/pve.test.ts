@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backgroundLayerBlend, createPveRuntime, pveHud, stepPve, togglePvePause } from "./pve";
+import { backgroundLayerBlend, createPveRuntime, pveHud, stepPve, togglePvePause, pveEnemyPose, pveActionSlot, PVE_ACTION_SLOTS } from "./pve";
 import type { PveLevel } from "../types";
 
 const level: PveLevel = {
@@ -67,6 +67,105 @@ const input = {
 };
 
 describe("PVE runtime", () => {
+  it("maps the six-action package without overwriting base actions", () => {
+    expect(PVE_ACTION_SLOTS).toEqual(["idle", "walk", "windup", "attack", "hurt", "death"]);
+    expect(pveActionSlot("custom:windup")).toBe("windup");
+    expect(pveActionSlot("custom:hurt")).toBe("hurt");
+    expect(pveActionSlot("custom:death")).toBe("death");
+    expect(pveActionSlot("custom:celebrate")).toBe("custom:celebrate");
+    expect(pveActionSlot("attack")).toBe("attack");
+  });
+  it("lets ground melee enemies jump toward a reachable platform", () => {
+    const arena: PveLevel = {
+      ...level,
+      platforms: [...level.platforms, { x: 520, y: 284, width: 220, height: 16, kind: "floating" }],
+    };
+    const runtime = createPveRuntime(arena);
+    runtime.player.x = 600;
+    runtime.player.y = 284;
+    runtime.player.onGround = true;
+    runtime.enemies[0].behavior = "chaser";
+    runtime.enemies[0].shootCooldown = 99;
+    stepPve(runtime, arena, input, 0.05);
+    expect(runtime.enemies[0].navOnGround).toBe(false);
+    expect(runtime.enemies[0].navVy).toBeLessThan(0);
+    for (let index = 0; index < 30; index += 1) stepPve(runtime, arena, input, 0.05);
+    expect(runtime.enemies[0].y).toBeLessThan(level.groundY);
+  });
+
+  it("uses boss cover as real projectile collision", () => {
+    const arena: PveLevel = {
+      ...level,
+      covers: [{ id: "cover", x: 620, y: 348, width: 40, height: 120 }],
+    };
+    const runtime = createPveRuntime(arena);
+    runtime.player.x = 530;
+    runtime.projectiles.push({ id: 77, owner: "player", x: 600, y: 300, vx: 1000, vy: 0, radius: 5, damage: 1, ttl: 1, color: "#fff" });
+    const enemyHp = runtime.enemies[0].hp;
+    stepPve(runtime, arena, input, 0.05);
+    expect(runtime.projectiles).toHaveLength(0);
+    expect(runtime.enemies[0].hp).toBe(enemyHp);
+  });
+  it("exposes separate windup, hurt and death poses with death priority", () => {
+    const enemy = createPveRuntime(level).enemies[0];
+    enemy.abilityStage = "windup";
+    expect(pveEnemyPose(enemy, 1)).toBe("windup");
+    enemy.hitFlashUntil = 2;
+    expect(pveEnemyPose(enemy, 1)).toBe("hurt");
+    enemy.hp = 0;
+    expect(pveEnemyPose(enemy, 1)).toBe("death");
+  });
+  it("guardians can contest a player on a platform instead of endlessly slamming below", () => {
+    const runtime = createPveRuntime(level);
+    runtime.player.x = 600;
+    runtime.player.y = 284;
+    runtime.player.onGround = false;
+    runtime.enemies[0].behavior = "guardian";
+    runtime.enemies[0].shootCooldown = 0;
+    stepPve(runtime, level, input, 0.01);
+    expect(runtime.enemies[0].ability).toBe("shot");
+    expect(runtime.enemies[0].abilityStage).toBe("windup");
+  });
+  it("vents warn before damage and the bridge stays safe", () => {
+    const arena = { ...level, hazards: [{ id: "vent", x: 90, y: 348, width: 64, kind: "vent" as const }] };
+    const runtime = createPveRuntime(arena);
+    runtime.elapsed = 1.5;
+    stepPve(runtime, arena, input, 0.05);
+    expect(runtime.playerHp).toBe(6);
+    runtime.elapsed = 2.3;
+    stepPve(runtime, arena, input, 0.05);
+    expect(runtime.playerHp).toBe(5);
+    const safe = createPveRuntime(arena);
+    safe.elapsed = 2.3;
+    safe.player.y = 284;
+    safe.player.onGround = false;
+    stepPve(safe, arena, input, 0.05);
+    expect(safe.playerHp).toBe(6);
+  });
+  it("dodges with a finite invulnerability window and cannot repeat while held", () => {
+    const runtime = createPveRuntime(level);
+    const start = runtime.player.x;
+    stepPve(runtime, level, { ...input, dodge: true }, 0.05);
+    expect(runtime.player.x).toBeGreaterThan(start + 20);
+    expect(runtime.invulnerableUntil).toBeGreaterThan(runtime.elapsed);
+    const cooldown = runtime.dodgeCooldownUntil;
+    for (let i = 0; i < 40; i++) stepPve(runtime, level, { ...input, dodge: true }, 0.05);
+    expect(runtime.dodgeCooldownUntil).toBe(cooldown);
+    expect(runtime.invulnerableUntil).toBeLessThan(runtime.elapsed);
+  });
+
+  it("lands on floating platforms and can aim upward", () => {
+    const arena = { ...level, platforms: [...level.platforms, { x: 50, y: 240, width: 200, height: 16, kind: "floating" as const }] };
+    const runtime = createPveRuntime(arena);
+    runtime.player.y = 230;
+    runtime.player.vy = 200;
+    runtime.player.onGround = false;
+    stepPve(runtime, arena, input, 0.05);
+    expect(runtime.player.y).toBe(240);
+    expect(runtime.player.onGround).toBe(true);
+    stepPve(runtime, arena, { ...input, shoot: true, aimY: -0.7 }, 0.05);
+    expect(runtime.projectiles[0].vy).toBeLessThan(0);
+  });
   it("crossfades between scene backgrounds instead of snapping", () => {
     expect(backgroundLayerBlend(0.5, 5)).toEqual({ from: 2, to: 3, mix: 0 });
     expect(backgroundLayerBlend(0.625, 5).mix).toBeCloseTo(0.5);
@@ -171,5 +270,113 @@ describe("PVE runtime", () => {
     stepPve(runtime, level, input, 1 / 60);
     expect(runtime.elapsed).toBe(before);
     expect(pveHud(runtime, level).paused).toBe(true);
+  });
+
+  it("does not damage enemies outside the active encounter", () => {
+    const runtime = createPveRuntime(level);
+    const boss = runtime.enemies[1];
+    runtime.player.x = boss.x - 100;
+    runtime.player.facing = 1;
+    stepPve(runtime, level, { ...input, shoot: true }, 0.05);
+    for (let i = 0; i < 10; i++) stepPve(runtime, level, input, 0.05);
+    expect(boss.hp).toBe(boss.max_hp);
+  });
+
+  it("sweeps fast shots and knocks the closest active enemy away", () => {
+    const runtime = createPveRuntime(level);
+    runtime.player.x = 530;
+    stepPve(runtime, level, input, 0.01);
+    const enemy = runtime.enemies[0];
+    enemy.speed = 0;
+    const startX = enemy.x;
+    runtime.projectiles.push({ id: 100, owner: "player", x: 600, y: 300, vx: 4000, vy: 0, radius: 2, damage: 1, ttl: 1, color: "#fff" });
+    stepPve(runtime, level, input, 0.05);
+    expect(enemy.hp).toBe(enemy.max_hp - 1);
+    expect(enemy.x).toBeGreaterThan(startX);
+  });
+
+  it("does not apply contact damage when the player is above the enemy", () => {
+    const runtime = createPveRuntime(level);
+    runtime.player.x = 700;
+    runtime.player.y = 200;
+    runtime.player.onGround = false;
+    stepPve(runtime, level, input, 0.01);
+    expect(runtime.playerHp).toBe(6);
+  });
+
+  it("detects fast enemy shots crossing the player", () => {
+    const runtime = createPveRuntime(level);
+    runtime.projectiles.push({ id: 101, owner: "enemy", x: 20, y: 260, vx: 4000, vy: 0, radius: 2, damage: 1, ttl: 1, color: "#fff" });
+    stepPve(runtime, level, input, 0.05);
+    expect(runtime.playerHp).toBe(5);
+  });
+
+  it("telegraphs a locked shot before firing and lets the player move away", () => {
+    const runtime = createPveRuntime(level);
+    runtime.player.x = 530;
+    const enemy = runtime.enemies[0];
+    enemy.behavior = "shooter";
+    enemy.speed = 0;
+    enemy.shootCooldown = 0;
+    stepPve(runtime, level, input, 0.01);
+    expect(enemy.abilityStage).toBe("windup");
+    expect(runtime.projectiles).toHaveLength(0);
+    const target = enemy.abilityTargetX;
+    for (let i = 0; i < 10; i++) stepPve(runtime, level, { ...input, left: true }, 0.05);
+    expect(runtime.projectiles).toHaveLength(0);
+    expect(enemy.abilityTargetX).toBe(target);
+    for (let i = 0; i < 3; i++) stepPve(runtime, level, input, 0.05);
+    expect(runtime.projectiles.some((item) => item.owner === "enemy")).toBe(true);
+  });
+
+  it("uses different abilities for charger and chaser", () => {
+    for (const [behavior, expected] of [["charger", "charge"], ["chaser", "lunge"]] as const) {
+      const runtime = createPveRuntime(level);
+      runtime.player.x = 600;
+      const enemy = runtime.enemies[0];
+      enemy.behavior = behavior;
+      enemy.speed = 0;
+      enemy.shootCooldown = 0;
+      stepPve(runtime, level, input, 0.01);
+      expect(enemy.ability).toBe(expected);
+      expect(enemy.abilityStage).toBe("windup");
+    }
+  });
+
+  it("applies melee damage only during the active window and guard blocks it", () => {
+    const runtime = createPveRuntime(level);
+    runtime.player.x = 660;
+    const enemy = runtime.enemies[0];
+    enemy.behavior = "chaser";
+    enemy.speed = 0;
+    enemy.shootCooldown = 0;
+    stepPve(runtime, level, input, 0.01);
+    for (let i = 0; i < 8; i++) stepPve(runtime, level, input, 0.05);
+    expect(runtime.playerHp).toBe(6);
+    expect(runtime.guardAvailable).toBe(true);
+    for (let i = 0; i < 4; i++) stepPve(runtime, level, { ...input, guard: true }, 0.05);
+    expect(runtime.playerHp).toBe(6);
+    expect(runtime.guardAvailable).toBe(false);
+  });
+
+  it("switches the boss to phase two and telegraphs a dodgeable slam", () => {
+    const runtime = createPveRuntime(level);
+    runtime.enemies[0].hp = 0;
+    runtime.nextEncounterIndex = 1;
+    runtime.player.x = 1270;
+    const boss = runtime.enemies[1];
+    boss.hp = boss.max_hp / 2;
+    boss.attacks = 1;
+    boss.shootCooldown = 0;
+    stepPve(runtime, level, input, 0.01);
+    expect(boss.phase).toBe(2);
+    expect(boss.ability).toBe("slam");
+    expect(boss.abilityStage).toBe("windup");
+    expect(runtime.encounterNotice).toContain("第二阶段");
+    for (let i = 0; i < 15; i++) stepPve(runtime, level, input, 0.05);
+    expect(runtime.playerHp).toBe(6);
+    stepPve(runtime, level, { ...input, jump: true }, 0.05);
+    for (let i = 0; i < 5; i++) stepPve(runtime, level, input, 0.05);
+    expect(runtime.playerHp).toBe(6);
   });
 });

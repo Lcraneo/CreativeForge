@@ -230,6 +230,7 @@ class PveEnemyService:
         self.runtime = runtime
         self.store = store or PveEnemyStore()
         self._chat_fn = chat_fn or self._chat
+        self._rebuild_lock = threading.Lock()
         self.claim_builtin_assets()
 
     def claim_builtin_assets(self) -> None:
@@ -246,6 +247,29 @@ class PveEnemyService:
 
     def ready_profiles(self) -> list[dict]:
         return self.store.ready()
+
+    def rebuild_action(self, enemy_id: str, action: str) -> dict:
+        if action not in ("idle", "walk", "attack"):
+            raise ValueError("只支持重建 idle、walk、attack 基础动作")
+        with self._rebuild_lock:
+            record = self.store.get(enemy_id)
+            if not record:
+                raise KeyError(enemy_id)
+            if not record.get("asset_id") or record.get("status") not in ("ready", "failed"):
+                raise ValueError("敌人尚未就绪或已有生成任务")
+            settings = self.runtime.model_settings.effective()
+            if not settings.get("enabled") or not settings.get("api_key"):
+                raise ValueError("请先配置并启用动作模型")
+            record = self.store.update(enemy_id, {"status": "generating_actions", "error": None})
+            threading.Thread(target=self._rebuild_action, args=(enemy_id, record["asset_id"], action), daemon=True).start()
+            return record
+
+    def _rebuild_action(self, enemy_id: str, asset_id: str, action: str):
+        try:
+            warning = self._generate_actions(enemy_id, asset_id, [action])
+            self.store.update(enemy_id, {"status": "ready", "action_warning": warning, "error": None})
+        except Exception as error:
+            self.store.update(enemy_id, {"status": "ready", "action_warning": "动作重建失败，保留已有资源", "error": str(error)[:500]})
 
     def start_generation(
         self, prompt: str, role: str, difficulty: str = "normal"
@@ -360,7 +384,7 @@ class PveEnemyService:
             time.sleep(0.5)
         raise RuntimeError("敌人模型生成超时")
 
-    def _generate_actions(self, enemy_id: str, asset_id: str) -> str | None:
+    def _generate_actions(self, enemy_id: str, asset_id: str, rebuild: list[str] | None = None) -> str | None:
         from studio.backend.animation_service.service import AnimationService
 
         settings = self.runtime.model_settings.effective()
@@ -379,11 +403,13 @@ class PveEnemyService:
                 "animation",
             )
         )
-        source = service._asset_render(asset, view="front")
+        has_side = bool((asset.get("design_views") or {}).get("side"))
+        view = "side" if has_side else "front"
+        source = service._asset_render(asset, view=view)
         if not source:
-            return "敌人正面源图不可用，试玩时将使用程序化动作"
-        actions = ["idle", "walk", "attack"]
-        views = {action: "front" for action in actions}
+            return "敌人动作源图不可用，请补齐对应视图后重建动作"
+        actions = rebuild or ["idle", "walk", "attack"]
+        views = {action: view for action in actions}
         batch_id = service.start_action_batch(
             asset_id,
             source,
@@ -391,6 +417,8 @@ class PveEnemyService:
             actions=actions,
             enhance_context=f"{asset.get('name') or ''}；PVE 敌人",
             views_by_action=views,
+            view=view,
+            force_actions=rebuild,
         )
         self.store.update(enemy_id, {"action_batch_id": batch_id})
         deadline = time.time() + 360
@@ -399,7 +427,16 @@ class PveEnemyService:
             if snapshot.get("status") in ("done", "failed", "interrupted"):
                 if snapshot.get("status") == "done":
                     failed = int(snapshot.get("failed_count") or 0)
-                    return f"{failed} 个动作生成失败，已回退程序化动作" if failed else None
+                    if failed:
+                        return f"{failed} 个动作生成失败，已回退程序化动作"
+                    metadata = dict(asset.get("pve_action_views") or {})
+                    metadata.update(views)
+                    asset["pve_action_views"] = metadata
+                    if not rebuild:
+                        asset["pve_action_view"] = view
+                    self.runtime.assets.save(asset)
+                    self.runtime.history.patch_asset(asset_id, {"pve_action_views": metadata, "pve_action_view": asset.get("pve_action_view", "front")})
+                    return None if has_side else "缺少侧视源图，当前使用旧版正面动作，尚未达到侧视动作验收"
                 return "AI 动作生成失败，已回退程序化动作"
             time.sleep(1)
         return "AI 动作生成超时，已回退程序化动作"
@@ -422,7 +459,8 @@ class PveEnemyService:
         cache_dir = os.path.join(animation_dir, "play_cache")
         os.makedirs(cache_dir, exist_ok=True)
         actions = ["idle", "walk", "attack"]
-        views = {action: "front" for action in actions}
+        asset = self.runtime.assets.get(asset_id) or {}
+        views = {action: (asset.get("pve_action_views") or {}).get(action, asset.get("pve_action_view") or "front") for action in actions}
         strips = collect_ai_strips(
             animation_dir,
             asset_id,

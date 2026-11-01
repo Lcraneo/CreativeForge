@@ -640,7 +640,10 @@ export interface PveEncounter {
   trigger_x: number;
   lock_x: number;
   enemy_ids: string[];
+  arena_template?: "open" | "dual_platform" | "boss_cover";
 }
+
+export type PveArenaTemplate = "open" | "dual_platform" | "hazard_corridor" | "boss_cover";
 
 export interface PveLevel {
   seed: string;
@@ -651,6 +654,9 @@ export interface PveLevel {
   platforms: ScenePlatform[];
   enemies: PveEnemy[];
   encounters?: PveEncounter[];
+  hazards?: Array<{ id: string; x: number; y: number; width: number; kind: "vent" }>;
+  covers?: Array<{ id: string; x: number; y: number; width: number; height: number }>;
+  arena_segments?: Array<{ id: string; template: PveArenaTemplate; start_x: number; end_x: number }>;
 }
 
 export interface PveEnemyProfile {
@@ -692,6 +698,13 @@ export interface SceneValidation {
   issues: string[];
   max_gap: number;
   max_rise: number;
+  combat_metrics?: {
+    estimated_duration_seconds: number;
+    projectile_budget: number;
+    minimum_telegraph_seconds: number;
+    quality_ok: boolean;
+    recommendations: string[];
+  };
 }
 
 export interface ParkourGameplay {

@@ -18,19 +18,60 @@ export const PVE_SHOT_COOLDOWN = 0.22;
 export const PVE_SHOT_SPEED = 720;
 export const PVE_GUARD_COOLDOWN = 4;
 
+/** Same clock drives the vent warning, rendering and damage window. */
+export function pveVentStage(elapsed: number): "idle" | "warning" | "active" {
+  const phase = elapsed % 3;
+  return phase < 1.4 ? "idle" : phase < 2.2 ? "warning" : "active";
+}
+
 export type PveEnemyAction = "idle" | "walk" | "attack";
+export type PvePose = PveEnemyAction | "windup" | "hurt" | "death";
+export const PVE_ACTION_SLOTS: PvePose[] = ["idle", "walk", "windup", "attack", "hurt", "death"];
+export function pveActionSlot(identity: string): string {
+  const custom = identity.startsWith("custom:") ? identity.slice("custom:".length) : identity;
+  return ["windup", "hurt", "death"].includes(custom) ? custom : identity;
+}
+export const PVE_ACTION_FALLBACK: Record<PvePose, PveEnemyAction> = {
+  idle: "idle", walk: "walk", windup: "idle", attack: "attack", hurt: "idle", death: "idle",
+};
+export function pveEnemyPose(enemy: PveRuntimeEnemy, elapsed: number): PvePose {
+  if (enemy.hp <= 0) return "death";
+  if (enemy.hitFlashUntil > elapsed) return "hurt";
+  if (enemy.abilityStage === "windup") return "windup";
+  return enemy.action;
+}
 export type PveStatus = "playing" | "won" | "lost";
 export type PveAudioEvent = "shot" | "hit" | "hurt" | "guard" | "clear" | "win" | "lose";
+export type PveAbility = "shot" | "lunge" | "charge" | "slam";
+export type PveAbilityStage = "idle" | "windup" | "active" | "recovery";
+
+export const PVE_ABILITIES: Record<PveAbility, { windup: number; active: number; recovery: number; range: number }> = {
+  shot: { windup: 0.6, active: 0.1, recovery: 0.35, range: 560 },
+  lunge: { windup: 0.45, active: 0.25, recovery: 0.5, range: 140 },
+  charge: { windup: 0.65, active: 0.55, recovery: 0.8, range: 380 },
+  slam: { windup: 0.8, active: 0.2, recovery: 0.65, range: 190 },
+};
 
 export interface PveRuntimeEnemy extends PveEnemy {
   hp: number;
   awake: boolean;
   facing: 1 | -1;
   action: PveEnemyAction;
-  actionUntil: number;
   shootCooldown: number;
-  contactCooldown: number;
   hitFlashUntil: number;
+  ability: PveAbility | null;
+  abilityStage: PveAbilityStage;
+  abilityUntil: number;
+  abilityTargetX: number;
+  abilityTargetY: number;
+  abilityDirection: 1 | -1;
+  abilityHit: boolean;
+  phase: 1 | 2;
+  attacks: number;
+  deathAt: number | null;
+  navVy: number;
+  navOnGround: boolean;
+  navJumpCooldown: number;
 }
 
 export interface PveProjectile {
@@ -80,11 +121,21 @@ export interface PveRuntime {
   paused: boolean;
   hitstopRemaining: number;
   audioEvents: PveAudioEvent[];
+  dodgeUntil: number;
+  dodgeCooldownUntil: number;
+  dodgeHeld: boolean;
+  dodgeDirection: 1 | -1;
+  damageTaken: number;
+  guardsUsed: number;
+  shotsFired: number;
+  shotsHit: number;
 }
 
 export interface PveInput extends ArcadeInput {
   shoot: boolean;
   guard: boolean;
+  dodge?: boolean;
+  aimY?: number;
 }
 
 export interface PveHud {
@@ -105,12 +156,17 @@ export interface PveHud {
   guardAvailable: boolean;
   guardCooldown: number;
   paused: boolean;
+  dodgeCooldown: number;
+  damageTaken: number;
+  guardsUsed: number;
+  accuracy: number;
+  grade: "S" | "A" | "B" | "C";
 }
 
 function arcadeLevel(level: PveLevel): ArcadeLevel {
   return {
     ...level,
-    platforms: level.platforms.filter((platform) => platform.kind === "ground"),
+    platforms: level.platforms,
     coins: [],
   };
 }
@@ -169,10 +225,21 @@ export function createPveRuntime(level: PveLevel, playerHp = PVE_PLAYER_HP): Pve
       awake: false,
       facing: -1,
       action: "idle",
-      actionUntil: 0,
       shootCooldown: 0.7,
-      contactCooldown: 0,
       hitFlashUntil: 0,
+      ability: null,
+      abilityStage: "idle",
+      abilityUntil: 0,
+      abilityTargetX: 0,
+      abilityTargetY: 0,
+      abilityDirection: -1,
+      abilityHit: false,
+      phase: 1,
+      attacks: 0,
+      deathAt: null,
+      navVy: 0,
+      navOnGround: true,
+      navJumpCooldown: 0,
     })),
     projectiles: [],
     particles: [],
@@ -195,6 +262,14 @@ export function createPveRuntime(level: PveLevel, playerHp = PVE_PLAYER_HP): Pve
     paused: false,
     hitstopRemaining: 0,
     audioEvents: [],
+    dodgeUntil: 0,
+    dodgeCooldownUntil: 0,
+    dodgeHeld: false,
+    dodgeDirection: 1,
+    damageTaken: 0,
+    guardsUsed: 0,
+    shotsFired: 0,
+    shotsHit: 0,
   };
 }
 
@@ -225,7 +300,19 @@ export function pveHud(runtime: PveRuntime, level: PveLevel): PveHud {
     guardAvailable: runtime.guardAvailable || runtime.elapsed >= runtime.guardCooldownUntil,
     guardCooldown: Math.max(0, runtime.guardCooldownUntil - runtime.elapsed),
     paused: runtime.paused,
+    dodgeCooldown: Math.max(0, runtime.dodgeCooldownUntil - runtime.elapsed),
+    damageTaken: runtime.damageTaken,
+    guardsUsed: runtime.guardsUsed,
+    accuracy: runtime.shotsFired ? runtime.shotsHit / runtime.shotsFired : 0,
+    grade: pveGrade(runtime),
   };
+}
+
+export function pveGrade(runtime: Pick<PveRuntime, "status" | "elapsed" | "damageTaken" | "guardsUsed">): "S" | "A" | "B" | "C" {
+  if (runtime.status !== "won") return "C";
+  if (runtime.damageTaken === 0 && runtime.elapsed <= 150) return "S";
+  if (runtime.damageTaken <= 2 && runtime.elapsed <= 180) return "A";
+  return runtime.damageTaken <= 5 ? "B" : "C";
 }
 
 export function enemyHalfWidth(enemy: PveRuntimeEnemy): number {
@@ -268,12 +355,14 @@ function damagePlayer(runtime: PveRuntime, damage: number) {
     runtime.guardAvailable = false;
     runtime.guarding = false;
     runtime.guardCooldownUntil = runtime.elapsed + PVE_GUARD_COOLDOWN;
+    runtime.guardsUsed += 1;
     runtime.invulnerableUntil = runtime.elapsed + 0.3;
     emitAudio(runtime, "guard");
     burst(runtime, runtime.player.x, runtime.player.y - 82, "#9edff2", 8, 70);
     return;
   }
   runtime.playerHp = Math.max(0, runtime.playerHp - damage);
+  runtime.damageTaken += damage;
   runtime.invulnerableUntil = runtime.elapsed + 0.85;
   runtime.hitstopRemaining = Math.max(runtime.hitstopRemaining, 42);
   emitAudio(runtime, "hurt");
@@ -287,8 +376,8 @@ function damagePlayer(runtime: PveRuntime, damage: number) {
 function spawnEnemyShot(runtime: PveRuntime, enemy: PveRuntimeEnemy) {
   const originX = enemy.x + enemy.facing * enemyHalfWidth(enemy) * 0.55;
   const originY = enemy.y - enemyHeight(enemy) * 0.55;
-  const targetX = runtime.player.x;
-  const targetY = runtime.player.y - CHAR_HEIGHT * 0.5;
+  const targetX = enemy.abilityTargetX;
+  const targetY = enemy.abilityTargetY;
   const dx = targetX - originX;
   const dy = targetY - originY;
   const distance = Math.max(1, Math.hypot(dx, dy));
@@ -305,27 +394,36 @@ function spawnEnemyShot(runtime: PveRuntime, enemy: PveRuntimeEnemy) {
     ttl: 4,
     color: enemy.projectile_color || (enemy.kind === "boss" ? "#8feaff" : "#a9df72"),
   });
-  enemy.action = "attack";
-  enemy.actionUntil = runtime.elapsed + 0.32;
 }
 
-function playerHit(runtime: PveRuntime, projectile: PveProjectile): boolean {
-  const playerCenterY = runtime.player.y - CHAR_HEIGHT * 0.5;
-  return (
-    Math.abs(projectile.x - runtime.player.x) < projectile.radius + 25 &&
-    Math.abs(projectile.y - playerCenterY) < projectile.radius + CHAR_HEIGHT * 0.38
-  );
+function chooseAbility(enemy: PveRuntimeEnemy): PveAbility {
+  if (enemy.kind === "boss") return enemy.phase === 2 ? (["shot", "slam", "charge"] as const)[enemy.attacks % 3] : "shot";
+  if (enemy.behavior === "charger") return "charge";
+  if (enemy.behavior === "guardian") return "slam";
+  if (enemy.behavior === "shooter") return "shot";
+  return "lunge";
 }
 
-function projectileHitsEnemy(projectile: PveProjectile, enemy: PveRuntimeEnemy): boolean {
-  if (enemy.hp <= 0) return false;
-  const halfWidth = enemyHalfWidth(enemy);
-  const height = enemyHeight(enemy);
-  return (
-    Math.abs(projectile.x - enemy.x) < halfWidth + projectile.radius &&
-    projectile.y >= enemy.y - height &&
-    projectile.y <= enemy.y + 4
-  );
+// Sweep the projectile through the whole frame, including its radius. Return
+// the first impact fraction so a fast shot hits the nearest enemy in its path.
+function impactTime(p: PveProjectile, dt: number, left: number, top: number, right: number, bottom: number): number | null {
+  let enter = 0;
+  let exit = 1;
+  for (const [position, delta, min, max] of [
+    [p.x, p.vx * dt, left - p.radius, right + p.radius],
+    [p.y, p.vy * dt, top - p.radius, bottom + p.radius],
+  ]) {
+    if (delta === 0) {
+      if (position < min || position > max) return null;
+      continue;
+    }
+    const a = (min - position) / delta;
+    const b = (max - position) / delta;
+    enter = Math.max(enter, Math.min(a, b));
+    exit = Math.min(exit, Math.max(a, b));
+    if (enter > exit) return null;
+  }
+  return enter;
 }
 
 function updateEncounter(runtime: PveRuntime, level: PveLevel, playerX: number): number {
@@ -364,6 +462,55 @@ function updateEncounter(runtime: PveRuntime, level: PveLevel, playerX: number):
   return playerX;
 }
 
+function stepEnemyNavigation(
+  enemy: PveRuntimeEnemy,
+  level: PveLevel,
+  player: PlayerState,
+  direction: 1 | -1,
+  shouldMove: boolean,
+  dt: number,
+) {
+  enemy.navJumpCooldown = Math.max(0, enemy.navJumpCooldown - dt);
+  if (shouldMove) enemy.x += direction * enemy.speed * dt;
+  enemy.x = Math.max(80, Math.min(level.width - 80, enemy.x));
+
+  const canClimb = enemy.kind !== "boss" && ["chaser", "charger"].includes(enemy.behavior || "chaser");
+  if (
+    canClimb && enemy.navOnGround && enemy.navJumpCooldown <= 0 &&
+    player.y < enemy.y - 28 && Math.abs(player.x - enemy.x) < 300
+  ) {
+    enemy.navVy = -500;
+    enemy.navOnGround = false;
+    enemy.navJumpCooldown = 0.9;
+  }
+
+  const previousY = enemy.y;
+  if (!enemy.navOnGround) {
+    enemy.navVy = Math.min(1000, enemy.navVy + 1600 * dt);
+    enemy.y += enemy.navVy * dt;
+  }
+  if (enemy.navVy >= 0) {
+    let landing: number | null = null;
+    for (const platform of level.platforms) {
+      const half = Math.min(26, enemyHalfWidth(enemy));
+      const within = enemy.x + half > platform.x && enemy.x - half < platform.x + platform.width;
+      if (within && previousY <= platform.y + 1 && enemy.y >= platform.y) {
+        landing = landing === null ? platform.y : Math.min(landing, platform.y);
+      }
+    }
+    if (landing !== null) {
+      enemy.y = landing;
+      enemy.navVy = 0;
+      enemy.navOnGround = true;
+    } else if (enemy.navOnGround) {
+      const supported = level.platforms.some((platform) =>
+        enemy.x >= platform.x && enemy.x <= platform.x + platform.width && Math.abs(enemy.y - platform.y) < 2,
+      );
+      if (!supported) enemy.navOnGround = false;
+    }
+  }
+}
+
 export function stepPve(
   runtime: PveRuntime,
   level: PveLevel,
@@ -382,8 +529,21 @@ export function stepPve(
     runtime.guardAvailable = true;
   }
   runtime.guarding = input.guard && runtime.guardAvailable;
+  if (input.dodge && !runtime.dodgeHeld && runtime.elapsed >= runtime.dodgeCooldownUntil) {
+    runtime.dodgeDirection = input.left !== input.right ? (input.right ? 1 : -1) : runtime.player.facing;
+    runtime.dodgeUntil = runtime.elapsed + 0.22;
+    runtime.dodgeCooldownUntil = runtime.elapsed + 1.6;
+    runtime.invulnerableUntil = Math.max(runtime.invulnerableUntil, runtime.elapsed + 0.18);
+  }
+  runtime.dodgeHeld = Boolean(input.dodge);
   const physicsLevel = arcadeLevel(level);
   let player = stepPlayer(runtime.player, input, physicsLevel, dt);
+  if (runtime.elapsed < runtime.dodgeUntil) {
+    const x = Math.max(24, Math.min(level.width - 24, runtime.player.x + runtime.dodgeDirection * 560 * dt));
+    player = stepPlayer({ ...runtime.player, x }, { ...input, left: false, right: false }, physicsLevel, dt);
+    player.facing = runtime.dodgeDirection;
+    player.vx = runtime.dodgeDirection * 560;
+  }
   player = {
     ...player,
     x: updateEncounter(runtime, level, player.x),
@@ -393,6 +553,16 @@ export function stepPve(
     player = respawn(physicsLevel, level.spawnX);
   }
   runtime.player = player;
+  if (runtime.status !== "playing") return runtime;
+  if (pveVentStage(runtime.elapsed) === "active") {
+    for (const hazard of level.hazards ?? []) {
+      if (player.x + 22 > hazard.x && player.x - 22 < hazard.x + hazard.width &&
+          player.y > hazard.y - 28 && player.y - CHAR_HEIGHT < hazard.y) {
+        damagePlayer(runtime, 1);
+      }
+    }
+  }
+  if (runtime.status !== "playing") return runtime;
 
   if (input.shoot && runtime.shotCooldown <= 0) {
     runtime.shotCooldown = PVE_SHOT_COOLDOWN;
@@ -401,13 +571,14 @@ export function stepPve(
       owner: "player",
       x: player.x + player.facing * 30,
       y: player.y - 82,
-      vx: player.facing * PVE_SHOT_SPEED,
-      vy: 0,
+      vx: player.facing * PVE_SHOT_SPEED / Math.hypot(1, Math.max(-1, Math.min(1, input.aimY ?? 0))),
+      vy: Math.max(-1, Math.min(1, input.aimY ?? 0)) * PVE_SHOT_SPEED / Math.hypot(1, Math.max(-1, Math.min(1, input.aimY ?? 0))),
       radius: 7,
       damage: PVE_PLAYER_DAMAGE,
       ttl: 1.5,
       color: "#f1c66c",
     });
+    runtime.shotsFired += 1;
     emitAudio(runtime, "shot");
   }
 
@@ -421,43 +592,71 @@ export function stepPve(
       continue;
     }
     enemy.awake = true;
+    if (enemy.kind === "boss" && enemy.phase === 1 && enemy.hp <= enemy.max_hp / 2) {
+      enemy.phase = 2;
+      runtime.encounterNotice = `${enemy.name} · 第二阶段`;
+      runtime.encounterNoticeUntil = runtime.elapsed + 2;
+    }
     const distanceX = Math.abs(enemy.x - player.x);
     const direction = player.x < enemy.x ? -1 : 1;
-    enemy.facing = direction;
     enemy.shootCooldown = Math.max(0, enemy.shootCooldown - dt);
-    enemy.contactCooldown = Math.max(0, enemy.contactCooldown - dt);
-    if (runtime.elapsed < enemy.actionUntil) {
-      enemy.action = "attack";
+    if (enemy.ability && enemy.abilityStage !== "idle") {
+      const ability = enemy.ability;
+      const config = PVE_ABILITIES[ability];
+      if (runtime.elapsed >= enemy.abilityUntil) {
+        if (enemy.abilityStage === "windup") {
+          enemy.abilityStage = "active";
+          enemy.abilityUntil = runtime.elapsed + config.active;
+          if (ability === "shot") spawnEnemyShot(runtime, enemy);
+        } else if (enemy.abilityStage === "active") {
+          enemy.abilityStage = "recovery";
+          enemy.abilityUntil = runtime.elapsed + config.recovery;
+        } else {
+          enemy.abilityStage = "idle";
+          enemy.ability = null;
+          enemy.shootCooldown = Math.max(0.5, enemy.attack_interval * (enemy.phase === 2 ? 0.8 : 1));
+        }
+      }
+      enemy.action = enemy.abilityStage === "active" ? "attack" : "idle";
+      if (enemy.abilityStage === "active" && ability !== "shot") {
+        const beforeX = enemy.x;
+        if (ability === "charge" || ability === "lunge") {
+          const speed = ability === "charge" ? 420 : 260;
+          enemy.x = Math.max(80, Math.min(level.width - 80, enemy.x + enemy.abilityDirection * speed * dt));
+        }
+        const reach = ability === "slam" ? config.range : enemyHalfWidth(enemy) + 25;
+        const overlapsX = player.x >= Math.min(beforeX, enemy.x) - reach && player.x <= Math.max(beforeX, enemy.x) + reach;
+        const overlapsY = ability === "slam"
+          ? player.y > enemy.y - 24 && player.y - CHAR_HEIGHT < enemy.y
+          : player.y > enemy.y - enemyHeight(enemy) && player.y - CHAR_HEIGHT < enemy.y;
+        if (!enemy.abilityHit && overlapsX && overlapsY) {
+          damagePlayer(runtime, enemy.damage);
+          enemy.abilityHit = true;
+        }
+      }
       continue;
     }
 
-    const behavior = enemy.behavior || "chaser";
-    const preferredRange =
-      behavior === "shooter" || behavior === "guardian"
-        ? enemy.kind === "boss"
-          ? 270
-          : 230
-        : behavior === "charger"
-          ? 40
-          : 110;
-    const shouldMove = distanceX > preferredRange;
+    enemy.facing = direction;
+    // A guardian cannot hit a raised target with a ground-only slam. Switch to
+    // a telegraphed shot instead of getting stuck attacking an unreachable plane.
+    const ability = enemy.behavior === "guardian" && enemy.kind !== "boss" && player.y < enemy.y - 28
+      ? "shot"
+      : chooseAbility(enemy);
+    const config = PVE_ABILITIES[ability];
+    const range = enemy.kind === "boss" && ability === "shot" ? 680 : config.range;
+    const shouldMove = distanceX > range * 0.8;
     enemy.action = shouldMove ? "walk" : "idle";
-    if (shouldMove) {
-      const charge = behavior === "charger" && distanceX < 420 ? 1.55 : 1;
-      enemy.x += direction * enemy.speed * charge * dt;
-      enemy.x = Math.max(80, Math.min(level.width - 80, enemy.x));
-    }
-
-    const attackRange = enemy.kind === "boss" ? 680 : behavior === "shooter" ? 560 : 430;
-    if (distanceX < attackRange && enemy.shootCooldown <= 0) {
-      spawnEnemyShot(runtime, enemy);
-      enemy.shootCooldown = enemy.attack_interval;
-    }
-
-    const contactRange = enemy.kind === "boss" ? 104 : behavior === "charger" ? 64 : 48;
-    if (distanceX < contactRange && enemy.contactCooldown <= 0) {
-      damagePlayer(runtime, enemy.damage);
-      enemy.contactCooldown = 1.1;
+    stepEnemyNavigation(enemy, level, player, direction, shouldMove, dt);
+    if (distanceX < range && enemy.shootCooldown <= 0) {
+      enemy.ability = ability;
+      enemy.abilityStage = "windup";
+      enemy.abilityUntil = runtime.elapsed + config.windup;
+      enemy.abilityTargetX = player.x;
+      enemy.abilityTargetY = player.y - CHAR_HEIGHT * 0.5;
+      enemy.abilityDirection = direction;
+      enemy.abilityHit = false;
+      enemy.attacks += 1;
     }
   }
 
@@ -469,23 +668,43 @@ export function stepPve(
       y: projectile.y + projectile.vy * dt,
       ttl: projectile.ttl - dt,
     };
-    if (moved.ttl <= 0) continue;
+    const travelDt = Math.min(dt, Math.max(0, projectile.ttl));
+    if (travelDt <= 0) continue;
+    const coverHit = (level.covers ?? []).some((cover) =>
+      impactTime(projectile, travelDt, cover.x, cover.y - cover.height, cover.x + cover.width, cover.y) !== null,
+    );
+    if (coverHit) {
+      burst(runtime, moved.x, moved.y, "#d8d2c3", 5, 45);
+      continue;
+    }
     if (moved.owner === "player") {
-      const target = runtime.enemies.find((enemy) => projectileHitsEnemy(moved, enemy));
+      let target: PveRuntimeEnemy | undefined;
+      let nearest = Infinity;
+      for (const enemy of runtime.enemies) {
+        if (enemy.hp <= 0 || !encounter?.enemy_ids.includes(enemy.id)) continue;
+        const halfWidth = enemyHalfWidth(enemy);
+        const hit = impactTime(projectile, travelDt, enemy.x - halfWidth, enemy.y - enemyHeight(enemy), enemy.x + halfWidth, enemy.y + 4);
+        if (hit !== null && hit < nearest) {
+          nearest = hit;
+          target = enemy;
+        }
+      }
       if (target) {
         target.hp = Math.max(0, target.hp - moved.damage);
+        if (target.hp === 0) target.deathAt = runtime.elapsed;
         target.hitFlashUntil = runtime.elapsed + 0.16;
-        target.x += target.facing * 20;
+        runtime.shotsHit += 1;
+        target.x = Math.max(80, Math.min(level.width - 80, target.x + Math.sign(projectile.vx) * 20));
         runtime.hitstopRemaining = Math.max(runtime.hitstopRemaining, 48);
         emitAudio(runtime, "hit");
         burst(runtime, moved.x, moved.y, moved.color, target.kind === "boss" ? 14 : 9);
         continue;
       }
-    } else if (playerHit(runtime, moved)) {
+    } else if (impactTime(projectile, travelDt, player.x - 25, player.y - CHAR_HEIGHT * 0.88, player.x + 25, player.y - CHAR_HEIGHT * 0.12) !== null) {
       damagePlayer(runtime, moved.damage);
       continue;
     }
-    projectiles.push(moved);
+    if (moved.ttl > 0) projectiles.push(moved);
   }
   runtime.projectiles = projectiles;
 

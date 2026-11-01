@@ -301,6 +301,9 @@ export const api = {
       { method: "DELETE" },
     ),
 
+  rebuildPveAction: (enemyId: string, action: string) =>
+    request<import("../types").PveEnemyProfile>(`/api/pve/enemies/${encodeURIComponent(enemyId)}/actions/${encodeURIComponent(action)}/rebuild`, { method: "POST" }),
+
   generatePveEnemy: (
     prompt: string,
     role: "minion" | "boss",

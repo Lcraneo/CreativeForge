@@ -2089,6 +2089,12 @@ def build_router(runtime):
             # walk/run bands on first play.
             for action in ("walk", "run", "jump"):
                 expected_views[action] = "front"
+            if asset.get("pve_action_view") == "side":
+                for action in ("idle", "walk", "attack"):
+                    expected_views[action] = "side"
+            for action, view in (asset.get("pve_action_views") or {}).items():
+                if action in ("idle", "walk", "attack") and view in ("front", "side"):
+                    expected_views[action] = view
 
         from studio.backend.animation_service.service import collect_ai_strips
 

@@ -218,7 +218,9 @@ class SceneApiTests(unittest.TestCase):
         self.assertEqual(encounters[-1]["kind"], "boss")
         self.assertTrue(all(encounter["enemy_ids"] for encounter in encounters))
         platforms = scene["gameplay"]["level"]["platforms"]
-        self.assertEqual([platform["kind"] for platform in platforms], ["ground"])
+        self.assertEqual(platforms[0]["kind"], "ground")
+        self.assertTrue(any(platform["kind"] == "floating" for platform in platforms))
+        self.assertTrue(scene["gameplay"]["level"]["hazards"])
         self.assertNotIn("coins", scene["gameplay"]["level"])
         listed = self.client.get("/api/scenes").json()["scenes"]
         self.assertEqual(listed[0]["gameplay_type"], "pve")

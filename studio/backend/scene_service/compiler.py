@@ -346,7 +346,40 @@ def validate_pve(level: dict, difficulty: str) -> dict:
     platforms = level.get("platforms") or []
     enemies = level.get("enemies") or []
     encounters = level.get("encounters") or []
+    templates = {"open", "dual_platform", "hazard_corridor", "boss_cover"}
+    segments = level.get("arena_segments") or []
+    if {segment.get("template") for segment in segments} != templates:
+        issues.append("战场必须包含开放场、双层平台、危险走廊和 Boss 掩体四种模板")
+    previous_end = -1
+    for segment in segments:
+        start, end = segment.get("start_x", -1), segment.get("end_x", -1)
+        if start < previous_end or start < 0 or end <= start or end > level.get("width", 0):
+            issues.append("战场模板边界无效或重叠")
+        previous_end = end
+    for platform in platforms:
+        if platform.get("kind") == "floating":
+            rise = level.get("groundY", GROUND_Y) - platform.get("y", 0)
+            if not 0 < rise <= 100 or platform.get("width", 0) < 80:
+                issues.append("浮台超出单次跳跃可达范围或过窄")
+    for hazard in level.get("hazards") or []:
+        x, width = hazard.get("x", -1), hazard.get("width", 0)
+        if hazard.get("kind") != "vent" or not 0 < width <= 80 or x < 0 or x + width > level.get("width", 0):
+            issues.append("危险区域类型或范围无效")
+        if not any(p.get("kind") == "floating" and p["x"] <= x - 22 and
+                   p["x"] + p["width"] >= x + width + 22 and
+                   28 < hazard.get("y", 0) - p["y"] <= 100 for p in platforms):
+            issues.append("危险区域缺少可达的安全桥面")
+    covers = level.get("covers") or []
+    if not covers:
+        issues.append("Boss 战缺少可阻挡直线弹道的掩体")
+    for cover in covers:
+        if cover.get("width", 0) < 24 or not 60 <= cover.get("height", 0) <= 150:
+            issues.append("Boss 掩体尺寸无效")
+        if not 0 <= cover.get("x", -1) < level.get("width", 0):
+            issues.append("Boss 掩体位置无效")
     enemy_ids = {str(enemy.get("id")) for enemy in enemies}
+    if len(enemy_ids) != len(enemies) or any(not enemy.get("id") for enemy in enemies):
+        issues.append("敌人 ID 缺失或重复")
     if len(platforms) < 1:
         issues.append("战斗路线缺少地面")
     if not _supports(level, level.get("spawnX", -1)):
@@ -357,14 +390,38 @@ def validate_pve(level: dict, difficulty: str) -> dict:
         issues.append("缺少 Boss")
     if not encounters:
         issues.append("缺少遭遇战序列")
+    assigned: set[str] = set()
+    previous_lock = -1
+    encounter_ids: set[str] = set()
     for encounter in encounters:
+        encounter_id = encounter.get("id")
+        if not encounter_id or encounter_id in encounter_ids:
+            issues.append("遭遇战 ID 缺失或重复")
+        encounter_ids.add(encounter_id)
         if encounter.get("trigger_x", 0) >= encounter.get("lock_x", 0):
             issues.append("遭遇战触发点越过了封锁点")
-        missing = set(encounter.get("enemy_ids") or []) - enemy_ids
+        if encounter.get("trigger_x", 0) < previous_lock:
+            issues.append("遭遇战顺序或边界重叠")
+        previous_lock = encounter.get("lock_x", 0)
+        ids = encounter.get("enemy_ids") or []
+        if not ids:
+            issues.append("遭遇战没有敌人")
+        if len(set(ids)) != len(ids) or assigned.intersection(ids):
+            issues.append("敌人被重复分配到遭遇战")
+        assigned.update(ids)
+        missing = set(ids) - enemy_ids
         if missing:
             issues.append("遭遇战引用了不存在的敌人")
+    if enemy_ids - assigned:
+        issues.append("存在未分配遭遇战的敌人")
     if encounters and encounters[-1].get("kind") != "boss":
         issues.append("最后一个遭遇战必须是 Boss")
+    if encounters:
+        boss_ids = {enemy.get("id") for enemy in enemies if enemy.get("kind") == "boss"}
+        if not boss_ids or not boss_ids.issubset(set(encounters[-1].get("enemy_ids") or [])):
+            issues.append("Boss 必须全部分配到最后的守关战")
+        if any(encounter.get("kind") == "boss" for encounter in encounters[:-1]):
+            issues.append("只有最后一个遭遇战可以是 Boss 战")
     for enemy in enemies:
         if not _supports(level, enemy.get("x", -1)):
             issues.append("{} 没有落点".format(enemy.get("name") or enemy.get("id")))
@@ -372,11 +429,41 @@ def validate_pve(level: dict, difficulty: str) -> dict:
             issues.append("{} 生命值无效".format(enemy.get("name") or enemy.get("id")))
     if difficulty not in DIFFICULTIES:
         issues.append("难度无效")
+    duration_factor = {"easy": 3.6, "normal": 3.0, "hard": 2.0}.get(difficulty, 3.0)
+    total_hp = sum(max(0, float(enemy.get("max_hp", 0))) for enemy in enemies)
+    estimated_duration = round(
+        total_hp * duration_factor + level.get("width", 0) / 220 + len(encounters) * 4,
+        1,
+    )
+    projectile_budget = max(
+        (
+            sum(
+                max(1, round(4 / max(0.5, float(enemy.get("attack_interval", 2)))))
+                for enemy in enemies if enemy.get("id") in (encounter.get("enemy_ids") or [])
+            )
+            for encounter in encounters
+        ),
+        default=0,
+    )
+    recommendations = []
+    if estimated_duration < 90:
+        recommendations.append("预计战斗偏短，建议提高敌人生命或增加遭遇战")
+    elif estimated_duration > 160:
+        recommendations.append("预计战斗偏长，建议降低生命或缩短路线")
+    if projectile_budget > 20:
+        recommendations.append("同屏投射物预算过高，建议延长攻击间隔")
     return {
         "ok": not issues,
         "issues": issues,
         "max_gap": 0,
         "max_rise": 0,
+        "combat_metrics": {
+            "estimated_duration_seconds": estimated_duration,
+            "projectile_budget": projectile_budget,
+            "minimum_telegraph_seconds": 0.45,
+            "quality_ok": 90 <= estimated_duration <= 160 and projectile_budget <= 20,
+            "recommendations": recommendations,
+        },
     }
 
 
@@ -471,6 +558,13 @@ def compile_pve(
         "display_height": 224,
     }
     enemies = []
+    # Builtin profiles store normal-mode defaults. Scene difficulty must still
+    # affect their combat values; custom profiles retain explicit user stats.
+    if minion_profile.get("builtin"):
+        minion_stats = {**minion_stats, "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
+                        "speed": {"easy": 58, "normal": 72, "hard": 88}[difficulty]}
+    if boss_profile.get("builtin"):
+        boss_stats = {**boss_stats, "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty]}
     boss_x = width - 420
     room1_lock = min(1380, boss_x - 1300)
     room2_start = room1_lock + 180
@@ -481,6 +575,37 @@ def compile_pve(
         (room2_start, room2_lock, list(range(half, slime_count))),
     ]
     room_encounters = []
+    hazards = []
+    covers = []
+    boss_start = boss_x - 520
+    dual_start = room2_start
+    dual_end = min(room2_lock, dual_start + 360)
+    corridor_end = boss_start - 40
+    corridor_start = max(dual_end + 40, corridor_end - 240)
+    arena_segments = [
+        {"id": "arena_open", "template": "open", "start_x": 620, "end_x": room1_lock},
+        {"id": "arena_dual", "template": "dual_platform", "start_x": dual_start, "end_x": dual_end},
+        {"id": "arena_hazard", "template": "hazard_corridor", "start_x": corridor_start, "end_x": corridor_end},
+        {"id": "arena_boss", "template": "boss_cover", "start_x": boss_start, "end_x": boss_x + 100},
+    ]
+    # Dual-level template: two reachable one-way platforms with overlapping jump arcs.
+    platforms.extend([
+        {"x": dual_start + 20, "y": ground_y - 64, "width": 190, "height": 16, "kind": "floating"},
+        {"x": dual_start + 190, "y": ground_y - 96, "width": 190, "height": 16, "kind": "floating"},
+    ])
+    # Hazard corridor: a bridge spans the vent and leaves a ground-level jump route.
+    bridge_x = corridor_start + 10
+    bridge_width = max(150, corridor_end - corridor_start - 20)
+    platforms.append({"x": bridge_x, "y": ground_y - 64,
+                      "width": bridge_width, "height": 16, "kind": "floating"})
+    vent_width = min(64, max(40, bridge_width - 60))
+    hazards.append({"id": "vent_corridor", "x": bridge_x + (bridge_width - vent_width) // 2,
+                    "y": ground_y, "width": vent_width, "kind": "vent"})
+    # Boss cover blocks projectiles; positions leave a readable lane between covers.
+    covers.extend([
+        {"id": "boss_cover_1", "x": boss_start + 125, "y": ground_y, "width": 34, "height": 104},
+        {"id": "boss_cover_2", "x": boss_start + 290, "y": ground_y, "width": 38, "height": 124},
+    ])
     for room_index, (room_start, room_lock, indexes) in enumerate(rooms, start=1):
         if not indexes:
             continue
@@ -519,6 +644,7 @@ def compile_pve(
                 "trigger_x": room_start,
                 "lock_x": room_lock,
                 "enemy_ids": enemy_ids,
+                "arena_template": "open" if room_index == 1 else "dual_platform",
             }
         )
 
@@ -549,6 +675,7 @@ def compile_pve(
             "trigger_x": boss_x - 520,
             "lock_x": boss_x - 105,
             "enemy_ids": ["boss_1"],
+            "arena_template": "boss_cover",
         }
     )
     return {
@@ -560,4 +687,7 @@ def compile_pve(
         "platforms": platforms,
         "enemies": enemies,
         "encounters": room_encounters,
+        "hazards": hazards,
+        "covers": covers,
+        "arena_segments": arena_segments,
     }

@@ -20,6 +20,11 @@ import { preloadImage } from "../lib/preload";
 import { cameraX, type ArcadeAction } from "../lib/arcade";
 import {
   PVE_PLAYER_HP,
+  PVE_ABILITIES,
+  pveVentStage,
+  pveEnemyPose,
+  pveActionSlot,
+  PVE_ACTION_FALLBACK,
   activePveEncounter,
   backgroundLayerBlend,
   consumePveAudioEvents,
@@ -169,11 +174,11 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   });
   const enemyPreviewQueries = useQueries({
     queries: enemyAssetIds.map((assetId) => ({
-      queryKey: ["pve-enemy-previews", assetId],
+      queryKey: ["pve-enemy-previews", assetId, readyEnemyProfiles.find((profile) => profile.asset_id === assetId)?.updated_at],
       queryFn: () =>
         api.playtestPreviews(assetId, {
           actions: ["idle", "walk", "attack"],
-          includeCustom: false,
+          includeCustom: true,
         }),
       enabled: Boolean(assetId),
     })),
@@ -185,6 +190,20 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     if (sequenced.length > 0) return sequenced;
     return scene?.theme.background_url ? [scene.theme.background_url] : [];
   }, [scene]);
+
+  const storedBestTime = useMemo(() => {
+    if (!sceneId) return null;
+    const stored = Number(window.localStorage.getItem(`creativeforge:pve-best:${sceneId}`));
+    return Number.isFinite(stored) && stored > 0 ? stored : null;
+  }, [sceneId]);
+  const bestTime = hud?.status === "won"
+    ? Math.min(storedBestTime ?? Infinity, hud.elapsed)
+    : storedBestTime;
+
+  useEffect(() => {
+    if (!sceneId || hud?.status !== "won") return;
+    window.localStorage.setItem(`creativeforge:pve-best:${sceneId}`, String(bestTime));
+  }, [bestTime, hud?.status, sceneId]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -226,10 +245,11 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           const target = assetId === selected?.id ? player : (enemies[assetId] ??= {});
           return Object.entries(payload.strips ?? {}).map(async ([action, strip]) => {
             if (!strip?.url) return;
+            const slot = pveActionSlot(action);
             try {
-              target[action] = { image: await preloadImage(strip.url), strip };
+              target[slot] = { image: await preloadImage(strip.url), strip };
             } catch {
-              target[action] = undefined;
+              target[slot] = undefined;
             }
           });
         }),
@@ -313,6 +333,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       const dt = lastTick ? Math.min(0.05, (time - lastTick) / 1000) : 1 / 60;
       lastTick = time;
       const keys = heldRef.current;
+      const canConsumeShot = !runtime.paused && runtime.status === "playing" && runtime.hitstopRemaining <= 0;
       stepPve(
         runtime,
         pveLevel,
@@ -323,10 +344,12 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           jump: keys.has(" ") || keys.has("arrowup"),
           shoot: shotRequestRef.current,
           guard: keys.has("k"),
+          dodge: keys.has("l"),
+          aimY: keys.has("w") ? -0.7 : keys.has("s") ? 0.7 : 0,
         },
         dt,
       );
-      shotRequestRef.current = false;
+      if (canConsumeShot || runtime.status !== "playing") shotRequestRef.current = false;
       playPveSounds(consumePveAudioEvents(runtime));
       runtime.camera = cameraX(runtime.player.x, stageWidthRef.current, pveLevel.width);
       drawPveScene(context, canvas, pveLevel, runtime, renderAssets, reduceMotion);
@@ -361,14 +384,17 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           setHud(pveHud(runtime, pveLevel));
         }
       }
-      if (!event.repeat && (key === "f" || key === "j")) {
+      if (!event.repeat && (key === "f" || key === "j") && !runtimeRef.current?.paused) {
         shotRequestRef.current = true;
       }
     };
     const onUp = (event: KeyboardEvent) => {
       heldRef.current.delete(event.key.toLowerCase());
     };
-    const clear = () => heldRef.current.clear();
+    const clear = () => {
+      heldRef.current.clear();
+      shotRequestRef.current = false;
+    };
     window.addEventListener("keydown", onDown);
     window.addEventListener("keyup", onUp);
     window.addEventListener("blur", clear);
@@ -419,7 +445,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
 
   function shoot() {
     ensureAudio();
-    shotRequestRef.current = true;
+    if (!runtimeRef.current?.paused) shotRequestRef.current = true;
   }
 
   function togglePause() {
@@ -605,7 +631,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 </div>
               )}
 
-              <div className="absolute bottom-3 right-3 z-[5] flex items-end gap-2">
+              <div className="absolute bottom-2 left-2 right-2 z-[5] flex items-end justify-end gap-1 sm:bottom-3 sm:left-auto sm:right-3 sm:gap-2">
                 <TouchButton
                   label="向左"
                   icon="arrow-left"
@@ -646,10 +672,14 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                   type="button"
                   aria-label="发射攻击"
                   onClick={shoot}
-                  className="grid h-12 w-12 place-items-center rounded-full border border-primary/50 bg-ink text-paper shadow-e2 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-primary/50 bg-ink text-paper shadow-e2 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
                 >
                   <Icon name="crosshair" className="h-5 w-5" />
                 </button>
+                <TouchButton label={`闪避，冷却 ${Math.ceil(hud?.dodgeCooldown ?? 0)} 秒`} icon="arrow-right" onDown={() => heldRef.current.add("l")} onUp={() => heldRef.current.delete("l")} />
+                <TouchButton label="向上瞄准" icon="arrow-up" onDown={() => heldRef.current.add("w")} onUp={() => heldRef.current.delete("w")} />
+                <TouchButton label="向下瞄准" icon="arrow-up" onDown={() => heldRef.current.add("s")} onUp={() => heldRef.current.delete("s")} />
+                <span className="hidden text-xs xl:inline">闪避 {(hud?.dodgeCooldown ?? 0) > 0 ? `${hud?.dodgeCooldown.toFixed(1)}s` : "就绪"}</span>
               </div>
 
               {playerLoadFailed ? (
@@ -722,8 +752,8 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
               {hud?.status === "won" && (
                 <ResultOverlay
                   won
-                  title="守关 Boss 已被击败"
-                  detail={`清除 ${hud.defeated}/${hud.total} 个敌人 · 用时 ${hud.elapsed.toFixed(1)}s`}
+                  title={`${hud.grade} 级 · 守关 Boss 已被击败`}
+                  detail={`清除 ${hud.defeated}/${hud.total} · ${hud.elapsed.toFixed(1)}s · 受伤 ${hud.damageTaken} · 防御 ${hud.guardsUsed} · 命中率 ${Math.round(hud.accuracy * 100)}%${bestTime ? ` · 最佳 ${bestTime.toFixed(1)}s` : ""}`}
                   onRestart={restart}
                   onBack={() => navigate("/scenes")}
                 />
@@ -749,7 +779,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 更换出战角色
               </Button>
               <span className="text-[11px] text-ink-4">
-                A / D 或 ← → 移动 · Shift 奔跑 · ↑ / 空格跳跃 · F / J 单发攻击 · K 防御 · P 暂停
+                A / D 或 ← → 移动 · Shift 奔跑 · ↑ / 空格跳跃 · F / J 单发攻击 · W / S 瞄准 · K 防御 · L 闪避 · P 暂停
               </span>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -977,6 +1007,11 @@ function PveEnemyForge({
   const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const [role, setRole] = useState<"minion" | "boss">("minion");
+  const rebuild = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: string }) => api.rebuildPveAction(id, action),
+    onSuccess: () => { onRefresh(); void queryClient.invalidateQueries({ queryKey: ["pve-enemies"] }); },
+    onError: (error) => toast({ tone: "danger", title: "动作重建失败", description: error instanceof Error ? error.message : "请稍后重试" }),
+  });
   const generate = useMutation({
     mutationFn: () => api.generatePveEnemy(prompt.trim(), role, difficulty),
     onSuccess: () => {
@@ -1125,6 +1160,13 @@ function PveEnemyForge({
                       {enemy.action_warning}
                     </p>
                   )}
+                  <div className="mt-1 flex gap-2">
+                    {(["idle", "walk", "attack"] as const).map((action) => (
+                      <button key={action} type="button" disabled={rebuild.isPending || enemy.status !== "ready"} className="text-[10px] text-primary disabled:opacity-40" onClick={() => rebuild.mutate({ id: enemy.id, action })}>
+                        重建{action === "idle" ? "待机" : action === "walk" ? "行走" : "攻击"}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <IconButton
                   icon="trash"
@@ -1226,7 +1268,7 @@ function TouchButton({
       onPointerUp={onUp}
       onPointerCancel={onUp}
       onPointerLeave={onUp}
-      className="grid h-10 w-10 touch-none place-items-center rounded-full border border-line/70 bg-paper/90 text-ink-2 shadow-sm backdrop-blur-sm active:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className="grid h-8 w-8 shrink-0 touch-none place-items-center rounded-full border border-line/70 bg-paper/90 text-ink-2 shadow-sm backdrop-blur-sm active:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-10 sm:w-10"
     >
       <Icon name={icon} className="h-4 w-4" />
     </button>
@@ -1307,6 +1349,30 @@ function drawPveScene(
   context.save();
   context.translate(-runtime.camera, 0);
   drawPlatforms(context, level);
+  for (const cover of level.covers ?? []) {
+    context.save();
+    context.fillStyle = "#3f4e5b";
+    context.fillRect(cover.x, cover.y - cover.height, cover.width, cover.height);
+    context.fillStyle = "#98a9b4";
+    context.fillRect(cover.x, cover.y - cover.height, cover.width, 6);
+    context.strokeStyle = "rgba(255,255,255,.28)";
+    context.strokeRect(cover.x, cover.y - cover.height, cover.width, cover.height);
+    context.restore();
+  }
+  for (const hazard of level.hazards ?? []) {
+    const stage = pveVentStage(runtime.elapsed);
+    context.save();
+    context.fillStyle = stage === "active" ? "#ff8050" : "#533b36";
+    context.fillRect(hazard.x, hazard.y - (stage === "active" ? 28 : 6), hazard.width, stage === "active" ? 28 : 6);
+    context.strokeStyle = "#fff0b0";
+    context.lineWidth = 2;
+    context.strokeRect(hazard.x, hazard.y - 28, hazard.width, 28);
+    context.fillStyle = "#fff";
+    context.font = "12px sans-serif";
+    context.textAlign = "center";
+    context.fillText(stage === "warning" ? "⚠ 即将喷发" : stage === "active" ? "喷发！" : "间歇喷口", hazard.x + hazard.width / 2, hazard.y - 34);
+    context.restore();
+  }
 
   const active = activePveEncounter(runtime, level);
   if (active) {
@@ -1331,8 +1397,37 @@ function drawPveScene(
   }
 
   for (const enemy of runtime.enemies) {
-    if (enemy.hp <= 0) continue;
-    if (!active?.enemy_ids.includes(enemy.id)) continue;
+    const dying = enemy.deathAt !== null && runtime.elapsed - enemy.deathAt < 0.6;
+    if (enemy.hp <= 0 && !dying) continue;
+    if (!dying && !active?.enemy_ids.includes(enemy.id)) continue;
+    if (enemy.ability && enemy.abilityStage === "windup") {
+      const ability = enemy.ability;
+      context.save();
+      context.strokeStyle = "#fff1b6";
+      context.fillStyle = "rgba(255, 130, 65, .25)";
+      context.lineWidth = 3;
+      context.setLineDash([8, 5]);
+      context.beginPath();
+      if (ability === "shot") {
+        context.moveTo(enemy.x, enemy.y - enemyHeight(enemy) * 0.55);
+        context.lineTo(enemy.abilityTargetX, enemy.abilityTargetY);
+      } else if (ability === "slam") {
+        context.rect(enemy.x - PVE_ABILITIES.slam.range, enemy.y - 24, PVE_ABILITIES.slam.range * 2, 24);
+        context.fill();
+      } else {
+        const distance = ability === "charge" ? 420 * PVE_ABILITIES.charge.active : 260 * PVE_ABILITIES.lunge.active;
+        const start = enemy.x + (enemy.abilityDirection < 0 ? -distance : 0);
+        context.rect(start - enemyHalfWidth(enemy), enemy.y - enemyHeight(enemy), distance + enemyHalfWidth(enemy) * 2, enemyHeight(enemy));
+        context.fill();
+      }
+      context.stroke();
+      context.setLineDash([]);
+      context.fillStyle = "#fff";
+      context.font = "bold 14px sans-serif";
+      context.textAlign = "center";
+      context.fillText(ability === "shot" ? "瞄准！" : ability === "slam" ? "震地！跳跃" : "冲刺！", enemy.x, enemy.y - enemyHeight(enemy) - 24);
+      context.restore();
+    }
     drawEnemy(context, enemy, runtime, assets.enemies[enemy.asset_id]);
   }
   drawPlayer(context, runtime, assets.player);
@@ -1427,7 +1522,7 @@ function paintBackgroundLayer(
 }
 
 function drawPlatforms(context: CanvasRenderingContext2D, level: PveLevel) {
-  for (const platform of level.platforms.filter((item) => item.kind === "ground")) {
+  for (const platform of level.platforms) {
     context.save();
     if (platform.kind === "floating") {
       context.fillStyle = "rgba(24, 36, 52, .24)";
@@ -1482,7 +1577,25 @@ function drawEnemy(
   runtime: PveRuntime,
   sprites: Record<string, SpriteSet | undefined> | undefined,
 ) {
-  const sprite = sprites?.[enemy.action] ?? sprites?.walk ?? sprites?.idle;
+  const pose = pveEnemyPose(enemy, runtime.elapsed);
+  const sprite = sprites?.[pose] ?? sprites?.[PVE_ACTION_FALLBACK[pose]] ?? sprites?.walk ?? sprites?.idle;
+  const attackProgress = enemy.ability && enemy.abilityStage === "active"
+    ? Math.max(0, Math.min(0.999, 1 - (enemy.abilityUntil - runtime.elapsed) / PVE_ABILITIES[enemy.ability].active))
+    : 0;
+  const animationTime = pose === "attack" && sprite
+    ? attackProgress * sprite.strip.frames / Math.max(1, sprite.strip.fps ?? 10)
+    : pose === "windup" || pose === "death" ? 0 : runtime.elapsed;
+  context.save();
+  // Dedicated procedural poses remain available when generated slots are absent.
+  context.translate(enemy.x, enemy.y);
+  if (pose === "windup") context.scale(1.12, 0.88);
+  if (pose === "hurt") context.rotate(-enemy.facing * 0.16);
+  if (pose === "death") {
+    const progress = Math.min(1, (runtime.elapsed - (enemy.deathAt ?? runtime.elapsed)) / 0.6);
+    context.rotate(enemy.facing * (0.3 + progress * 1.2));
+    context.scale(1, Math.max(0.12, 1 - progress));
+  }
+  context.translate(-enemy.x, -enemy.y);
   if (sprite) {
     drawSprite(
       context,
@@ -1491,7 +1604,7 @@ function drawEnemy(
       enemy.y,
       enemy.display_height,
       enemy.facing,
-      runtime.elapsed + enemy.x * 0.01,
+      animationTime,
     );
   } else {
     drawFallbackActor(
@@ -1514,7 +1627,7 @@ function drawEnemy(
         enemy.y,
         enemy.display_height,
         enemy.facing,
-        runtime.elapsed + enemy.x * 0.01,
+        animationTime,
       );
       context.restore();
     } else {
@@ -1531,6 +1644,8 @@ function drawEnemy(
       context.restore();
     }
   }
+  context.restore();
+  if (pose === "death") return;
   const barWidth = enemy.kind === "boss" ? 190 : 54;
   const barY = enemy.y - enemyHeight(enemy) - 14;
   context.save();

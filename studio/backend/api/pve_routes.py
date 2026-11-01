@@ -15,6 +15,15 @@ class GeneratePveEnemyRequest(BaseModel):
 def build_pve_router(service: PveEnemyService) -> APIRouter:
     router = APIRouter(prefix="/api")
 
+    @router.post("/pve/enemies/{enemy_id}/actions/{action}/rebuild", status_code=202)
+    def rebuild_enemy_action(enemy_id: str, action: str):
+        try:
+            return service.rebuild_action(enemy_id, action)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="unknown enemy")
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error))
+
     @router.get("/pve/enemies")
     def list_pve_enemies():
         return {"enemies": service.store.list()}
