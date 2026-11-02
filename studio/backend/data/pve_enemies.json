@@ -1,0 +1,97 @@
+{
+  "enemies": [
+    {
+      "id": "pve_f57217e5c7",
+      "name": "菌伞射手",
+      "role": "minion",
+      "prompt": "菌伞射手，站在巨型蘑菇伞下的远程小怪。伞盖中央像炮口一样张开，\n喷射直线飞行的孢子弹；菌盖表面覆盖坚硬菌甲，颜色鲜艳，移动缓慢。",
+      "summary": "站在巨型蘑菇伞下缓慢移动的远程小怪，用伞盖炮口喷射孢子弹。",
+      "tags": [
+        "ranged",
+        "armored",
+        "toxic"
+      ],
+      "behavior": "shooter",
+      "element": "toxic",
+      "projectile_color": "#9fe56f",
+      "asset_id": "ast49215",
+      "status": "ready",
+      "builtin": false,
+      "difficulty": "normal",
+      "stats": {
+        "max_hp": 3,
+        "speed": 62,
+        "damage": 1,
+        "attack_interval": 2.05,
+        "display_height": 92
+      },
+      "created_at": 1793585009.19619,
+      "updated_at": 1793585437.0704613,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0001",
+      "action_batch_id": "120e02f3"
+    },
+    {
+      "id": "pve_0718f7caeb",
+      "name": "冲锋菇",
+      "role": "minion",
+      "prompt": "菌根冲锋菇，粗壮菌柄像攻城锤，底部拖着盘根。锁定玩家后短暂蓄力，\n然后低头直线冲锋。",
+      "summary": "菌柄如攻城锤，蓄力后直线冲锋攻击玩家。",
+      "tags": [
+        "beast"
+      ],
+      "behavior": "charger",
+      "element": "physical",
+      "projectile_color": "#e8d49d",
+      "asset_id": "ast27079",
+      "status": "ready",
+      "builtin": false,
+      "difficulty": "normal",
+      "stats": {
+        "max_hp": 3,
+        "speed": 92,
+        "damage": 1,
+        "attack_interval": 1.9999999999999998,
+        "display_height": 92
+      },
+      "created_at": 1793585035.363191,
+      "updated_at": 1793585438.6795478,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0002",
+      "action_batch_id": "119b2162"
+    },
+    {
+      "id": "pve_70019aa057",
+      "name": "腐心菌王",
+      "role": "boss",
+      "prompt": "腐心菌王，蘑菇森林守关 Boss。巨大伞盖像一顶腐朽王冠，边缘垂落发光孢子帘；\n躯干由粗壮菌柄和缠绕菌根构成，胸口裂开一张孢子巨口。战斗中以缓慢逼近为主，\n持续抛射三连孢子弹。\n体型厚重、轮廓清晰，有强烈压迫感。",
+      "summary": "缓慢逼近并投射三连孢子弹的蘑菇森林守关Boss",
+      "tags": [
+        "ranged",
+        "armored"
+      ],
+      "behavior": "chaser",
+      "element": "toxic",
+      "projectile_color": "#9fe56f",
+      "asset_id": "ast87416",
+      "status": "ready",
+      "builtin": false,
+      "difficulty": "normal",
+      "stats": {
+        "max_hp": 24,
+        "speed": 44,
+        "damage": 2,
+        "attack_interval": 1.4,
+        "display_height": 224
+      },
+      "created_at": 1793585059.658302,
+      "updated_at": 1793585466.47138,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0003",
+      "action_batch_id": "5c128cb5"
+    }
+  ]
+}

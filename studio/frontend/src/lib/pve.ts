@@ -7,10 +7,6 @@ export const PVE_PLAYER_DAMAGE = 1;
 export const PVE_SHOT_COOLDOWN = 0.22;
 export const PVE_SHOT_SPEED = 900;
 export const PVE_GUARD_COOLDOWN = 2;
-/** 玩家弹丸追踪：只锁定该地面距离内的最近敌人，超出后保持直线。 */
-export const PVE_HOMING_RANGE = 520;
-/** 每秒转向权重，越大越"贴脸"，用于限制追踪的弯曲程度。 */
-export const PVE_HOMING_TURN = 7;
 
 /** 地面纵深压缩：y 方向 1 单位只相当于 x 方向 1/1.6 的距离。 */
 export const PVE_DEPTH_SCALE = 1.6;
@@ -921,53 +917,9 @@ function stepPlayerMove(
   }
 }
 
-/**
- * 玩家弹丸追踪：锁定追踪范围内最近的活敌人，按有限转向速率把速度弯向目标。
- * 超出范围或没有目标时保持直线，命中判定仍走三维扫掠。
- */
-function steerPlayerProjectile(
-  runtime: PveRuntime,
-  projectile: PveProjectile,
-  dt: number,
-): void {
-  let target: PveRuntimeEnemy | null = null;
-  let nearest = PVE_HOMING_RANGE;
-  for (const enemy of runtime.enemies) {
-    if (enemy.hp <= 0) continue;
-    const distance = pveGroundDistance(projectile.x, projectile.y, enemy.x, enemy.y);
-    if (distance <= nearest) {
-      nearest = distance;
-      target = enemy;
-    }
-  }
-  if (!target) return;
-  const speed = Math.hypot(projectile.vx, projectile.vy, projectile.vz) || PVE_SHOT_SPEED;
-  const current = { x: projectile.vx, y: projectile.vy * PVE_DEPTH_SCALE, z: projectile.vz };
-  const desired = {
-    x: target.x - projectile.x,
-    y: (target.y - projectile.y) * PVE_DEPTH_SCALE,
-    z: target.heightZ * 0.5 - projectile.z,
-  };
-  const currentLength = Math.hypot(current.x, current.y, current.z);
-  const desiredLength = Math.hypot(desired.x, desired.y, desired.z);
-  if (currentLength < 1e-6 || desiredLength < 1e-6) return;
-  const weight = Math.min(1, PVE_HOMING_TURN * dt);
-  const mix = {
-    x: (current.x / currentLength) * (1 - weight) + (desired.x / desiredLength) * weight,
-    y: (current.y / currentLength) * (1 - weight) + (desired.y / desiredLength) * weight,
-    z: (current.z / currentLength) * (1 - weight) + (desired.z / desiredLength) * weight,
-  };
-  const mixLength = Math.hypot(mix.x, mix.y, mix.z);
-  if (mixLength < 1e-6) return;
-  projectile.vx = (mix.x / mixLength) * speed;
-  projectile.vy = ((mix.y / mixLength) * speed) / PVE_DEPTH_SCALE;
-  projectile.vz = (mix.z / mixLength) * speed;
-}
-
 function stepProjectiles(runtime: PveRuntime, dt: number): void {
   const kept: PveProjectile[] = [];
   for (const projectile of runtime.projectiles) {
-    if (projectile.owner === "player") steerPlayerProjectile(runtime, projectile, dt);
     const delta = { x: projectile.vx * dt, y: projectile.vy * dt, z: projectile.vz * dt };
     const moved = {
       ...projectile,

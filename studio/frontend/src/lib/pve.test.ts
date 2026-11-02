@@ -178,18 +178,20 @@ describe("PVE 2.5D 碰撞", () => {
     expect(pveGroundDistance(0, 0, 100, 100)).toBeCloseTo(Math.hypot(100, 160), 6);
   });
 
-  it("tracks a nearby depth-offset enemy with homing shots", () => {
+  it("fires straight shots that miss depth-offset enemies", () => {
     const runtime = quietRuntime();
     const target = runtime.enemies[0];
     runtime.player.x = target.x - 200;
     runtime.player.y = target.y + 200;
     runtime.player.facing = 1;
     stepPve(runtime, { ...idle, shoot: true }, 0.05);
+    const shot = runtime.projectiles.find((item) => item.owner === "player");
+    expect(shot?.vy).toBe(0);
     for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
-    expect(target.hp).toBe(target.max_hp - 1);
+    expect(target.hp).toBe(target.max_hp);
   });
 
-  it("keeps a straight shot when the target is outside homing range", () => {
+  it("keeps a straight shot when the target is far in depth", () => {
     const runtime = quietRuntime();
     const target = runtime.enemies[0];
     runtime.player.x = target.x - 200;
@@ -237,15 +239,14 @@ describe("PVE 2.5D 弹道", () => {
     const shot = runtime.projectiles.find((item) => item.owner === "player");
     expect(shot).toBeTruthy();
     expect(shot?.y).toBeCloseTo(runtime.player.y, 6);
-    // 追踪会在同一帧把 z 向目标中心修正，允许一帧的偏移。
-    expect(shot?.z).toBeGreaterThan(runtime.player.z + 40);
-    expect(shot?.z).toBeLessThanOrEqual(runtime.player.z + 42);
+    // 玩家子弹按发射时的高度直线飞行，不会向目标中心转向。
+    expect(shot?.z).toBeCloseTo(runtime.player.z + 42, 6);
     for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
     expect(target.hp).toBe(target.max_hp - 1);
     expect(runtime.shotsHit).toBeGreaterThan(0);
   });
 
-  it("curves an upward aimed shot back onto the target", () => {
+  it("keeps an upward aimed shot travelling straight", () => {
     const runtime = quietRuntime();
     const target = runtime.enemies[0];
     runtime.player.x = target.x - 200;
@@ -255,7 +256,7 @@ describe("PVE 2.5D 弹道", () => {
     const shot = runtime.projectiles.find((item) => item.owner === "player");
     expect(shot?.vz).toBeGreaterThan(0);
     for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
-    expect(target.hp).toBe(target.max_hp - 1);
+    expect(target.hp).toBe(target.max_hp);
   });
 
   it("detects a 3D segment crossing a box only when all axes overlap", () => {

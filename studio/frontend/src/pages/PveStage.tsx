@@ -706,86 +706,6 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 </div>
               )}
 
-              <div className="absolute bottom-2 left-2 right-2 z-[5] flex flex-wrap items-end justify-end gap-1 sm:bottom-3 sm:left-auto sm:right-3 sm:gap-2">
-                <TouchButton
-                  label="向左"
-                  icon="arrow-left"
-                  onDown={() => {
-                    ensureAudio();
-                    heldRef.current.add("arrowleft");
-                  }}
-                  onUp={() => heldRef.current.delete("arrowleft")}
-                />
-                <TouchButton
-                  label="向右"
-                  icon="arrow-right"
-                  onDown={() => {
-                    ensureAudio();
-                    heldRef.current.add("arrowright");
-                  }}
-                  onUp={() => heldRef.current.delete("arrowright")}
-                />
-                <TouchButton
-                  label="向上（靠后）"
-                  icon="arrow-up"
-                  onDown={() => heldRef.current.add("arrowup")}
-                  onUp={() => heldRef.current.delete("arrowup")}
-                />
-                <TouchButton
-                  label="向下（靠近）"
-                  icon="arrow-up"
-                  iconClassName="rotate-180"
-                  onDown={() => heldRef.current.add("arrowdown")}
-                  onUp={() => heldRef.current.delete("arrowdown")}
-                />
-                <TouchButton
-                  label="跳跃"
-                  icon="arrow-up"
-                  iconClassName="rotate-45"
-                  onDown={() => {
-                    ensureAudio();
-                    heldRef.current.add(" ");
-                  }}
-                  onUp={() => heldRef.current.delete(" ")}
-                />
-                <TouchButton
-                  label="单格防御"
-                  icon="shield"
-                  onDown={() => {
-                    ensureAudio();
-                    heldRef.current.add("k");
-                  }}
-                  onUp={() => heldRef.current.delete("k")}
-                />
-                <TouchButton
-                  label={`闪避，冷却 ${Math.ceil(hud?.dodgeCooldown ?? 0)} 秒`}
-                  icon="arrow-right"
-                  onDown={() => heldRef.current.add("l")}
-                  onUp={() => heldRef.current.delete("l")}
-                />
-                <TouchButton
-                  label="向上瞄准"
-                  icon="arrow-up"
-                  onDown={() => heldRef.current.add("q")}
-                  onUp={() => heldRef.current.delete("q")}
-                />
-                <TouchButton
-                  label="向下瞄准"
-                  icon="arrow-up"
-                  iconClassName="rotate-180"
-                  onDown={() => heldRef.current.add("e")}
-                  onUp={() => heldRef.current.delete("e")}
-                />
-                <button
-                  type="button"
-                  aria-label="发射攻击"
-                  onClick={shoot}
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-primary/50 bg-ink text-paper shadow-e2 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:h-12 sm:w-12"
-                >
-                  <Icon name="crosshair" className="h-5 w-5" />
-                </button>
-              </div>
-
               {playerLoadFailed ? (
                 <div className="absolute inset-0 z-20 grid place-items-center bg-surface-1/[.92] backdrop-blur-[2px]">
                   <EmptyState
@@ -993,7 +913,7 @@ function makeProjection(arena: { width: number; depth: number }, width: number, 
     arenaWidth: arena.width,
     arenaDepth: arena.depth,
     scale: width / arena.width,
-    depthScale: (height - top) / (arena.depth * PVE_DEPTH_SCALE),
+    depthScale: (height - top) / arena.depth,
     offsetX: 0,
     top,
     spriteScale: Math.max(0.55, Math.min(1.15, width / 860)),
@@ -1920,34 +1840,6 @@ function HudChip({
       <Icon name={icon} className="h-3 w-3" />
       {text}
     </span>
-  );
-}
-
-function TouchButton({
-  label,
-  icon,
-  iconClassName,
-  onDown,
-  onUp,
-}: {
-  label: string;
-  icon: "arrow-left" | "arrow-right" | "arrow-up" | "shield";
-  iconClassName?: string;
-  onDown: () => void;
-  onUp: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onPointerDown={onDown}
-      onPointerUp={onUp}
-      onPointerCancel={onUp}
-      onPointerLeave={onUp}
-      className="grid h-8 w-8 shrink-0 touch-none place-items-center rounded-full border border-line/70 bg-paper/90 text-ink-2 shadow-sm backdrop-blur-sm active:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-10 sm:w-10"
-    >
-      <Icon name={icon} className={cx("h-4 w-4", iconClassName)} />
-    </button>
   );
 }
 
