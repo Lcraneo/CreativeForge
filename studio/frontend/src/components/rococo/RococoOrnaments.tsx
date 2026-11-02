@@ -136,14 +136,14 @@ export function RococoFrame({
         className="cf-rococo-frame__lines"
       >
         <path
-          d="M26 92H384C420 92 433 27 500 27C567 27 580 92 616 92H974C988 92 996 101 996 115V590C996 604 986 613 974 613H26C14 613 4 604 4 590V115C4 101 12 92 26 92Z"
+          d="M20 20H420C450 20 460 6 500 6C540 6 550 20 580 20H980C990 20 996 26 996 36V584C996 594 990 600 980 600H20C10 600 4 594 4 584V36C4 26 10 20 20 20Z"
           stroke="currentColor"
           strokeWidth="1.15"
           vectorEffect="non-scaling-stroke"
           className="cf-rococo-frame__line"
         />
         <path
-          d="M38 102H382C418 102 428 38 500 38C572 38 582 102 618 102H962C974 102 982 110 982 121V578C982 590 974 598 962 598H38C26 598 18 590 18 578V121C18 110 26 102 38 102Z"
+          d="M28 28H424C452 28 462 16 500 16C538 16 548 28 576 28H972C980 28 985 33 985 40V576C985 583 980 588 972 588H28C20 588 15 583 15 576V40C15 33 20 28 28 28Z"
           stroke="currentColor"
           strokeWidth="0.8"
           strokeDasharray="4 5"
@@ -151,9 +151,9 @@ export function RococoFrame({
           vectorEffect="non-scaling-stroke"
           className="cf-rococo-frame__line cf-rococo-frame__line--inner"
         />
-        <path d="M470 27h-24M530 27h24" stroke="currentColor" strokeWidth="0.9" />
-        <circle cx="500" cy="19" r="3.5" stroke="currentColor" strokeWidth="1" fill="var(--color-paper)" />
-        <path d="M500 22v8" stroke="currentColor" strokeWidth="0.9" />
+        <path d="M470 6h-24M530 6h24" stroke="currentColor" strokeWidth="0.9" />
+        <circle cx="500" cy="2" r="3.5" stroke="currentColor" strokeWidth="1" fill="var(--color-paper)" />
+        <path d="M500 5v4" stroke="currentColor" strokeWidth="0.9" />
       </svg>
       {corners && (
         <>

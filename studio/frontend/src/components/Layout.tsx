@@ -13,7 +13,7 @@ import { Toaster } from "./Toaster";
 import { Icon } from "./icons";
 import { Badge, Stamp, StatusDot, cx } from "./ui";
 import { RococoCorner, RococoCrest, RococoDivider, RococoFleuron } from "./rococo/RococoOrnaments";
-import { RococoBackdrop, RococoJournal, RococoLetterMark } from "./rococo/RococoBackdrop";
+import { RococoJournal, RococoLetterMark } from "./rococo/RococoBackdrop";
 
 const AGENTS_NAV_KEY = "cf-nav-agents-open";
 
@@ -131,7 +131,7 @@ export default function Layout() {
       {/* Sidebar (desktop) */}
       <aside
         className={cx(
-          "cf-folio relative hidden shrink-0 flex-col border-r border-line transition-[width] duration-(--motion-slow) ease-standard md:flex",
+          "cf-folio relative hidden shrink-0 flex-col border-r border-line backdrop-blur-md transition-[width] duration-(--motion-slow) ease-standard md:flex",
           rail ? "w-16 px-2 py-3" : "w-60 p-3",
         )}
       >
@@ -388,13 +388,12 @@ export default function Layout() {
 
       {/* Main column */}
       <div className="relative flex min-w-0 flex-1 flex-col">
-        {/* 纸面背景层：城堡 / 首字母水印 / 四角花饰（不随内容滚动） */}
+        {/* 装饰层：仅保留四角花饰，让全站背景图完整可见 */}
         <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
-          <RococoBackdrop />
           <RococoCorner className="absolute right-3 top-14 hidden h-36 w-36 rotate-90 text-line/35 lg:block" />
           <RococoCorner className="absolute bottom-3 left-3 hidden h-32 w-32 rotate-180 text-line/25 lg:block" />
         </div>
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-paper/95 px-4 md:px-6">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-paper/70 px-4 backdrop-blur-md md:px-6">
           <span className="flex items-center gap-2 md:hidden">
             <RococoCrest className="h-7 w-6 shrink-0" />
             <b className="text-[13px]">{crumb.label}</b>
@@ -477,7 +476,7 @@ export default function Layout() {
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line bg-paper/95 md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line bg-paper/80 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}

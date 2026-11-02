@@ -10,7 +10,7 @@ import {
   type TextareaHTMLAttributes,
 } from "react";
 import { Icon, type IconName } from "./icons";
-import { RococoCorner, RococoDivider, RococoFleuron } from "./rococo/RococoOrnaments";
+import { RococoDivider, RococoFleuron } from "./rococo/RococoOrnaments";
 import { MOTION, EASE_STANDARD } from "../lib/motion";
 
 export function cx(...parts: Array<string | false | null | undefined>) {
@@ -136,7 +136,7 @@ export function Card({
   return (
     <section
       className={cx(
-        "cf-sheen relative overflow-hidden rounded-lg border border-line bg-paper shadow-e1",
+        "cf-sheen relative overflow-hidden rounded-lg border border-line bg-paper/90 shadow-e1",
         interactive &&
           "cf-raise hover:-translate-y-px hover:border-line hover:shadow-e3",
         className,
@@ -172,9 +172,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="relative flex flex-wrap items-end justify-between gap-4 border-b border-line pb-5">
-      <RococoCorner className="pointer-events-none absolute -left-2 -top-6 hidden h-20 w-20 text-line-strong/45 md:block" />
-      <span className="absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,var(--color-line-strong),transparent_64%)]" aria-hidden="true" />
+    <header className="relative flex flex-wrap items-end justify-between gap-4 rounded-lg border border-line bg-paper/80 px-5 py-4 shadow-e1 backdrop-blur-sm">
       <div className="min-w-0">
         <h1 className="font-display text-[34px] font-semibold leading-[1.05] tracking-[-0.02em] [text-wrap:balance]">
           {title}

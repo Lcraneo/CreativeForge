@@ -524,16 +524,18 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           description="从场景工坊选择 PVE 模式生成三关战役，再选择角色进入竞技场。"
         />
         <div className="mt-5">
-          <EmptyState
-            icon="zap"
-            title="还没有选择 PVE 场景"
-            description="先在工作坊里描述敌人与战场主题，生成后会直接进入三关 2.5D 战役。"
-            action={
-              <Button variant="primary" icon="grid" onClick={() => navigate("/scenes")}>
-                去场景工坊
-              </Button>
-            }
-          />
+          <Card>
+            <EmptyState
+              icon="zap"
+              title="还没有选择 PVE 场景"
+              description="先在工作坊里描述敌人与战场主题，生成后会直接进入三关 2.5D 战役。"
+              action={
+                <Button variant="primary" icon="grid" onClick={() => navigate("/scenes")}>
+                  去场景工坊
+                </Button>
+              }
+            />
+          </Card>
         </div>
       </div>
     );

@@ -273,7 +273,7 @@
     transform: none;
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.54), transparent 42%),
-      var(--color-paper);
+      rgba(251, 249, 244, 0.92);
   }
   .cf-slip::before {
     content: "";
@@ -313,7 +313,7 @@
   }
 
   .cf-hatch {
-    background-color: var(--color-paper);
+    background-color: rgba(251, 249, 244, 0.9);
     background-image: radial-gradient(circle, rgba(37, 52, 90, 0.1) 1px, transparent 1px);
     background-size: 8px 8px;
   }
@@ -321,19 +321,19 @@
   .cf-vellum {
     background:
       linear-gradient(135deg, rgba(255, 255, 255, 0.58), transparent 52%),
-      var(--color-paper);
+      rgba(251, 249, 244, 0.88);
   }
 
   .cf-folio {
     background:
       linear-gradient(90deg, rgba(174, 191, 215, 0.26), transparent 42%),
-      var(--color-surface-1);
+      rgba(234, 240, 246, 0.78);
   }
 
   .cf-dossier {
     background:
       linear-gradient(180deg, rgba(255, 255, 255, 0.44), transparent 26%),
-      var(--color-surface-1);
+      rgba(234, 240, 246, 0.88);
   }
 
   .cf-ticket {

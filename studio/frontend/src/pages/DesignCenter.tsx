@@ -61,8 +61,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const spec = asset.character;
   const palette = asset.pixel?.palette.colors;
   const views = asset.design_views;
-  const reference = asset.reference_image;
-  const persistedViewError = asset.design_views_error?.detail ?? null;
   const viewsReady = Boolean(views?.side?.url && views?.back?.url);
   const viewModel = views?.side?.model ?? views?.back?.model ?? "qwen-image-2.1-turbo";
   const chips = [
@@ -262,20 +260,15 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             })}
           </div>
           <p
-            className={cx(
-              "mt-3 text-[11px]",
-              viewError || persistedViewError ? "text-danger" : "text-ink-4",
-            )}
+            className={cx("mt-3 text-[11px]", viewError ? "text-danger" : "text-ink-4")}
           >
             {generating
               ? `正在调用 ${viewModel} 生成 side / back 双栏图，请勿关闭页面…`
               : viewError
                 ? `三视图生成失败：${viewError}（已保留上一版三视图）`
-                : persistedViewError
-                  ? `三视图生成失败：${persistedViewError}（原画与原始正面图已保留，可点击「重新生成三视图」）`
-                  : viewsReady
-                    ? `三视图由 ${viewModel} 基于 AI 原画一次生成双栏图后本地裁切，与资产同源。`
-                    : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成三视图」手动触发生成。"}
+                : viewsReady
+                  ? `三视图由 ${viewModel} 基于 AI 原画一次生成双栏图后本地裁切，与资产同源。`
+                  : "正面为 AI 原画；侧 / 背尚未生成，示意图不是 AI 结果。点击「生成三视图」手动触发生成。"}
           </p>
         </Card>
 
@@ -330,68 +323,51 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             <KV label="身高" value={spec.height_cm != null ? `${spec.height_cm} cm` : "—"} />
           </Card>
 
-          {reference && (
-            <Card title="人物正面图 Reference" icon="image">
-              <div className="overflow-hidden rounded-[10px] border border-line-subtle bg-canvas">
-                <a href={reference.url} target="_blank" rel="noreferrer">
-                  <SafeImage
-                    src={reference.url}
-                    alt="人物正面图"
-                    sealChar="正"
-                    className="mx-auto h-[200px] object-contain"
-                  />
-                </a>
-              </div>
-              <p className="mt-2 text-[11px] leading-[17px] text-ink-3">
-                生成原画时的强身份参考；三视图失败时原图仍保留，可直接重试。
-              </p>
-            </Card>
-          )}
-
           <Card
             title="AI 原画 Concept"
             icon="spark"
             right={
-              <div className="flex flex-wrap items-center gap-1.5">
-                {asset.image ? (
-                  <Badge tone="primary">{asset.image.provider}</Badge>
-                ) : (
-                  <Badge tone="neutral">未生成</Badge>
-                )}
-                {aiImageAvailable(asset) && (
-                  <>
-                    <Segmented
-                      options={[
-                        { id: "anime", label: "动漫" },
-                        { id: "pixel", label: "像素" },
-                        { id: "ink", label: "水墨" },
-                      ]}
-                      value={restyleStyle}
-                      onChange={setRestyleStyle}
-                    />
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon="spark"
-                      loading={restyleBusy}
-                      onClick={doRestyle}
-                    >
-                      风格迁移
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      icon="eraser"
-                      loading={cutoutBusy}
-                      onClick={doCutout}
-                    >
-                      透明底
-                    </Button>
-                  </>
-                )}
-              </div>
+              asset.image ? (
+                <Badge tone="primary">{asset.image.provider}</Badge>
+              ) : (
+                <Badge tone="neutral">未生成</Badge>
+              )
             }
           >
+            {aiImageAvailable(asset) && (
+              <div className="mb-3 flex flex-col gap-2 rounded-sm border border-line-subtle bg-surface-1/60 p-2.5">
+                <Segmented
+                  options={[
+                    { id: "anime", label: "动漫" },
+                    { id: "pixel", label: "像素" },
+                    { id: "ink", label: "水墨" },
+                  ]}
+                  value={restyleStyle}
+                  onChange={setRestyleStyle}
+                  className="self-start"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="spark"
+                    loading={restyleBusy}
+                    onClick={doRestyle}
+                  >
+                    风格迁移
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="eraser"
+                    loading={cutoutBusy}
+                    onClick={doCutout}
+                  >
+                    透明底
+                  </Button>
+                </div>
+              </div>
+            )}
             {asset.restyle?.url && (
               <div className="mb-3 overflow-hidden rounded-[10px] border border-line-subtle bg-canvas">
                 <p className="px-3 pt-2 text-[11px] text-ink-3">

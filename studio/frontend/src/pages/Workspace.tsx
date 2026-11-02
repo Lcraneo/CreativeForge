@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
-import { api, ApiError } from "../api/client";
+import { api } from "../api/client";
 import { useAgentStore } from "../stores/agentStore";
 import { useWorkflowStore } from "../stores/workflowStore";
 import { useAssetStore } from "../stores/assetStore";
@@ -13,7 +13,6 @@ import {
   Card,
   Chip,
   Input,
-  SafeImage,
   SectionTitle,
   Select,
   Stamp,
@@ -29,16 +28,7 @@ import {
 } from "../components/rococo/RococoOrnaments";
 import { EASE_STANDARD, MOTION } from "../lib/motion";
 import { NAV_GROUPS } from "../lib/navigation";
-import type { GenerationOverrides, ReferenceImage } from "../types";
-
-const REFERENCE_MAX_BYTES = 10 * 1024 * 1024;
-const REFERENCE_ACCEPT = "image/jpeg,image/png,image/webp";
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import type { GenerationOverrides } from "../types";
 
 /** 四大工区旅程条：章序/名称/副题直接取自导航信息架构，落点 = 各区块首站 */
 const JOURNEY = NAV_GROUPS.filter((group) => group.label !== "总览").map((group) => ({
@@ -193,10 +183,6 @@ export default function Workspace() {
   const [overrides, setOverrides] = useState<Record<string, string>>(() =>
     Object.fromEntries(Object.keys(OVERRIDE_OPTIONS).map((key) => [key, "auto"])),
   );
-  const [reference, setReference] = useState<ReferenceImage | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [referenceError, setReferenceError] = useState<string | null>(null);
-  const referenceInput = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const reduceMotion = useReducedMotion();
@@ -261,67 +247,8 @@ export default function Workspace() {
     }));
   }, [plan, agentStatuses, progress, liveTaskId]);
 
-  async function uploadReference(file: File) {
-    setUploading(true);
-    setReferenceError(null);
-    const previous = reference;
-    try {
-      const meta = await api.uploadCharacterReference(file);
-      setReference(meta);
-      if (previous && previous.file !== meta.file) {
-        // 替换后尽力释放旧文件；仍被旧角色引用时后端会拒绝，不影响新图使用
-        void api.deleteCharacterReference(previous.file).catch(() => undefined);
-      }
-      toast({
-        tone: "success",
-        title: "人物正面图已上传",
-        description: "生成时将作为强身份参考，并保留原图关联到新角色",
-      });
-    } catch (cause) {
-      const message =
-        cause instanceof ApiError ? cause.message.replace(/^\d+:\s*/, "") : String(cause);
-      setReferenceError(message);
-      toast({ tone: "danger", title: "图片上传失败", description: message });
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  function chooseReference(file: File) {
-    if (busy) return;
-    const typeOk =
-      ["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
-      /\.(jpe?g|png|webp)$/i.test(file.name);
-    if (!typeOk) {
-      const message = "仅支持 JPG / PNG / WebP 图片";
-      setReferenceError(message);
-      toast({ tone: "danger", title: "图片格式不支持", description: message });
-      return;
-    }
-    if (file.size > REFERENCE_MAX_BYTES) {
-      const message = "图片超过 10MB 限制，请压缩后重新上传";
-      setReferenceError(message);
-      toast({ tone: "danger", title: "图片过大", description: message });
-      return;
-    }
-    void uploadReference(file);
-  }
-
-  async function removeReference() {
-    const current = reference;
-    setReference(null);
-    setReferenceError(null);
-    if (referenceInput.current) referenceInput.current.value = "";
-    if (!current) return;
-    try {
-      await api.deleteCharacterReference(current.file);
-    } catch {
-      // 已被角色引用时后端拒绝删除；服务端文件保留，本地表单先清空即可
-    }
-  }
-
   async function generate() {
-    if (!goal.trim() || busy || uploading || agentStatus === "running") return;
+    if (!goal.trim() || busy || agentStatus === "running") return;
     setBusy(true);
     try {
       resetWorkflow();
@@ -339,16 +266,14 @@ export default function Workspace() {
       }
       if (height.trim()) cleaned.height_cm = Number(height);
 
-      const { task_id } = await api.createTask(text, cleaned, undefined, reference?.file);
+      const { task_id } = await api.createTask(text, cleaned);
       startAgent(task_id, text);
       toast({
         tone: "success",
         title: `任务 ${task_id} 已进入规划`,
-        description: reference
-          ? "已携带人物正面图：将作为强身份参考生成原画与三视图"
-          : modelSettings.data?.enabled
-            ? `将调用自定义模型 ${modelSettings.data.model} 生成原画`
-            : "Supervisor 正在生成任务图并调度智能体",
+        description: modelSettings.data?.enabled
+          ? `将调用自定义模型 ${modelSettings.data.model} 生成原画`
+          : "Supervisor 正在生成任务图并调度智能体",
       });
       navigate("/agents");
     } catch (cause) {
@@ -455,74 +380,6 @@ export default function Workspace() {
             </div>
           </div>
 
-          <div className="mt-4 rounded-sm border border-line bg-surface-1/60 p-3">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <span className="cf-ref">人物正面图 · 可选</span>
-                <p className="mt-1 max-w-[52ch] text-[11.5px] leading-[18px] text-ink-3">
-                  上传光线均匀、人物正面站立、面部和服装无遮挡的全身图。上传后将作为强身份参考生成原画与正 /
-                  侧 / 背三视图；不上传则按纯文本描述生成。
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon="image"
-                  loading={uploading}
-                  disabled={busy || agentStatus === "running"}
-                  onClick={() => referenceInput.current?.click()}
-                >
-                  {uploading ? "上传中…" : reference ? "重新上传" : "上传图片"}
-                </Button>
-                {reference && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    icon="trash"
-                    disabled={busy}
-                    onClick={removeReference}
-                  >
-                    删除
-                  </Button>
-                )}
-              </div>
-            </div>
-            {reference && (
-              <div className="mt-3 flex items-center gap-3 rounded-sm border border-line-subtle bg-paper p-2">
-                <SafeImage
-                  src={reference.url}
-                  alt="人物正面图"
-                  sealChar="正"
-                  className="h-[92px] w-[92px] shrink-0 rounded-sm object-contain"
-                />
-                <div className="min-w-0 text-[11.5px] leading-[18px] text-ink-3">
-                  <p className="truncate font-medium text-ink-2">{reference.file}</p>
-                  <p className="mt-0.5">
-                    {reference.width}×{reference.height} · {formatBytes(reference.bytes)}
-                  </p>
-                  <p className="mt-0.5 text-ink-4">生成时会保留原图并关联到新角色。</p>
-                </div>
-              </div>
-            )}
-            {referenceError && (
-              <p role="alert" className="mt-2 text-[11.5px] text-danger">
-                {referenceError}
-              </p>
-            )}
-            <input
-              ref={referenceInput}
-              type="file"
-              accept={REFERENCE_ACCEPT}
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) chooseReference(file);
-                event.target.value = "";
-              }}
-            />
-          </div>
-
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <button type="button" onClick={() => navigate("/settings")} title="模型设置">
@@ -591,7 +448,7 @@ export default function Workspace() {
                 icon="spark"
                 loading={busy}
                 onClick={generate}
-                disabled={busy || uploading || agentStatus === "running"}
+                disabled={busy || agentStatus === "running"}
               >
                 {busy ? "创建中…" : "生成资产"}
               </Button>

@@ -211,10 +211,6 @@ export interface CreativeAsset {
     side?: DesignViewImage;
     back?: DesignViewImage;
   };
-  /** 用户上传的人物正面图（强身份参考），与角色资产一同持久化 */
-  reference_image?: ReferenceImage;
-  /** 参考图流程中三视图生成失败的原因（原画与正面图仍保留，可重试） */
-  design_views_error?: { kind: string; detail: string } | null;
   restyle?: RestyleInfo;
   cutout_png?: string;
   review?: ReviewInfo;
@@ -225,16 +221,6 @@ export interface CreativeAsset {
   model_fallback?: { kind: string; detail: string } | null;
   pve_enemy?: boolean;
   pve_role?: "minion" | "boss";
-}
-
-/** 用户上传的人物正面图：文件与代理 URL 均指向本地持久化产物 */
-export interface ReferenceImage {
-  file: string;
-  url: string;
-  mime: string;
-  width: number;
-  height: number;
-  bytes: number;
 }
 
 export interface GeneratedImage {

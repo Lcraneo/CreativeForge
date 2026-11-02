@@ -212,8 +212,6 @@ class CreateTaskRequest(BaseModel):
     overrides: dict | None = None
     turbo: bool = False  # 极速档：跳过三视图等增值步骤，最快出结果
     asset_id: str | None = None  # 有值 → 在该资产上继续（编辑/加动画）；空 → 创建全新资产
-    # 已上传的人物正面图文件名（POST /api/character/reference 返回的 file）
-    reference_image: str | None = None
 
 
 class AnimationRequest(BaseModel):
@@ -366,10 +364,6 @@ def _localize_asset(asset):
     image = asset.get("image")
     if isinstance(image, dict):
         asset["image"] = localized(image)
-    reference = asset.get("reference_image")
-    if isinstance(reference, dict):
-        # 用户上传的正面图同为本地产物，URL 以文件名为准回写
-        asset["reference_image"] = localized(reference)
     source = asset.get("source")
     if isinstance(source, dict) and isinstance(source.get("ai_image"), dict):
         source["ai_image"] = localized(source["ai_image"])
@@ -425,79 +419,6 @@ def _enhance_context_for(asset) -> str | None:
     return ("；".join(parts)[:200]) or None
 
 
-def _reference_file_of(asset):
-    """资产上的人物正面图文件名（无参考图时返回 None）。"""
-
-    reference = asset.get("reference_image") if isinstance(asset, dict) else None
-    if isinstance(reference, dict) and reference.get("file"):
-        return os.path.basename(str(reference["file"]))
-    return None
-
-
-def _reference_in_use(runtime, name):
-    """正面图是否仍被任一资产 / 历史记录引用（用于删除保护）。"""
-
-    base = os.path.basename(str(name or ""))
-    if not base:
-        return False
-    for summary in runtime.assets.list():
-        if _reference_file_of(runtime.assets.get(summary.get("id"))) == base:
-            return True
-    for record in runtime.history.list(limit=runtime.history.count()):
-        if _reference_file_of(record.get("asset")) == base:
-            return True
-    return False
-
-
-def _task_reference_meta(name):
-    """把任务请求里的参考图文件名归一为持久化 meta；非法返回 None。"""
-
-    from studio.backend.model_service.service import safe_generated_path, validate_reference_image
-
-    base = os.path.basename(str(name or ""))
-    if not base.startswith("reference_"):
-        return None
-    path = safe_generated_path(base)
-    if not path:
-        return None
-    try:
-        with open(path, "rb") as handle:
-            data = handle.read()
-        info = validate_reference_image(data)
-    except (OSError, ValueError):
-        return None
-    return {
-        "file": base,
-        "url": "/api/generated/" + base,
-        "mime": info.get("mime"),
-        "width": info.get("width"),
-        "height": info.get("height"),
-        "bytes": info.get("bytes"),
-    }
-
-
-def _cleanup_orphan_references(runtime, candidates):
-    """删除 ``candidates`` 中已不再被任何资产 / 历史记录引用的正面图文件。
-
-    只处理调用方明确列出的 reference_ 文件，避免误删用户刚上传但尚未提交
-    生成、尚未写入历史记录的图片。
-    """
-
-    from studio.backend.model_service.service import safe_generated_path
-
-    for candidate in candidates:
-        base = os.path.basename(str(candidate or ""))
-        if not base.startswith("reference_") or _reference_in_use(runtime, base):
-            continue
-        path = safe_generated_path(base)
-        if not path:
-            continue
-        try:
-            os.remove(path)
-        except OSError:
-            pass
-
-
 def build_router(runtime):
     router = APIRouter(prefix="/api")
 
@@ -509,19 +430,11 @@ def build_router(runtime):
         # 仅当显式传了 asset_id 才继续现有资产；不带 asset_id 一律创建全新
         # 资产，避免"想新建角色却被历史资产劫持"的上下文污染（Phase 4 §6）。
         asset = _resolve_asset(runtime, request.asset_id) if request.asset_id else None
-        reference_image = None
-        if request.reference_image:
-            reference_image = _task_reference_meta(request.reference_image)
-            if reference_image is None:
-                raise HTTPException(
-                    status_code=400, detail="人物正面图不存在或不可用，请重新上传"
-                )
         task_id = runtime.start_task(
             goal,
             overrides=request.overrides,
             turbo=request.turbo,
             asset=asset,
-            reference_image=reference_image,
         )
         return {
             "task_id": task_id,
@@ -707,21 +620,14 @@ def build_router(runtime):
 
     @router.delete("/history/{record_id}")
     def delete_history(record_id: str):
-        record = runtime.history.get(record_id)
         removed = runtime.history.delete(record_id)
         if not removed:
             raise HTTPException(status_code=404, detail="unknown history record")
-        _cleanup_orphan_references(runtime, [_reference_file_of((record or {}).get("asset"))])
         return {"status": "deleted", "removed": removed}
 
     @router.delete("/history")
     def clear_history():
-        candidates = [
-            _reference_file_of(record.get("asset"))
-            for record in runtime.history.list(limit=runtime.history.count())
-        ]
         runtime.history.clear()
-        _cleanup_orphan_references(runtime, candidates)
         return {"status": "cleared"}
 
     # ------------------------------------------------------------------
@@ -841,43 +747,7 @@ def build_router(runtime):
             raise HTTPException(status_code=404, detail="unknown image")
         return FileResponse(path)
 
-    # ── 角色创建：人物正面图上传 / 删除 ──────────────────────────────────
-
-    @router.post("/character/reference")
-    async def upload_character_reference(file: "UploadFile" = File(...)):
-        """接收用户的人物正面全身图，落盘后返回可复用的参考图 meta。"""
-
-        from studio.backend.model_service.service import MAX_REFERENCE_BYTES, save_reference_image
-
-        data = await file.read()
-        if len(data) > MAX_REFERENCE_BYTES:
-            raise HTTPException(
-                status_code=413, detail="图片超过 10MB 限制，请压缩后重新上传"
-            )
-        try:
-            return save_reference_image(data)
-        except ValueError as error:
-            raise HTTPException(status_code=415, detail=str(error)) from error
-
-    @router.delete("/character/reference/{name}")
-    def delete_character_reference(name: str):
-        """删除未被角色引用的正面图；在用图片返回 409，避免产生裂图。"""
-
-        from studio.backend.model_service.service import safe_generated_path
-
-        base = os.path.basename(str(name or ""))
-        if not base.startswith("reference_"):
-            raise HTTPException(status_code=400, detail="只能删除人物正面图")
-        path = safe_generated_path(base)
-        if not path:
-            raise HTTPException(status_code=404, detail="图片不存在")
-        if _reference_in_use(runtime, base):
-            raise HTTPException(status_code=409, detail="该图片仍被角色引用，无法删除")
-        try:
-            os.remove(path)
-        except OSError as error:
-            raise HTTPException(status_code=500, detail="删除图片失败") from error
-        return {"status": "deleted", "file": base}
+    # ── 三视图生成 ────────────────────────────────────────────────────
 
     @router.post("/design/views")
     def generate_design_views(request: dict):
@@ -943,12 +813,8 @@ def build_router(runtime):
             existing = asset.get("design_views")
             merged = {**(existing if isinstance(existing, dict) else {}), **views}
             asset["design_views"] = merged
-            # 重试成功后清除上次失败原因，避免页面同时显示成功与错误
-            asset.pop("design_views_error", None)
             runtime.assets.save(asset)
-            runtime.history.patch_asset(
-                asset_id, {"design_views": merged, "design_views_error": None}
-            )
+            runtime.history.patch_asset(asset_id, {"design_views": merged})
             return {
                 "design_views": merged,
                 "failures": failures,

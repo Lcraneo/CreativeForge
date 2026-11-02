@@ -10,7 +10,6 @@ import type {
   ActionBatchSnapshot,
   CharacterPackageResult,
   GameScene,
-  ReferenceImage,
   RollbackRecord,
   SceneSummary,
   TaskEvent,
@@ -327,43 +326,11 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
-  createTask: (
-    goal: string,
-    overrides?: GenerationOverrides,
-    turbo?: boolean,
-    referenceImage?: string,
-  ) =>
+  createTask: (goal: string, overrides?: GenerationOverrides, turbo?: boolean) =>
     request<{ task_id: string; status: string; stream_url: string }>("/api/tasks", {
       method: "POST",
-      body: JSON.stringify({ goal, overrides, turbo, reference_image: referenceImage }),
+      body: JSON.stringify({ goal, overrides, turbo }),
     }),
-
-  /** 人物正面图上传：multipart 必须绕开 request() 的 JSON Content-Type。 */
-  uploadCharacterReference: async (file: File): Promise<ReferenceImage> => {
-    const form = new FormData();
-    form.append("file", file);
-    let response: Response;
-    try {
-      response = await fetch("/api/character/reference", {
-        method: "POST",
-        body: form,
-        headers: authHeaders(),
-      });
-    } catch (cause) {
-      throw new ApiError(0, `图片上传失败：${cause instanceof Error ? cause.message : String(cause)}`);
-    }
-    if (!response.ok) {
-      throw new ApiError(response.status, await errorDetail(response));
-    }
-    return (await response.json()) as ReferenceImage;
-  },
-
-  /** 删除未被角色引用的正面图；被引用时后端返回 409。 */
-  deleteCharacterReference: (name: string) =>
-    request<{ status: string; file: string }>(
-      `/api/character/reference/${encodeURIComponent(name)}`,
-      { method: "DELETE", silent: true },
-    ),
 
   enhancePrompt: (goal: string, overrides?: GenerationOverrides) =>
     request<{ model: string; prompt: string }>("/api/prompt/enhance", {

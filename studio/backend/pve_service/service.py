@@ -518,11 +518,8 @@ class PveEnemyService:
         existing = asset.get("design_views")
         merged = {**(existing if isinstance(existing, dict) else {}), **views}
         asset["design_views"] = merged
-        asset.pop("design_views_error", None)
         self.runtime.assets.save(asset)
-        self.runtime.history.patch_asset(
-            asset_id, {"design_views": merged, "design_views_error": None}
-        )
+        self.runtime.history.patch_asset(asset_id, {"design_views": merged})
 
     def _generate_actions(self, enemy_id: str, asset_id: str, rebuild: list[str] | None = None) -> str | None:
         from studio.backend.animation_service.service import AnimationService
