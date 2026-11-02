@@ -11,7 +11,9 @@
 //   studio/backend/tests/fixtures/playtest3d/manifest.json
 
 import { createHash } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+/* global Buffer, console, process */
+
+import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -20,8 +22,6 @@ import {
   BoxGeometry,
   BufferGeometry,
   Float32BufferAttribute,
-  Group,
-  MathUtils,
   Quaternion,
   QuaternionKeyframeTrack,
   Scene,
@@ -45,14 +45,14 @@ if (typeof globalThis.FileReader === "undefined") {
     readAsArrayBuffer(blob) {
       blob.arrayBuffer().then((buf) => {
         this.result = buf;
-        this.onloadend && this.onloadend();
+        if (this.onloadend) this.onloadend();
       });
     }
     readAsDataURL(blob) {
       blob.arrayBuffer().then((buf) => {
         this.result =
           "data:application/octet-stream;base64," + buf.toString("base64");
-        this.onloadend && this.onloadend();
+        if (this.onloadend) this.onloadend();
       });
     }
   };

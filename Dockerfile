@@ -7,8 +7,8 @@ RUN npm run build
 
 FROM python:3.11-slim
 WORKDIR /app
-COPY studio/backend/requirements.txt ./studio/backend/
-RUN pip install --no-cache-dir -r studio/backend/requirements.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 # 注意：COPY 多源+dest=./ 会把各目录“内容”平铺进 /app（studio/ 目录不存在），
 # 必须逐目录拷到同名目标，保持 /app/studio、/app/core ... 的包结构
 COPY core ./core

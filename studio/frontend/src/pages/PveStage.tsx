@@ -37,7 +37,6 @@ import {
   retryPveStage,
   stepPve,
   togglePvePause,
-  type PveAbility,
   type PveAudioEvent,
   type PveHud,
   type PveInput,

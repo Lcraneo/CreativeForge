@@ -4,7 +4,8 @@ Upstream: https://github.com/feitangyuan/onetake — skill snapshot, lineage `ot
 Snapshot date: 2026-10-02, taken from `D:/onetake-main.zip`.
 License: **PolyForm Noncommercial 1.0.0** (see `LICENSE`) — free for noncommercial use only.
 CreativeForge 定位：External Creative Capability（发布视频 / Showcase Engine），不属于自研核心
-（PReCon / FAlign / GImport）。方案与验收标准见 `docs/onetake-integration-plan.md`。
+（PReCon / FAlign / GImport）。集成代码位于 `adapters/onetake/`，验收见
+`tests/test_onetake_pipeline.py`。
 
 ## Rules
 

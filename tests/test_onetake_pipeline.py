@@ -1,12 +1,11 @@
 """OneTake 发布视频链路契约测试（离线、零渲染、无网络）。
 
-对应 docs/onetake-integration-plan.md 的 P1 验收面：
+验证 OneTake 接入的以下行为：
 
   * scene/timeline mapper：文案派生确定性、节奏纪律（cadence CV ≥0.25、
     静止段 ≥1.0s、镜长差 ≥4×、cuts 全声明）
   * comp 装配：{{CF_JSON}} 注入完整、onetake 契约钩子齐全、渲染路径确定性
   * 资产映射：像素重建/方形画幅/缺素材可读报错
-  * 能力注册：plan_service 目录 + legacy registry 双向可见
   * ShowcaseService：产物伺服目录穿越防护
   * （可选，RUN_ONETAKE_RENDER=1）chromium 渲染冒烟：模板 comp 出 stills
 

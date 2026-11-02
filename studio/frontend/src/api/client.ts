@@ -141,18 +141,6 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
   return response.json() as Promise<T>;
 }
 
-/** FastAPI 错误响应是 JSON {detail}；上传接口直接读取文本并还原可读原因。 */
-async function errorDetail(response: Response): Promise<string> {
-  const raw = await response.text().catch(() => response.statusText);
-  try {
-    const parsed = JSON.parse(raw) as { detail?: unknown };
-    if (typeof parsed?.detail === "string") return parsed.detail;
-  } catch {
-    /* 非 JSON 错误体按原文返回 */
-  }
-  return raw;
-}
-
 export const api = {
   health: () => request<{ status: string; frontend_stale?: boolean }>("/api/health"),
 

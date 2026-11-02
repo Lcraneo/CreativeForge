@@ -1,8 +1,11 @@
 # CreativeForge Studio
 
-CreativeForge Studio 是一个面向游戏开发的 AI 资产生产工作台。用户可以输入自然语言创意，由多智能体完成规划与调度，再通过像素重建、动画对齐、引擎导入和 3D 试玩等管线，生成可导入 Unity、Cocos 或 Godot 的游戏角色、动画及工程资产。
+CreativeForge Studio 是一个面向游戏开发的 AI 资产生产工作台。用户输入
+自然语言创意，由智能体完成规划与调度，再通过像素重建、动画对齐、引擎导入、
+场景编译和试玩管线，生成可进入 Unity、Cocos 或 Godot 的角色、动画和工程资产。
 
-项目以 `CreativeAsset` 资产协议串联设计、生成、检查、动效、试玩和导出流程，目标是把「创意描述」转化为可直接进入游戏引擎的可用资源。
+项目以 `CreativeAsset` 串联设计、生成、检查、动效、试玩和导出流程。目标是把
+「创意描述」转化为可检查、可试玩、可导出的游戏资源。
 
 ## 技术栈
 
@@ -15,7 +18,7 @@ CreativeForge Studio 是一个面向游戏开发的 AI 资产生产工作台。�
 ## 环境要求
 
 - Python 3.11+
-- Node.js 18+（推荐 20+）
+- Node.js 20.19+、22.13+ 或 24+（推荐 22 LTS）
 - npm
 
 以下命令均从仓库根目录执行。
@@ -70,7 +73,8 @@ npm --prefix studio/frontend run dev
 - 有开屏动画：<http://127.0.0.1:5173/#opening>
 - 没有开屏动画：<http://127.0.0.1:5173/#noopening>
 
-Vite 会将 `/api` 和 `/ws` 请求代理到 `http://127.0.0.1:8600`。如需连接其他后端地址，可设置 `VITE_BACKEND`。
+Vite 会将 `/api` 和 `/ws` 请求代理到 `http://127.0.0.1:8600`。如需连接其他
+后端地址，可设置 `VITE_BACKEND`。
 
 ## 开屏动画说明
 
@@ -99,29 +103,48 @@ npm --prefix studio/frontend run build
 ## 常用检查
 
 ```powershell
+.\.venv\Scripts\python.exe tests\run_tests.py
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe tests\release\run_release_tests.py
 npm --prefix studio/frontend run typecheck
 npm --prefix studio/frontend run lint
 npm --prefix studio/frontend run test
+npm --prefix studio/frontend run build
 ```
 
 ## 项目结构
 
 ```text
-creative-forge/
-├── studio/frontend/       # React 工作台
-├── studio/backend/        # FastAPI 后端
-├── agent/  agents/        # 智能体与多 Agent 编排
-├── precon/                # 像素重建
-├── falign/                # 动画对齐
-├── gimport/               # 引擎导入
-├── artgen/  sprite/       # 2D 生成管线
-├── three_d/               # 3D 资产管线
-├── adapters/              # 模型与云服务适配
-├── core/  protocol/       # CreativeAsset 协议与契约
-├── benchmark/             # 质量评测
-└── tests/                 # 测试
+studio/frontend/       React 工作台
+studio/backend/        FastAPI、智能体运行时与业务服务
+agent/  agents/        智能体规划与多 Agent 编排
+precon/                像素重建
+falign/                动画对齐
+gimport/               引擎导入
+artgen/                2D 生成与动画
+adapters/              模型、云服务和 OneTake 适配
+core/  protocol/       核心接口与 Agent 协议
+schemas/  packages/    CreativeAsset 契约
+benchmark/  tests/     质量评测与测试
+examples/  games/      示例和浏览器演示
 ```
+
+`studio/backend/data/`、`studio/backend/generated/`、历史记录和导出文件属于
+本地运行时数据，不属于源码结构。
+
+## 项目文档
+
+关键文档共六份：
+
+- [README.md](README.md)：安装、启动和日常使用
+- [ARCHITECTURE.md](ARCHITECTURE.md)：运行时流程、目录职责和扩展点
+- [PRODUCT.md](PRODUCT.md)：产品定位、用户和边界
+- [DESIGN.md](DESIGN.md)：视觉系统与交互规范
+- [PROMPT_GUIDE.md](PROMPT_GUIDE.md)：角色、场景和 PVE 敌人提示词写法
+- [CONTRIBUTING.md](CONTRIBUTING.md)：开发约定和质量门
 
 ## 模型配置
 
-后端默认可使用内置确定性管线。需要 AI 原画、图生视频等能力时，可在「设置 → 模型设置」中填写模型服务地址与密钥；密钥通过环境变量或本地 `.env` 提供，不写入仓库。
+后端默认可使用内置确定性管线。需要 AI 原画、图生视频等能力时，可在
+「设置 → 模型设置」中填写模型服务地址与密钥；密钥通过环境变量或本地 `.env`
+提供，不写入仓库。

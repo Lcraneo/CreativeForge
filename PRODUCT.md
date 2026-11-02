@@ -1,64 +1,77 @@
-# Product
+# 产品说明
 
 <!-- impeccable:product-schema 1 -->
 
-## Platform
+## 平台
 
 web
 
-## Users
+## 用户
 
-CreativeForge is built for game developers, indie studios, technical artists, designers, and solo creators who turn a natural-language brief into playable game assets and engine-ready packages. They work in a browser-based production studio, often alternating between rapid ideation, generation monitoring, visual review, animation checks, playtesting, and export.
+CreativeForge 面向游戏开发者、独立工作室、技术美术、设计师和独立创作者。用户通过
+自然语言描述制作可玩的游戏资产和可直接进入引擎的资源包，并在浏览器工作台中
+交替完成快速构思、生成监控、视觉检查、动画确认、试玩和导出。
 
-## Product Purpose
+## 产品目标
 
-CreativeForge Studio is an AI game-asset production workbench. It turns a natural-language goal into planned, traceable, reusable game assets through multi-agent orchestration, 2D/3D generation pipelines, animation alignment, engine import, preview, and export. Success means the user can move from concept to an inspectable, playable, exportable asset without losing context or control.
+CreativeForge Studio 是一个 AI 游戏资产生产工作台。它通过多智能体编排、2D/3D
+生成管线、动画对齐、引擎导入、预览和导出，把自然语言目标转化为可规划、可追踪、
+可复用的游戏资产。成功的标准是用户能够从概念走到可检查、可试玩、可导出的资产，
+同时不丢失上下文和控制权。
 
-## Positioning
+## 产品定位
 
-CreativeForge is not a single model call or a generic image generator. Its distinctive mechanism is a shared CreativeAsset protocol spanning planning, generation, animation, 3D, preview, and Unity/Cocos/Godot-oriented export, backed by visible multi-agent execution and in-house production pipelines.
+CreativeForge 不是一次模型调用，也不是通用图片生成器。它的核心机制是使用统一的
+`CreativeAsset` 协议贯通规划、生成、动画、3D、预览和面向 Unity/Cocos/Godot 的
+导出，并由可观察的多智能体执行过程和自研生产管线支撑。
 
-## Operating Context
+## 使用场景
 
-- The primary surface is the Studio web application at the project root route.
-- Users supervise long-running asynchronous work through live events, task state, progress, and failure recovery.
-- Asset work spans character art, three-view sheets, animation frames, sprite/2D assets, 3D assets, playtests, arcade scenes, versions, and export packages.
-- The interface is Chinese-first, with technical identifiers and pipeline terminology in English.
-- The product runs locally or in a hosted deployment and can connect to optional external model providers.
-- The existing Studio frontend is React 18 + TypeScript + Vite + Tailwind CSS 4, with Framer Motion, TanStack Query, Zustand, React Router, Three.js, and Konva already in use.
+- 主要入口是项目根路由上的 Studio Web 应用。
+- 用户通过实时事件、任务状态、进度和失败恢复信息监督长时间运行的异步任务。
+- 资产工作覆盖角色原画、三视图、动画帧、精灵/2D 资产、3D 资产、试玩、街机场景、
+  版本和导出包。
+- 界面以中文为主，技术标识和管线术语保留英文。
+- 产品可以本地运行或部署到托管环境，并连接可选的外部模型服务。
+- 现有 Studio 前端使用 React 18、TypeScript、Vite 和 Tailwind CSS 4，同时使用
+  Framer Motion、TanStack Query、Zustand、React Router、Three.js 和 Konva。
 
-## Capabilities and Constraints
+## 能力与约束
 
-- Preserve all existing routes and workflows: workspace, agent dashboard, history, versions, asset inspection, three-view design, animation studio, export, model settings, 2D playtest, 3D playtest, and arcade.
-- Preserve API, WebSocket, task-feed, asset-store, export, model-provider, and playtest behavior.
-- Preserve loading, empty, error, disconnected, progress, and retry states.
-- Heavy canvas and 3D surfaces must remain usable; decorative chrome must not reduce their working area or frame rate.
-- Long-running work and large event streams require bounded, scan-friendly information density.
-- No customer names, benchmarks, testimonials, pricing, or commercial claims may be invented.
-- The current backend data and unrelated export/history artifacts must not be altered by frontend work.
+- 保留现有全部路由和工作流：工作台、智能体面板、历史、版本、资产检查、三视图设计、
+  动画工作台、导出、模型设置、2D 试玩、3D 试玩和街机。
+- 保留 API、WebSocket、任务流、资产库、导出、模型服务和试玩行为。
+- 保留加载、空状态、错误、断连、进度和重试状态。
+- 重型画布和 3D 界面必须保持可用；装饰元素不能压缩工作区或降低帧率。
+- 长时间任务和大量事件流需要有边界、便于扫读的信息密度。
+- 不得虚构客户名称、基准数据、用户证言、价格或商业承诺。
+- 前端工作不得修改当前后端数据和无关的导出/历史产物。
 
-## Brand Commitments
+## 品牌约定
 
-- The product name is CreativeForge / CreativeForge Studio.
-- The product voice is precise, calm, capable, and slightly artisanal; it should not become theatrical or cryptic.
-- The user has pinned the Trianon concept as the reference for atmosphere, material language, and opening-animation ambition. The result must be an original CreativeForge expression, not a copy of Kimi branding, logos, copy, or page content.
+- 产品名称为 CreativeForge / CreativeForge Studio。
+- 产品语气应准确、冷静、可靠并带有手工艺感，不应变得戏剧化或晦涩。
+- 用户指定 Trianon 概念作为氛围、材质语言和开屏动画目标的参考。最终结果必须是
+  CreativeForge 的原创表达，不得复制 Kimi 的品牌、标志、文案或页面内容。
 
-## Evidence on Hand
+## 现有依据
 
-- Product and architecture facts: `README.md` and `docs/`.
-- Existing visual system and prior design decisions: `docs/design/02-visual-spec.md`, `docs/design/03-key-screens.md`, and `docs/design/ui-refresh-20261006/`.
-- Existing rendered evidence: screenshots under `docs/design/ui-refresh-20261006/` and `D:/pyProject/.screenshots/`.
-- Reference concept source and licensed assets: the public Trianon repository and its MIT/OFL/CC0 notices.
-- No approved customer case studies, commercial metrics, or production testimonials are available.
+- 产品与架构事实以 `README.md` 和 `ARCHITECTURE.md` 为准。
+- 现有视觉系统与交互规则以 `DESIGN.md` 和 Studio 前端实现为准。
+- 参考概念与授权资产来自公开的 Trianon 仓库及其 MIT/OFL/CC0 声明。
+- 当前没有已确认的客户案例、商业指标或生产环境用户证言。
 
-## Product Principles
+## 产品原则
 
-1. Make agent work legible: planning, state, progress, and failure should never feel like a black box.
-2. Keep the asset as the center of gravity: every screen should make the current creative object easier to understand or improve.
-3. Preserve continuity from idea to playable output: the same asset identity should follow generation, review, animation, playtest, versioning, and export.
-4. Earn decoration with function: visual character should clarify hierarchy, state, or material provenance, not compete with the task.
-5. Prefer recoverable, inspectable workflows over opaque automation.
+1. 让智能体工作可读：规划、状态、进度和失败不能成为黑盒。
+2. 以资产为中心：每个界面都应帮助用户理解或改进当前创作对象。
+3. 保持从想法到可玩产物的连续性：同一资产身份应贯穿生成、检查、动画、试玩、
+   版本和导出。
+4. 装饰必须服务于功能：视觉风格应说明层级、状态或材质来源，不能与任务争夺注意力。
+5. 优先选择可恢复、可检查的工作流，而不是不透明的自动化。
 
-## Accessibility & Inclusion
+## 无障碍与包容性
 
-The redesign targets WCAG 2.2 AA for contrast, keyboard operation, focus visibility, semantic structure, reduced motion, and touch target sizing. Every animation requires a reduced-motion path, and all critical status information must have a text or shape cue in addition to color.
+界面以 WCAG 2.2 AA 为目标，覆盖对比度、键盘操作、焦点可见性、语义结构、减少动态
+效果和触控目标尺寸。每种动画都需要减少动态效果路径；所有关键状态信息除颜色外，
+还必须提供文字或形状提示。

@@ -1,6 +1,6 @@
 ---
 name: CreativeForge Studio
-description: A mist-blue atelier for turning natural-language ideas into game-ready assets.
+description: 以雾蓝色工坊为视觉世界，将自然语言创意转化为可直接用于游戏的资产。
 colors:
   canvas: "#F3F6FA"
   paper: "#FBF9F4"
@@ -97,128 +97,159 @@ components:
 
 ---
 
-# Design System: CreativeForge Studio
+# 设计系统：CreativeForge Studio
 
-## Overview
+## 概述
 
-**Creative North Star: "The Mist-Blue Atelier"**
+**创意北极星：“雾蓝工坊”**
 
-CreativeForge should feel like a working atelier rather than a control panel: ivory work surfaces, mist-blue air, ink-blue typography, silver rules, and a few wax-red moments reserved for consequence. The visual world borrows the poise and ceremony of a rococo salon, but translates it into a production tool where the asset, the agent's reasoning, and the next action remain immediately legible.
+CreativeForge 应当像一个正在工作的工坊，而不是传统控制面板：象牙色工作台面、
+雾蓝空气、墨蓝文字、银蓝分隔线，以及只用于重要结果的少量蜡红色时刻。视觉世界
+借用洛可可沙龙的从容与仪式感，但最终服务于生产工具，让资产、智能体推理和下一步
+操作始终清晰可读。
 
-**Key Characteristics:**
+**关键特征：**
 
-- Paper and vellum surfaces with precise silver-blue rules.
-- Ink-blue type on warm ivory, with mist-blue used as atmosphere rather than decoration.
-- One expressive moment in the opening sequence; routine product motion stays quiet.
-- Dossier-like secondary panels, ticket-like controls, and postmark-like metadata.
-- Crisp SVG scrollwork, ribbon bands, crests, and arched rules anchor the salon atmosphere.
-- Dense work areas stay calm, rectangular, and scan-friendly.
-- Chinese typography is designed, not left to fallback.
+- 纸张与羊皮纸质感表面，搭配精确的银蓝分隔线。
+- 暖象牙底色上的墨蓝文字，雾蓝主要用于氛围，而非装饰。
+- 开屏是唯一强表现时刻，日常产品动效保持克制。
+- 二级面板像档案页，控制项像票签，元数据像邮戳。
+- 使用清晰的 SVG 卷草纹、缎带、纹章和拱形线条建立沙龙氛围。
+- 高密度区域保持安静、规整、便于扫读。
+- 中文排版经过专门设计，不依赖系统兜底效果。
 
-## Colors
+## 色彩
 
-### Primary
+### 主色
 
-- **Ink Blue `#25345A`** — primary text, primary actions, and authoritative labels.
-- **Mist Blue `#AEBFD7`** — atmospheric fields, selected surfaces, and quiet brand presence.
-- **Wax Red `#8E4657`** — destructive actions, irreversible confirmation, and rare seals of consequence.
+- **墨蓝 `#25345A`**：主要文字、主要操作和权威标签。
+- **雾蓝 `#AEBFD7`**：氛围背景、选中表面和低调的品牌存在感。
+- **蜡红 `#8E4657`**：破坏性操作、不可逆确认和少量表示结果的重要印记。
 
-### Neutral
+### 中性色
 
-- **Paper / Ivory `#FBF9F4`** — primary work paper.
-- **Canvas `#F3F6FA`** — application background and atmospheric wash.
-- **Surface `#EAF0F6`** — secondary panels, toolbars, and dossier interiors.
-- **Mist Silver `#93A9C4`** — rules, icons, muted metadata, and disabled text.
-- **Line `#CBD5E3`** — one-pixel borders and separators.
+- **纸张 / 象牙白 `#FBF9F4`**：主要工作纸张。
+- **画布 `#F3F6FA`**：应用背景与大气层。
+- **表面 `#EAF0F6`**：二级面板、工具栏和档案内容区。
+- **雾银 `#93A9C4`**：线条、图标、弱化元数据和禁用文字。
+- **分隔线 `#CBD5E3`**：一像素边框和分隔线。
 
-Success, warning, and danger use `#3E6553`, `#765A2C`, and `#8E4657` and always pair with text or a shape cue.
+成功、警告和危险状态分别使用 `#3E6553`、`#765A2C` 和 `#8E4657`，
+并且必须同时搭配文字或形状提示。
 
-### Named Rules
+### 命名规则
 
-**The Consequence Rule.** Wax red never decorates inactive content; it marks a decision, interruption, or irreversible action.
+**结果规则。** 蜡红不装饰非活动内容，只用于决策、中断或不可逆操作。
 
-**The Ink-on-Paper Rule.** Body text and controls use ink blue on ivory or canvas, not gray on blue. Secondary text is tinted from ink blue rather than neutral gray.
+**纸上墨色规则。** 正文和控件在象牙白或画布上使用墨蓝，不使用浅灰配蓝色；
+次级文字从墨蓝派生，而不是改成中性灰。
 
-## Typography
+## 排版
 
-### Hierarchy
+### 层级
 
-- **Display** — Cormorant Garamond with Noto Serif SC fallback; opening titles, empty-state statements, and one focal heading per surface.
-- **Title** — Noto Serif SC at 28–34px; page and section headings.
-- **Body** — Outfit with a Chinese sans fallback; labels, controls, descriptions, and data.
-- **Label** — Outfit at 12px, weight 600, moderate tracking; navigation and metadata.
-- **Code** — IBM Plex Mono; paths, task IDs, JSON, logs, and numeric measurements.
+- **展示标题**：Cormorant Garamond，中文回退到 Noto Serif SC；用于开屏、空状态
+  核心句和每个界面的唯一焦点标题。
+- **页面标题**：Noto Serif SC，28–34px；用于页面和区块标题。
+- **正文**：Outfit，中文回退到无衬线字体；用于标签、控件、描述和数据。
+- **标签**：Outfit 12px、字重 600、适度字距；用于导航和元数据。
+- **代码**：IBM Plex Mono；用于路径、任务 ID、JSON、日志和数值测量。
 
-### Named Rules
+### 命名规则
 
-**The Chinese Voice Rule.** Latin display faces may set English and French accents, but Chinese display text always uses Noto Serif SC with its own weight and line-height tuning.
+**中文语气规则。** 拉丁展示字体可以承担英文和法文视觉重音，但中文展示文字始终
+使用 Noto Serif SC，并单独调整字重与行高。
 
-**The Label Rule.** Display and script faces never appear in buttons, form labels, table headers, or dense operational text.
+**标签规则。** 展示字体和手写风格字体不得出现在按钮、表单标签、表头或高密度操作
+文本中。
 
-## Layout
+## 布局
 
-Desktop uses a three-part composition: a navigation folio on the left, the working letter in the center, and an optional dossier on the right. The center column owns the task; side regions are secondary and may collapse. At 1280px and below the left folio may rail; at 1024px and below the dossier becomes a drawer; below 768px the interface becomes a single column with a compact bottom navigation.
+桌面端采用三段式结构：左侧导航书页、中间工作信纸、右侧可选档案面板。中栏承担
+主要任务，两侧区域是辅助内容并可以收起。视口小于等于 1280px 时，左侧导航可以
+收窄；小于等于 1024px 时，档案面板变为抽屉；小于 768px 时，界面切换为单列，
+并使用紧凑的底部导航。
 
-Page padding uses a 4px rhythm with 16/24/32/48px steps. Dense tables and logs may use compact rows, but page-level sections keep generous separation. Reading text stays within 65–75ch. The 3D, playtest, and animation canvases take all remaining space and receive only a light frame.
+页面间距采用 4px 节奏，并以 16/24/32/48px 递进。密集表格和日志可以使用紧凑行，
+但页面级区块之间保持充足留白。阅读文本宽度控制在 65–75 个字符。3D、试玩和动画
+画布占用全部剩余空间，只保留轻量边框。
 
-## Elevation & Depth
+## 抬升与纵深感
 
-Borders carry most structure. Shadows appear only for floating menus, drawers, and the opening overlay. Elevation uses an offset and soft blur; no zero-offset colored halos. Paper surfaces may use a subtle inner highlight, but not a double border-and-heavy-shadow treatment.
+结构主要由边框承担。阴影只用于浮动菜单、抽屉和开屏遮罩。抬升效果使用偏移和柔和
+模糊，不使用零偏移的彩色光晕。纸张表面可以有轻微内高光，但不能同时叠加粗边框和
+重阴影。
 
-## Shapes
+## 形状
 
-Corners stay in the 6–18px range. Primary containers remain stable rectangles with 14px radius. Rococo expression uses authored SVG geometry: a crest for the identity, a double-rule arch for the workspace, scrollwork corners for page headers, and fleurons for card headings. Ribbon bands and oval stamps carry metadata or state. Ornament is a layer above layout, never an alternative to hit areas, text flow, or canvas space.
+圆角保持在 6–18px。主要容器使用 14px 圆角的稳定矩形。洛可可表达使用专门绘制的
+SVG 几何：身份区域使用纹章，工作区使用双线拱门，页面标题使用卷草角，卡片标题
+使用小花饰。缎带和椭圆印章承载元数据或状态。装饰是布局之上的图层，绝不能替代
+点击区域、文本流或画布空间。
 
-## Components
+## 组件
 
-### Buttons
+### 按钮
 
-Primary buttons use ink blue with paper text and a compact rectangular shape. Secondary buttons use paper with a silver-blue border. Hover moves one pixel and strengthens the rule, never the shadow. Pressed state compresses to 98%. Focus uses a two-ring ivory/ink outline. Destructive actions use wax red and explicit verbs.
+主按钮使用墨蓝底和纸张白文字，保持紧凑矩形。次按钮使用纸张白底和银蓝边框。悬停
+时向上移动一像素并强化边框，不强化阴影。按下状态缩放到 98%。焦点使用象牙白与
+墨蓝双层轮廓。破坏性操作使用蜡红色和明确动词。
 
-### Chips
+### 标签片
 
-Chips are compact stamps: ivory fill, silver rule, ink-blue label. Selected chips use mist blue with ink-blue text. Chips never use wax red unless they represent a destructive filter.
+标签片像小型印章：象牙白填充、银蓝边框、墨蓝文字。选中项使用雾蓝底和墨蓝文字。
+除非表示破坏性筛选，否则不使用蜡红。
 
-### Cards / Containers
+### 卡片与容器
 
-Letter cards use ivory, a 14px radius, a one-pixel line border, and generous internal spacing. Avoid nested cards. Use a title rule and body rhythm instead of stacking decorated boxes.
+信件式卡片使用象牙白、14px 圆角、一像素边框和宽松内边距。避免卡片嵌套。通过标题
+分隔线和正文节奏建立层级，不要连续堆叠装饰盒子。
 
-### Inputs / Fields
+### 输入框
 
-Fields use ivory inset surfaces, a silver-blue rule, and ink-blue caret and text. Placeholder text remains at least 4.5:1 contrast. Error text names the problem and recovery in the product's language.
+输入框使用象牙白内嵌表面、银蓝边框和墨蓝光标与文字。占位文字对比度至少达到
+4.5:1。错误信息应使用产品语言说明问题和恢复方式。
 
-### Navigation
+### 导航
 
-The left folio groups destinations under quiet ink-blue headings with silver rules. The active destination receives a mist-blue field and a small wax-red bookmark, not a full saturated highlight. Mobile navigation keeps the same vocabulary in a compact form.
+左侧书页在安静的墨蓝标题和银色分隔线下组织目的地。当前项使用雾蓝底色和一个小
+蜡红书签，不使用大面积高饱和高亮。移动端导航保留同一套视觉语言，但采用紧凑形式。
 
-### Signature Components
+### 标志性组件
 
-The dossier panel is the signature secondary surface: a cool paper field with a ribbon tab, a compact heading, and a vertical sequence of facts. The ornament set is its companion grammar: `RococoCrest` for identity, `RococoDivider` for section transitions, `RococoCorner` for page frames, `RococoFrame` for the workspace arch, and `RococoRibbon` for labels. Ornaments are `aria-hidden`, pointer-transparent, and never replace textual meaning.
+档案面板是标志性的二级表面：冷纸张底色、缎带标签、紧凑标题和纵向事实序列。配套
+装饰语法包括：身份区使用 `RococoCrest`，区块过渡使用 `RococoDivider`，页面边框
+使用 `RococoCorner`，工作区拱门使用 `RococoFrame`，标签使用 `RococoRibbon`。
+装饰元素必须设置 `aria-hidden`、允许指针穿透，并且不能替代文字含义。
 
-### Ornament Budget
+### 装饰预算
 
-Each page may carry one header corner, one section divider, and one crest or ribbon at a major anchor. Cards receive only the small fleuron in their heading. Dense tables, logs, canvas controls, and 3D viewports receive no extra scrollwork.
+每个页面最多使用一个页眉角饰、一个区块分隔线，以及一个重要位置的纹章或缎带。
+卡片只在标题处使用小花饰。密集表格、日志、画布控件和 3D 视口不增加卷草装饰。
 
-### Motion
+### 动效
 
-Routine transitions use 120–320ms with confident ease-out. The opening sequence is the one authored spectacle: the desktop version runs 4.5s once per local day, moves through typographic frames and a final seal, then pulls back into the loaded workspace over 240ms. Mobile uses a 1.6s version; reduced motion uses a 1.15s fade of the final mark. Any click, Enter, Space, or Escape skips it. Page-load choreography never repeats inside the product.
+常规过渡时长 120–320ms，使用稳定的 ease-out。开屏是唯一专门编排的视觉演出：
+桌面端每天运行一次，持续 4.5 秒，经过字形画框和最终印章，再用 240ms 收回已加载
+的工作台。移动端版本为 1.6 秒；减少动态效果模式下，最终标记以 1.15 秒淡入。点击、
+Enter、空格或 Escape 均可跳过。页面加载编排不会在产品内部重复播放。
 
-## Do's and Don'ts
+## 应做与不应做
 
-### Do:
+### 应做
 
-- Use real product content and actual status vocabulary.
-- Pair every semantic color with text or shape.
-- Keep the center work area calm and the decorative budget concentrated.
-- Test Chinese, English, mixed strings, long paths, and large numbers at every breakpoint.
-- Use `prefers-reduced-motion` for every authored sequence.
-- Use crisp SVG linework for rococo ornament and keep it pointer-transparent.
+- 使用真实产品内容和实际状态词汇。
+- 每种语义色都必须搭配文字或形状。
+- 保持中央工作区安静，并把装饰预算集中使用。
+- 在每个断点测试中文、英文、混合字符串、长路径和大数字。
+- 所有专门编排的动画都支持 `prefers-reduced-motion`。
+- 洛可可装饰使用清晰的 SVG 线条，并保持指针穿透。
 
-### Don't:
+### 不应做
 
-- Copy Kimi Code branding, copy, or page content.
-- Put display fonts in operational labels.
-- Nest cards or add ornament to every panel.
-- Use emoji, raster doodles, or decorative glyphs as ornaments.
-- Use blur, gradients, or texture as a substitute for hierarchy.
-- Let the opening animation block access when assets or routes fail.
+- 复制 Kimi Code 的品牌、文案或页面内容。
+- 在操作标签中使用展示字体。
+- 嵌套卡片，或给每个面板都增加装饰。
+- 使用 emoji、位图涂鸦或装饰性字形代替纹样。
+- 用模糊、渐变或纹理替代信息层级。
+- 当资源或路由失败时，让开屏动画阻止用户进入。

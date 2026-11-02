@@ -1,10 +1,9 @@
-"""Runnable contract tests for CreativeForge (Phases 3-7).
+"""Runnable contract tests for the CreativeForge asset pipelines.
 
 Run from the repository root:
 
     python tests/run_tests.py
 
-Each check mirrors the markdown contract docs in tests/.
 """
 
 import os
@@ -771,9 +770,8 @@ def _():
 
 @check("architecture", "legacy systems stay deleted (no imports from backend/ or frontend/)")
 def _():
-    """Q4 4.2 遗留处置：backend/（Phase 11-23 旧后端）与 frontend/（MVP）已冻结并
-    于 2026-10-05 整体删除（docs/legacy-inventory.md）。门禁保留，防止从 git 历史
-    找回代码时把对已删系统的 import 重新带回活跃目录。"""
+    """遗留 backend/ 与 frontend/ 已删除。门禁保留，防止从 Git 历史找回代码时
+    把对已删系统的 import 重新带回活跃目录。"""
     import os
     import re
 
