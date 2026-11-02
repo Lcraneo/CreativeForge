@@ -83,28 +83,7 @@ class PveEnemyServiceTests(unittest.TestCase):
         self.store.save(record)
         restored = PveEnemyStore(self.path)
         self.assertEqual(restored.get("pve_test01")["name"], "霜甲冲锋兽")
-        self.assertIn("builtin_slime", {item["id"] for item in restored.list()})
-
-    def test_builtin_assets_are_claimed_by_enemy_pool(self):
-        class History:
-            def __init__(self):
-                self.patches = []
-
-            def patch_asset(self, asset_id, patch):
-                self.patches.append((asset_id, patch))
-                return True
-
-        runtime = _Runtime()
-        runtime.history = History()
-        PveEnemyService(runtime, store=self.store)
-
-        self.assertEqual(
-            runtime.history.patches,
-            [
-                ("ast64960", {"pve_enemy": True, "pve_role": "minion"}),
-                ("ast60574", {"pve_enemy": True, "pve_role": "boss"}),
-            ],
-        )
+        self.assertEqual([item["id"] for item in restored.list()], ["pve_test01"])
 
     def test_scene_selects_custom_enemy_by_prompt_and_builds_campaign(self):
         profile = {
@@ -130,6 +109,13 @@ class PveEnemyServiceTests(unittest.TestCase):
             "created_at": 2,
             "updated_at": 2,
         }
+        boss = {
+            "id": "pve_test_boss",
+            "name": "测试 Boss",
+            "role": "boss",
+            "status": "ready",
+            "asset_id": "ast_test_boss",
+        }
         intent = normalize_intent(
             {
                 "title": "机械冰原",
@@ -140,7 +126,7 @@ class PveEnemyServiceTests(unittest.TestCase):
             "冰原上的霜甲冲锋兽",
             "hard",
         )
-        level = compile_pve(intent, 42, "冰原上的霜甲冲锋兽", [profile])
+        level = compile_pve(intent, 42, "冰原上的霜甲冲锋兽", [profile, boss])
         minion = level["stages"][0]["enemies"][0]
         self.assertEqual(minion["asset_id"], "ast_custom_minion")
         self.assertEqual(minion["max_hp"], 7)
@@ -155,17 +141,14 @@ class PveEnemyServiceTests(unittest.TestCase):
         client = TestClient(app)
         listed = client.get("/api/pve/enemies")
         self.assertEqual(listed.status_code, 200)
-        self.assertIn(
-            "builtin_slime",
-            {enemy["id"] for enemy in listed.json()["enemies"]},
-        )
+        self.assertEqual(listed.json()["enemies"], [])
         response = client.post(
             "/api/pve/enemies/generate",
             json={"prompt": "冰霜兽", "role": "npc", "difficulty": "normal"},
         )
         self.assertEqual(response.status_code, 422)
 
-    def test_enemy_api_deletes_custom_profiles_but_keeps_builtins(self):
+    def test_enemy_api_deletes_custom_profiles(self):
         record = {
             "id": "pve_removable",
             "name": "待删除敌人",
@@ -187,10 +170,6 @@ class PveEnemyServiceTests(unittest.TestCase):
         self.assertEqual(removed.status_code, 200)
         self.assertEqual(removed.json()["removed"], "pve_removable")
         self.assertIsNone(PveEnemyStore(self.path).get("pve_removable"))
-
-        builtin = client.delete("/api/pve/enemies/builtin_slime")
-        self.assertEqual(builtin.status_code, 409)
-        self.assertIsNotNone(client.get("/api/pve/enemies/builtin_slime").json())
 
     def test_exact_boss_name_beats_generic_element_tags(self):
         boss = {
@@ -216,12 +195,19 @@ class PveEnemyServiceTests(unittest.TestCase):
             "created_at": 2,
             "updated_at": 2,
         }
+        minion = {
+            "id": "pve_ice_minion",
+            "name": "冰霜小怪",
+            "role": "minion",
+            "status": "ready",
+            "asset_id": "ast_custom_minion",
+        }
         intent = normalize_intent({}, "冰霜小怪与熔岩巨像", "normal")
         level = compile_pve(
             intent,
             7,
             "机械冰霜狼巡逻，尽头由熔岩巨像守关",
-            [boss],
+            [boss, minion],
         )
         scene_boss = level["stages"][2]["enemies"][0]
         self.assertEqual(scene_boss["name"], "熔岩巨像")

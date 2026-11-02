@@ -51,57 +51,6 @@ _ELEMENT_COLORS = {
 }
 
 
-def _builtin_profiles() -> list[dict]:
-    return [
-        {
-            "id": "builtin_slime",
-            "name": "森林史莱姆",
-            "role": "minion",
-            "prompt": "森林史莱姆，圆润果冻身体，近身追踪并喷射酸液",
-            "summary": "基础近战与酸液攻击的小型怪物",
-            "tags": ["toxic", "beast"],
-            "behavior": "chaser",
-            "element": "toxic",
-            "projectile_color": _ELEMENT_COLORS["toxic"],
-            "asset_id": "ast64960",
-            "status": "ready",
-            "builtin": True,
-            "stats": {
-                "max_hp": 3,
-                "speed": 72,
-                "damage": 1,
-                "attack_interval": 2.4,
-                "display_height": 92,
-            },
-            "created_at": 0,
-            "updated_at": 0,
-        },
-        {
-            "id": "builtin_frost_dragon",
-            "name": "冰霜巨龙",
-            "role": "boss",
-            "prompt": "冰霜巨龙 Boss，双翼展开，冰晶鳞片，发射冰弹守关",
-            "summary": "冰霜古堡的巨型守关 Boss",
-            "tags": ["ice", "flying", "beast"],
-            "behavior": "guardian",
-            "element": "ice",
-            "projectile_color": _ELEMENT_COLORS["ice"],
-            "asset_id": "ast60574",
-            "status": "ready",
-            "builtin": True,
-            "stats": {
-                "max_hp": 24,
-                "speed": 42,
-                "damage": 2,
-                "attack_interval": 1.35,
-                "display_height": 224,
-            },
-            "created_at": 0,
-            "updated_at": 0,
-        },
-    ]
-
-
 class PveEnemyStore:
     def __init__(self, path: str | None = None):
         self.path = path or DEFAULT_PVE_ENEMY_PATH
@@ -153,17 +102,12 @@ class PveEnemyStore:
         with self._lock:
             self._sweep_stale_locked()
             custom = [dict(item) for item in self._custom.values()]
-        return _builtin_profiles() + sorted(
-            custom, key=lambda item: item.get("created_at", 0), reverse=True
-        )
+        return sorted(custom, key=lambda item: item.get("created_at", 0), reverse=True)
 
     def ready(self) -> list[dict]:
         return [item for item in self.list() if item.get("status") == "ready"]
 
     def get(self, enemy_id: str) -> dict | None:
-        for item in _builtin_profiles():
-            if item["id"] == enemy_id:
-                return item
         with self._lock:
             self._sweep_stale_locked()
             item = self._custom.get(enemy_id)
@@ -254,19 +198,6 @@ class PveEnemyService:
         self.store = store or PveEnemyStore()
         self._chat_fn = chat_fn or self._chat
         self._rebuild_lock = threading.Lock()
-        self.claim_builtin_assets()
-
-    def claim_builtin_assets(self) -> None:
-        """Classify bundled enemies as PVE resources instead of player candidates."""
-
-        history = getattr(self.runtime, "history", None)
-        if history is None:
-            return
-        for profile in _builtin_profiles():
-            history.patch_asset(
-                profile["asset_id"],
-                {"pve_enemy": True, "pve_role": profile["role"]},
-            )
 
     def ready_profiles(self) -> list[dict]:
         return self.store.ready()
@@ -301,8 +232,6 @@ class PveEnemyService:
             record = self.store.get(enemy_id)
             if not record:
                 raise KeyError(enemy_id)
-            if record.get("builtin"):
-                raise ValueError("内置敌人无需重试")
             if record.get("status") in IN_FLIGHT_STATUSES:
                 raise ValueError("敌人仍在生成中")
             if record.get("asset_id"):
@@ -380,7 +309,6 @@ class PveEnemyService:
             "projectile_color": _ELEMENT_COLORS["physical"],
             "asset_id": None,
             "status": "analyzing",
-            "builtin": False,
             "difficulty": difficulty,
             "stats": self._stats(role, difficulty, "chaser", []),
             "created_at": now,

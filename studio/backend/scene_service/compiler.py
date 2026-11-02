@@ -20,11 +20,6 @@ FEATURES = {
     "ice_theme",
 }
 
-PVE_ENEMY_ASSETS = {
-    "slime": {"asset_id": "ast64960", "name": "森林史莱姆"},
-    "boss": {"asset_id": "ast60574", "name": "冰霜巨龙"},
-}
-
 # Fixed three-stage campaign. Each arena uses a slanted top-down plane; x is
 # horizontal, y is depth and z is reserved for the runtime jump height.
 PVE_STAGE_COUNTS = (4, 6, 1)
@@ -498,9 +493,8 @@ def _profile_score(profile: dict, prompt: str) -> int:
 
 
 def _pve_profiles(prompt: str, role: str, enemy_pool: list[dict] | None) -> list[dict]:
-    """Rank ready profiles for one role; the fallback is always available."""
+    """Rank ready custom profiles for one role."""
 
-    fallback = PVE_ENEMY_ASSETS["slime" if role == "minion" else "boss"]
     candidates = [
         item
         for item in (enemy_pool or [])
@@ -509,17 +503,15 @@ def _pve_profiles(prompt: str, role: str, enemy_pool: list[dict] | None) -> list
         and item.get("asset_id")
     ]
     if not candidates:
-        return [fallback]
+        return []
     ranked = sorted(candidates, key=lambda item: _profile_score(item, prompt), reverse=True)
-    meaningful = [
-        item for item in ranked
-        if _profile_score(item, prompt) > 0 or item.get("builtin")
-    ]
-    return meaningful or [fallback]
+    meaningful = [item for item in ranked if _profile_score(item, prompt) > 0]
+    return meaningful or ranked[:1]
 
 
-def _select_pve_profile(prompt: str, role: str, enemy_pool: list[dict] | None) -> dict:
-    return _pve_profiles(prompt, role, enemy_pool)[0]
+def _select_pve_profile(prompt: str, role: str, enemy_pool: list[dict] | None) -> dict | None:
+    profiles = _pve_profiles(prompt, role, enemy_pool)
+    return profiles[0] if profiles else None
 
 
 def _pve_stats(profile: dict, difficulty: str, role: str) -> dict:
@@ -541,14 +533,7 @@ def _pve_stats(profile: dict, difficulty: str, role: str) -> dict:
         }
     )
     stats = profile.get("stats") or {}
-    merged = {key: stats.get(key, value) for key, value in defaults.items()}
-    # Builtin profiles store normal-mode defaults; the chosen scene difficulty
-    # must still affect their combat values. Custom profiles keep user stats.
-    if profile.get("builtin"):
-        merged["max_hp"] = defaults["max_hp"]
-        if role != "boss":
-            merged["speed"] = defaults["speed"]
-    return merged
+    return {key: stats.get(key, value) for key, value in defaults.items()}
 
 
 def _pve_positions(rng: random.Random, count: int, width: int, depth: int) -> list[tuple[int, int]]:
@@ -565,12 +550,11 @@ def _pve_positions(rng: random.Random, count: int, width: int, depth: int) -> li
 def _pve_enemy(
     profile: dict, stats: dict, enemy_id: str, kind: str, x: int, y: int
 ) -> dict:
-    fallback = PVE_ENEMY_ASSETS["slime" if kind == "minion" else "boss"]
     return {
         "id": enemy_id,
         "profile_id": profile.get("id"),
-        "asset_id": profile.get("asset_id") or fallback["asset_id"],
-        "name": profile.get("name") or fallback["name"],
+        "asset_id": profile.get("asset_id"),
+        "name": profile.get("name"),
         "kind": kind,
         "x": x,
         "y": y,
@@ -603,6 +587,8 @@ def compile_pve(
     }
 
     minion_candidates = _pve_profiles(prompt, "minion", enemy_pool)
+    if not minion_candidates:
+        raise ValueError("PVE 场景需要至少一个已完成的小怪敌人，请先在 PVE 敌人工坊创建")
     stage1_profile = minion_candidates[0]
     stage1_key = (stage1_profile.get("id"), stage1_profile.get("asset_id"))
     stage2_profile = next(
@@ -614,6 +600,8 @@ def compile_pve(
         stage1_profile,
     )
     boss_profile = _select_pve_profile(prompt, "boss", enemy_pool)
+    if boss_profile is None:
+        raise ValueError("PVE 场景需要至少一个已完成的 Boss 敌人，请先在 PVE 敌人工坊创建")
 
     stages = []
     for index, (stage_id, kind, title) in enumerate(
@@ -623,9 +611,7 @@ def compile_pve(
             (
                 "stage_3",
                 "boss",
-                "第 3 关 · 守关战 · {}".format(
-                    boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"]
-                ),
+                "第 3 关 · 守关战 · {}".format(boss_profile.get("name")),
             ),
         )
     ):

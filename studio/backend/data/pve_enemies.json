@@ -33,36 +33,6 @@
       "action_batch_id": "120e02f3"
     },
     {
-      "id": "pve_0718f7caeb",
-      "name": "冲锋菇",
-      "role": "minion",
-      "prompt": "菌根冲锋菇，粗壮菌柄像攻城锤，底部拖着盘根。锁定玩家后短暂蓄力，\n然后低头直线冲锋。",
-      "summary": "菌柄如攻城锤，蓄力后直线冲锋攻击玩家。",
-      "tags": [
-        "beast"
-      ],
-      "behavior": "charger",
-      "element": "physical",
-      "projectile_color": "#e8d49d",
-      "asset_id": "ast27079",
-      "status": "ready",
-      "builtin": false,
-      "difficulty": "normal",
-      "stats": {
-        "max_hp": 3,
-        "speed": 92,
-        "damage": 1,
-        "attack_interval": 1.9999999999999998,
-        "display_height": 92
-      },
-      "created_at": 1793585035.363191,
-      "updated_at": 1793585438.6795478,
-      "error": null,
-      "action_warning": null,
-      "task_id": "T0002",
-      "action_batch_id": "119b2162"
-    },
-    {
       "id": "pve_70019aa057",
       "name": "腐心菌王",
       "role": "boss",
@@ -92,6 +62,70 @@
       "action_warning": null,
       "task_id": "T0003",
       "action_batch_id": "5c128cb5"
+    },
+    {
+      "id": "pve_323d6340a6",
+      "name": "甲壳冲锋者",
+      "role": "minion",
+      "prompt": "节肢甲壳冲锋怪物，中等体型，厚重铁灰色甲壳外壳，六条坚硬节肢肢体，背部遍布发光橙红色裂纹，擅长短距离高速向前冲撞，没有额外手臂结构",
+      "summary": "厚重甲壳的节肢怪物，短距高速冲锋撞击敌人。",
+      "tags": [
+        "fast",
+        "armored",
+        "beast"
+      ],
+      "behavior": "charger",
+      "element": "physical",
+      "projectile_color": "#e8d49d",
+      "asset_id": "ast87216",
+      "status": "ready",
+      "builtin": false,
+      "difficulty": "normal",
+      "stats": {
+        "max_hp": 3,
+        "speed": 92,
+        "damage": 1,
+        "attack_interval": 1.9999999999999998,
+        "display_height": 92
+      },
+      "created_at": 1793608408.9084823,
+      "updated_at": 1793608854.5228758,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0002",
+      "action_batch_id": "3668e244"
+    },
+    {
+      "id": "pve_9134e2adb8",
+      "name": "熔岩构装巨兽",
+      "role": "boss",
+      "prompt": "巨型熔岩岩石构装生物，庞大魁梧躯体，由熔融火山岩石拼接而成，多处躯体缝隙溢出流动炽红岩浆，四根粗壮岩石巨肢，肩膀生长巨型熔岩晶簇，挥动巨型熔岩巨拳，行动厚重缓慢",
+      "summary": "由熔岩岩石构成的巨型构装生物，挥舞巨拳缓慢移动，岩浆缝隙持续喷涌灼烧敌人。",
+      "tags": [
+        "construct",
+        "fire",
+        "armored"
+      ],
+      "behavior": "charger",
+      "element": "fire",
+      "projectile_color": "#ff9b62",
+      "asset_id": "ast13614",
+      "status": "ready",
+      "builtin": false,
+      "difficulty": "normal",
+      "stats": {
+        "max_hp": 24,
+        "speed": 62,
+        "damage": 2,
+        "attack_interval": 1.1,
+        "display_height": 224
+      },
+      "created_at": 1793608930.8138745,
+      "updated_at": 1793609027.562082,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0004",
+      "action_batch_id": "8142335a"
     }
   ]
 }

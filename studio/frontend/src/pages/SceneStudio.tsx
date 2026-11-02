@@ -25,8 +25,8 @@ const EXAMPLES = [
 ];
 
 const PVE_EXAMPLES = [
-  "月光古堡庭院，史莱姆巡逻，尽头由冰霜巨龙守关",
-  "覆雪森林战场，成群史莱姆和一只强化的冰霜巨龙",
+  "月光古堡庭院，小怪巡逻，尽头由守关 Boss 镇守",
+  "覆雪森林战场，成群小怪和一只强化的守关 Boss",
   "熔岩遗迹，短兵相接的连续战斗场地，高难度",
 ];
 
@@ -151,7 +151,7 @@ export default function SceneStudio() {
               rows={6}
               placeholder={
                 gameplay === "pve"
-                  ? "例如：月光古堡庭院，史莱姆巡逻，尽头由冰霜巨龙守关"
+                  ? "例如：月光古堡庭院，小怪巡逻，尽头由守关 Boss 镇守"
                   : "例如：月光下的漂浮城堡，连续上升平台和长距离跳跃，中等难度"
               }
               className="mt-2 w-full resize-y rounded-md border border-line bg-canvas px-3 py-2.5 text-[13px] leading-6 text-ink outline-none transition-colors placeholder:text-ink-4 focus:border-primary/60"

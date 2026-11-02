@@ -31,11 +31,11 @@ class SceneApiTests(unittest.TestCase):
         self.pve_profiles = [
             {
                 "id": "test_slime",
-                "name": "测试史莱姆",
+                "name": "测试小怪",
                 "role": "minion",
                 "status": "ready",
                 "builtin": True,
-                "asset_id": "ast64960",
+                "asset_id": "ast_test_minion",
                 "behavior": "chaser",
                 "element": "toxic",
                 "projectile_color": "#9fe56f",
@@ -50,11 +50,11 @@ class SceneApiTests(unittest.TestCase):
             },
             {
                 "id": "test_boss",
-                "name": "测试冰龙",
+                "name": "测试首领",
                 "role": "boss",
                 "status": "ready",
                 "builtin": True,
-                "asset_id": "ast60574",
+                "asset_id": "ast_test_boss",
                 "behavior": "guardian",
                 "element": "ice",
                 "projectile_color": "#8feaff",
@@ -323,8 +323,8 @@ class SceneApiTests(unittest.TestCase):
                     "enemies": [
                         {
                             "id": "slime_1",
-                            "asset_id": "ast64960",
-                            "name": "森林史莱姆",
+                            "asset_id": "ast_legacy_enemy",
+                            "name": "旧版敌人",
                             "kind": "slime",
                             "x": 400,
                             "y": 300,
@@ -400,6 +400,54 @@ class SceneApiTests(unittest.TestCase):
         self.assertEqual(self.service.background_count("short", "pve"), 3)
         self.assertEqual(self.service.background_count("medium", "pve"), 3)
         self.assertEqual(self.service.background_count("long", "pve"), 3)
+
+    def test_pve_background_prompts_fit_model_limit_and_keep_theme(self):
+        intent = {
+            "title": "火山要塞",
+            "summary": "压迫的纵深战场",
+            "environment": "lava",
+            "difficulty": "normal",
+            "length": "long",
+            "features": ["gaps"],
+            "palette": {
+                "skyTop": "#FF4500",
+                "skyBottom": "#8B0000",
+                "ground": "#333333",
+                "floating": "#FF6347",
+                "accent": "#FF1493",
+            },
+        }
+        prompts = SceneService._background_prompts(
+            "战火焚毁的火山要塞，焦黑开裂岩石地表，散落破损铠甲残片",
+            intent,
+            "pve",
+        )
+        self.assertEqual(len(prompts), 3)
+        for prompt in prompts:
+            # wanx2.1 正向提示词超过 800 字符会被静默截断。
+            self.assertLessEqual(len(prompt), 800)
+            self.assertIn("Palette:", prompt)
+            self.assertIn(intent["palette"]["skyTop"], prompt)
+            self.assertIn("Original request:", prompt)
+            # 背景是一整张斜俯视地面图，不能出现远景地平线或分镜编号。
+            self.assertIn("Full-bleed top-down battlefield", prompt)
+            self.assertNotIn("distant horizon", prompt)
+            self.assertNotIn("Shot ", prompt)
+            # 地面图提示词里不能出现 sky，否则模型会重新画一条天空带。
+            self.assertNotIn("sky", prompt.lower())
+
+    @patch("studio.backend.scene_service.service.ImageProvider")
+    def test_background_generation_blocks_split_frames(self, provider):
+        provider.return_value.generate.return_value = {"file": "bg.png"}
+        SceneService._generate_background(
+            "prompt", {"negative_prompt": "lowres", "prompt_extend": True}
+        )
+        settings = provider.call_args.args[0]
+        self.assertEqual(settings["size"], "1280*720")
+        self.assertFalse(settings["prompt_extend"])
+        self.assertIn("lowres", settings["negative_prompt"])
+        self.assertIn("split image", settings["negative_prompt"])
+        self.assertIn("triptych", settings["negative_prompt"])
 
 
 if __name__ == "__main__":

@@ -31,27 +31,38 @@ DEFAULT_SCENE_PATH = os.path.join(SCENE_DIR, "scenes.json")
 _SAFE_ID = re.compile(r"^scene_[0-9a-f]{12}$")
 BACKGROUND_COUNT_BY_LENGTH = {"short": 3, "medium": 5, "long": 7}
 PVE_BACKGROUND_COUNT = 3
+# wanx2.1 文生图正向提示词上限 800 字符，超出部分会被静默截断；保留安全余量，
+# 确保主题、色板与用户原始描述始终在模型可见范围内。
+IMAGE_PROMPT_MAX_CHARS = 780
 _BACKGROUND_SHOTS = (
-    "opening establishing panorama at the entrance of the route",
-    "early route with the first foreground landmarks and layered depth",
-    "middle of the route, a different landmark from the opening view",
-    "deep route transition with elevated terrain and distant silhouettes",
+    "wide establishing view of the route entrance with a clear landmark",
+    "early route with the first foreground landmarks and natural depth",
+    "middle of the route, centered on a distinct landmark",
+    "deep route scene with elevated terrain and distant silhouettes",
     "approach to the final area with the destination visible ahead",
     "final ascent with a strong vertical landmark and colder light",
     "destination gate or exit vista that concludes the environment",
 )
 _PVE_BACKGROUND_SHOTS = (
-    "stage 1 battlefield establishing shot: one continuous seamless ground plane "
-    "stretching from the immediate foreground to the distant horizon, strong "
-    "perspective depth with a low horizon line, distant landmarks and clear "
-    "foreground-to-background scale",
-    "stage 2 battlefield view: the same continuous ground plane pushing deeper "
-    "into hostile territory, different landmarks from stage 1, clear depth "
-    "layers and a fully walkable floor",
-    "stage 3 boss lair: a continuous ground floor leading to a distant focal "
-    "landmark, ominous rim light and strong depth from foreground to the boss "
-    "position",
+    "outer battlefield sector with broken low walls, crates and scattered rubble",
+    "inner battlefield sector with denser ruined structures, roots and debris",
+    "boss lair sector with a large circular arena floor, ruined pillars and ominous glow",
 )
+# 场景背景专用负向词：抑制模型输出分格/拼贴/上下拼接的构图。
+_SCENE_IMAGE_NEGATIVE = (
+    "split image, two stacked pictures, divided frame, collage, storyboard, "
+    "multiple panels, multiple views, three views, sequential art, triptych, "
+    "contact sheet, comic panels, concept sheet, letterbox bars, border, text, watermark"
+)
+# 按环境补充可直接落笔的细节，避免模型只画空地面。
+_PVE_ENVIRONMENT_DETAILS = {
+    "castle": "weathered stone fortress, broken battlements, torchlit arches",
+    "snow": "snowbound ruins, icicles, frozen stone, cold blue mist",
+    "forest": "mossy roots, giant mushrooms, hanging vines, glowing spores",
+    "lava": "charred basalt, glowing lava fissures, ruined iron fortress, embers",
+    "desert": "sun-bleached sandstone ruins, dunes, broken colonnades, dusty haze",
+    "city": "collapsed towers, rubble, twisted metal, faded neon",
+}
 
 
 def _json_object(text: str) -> dict:
@@ -335,39 +346,44 @@ class SceneService:
         palette = intent["palette"]
         prompts = []
         composition = (
-            "2.5D fixed oblique top-down arena game background, wide 16:9 "
-            "composition, one continuous seamless ground plane filling the "
-            "entire frame from the immediate foreground to the distant horizon, "
-            "strong perspective depth with a low horizon line, high three-quarter "
-            "camera angle, no floating islands, no separated platforms, no "
-            "split-level layers, no arena ring or border, no characters, no "
-            "creatures, no monsters, no text, no UI, no gameplay obstacles, "
-            "no ledges, no hazards, no cover props. "
+            "Full-bleed top-down battlefield map filling the entire frame, wide 16:9, "
+            "hand-painted 2D game environment art seen from a high bird's-eye angle. "
+            "One continuous ground plane textured edge to edge with cracked earth, "
+            "rubble, broken walls, crates and roots; the far map edge fades into dark "
+            "atmospheric haze. Keep the central combat floor readable. "
+            "No characters, no monsters, no UI. "
             if is_pve
-            else "2D side-scrolling platformer background, wide 16:9 composition, "
-            "no characters, no creatures, no monsters, no text, no UI, "
-            "no gameplay obstacles, clear foreground lane. "
+            else "Single edge-to-edge 2D side-scrolling platformer background painting, "
+            "wide 16:9, hand-painted 2D environment art. One unified scene where sky, "
+            "distant scenery and a clear foreground lane are painted as one continuous "
+            "vista. No characters, no creatures, no monsters, no text, no UI, "
+            "no gameplay obstacles. "
         )
         for index, shot_index in enumerate(shot_indexes):
             if is_pve:
                 shot_text = _PVE_BACKGROUND_SHOTS[index]
-                shared = (
-                    "Each image is one independent campaign stage and must read as "
-                    "a single continuous walkable floor of the same world, not a "
-                    "floating platform or a closed arena pit."
+                setting = _PVE_ENVIRONMENT_DETAILS.get(
+                    str(intent.get("environment") or "castle"),
+                    _PVE_ENVIRONMENT_DETAILS["castle"],
+                )
+                theme = (
+                    f"Theme: {intent['summary']}. Setting: {setting}. "
+                    f"Palette: ambient light {palette['skyTop']} to {palette['skyBottom']}, "
+                    f"ground {palette['ground']}, accent {palette['accent']}. "
                 )
             else:
                 shot_text = _BACKGROUND_SHOTS[shot_index]
-                shared = "Same continuous world and art direction across the sequence."
-            prompts.append(
-                composition
-                + shared
-                + f" Shot {index + 1} of {count}: {shot_text}. "
-                f"Theme: {intent['summary']}. Environment: {intent['environment']}. "
-                f"Palette: sky {palette['skyTop']} to {palette['skyBottom']}, "
-                f"ground {palette['ground']}, accent {palette['accent']}. "
-                f"Original request: {prompt}"
-            )
+                theme = (
+                    f"Theme: {intent['summary']}. Environment: {intent['environment']}. "
+                    f"Palette: sky {palette['skyTop']} to {palette['skyBottom']}, "
+                    f"ground {palette['ground']}, accent {palette['accent']}. "
+                )
+            prefix = composition + f"{shot_text}. " + theme
+            request = prompt.strip()
+            allowance = IMAGE_PROMPT_MAX_CHARS - len(prefix) - len("Original request: ")
+            if len(request) > allowance:
+                request = request[: max(60, allowance)]
+            prompts.append(prefix + "Original request: " + request)
         return prompts
 
     def _generate_background_sequence(
@@ -780,4 +796,11 @@ class SceneService:
         # gameplay readability becomes the bottleneck.
         image_settings = dict(settings)
         image_settings["size"] = "1280*720"
+        # 场景背景必须严格按本地拼装好的构图生成：关闭平台改写，避免模型把
+        # “三关 / 同世界”扩写成多格分镜或拼贴图。
+        image_settings["prompt_extend"] = False
+        user_negative = str(image_settings.get("negative_prompt") or "").strip()
+        image_settings["negative_prompt"] = ", ".join(
+            part for part in (user_negative, _SCENE_IMAGE_NEGATIVE) if part
+        )
         return ImageProvider(image_settings).generate(prompt)

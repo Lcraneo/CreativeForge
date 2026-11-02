@@ -49,8 +49,6 @@ def build_pve_router(service: PveEnemyService) -> APIRouter:
         record = service.store.get(enemy_id)
         if record is None:
             raise HTTPException(status_code=404, detail="unknown enemy")
-        if record.get("builtin"):
-            raise HTTPException(status_code=409, detail="builtin enemies cannot be deleted")
         if record.get("status") in {
             "analyzing",
             "generating_model",

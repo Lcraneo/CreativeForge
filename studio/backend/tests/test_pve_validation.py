@@ -9,9 +9,49 @@ from studio.backend.scene_service.compiler import (
 )
 
 
+def _test_pool(difficulty):
+    return [
+        {
+            "id": "test_minion",
+            "name": "测试小怪",
+            "role": "minion",
+            "status": "ready",
+            "asset_id": "ast_test_minion",
+            "behavior": "chaser",
+            "tags": ["beast"],
+            "stats": {
+                "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
+                "speed": 72,
+                "damage": 1,
+                "attack_interval": 2.4,
+                "display_height": 92,
+            },
+        },
+        {
+            "id": "test_boss",
+            "name": "测试 Boss",
+            "role": "boss",
+            "status": "ready",
+            "asset_id": "ast_test_boss",
+            "behavior": "guardian",
+            "tags": ["armored"],
+            "stats": {
+                "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty],
+                "speed": 42,
+                "damage": 2,
+                "attack_interval": 1.35,
+                "display_height": 224,
+            },
+        },
+    ]
+
+
 def _campaign(difficulty="normal", prompt="", enemy_pool=None, seed=1):
     return compile_pve(
-        {"difficulty": difficulty}, seed=seed, prompt=prompt, enemy_pool=enemy_pool
+        {"difficulty": difficulty},
+        seed=seed,
+        prompt=prompt,
+        enemy_pool=enemy_pool if enemy_pool is not None else _test_pool(difficulty),
     )
 
 
@@ -76,6 +116,7 @@ def test_stage_two_prefers_a_different_minion_template():
             "tags": ["ranged"],
             "stats": {"max_hp": 4, "speed": 60, "damage": 1, "attack_interval": 2.0, "display_height": 96},
         },
+        *_test_pool("normal")[1:],
     ]
     campaign = _campaign(prompt="远程小怪", enemy_pool=pool)
     first = {(e["profile_id"], e["asset_id"]) for e in campaign["stages"][0]["enemies"]}

@@ -675,7 +675,6 @@ export interface PveEnemyProfile {
     | "generating_actions"
     | "ready"
     | "failed";
-  builtin: boolean;
   difficulty?: "easy" | "normal" | "hard";
   stats: {
     max_hp: number;

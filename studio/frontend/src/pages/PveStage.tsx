@@ -1541,10 +1541,9 @@ function PveEnemyForge({
       });
     },
   });
-  const customProfiles = profiles
-    .filter((enemy) => !enemy.builtin)
-    .sort((left, right) => right.created_at - left.created_at);
-  const builtInCount = profiles.filter((enemy) => enemy.builtin).length;
+  const customProfiles = [...profiles].sort(
+    (left, right) => right.created_at - left.created_at,
+  );
 
   return (
     <Card title="PVE 敌人工坊" icon="spark" bodyClassName="p-3">
@@ -1612,14 +1611,14 @@ function PveEnemyForge({
         <div className="flex items-center gap-2">
           <span className="cf-ref">敌人池</span>
           <span className="text-[10px] text-ink-4">
-            {builtInCount} 默认 · {customProfiles.length} 自定义
+            {customProfiles.length} 个自定义敌人
           </span>
         </div>
         {loading ? (
           <Skeleton className="mt-2 h-12 w-full rounded-md" />
         ) : customProfiles.length === 0 ? (
           <p className="mt-2 text-[10.5px] leading-4 text-ink-4">
-            还没有自定义敌人，当前战役继续使用默认小怪与 Boss。
+            还没有自定义敌人。请先生成至少一个小怪和一个 Boss，场景才能构建 PVE 战役。
           </p>
         ) : (
           <div className="mt-2 flex max-h-72 flex-col gap-1.5 overflow-y-auto pr-1">
