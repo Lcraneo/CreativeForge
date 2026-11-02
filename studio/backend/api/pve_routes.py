@@ -54,6 +54,7 @@ def build_pve_router(service: PveEnemyService) -> APIRouter:
         if record.get("status") in {
             "analyzing",
             "generating_model",
+            "generating_views",
             "generating_actions",
         }:
             raise HTTPException(status_code=409, detail="enemy is still generating")

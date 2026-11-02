@@ -1807,7 +1807,12 @@ function PveEnemyForge({
                     label={`从敌人池删除 ${enemy.name}`}
                     disabled={
                       remove.isPending ||
-                      ["analyzing", "generating_model", "generating_actions"].includes(enemy.status)
+                      [
+                        "analyzing",
+                        "generating_model",
+                        "generating_views",
+                        "generating_actions",
+                      ].includes(enemy.status)
                     }
                     onClick={() => setPendingDelete(enemy.id)}
                     className="h-7 w-7 shrink-0"
@@ -1864,6 +1869,7 @@ const ENEMY_GENERATION_PROGRESS: Partial<
 > = {
   analyzing: { pct: 15, label: "解析敌人设定" },
   generating_model: { pct: 45, label: "生成敌人模型" },
+  generating_views: { pct: 62, label: "生成侧视 / 背面视图" },
   generating_actions: { pct: 80, label: "补齐待机 / 行走 / 攻击动作" },
 };
 
@@ -1875,6 +1881,7 @@ function enemyStatusLabel(status: PveEnemyProfile["status"]) {
   return {
     analyzing: "分析语义",
     generating_model: "生成模型",
+    generating_views: "生成三视图",
     generating_actions: "补齐动作",
     ready: "已加入场景匹配池",
     failed: "生成失败",

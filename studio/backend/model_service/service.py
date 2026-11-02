@@ -1234,6 +1234,22 @@ TURNAROUND_SHEET_PROMPT = (
     "纯白背景，无文字、无边框、无场景、无其他人物。"
 )
 
+# PVE 敌人可能是菌类、甲壳、根系等非人形生物，沿用角色的「单眼 / 双臂双腿」描述
+# 会诱导模型补出原本不存在的肢体，因此单独使用一版生物向提示词。
+PVE_TURNAROUND_SHEET_PROMPT = (
+    "以参考图中的怪物为唯一身份依据，生成一张双栏怪物正交转面设定图。\n\n"
+    "左栏：同一个怪物的正右侧 90° 全身侧面像，怪物面朝画面右侧，完整保留其原有身体结构、"
+    "肢体数量、器官、菌盖、甲壳、翅膀、尾巴、根系、配色和体型比例；"
+    "该怪物原本没有的肢体不得凭空增加。侧脸轮廓、肢体厚度和背部轮廓清晰可见，"
+    "所有肢体完整入画。\n\n"
+    "右栏：同一个怪物的正后方 180° 全身背面像，怪物背对镜头，只可见背部、背部甲壳、"
+    "菌盖背面、尾巴或根系结构，完全不可见眼睛、面部和口部正面。\n\n"
+    "两栏必须是同一个怪物，保持相同的体型、身高比例、配色、材质和所有识别特征。\n\n"
+    "两栏怪物均从头到脚（或到最低肢体 / 根系）完整入画，头顶、菌盖、肢体、尾巴和根系不被裁切；\n"
+    "两栏使用相同比例和底部基准线，各自在栏内居中；两栏之间保留白色间隔，互不重叠；\n"
+    "纯白背景，无文字、无边框、无场景、无其他怪物。"
+)
+
 
 class TurnaroundError(RuntimeError):
     """三视图生成失败：携带可直接展示给用户的真实原因。"""
@@ -1714,16 +1730,24 @@ def generate_from_reference(settings, reference_url, prompt, deadline=None):
     }
 
 
-def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_result=None):
-    """手动触发的三视图生成：front 直接用角色原画，side/back 来自一次双栏生成。
+def generate_turnaround(
+    settings,
+    base_url,
+    front_image=None,
+    deadline=None,
+    on_result=None,
+    sheet_prompt=None,
+):
+    """三视图生成：front 直接用原画，side/back 来自一次双栏生成。
 
     1. 不做正面视角识别，不调用任何 VLM / 图片理解模型；
-    2. ``front`` 严格等于角色原画（file / url / model），不生成替换图；
+    2. ``front`` 严格等于原画（file / url / model），不生成替换图；
     3. 以原画为参考，一次调用 qwen-image-2.1-turbo 生成 side+back 双栏设定图，
        禁止 Wanx 兜底；qwen 失败直接抛真实错误；
     4. 双栏图按白色间隔（兜底 50%）裁成两个独立 PNG，再逐项做确定性校验；
     5. side / back 任一不合格即整体失败，不返回可写入的 design_views。
 
+    ``sheet_prompt`` 可覆盖默认的角色转面提示词（PVE 生物使用单独版本）。
     Returns ``(views, failures)``，成功时 ``failures`` 恒为空。
     """
 
@@ -1751,7 +1775,7 @@ def generate_turnaround(settings, base_url, front_image=None, deadline=None, on_
 
     sheet = editor.edit(
         source_image.get("url"),
-        TURNAROUND_SHEET_PROMPT,
+        sheet_prompt or TURNAROUND_SHEET_PROMPT,
         poll_timeout=max(30.0, remaining) if remaining is not None else 180.0,
         allow_wanx_fallback=False,
     )

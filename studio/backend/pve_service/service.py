@@ -23,9 +23,11 @@ DIFFICULTIES = ("easy", "normal", "hard")
 ROLES = ("minion", "boss")
 BEHAVIORS = ("chaser", "shooter", "charger", "guardian")
 # 生成过程中可能停留的状态。线程丢失后会一直停在这里，因此需要超时兜底。
-IN_FLIGHT_STATUSES = ("analyzing", "generating_model", "generating_actions")
+IN_FLIGHT_STATUSES = ("analyzing", "generating_model", "generating_views", "generating_actions")
 # 超过该时长仍未推进，视为生成线程已丢失，转为失败以便重试或删除。
 STALE_GENERATION_SECONDS = 20 * 60
+# 敌人生成阶段的三视图总 deadline；与手动三视图接口保持一致。
+DESIGN_VIEW_TIMEOUT = 270.0
 TAGS = (
     "fast",
     "ranged",
@@ -304,13 +306,24 @@ class PveEnemyService:
             if record.get("status") in IN_FLIGHT_STATUSES:
                 raise ValueError("敌人仍在生成中")
             if record.get("asset_id"):
+                asset = self._load_asset(record["asset_id"])
+                needs_views = False
+                if isinstance(asset, dict):
+                    views = asset.get("design_views")
+                    needs_views = not isinstance(views, dict) or not (
+                        views.get("side") and views.get("back")
+                    )
                 record = self.store.update(
                     enemy_id,
-                    {"status": "generating_actions", "error": None, "action_warning": None},
+                    {
+                        "status": "generating_views" if needs_views else "generating_actions",
+                        "error": None,
+                        "action_warning": None,
+                    },
                 )
                 threading.Thread(
                     target=self._resume_actions,
-                    args=(enemy_id, record["asset_id"]),
+                    args=(enemy_id, record["asset_id"], needs_views),
                     name=f"creativeforge-pve-resume-{enemy_id}",
                     daemon=True,
                 ).start()
@@ -333,8 +346,14 @@ class PveEnemyService:
                 ).start()
             return record
 
-    def _resume_actions(self, enemy_id: str, asset_id: str) -> None:
+    def _resume_actions(
+        self, enemy_id: str, asset_id: str, ensure_views: bool = False
+    ) -> None:
         try:
+            if ensure_views:
+                self.store.update(enemy_id, {"status": "generating_views"})
+                self._generate_design_views(asset_id)
+                self.store.update(enemy_id, {"status": "generating_actions"})
             warning = self._generate_actions(enemy_id, asset_id)
             if not warning:
                 warning = self._prepack_ai_strips(asset_id)
@@ -427,10 +446,12 @@ class PveEnemyService:
                 enemy_id,
                 {
                     "asset_id": asset_id,
-                    "status": "generating_actions",
+                    "status": "generating_views",
                     "error": None,
                 },
             )
+            self._generate_design_views(asset_id)
+            self.store.update(enemy_id, {"status": "generating_actions"})
             warning = self._generate_actions(enemy_id, asset_id)
             if not warning:
                 warning = self._prepack_ai_strips(asset_id)
@@ -457,16 +478,59 @@ class PveEnemyService:
             time.sleep(0.5)
         raise RuntimeError("敌人模型生成超时")
 
+    def _load_asset(self, asset_id: str) -> dict | None:
+        assets = getattr(self.runtime, "assets", None)
+        asset = assets.get(asset_id) if assets is not None else None
+        if not isinstance(asset, dict):
+            history = getattr(self.runtime, "history", None)
+            record = history.get(asset_id) if history is not None else None
+            asset = record.get("asset") if isinstance(record, dict) else None
+        return asset if isinstance(asset, dict) else None
+
+    def _generate_design_views(self, asset_id: str) -> None:
+        from studio.backend.model_service.service import (
+            PVE_TURNAROUND_SHEET_PROMPT,
+            _keys_for,
+            generate_turnaround,
+        )
+
+        asset = self._load_asset(asset_id)
+        if not isinstance(asset, dict):
+            raise RuntimeError("敌人资产记录不可用，无法生成三视图")
+        image = asset.get("image")
+        if not (isinstance(image, dict) and image.get("file") and image.get("url")):
+            raise RuntimeError("敌人原画不可用，无法生成三视图")
+        settings = self.runtime.model_settings.effective()
+        if not settings.get("enabled") or not _keys_for(settings):
+            raise RuntimeError("自定义模型未启用或缺少 API Key，无法生成敌人三视图")
+        try:
+            views, failures = generate_turnaround(
+                settings,
+                image.get("url"),
+                front_image=image,
+                deadline=time.time() + DESIGN_VIEW_TIMEOUT,
+                sheet_prompt=PVE_TURNAROUND_SHEET_PROMPT,
+            )
+        except Exception as error:  # noqa: BLE001 - 保留原画并暴露真实失败原因
+            raise RuntimeError(str(error) or "敌人三视图生成失败") from error
+        if not (views.get("side") and views.get("back")):
+            raise RuntimeError("；".join(failures) or "敌人侧视 / 背面视图未完整生成")
+        existing = asset.get("design_views")
+        merged = {**(existing if isinstance(existing, dict) else {}), **views}
+        asset["design_views"] = merged
+        asset.pop("design_views_error", None)
+        self.runtime.assets.save(asset)
+        self.runtime.history.patch_asset(
+            asset_id, {"design_views": merged, "design_views_error": None}
+        )
+
     def _generate_actions(self, enemy_id: str, asset_id: str, rebuild: list[str] | None = None) -> str | None:
         from studio.backend.animation_service.service import AnimationService
 
         settings = self.runtime.model_settings.effective()
         if not (settings.get("enabled") and settings.get("api_key")):
             return "动作模型未启用，试玩时将使用程序化动作"
-        asset = self.runtime.assets.get(asset_id)
-        if asset is None:
-            record = self.runtime.history.get(asset_id)
-            asset = record.get("asset") if record else None
+        asset = self._load_asset(asset_id)
         if not isinstance(asset, dict):
             return "敌人资产记录不可用，试玩时将使用程序化动作"
         service = AnimationService(

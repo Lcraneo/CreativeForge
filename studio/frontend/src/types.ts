@@ -685,6 +685,7 @@ export interface PveEnemyProfile {
   status:
     | "analyzing"
     | "generating_model"
+    | "generating_views"
     | "generating_actions"
     | "ready"
     | "failed";

@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -269,9 +270,95 @@ class PveEnemyServiceTests(unittest.TestCase):
         app.include_router(build_pve_router(service))
         client = TestClient(app)
 
-        response = client.post("/api/pve/enemies/pve_retry/retry")
+        with mock.patch.object(PveEnemyService, "_resume_actions", return_value=None):
+            response = client.post("/api/pve/enemies/pve_retry/retry")
         self.assertEqual(response.status_code, 202)
         self.assertEqual(response.json()["status"], "generating_actions")
+
+    def test_retry_requeues_views_for_asset_without_side(self):
+        record = {
+            "id": "pve_retry_views",
+            "name": "缺侧视敌人",
+            "role": "minion",
+            "prompt": "缺侧视敌人",
+            "asset_id": "ast_retry_views",
+            "status": "failed",
+            "builtin": False,
+            "stats": {"max_hp": 3},
+            "created_at": 1,
+            "updated_at": 1,
+        }
+        self.store.save(record)
+
+        class Assets:
+            def get(self, asset_id):
+                return {
+                    "image": {"file": "source.png", "url": "http://source/src.png"},
+                    "design_views": {},
+                }
+
+        runtime = _Runtime()
+        runtime.assets = Assets()
+        service = PveEnemyService(runtime, store=self.store)
+        app = FastAPI()
+        app.include_router(build_pve_router(service))
+        client = TestClient(app)
+
+        with mock.patch.object(PveEnemyService, "_resume_actions", return_value=None):
+            response = client.post("/api/pve/enemies/pve_retry_views/retry")
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["status"], "generating_views")
+
+    def test_generate_design_views_uses_pve_prompt_and_persists(self):
+        from studio.backend.model_service.service import PVE_TURNAROUND_SHEET_PROMPT
+
+        source = {
+            "file": "source.png",
+            "url": "http://source/src.png",
+            "model": "gen",
+            "view": "front",
+        }
+
+        class Assets:
+            def __init__(self):
+                self.saved = None
+
+            def get(self, asset_id):
+                return {"image": dict(source), "design_views": {}}
+
+            def save(self, asset):
+                self.saved = asset
+
+        class History:
+            def __init__(self):
+                self.patches = []
+
+            def patch_asset(self, asset_id, patch):
+                self.patches.append((asset_id, patch))
+                return True
+
+        runtime = _Runtime()
+        runtime.assets = Assets()
+        runtime.history = History()
+        service = PveEnemyService(runtime, store=self.store)
+        views = {
+            "front": source,
+            "side": {"file": "side.png", "url": "/api/generated/side.png", "view": "side"},
+            "back": {"file": "back.png", "url": "/api/generated/back.png", "view": "back"},
+        }
+        with mock.patch(
+            "studio.backend.model_service.service.generate_turnaround",
+            return_value=(views, []),
+        ) as generate:
+            service._generate_design_views("ast_views")
+
+        self.assertEqual(
+            generate.call_args.kwargs["sheet_prompt"], PVE_TURNAROUND_SHEET_PROMPT
+        )
+        self.assertEqual(runtime.assets.saved["design_views"]["side"]["file"], "side.png")
+        self.assertEqual(
+            runtime.history.patches[-1][1]["design_views"]["back"]["file"], "back.png"
+        )
 
 
 if __name__ == "__main__":

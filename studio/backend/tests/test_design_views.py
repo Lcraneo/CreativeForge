@@ -111,7 +111,7 @@ class TurnaroundServiceTests(unittest.TestCase):
     def tearDown(self):
         self._tmp.cleanup()
 
-    def _run(self, editor):
+    def _run(self, editor, sheet_prompt=None):
         vision = mock.Mock(side_effect=AssertionError("vision model must not be called"))
         with mock.patch.object(svc, "ImageEditProvider", return_value=editor), \
                 mock.patch.object(svc, "VisionChatProvider", vision), \
@@ -120,6 +120,7 @@ class TurnaroundServiceTests(unittest.TestCase):
                 {},
                 SOURCE_URL,
                 front_image={"file": SOURCE_FILE, "url": SOURCE_URL, "model": "gen"},
+                sheet_prompt=sheet_prompt,
             )
         vision.assert_not_called()
         return result
@@ -166,6 +167,14 @@ class TurnaroundServiceTests(unittest.TestCase):
         self.assertEqual(len(back["bbox"]), 4)
         self.assertEqual(side["bbox"][2], back["bbox"][0])  # 共用同一条裁切线
         self.assertEqual(failures, [])
+
+    def test_custom_sheet_prompt_is_forwarded_to_editor(self):
+        editor = _Editor()
+        self._run(editor, sheet_prompt=svc.PVE_TURNAROUND_SHEET_PROMPT)
+        self.assertEqual(editor.calls[0]["instruction"], svc.PVE_TURNAROUND_SHEET_PROMPT)
+        # PVE 生物提示词不得沿用角色的单眼 / 双腿等人形假设
+        self.assertNotIn("单眼", svc.PVE_TURNAROUND_SHEET_PROMPT)
+        self.assertNotIn("双腿", svc.PVE_TURNAROUND_SHEET_PROMPT)
 
     def test_qwen_failure_propagates_real_error(self):
         editor = _Editor(error=RuntimeError(TURNAROUND_MODEL + " 调用失败：boom"))
