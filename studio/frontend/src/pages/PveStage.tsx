@@ -17,44 +17,54 @@ import {
 } from "../components/ui";
 import { PlaytestCharacterPicker } from "./playtest/PlaytestCharacterPicker";
 import { preloadImage } from "../lib/preload";
-import { cameraX, type ArcadeAction } from "../lib/arcade";
 import {
+  PVE_DEPTH_SCALE,
   PVE_PLAYER_HP,
   PVE_ABILITIES,
-  pveVentStage,
-  pveEnemyPose,
-  pveActionSlot,
   PVE_ACTION_FALLBACK,
-  activePveEncounter,
-  backgroundLayerBlend,
+  PVE_SLAM_MAX_Z,
+  advancePveStage,
   consumePveAudioEvents,
   createPveRuntime,
   enemyHalfWidth,
-  enemyHeight,
+  pveActionSlot,
+  pveEnemyPose,
+  pveGroundDistance,
   pveHud,
-  pveEncounters,
+  pveSortByDepth,
+  pveSpriteTime,
+  pveStage,
+  retryPveStage,
   stepPve,
   togglePvePause,
+  type PveAbility,
   type PveAudioEvent,
   type PveHud,
+  type PveInput,
   type PveRuntime,
   type PveRuntimeEnemy,
+  type PveStagePhase,
 } from "../lib/pve";
 import type {
   CreativeAsset,
   PlaytestPreviews,
   PlaytestStrip,
-  PveEncounter,
-  PveEnemy,
+  PveCampaign,
   PveEnemyProfile,
-  PveLevel,
+  PveEnemySpawn,
+  PveStage,
+  PveStageId,
 } from "../types";
 import { toast } from "../stores/toastStore";
 
-const STAGE_HEIGHT = 420;
+const STAGE_HEIGHT = 440;
 const DEFAULT_STAGE_WIDTH = 760;
-const PLAYER_HEIGHT = 176;
+const PLAYER_HEIGHT = 168;
 const HUD_INTERVAL_MS = 90;
+/** 地平线以上的留白比例，给远端角色与血条留出空间。 */
+const HORIZON_BAND = 0.16;
+/** 地平线附近的立绘缩放，近景为 1，形成纵深。 */
+const PERSPECTIVE_FAR = 0.55;
 
 interface SpriteSet {
   image: HTMLImageElement;
@@ -64,7 +74,19 @@ interface SpriteSet {
 interface RenderAssets {
   player: Record<string, SpriteSet | undefined>;
   enemies: Record<string, Record<string, SpriteSet | undefined>>;
-  backgrounds: HTMLImageElement[];
+  backgrounds: Record<string, HTMLImageElement | undefined>;
+}
+
+interface Projection {
+  arenaWidth: number;
+  arenaDepth: number;
+  /** 每逻辑 x 单位的屏幕像素，横向铺满画布。 */
+  scale: number;
+  /** 每逻辑 y 单位的屏幕像素，纵向铺满画布并形成透视压缩。 */
+  depthScale: number;
+  offsetX: number;
+  top: number;
+  spriteScale: number;
 }
 
 export default function PveStage() {
@@ -99,12 +121,12 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   const [hud, setHud] = useState<PveHud | null>(null);
   const [assetsReady, setAssetsReady] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [sequenceEditing, setSequenceEditing] = useState(false);
+  const [sequenceStageId, setSequenceStageId] = useState<PveStageId | null>(null);
   const [sequenceDraft, setSequenceDraft] = useState<Record<string, string>>({});
   const [renderAssets, setRenderAssets] = useState<RenderAssets>({
     player: {},
     enemies: {},
-    backgrounds: [],
+    backgrounds: {},
   });
 
   const sceneQuery = useQuery({
@@ -114,15 +136,25 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     retry: false,
   });
   const scene = sceneQuery.data;
-  const pveLevel = scene?.gameplay.type === "pve" ? scene.gameplay.level : null;
+  const campaign: PveCampaign | null =
+    scene?.gameplay.type === "pve" ? scene.gameplay.campaign : null;
+  const legacy = Boolean(
+    scene?.gameplay.type === "pve" && (scene.gameplay.legacy || !scene.gameplay.campaign),
+  );
   const enemyAssetIds = useMemo(
-    () => [...new Set(pveLevel?.enemies.map((enemy) => enemy.asset_id) ?? [])],
-    [pveLevel],
+    () => [
+      ...new Set(
+        (campaign?.stages ?? []).flatMap((stage) =>
+          stage.enemies.map((enemy) => enemy.asset_id),
+        ),
+      ),
+    ],
+    [campaign],
   );
 
   const history = useQuery({
     queryKey: ["pve-people"],
-    queryFn: () => api.listHistory({ limit: 12 }),
+    queryFn: () => api.listHistory({ kind: "character", limit: 12 }),
     enabled: pickerOpen,
   });
   const enemyRoster = useQuery({
@@ -137,12 +169,13 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     (enemy) => enemy.status === "ready" && enemy.asset_id,
   );
   const saveSequence = useMutation({
-    mutationFn: (profileIds: string[]) => api.updatePveEnemySequence(sceneId!, profileIds),
+    mutationFn: ({ stageId, profileIds }: { stageId: PveStageId; profileIds: string[] }) =>
+      api.updatePveEnemySequence(sceneId!, profileIds, stageId),
     onSuccess: (updated) => {
       queryClient.setQueryData(["pve-scene", sceneId], updated);
       void queryClient.invalidateQueries({ queryKey: ["scenes"] });
-      setSequenceEditing(false);
-      toast({ tone: "success", title: "敌人序列已保存", description: "关卡已按新阵容重新载入" });
+      setSequenceStageId(null);
+      toast({ tone: "success", title: "敌人序列已保存", description: "该关卡已按新阵容重新载入" });
     },
     onError: (error) => {
       toast({
@@ -174,7 +207,11 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   });
   const enemyPreviewQueries = useQueries({
     queries: enemyAssetIds.map((assetId) => ({
-      queryKey: ["pve-enemy-previews", assetId, readyEnemyProfiles.find((profile) => profile.asset_id === assetId)?.updated_at],
+      queryKey: [
+        "pve-enemy-previews",
+        assetId,
+        readyEnemyProfiles.find((profile) => profile.asset_id === assetId)?.updated_at,
+      ],
       queryFn: () =>
         api.playtestPreviews(assetId, {
           actions: ["idle", "walk", "attack"],
@@ -185,25 +222,25 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   });
   const enemyPreviewStamp = enemyPreviewQueries.map((query) => query.dataUpdatedAt).join(":");
 
-  const backgroundUrls = useMemo(() => {
-    const sequenced = (scene?.theme.background_urls ?? []).filter(Boolean);
-    if (sequenced.length > 0) return sequenced;
-    return scene?.theme.background_url ? [scene.theme.background_url] : [];
-  }, [scene]);
+  const backgroundUrls = useMemo(
+    () => (campaign?.stages ?? []).map((stage) => stage.background_url).filter(Boolean),
+    [campaign],
+  );
 
   const storedBestTime = useMemo(() => {
     if (!sceneId) return null;
     const stored = Number(window.localStorage.getItem(`creativeforge:pve-best:${sceneId}`));
     return Number.isFinite(stored) && stored > 0 ? stored : null;
   }, [sceneId]);
-  const bestTime = hud?.status === "won"
-    ? Math.min(storedBestTime ?? Infinity, hud.elapsed)
-    : storedBestTime;
+  const bestTime =
+    hud?.phase === "campaign_won"
+      ? Math.min(storedBestTime ?? Infinity, hud.elapsed)
+      : storedBestTime;
 
   useEffect(() => {
-    if (!sceneId || hud?.status !== "won") return;
+    if (!sceneId || hud?.phase !== "campaign_won") return;
     window.localStorage.setItem(`creativeforge:pve-best:${sceneId}`, String(bestTime));
-  }, [bestTime, hud?.status, sceneId]);
+  }, [bestTime, hud?.phase, sceneId]);
 
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -254,9 +291,17 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           });
         }),
       );
-      const loadedBackgrounds = (
-        await Promise.all(backgroundUrls.map((url) => preloadImage(url).catch(() => undefined)))
-      ).filter((image): image is HTMLImageElement => Boolean(image));
+      const loadedBackgrounds: Record<string, HTMLImageElement | undefined> = {};
+      await Promise.all(
+        (campaign?.stages ?? []).map(async (stage) => {
+          if (!stage.background_url) return;
+          try {
+            loadedBackgrounds[stage.id] = await preloadImage(stage.background_url);
+          } catch {
+            loadedBackgrounds[stage.id] = undefined;
+          }
+        }),
+      );
       if (cancelled) return;
       setRenderAssets({ player, enemies, backgrounds: loadedBackgrounds });
       setAssetsReady(Boolean(player.idle));
@@ -267,13 +312,17 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     };
     // enemyPreviewStamp changes whenever a query body or error state changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [backgroundUrls, enemyAssetIds, enemyPreviewStamp, playerPreviews.data, selected?.id]);
+  }, [backgroundUrls, campaign, enemyAssetIds, enemyPreviewStamp, playerPreviews.data, selected?.id]);
 
   useEffect(() => {
-    if (!pveLevel) return;
-    runtimeRef.current = createPveRuntime(pveLevel);
-    setHud(pveHud(runtimeRef.current, pveLevel));
-  }, [pveLevel]);
+    if (!campaign) {
+      runtimeRef.current = null;
+      setHud(null);
+      return;
+    }
+    runtimeRef.current = createPveRuntime(campaign);
+    setHud(pveHud(runtimeRef.current));
+  }, [campaign]);
 
   function ensureAudio() {
     if (!audioRef.current) {
@@ -317,7 +366,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   }
 
   useEffect(() => {
-    if (!pveLevel || !selected || !assetsReady) return;
+    if (!campaign || !selected || !assetsReady) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     let frame = 0;
@@ -333,34 +382,18 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       const dt = lastTick ? Math.min(0.05, (time - lastTick) / 1000) : 1 / 60;
       lastTick = time;
       const keys = heldRef.current;
-      const canConsumeShot = !runtime.paused && runtime.status === "playing" && runtime.hitstopRemaining <= 0;
-      stepPve(
-        runtime,
-        pveLevel,
-        {
-          left: keys.has("arrowleft") || keys.has("a"),
-          right: keys.has("arrowright") || keys.has("d"),
-          run: keys.has("shift"),
-          jump: keys.has(" ") || keys.has("arrowup"),
-          shoot: shotRequestRef.current,
-          guard: keys.has("k"),
-          dodge: keys.has("l"),
-          aimY: keys.has("w") ? -0.7 : keys.has("s") ? 0.7 : 0,
-        },
-        dt,
-      );
-      if (canConsumeShot || runtime.status !== "playing") shotRequestRef.current = false;
+      stepPve(runtime, readInput(keys, shotRequestRef.current), dt);
+      if (runtime.phase !== "playing" || !runtime.paused) shotRequestRef.current = false;
       playPveSounds(consumePveAudioEvents(runtime));
-      runtime.camera = cameraX(runtime.player.x, stageWidthRef.current, pveLevel.width);
-      drawPveScene(context, canvas, pveLevel, runtime, renderAssets, reduceMotion);
+      drawPveScene(context, canvas, campaign, runtime, renderAssets, reduceMotion, scene?.theme.palette);
       if (time - lastHud >= HUD_INTERVAL_MS) {
         lastHud = time;
-        setHud(pveHud(runtime, pveLevel));
+        setHud(pveHud(runtime));
       }
     };
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [assetsReady, pveLevel, reduceMotion, renderAssets, selected]);
+  }, [assetsReady, campaign, reduceMotion, renderAssets, scene?.theme.palette, selected]);
 
   useEffect(() => {
     const onDown = (event: KeyboardEvent) => {
@@ -373,18 +406,33 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       }
       const key = event.key.toLowerCase();
       ensureAudio();
-      if (["arrowleft", "arrowright", "arrowup", " ", "f", "j", "k", "p", "escape"].includes(key)) {
+      if (
+        ["arrowleft", "arrowright", "arrowup", "arrowdown", " ", "f", "j", "k", "l", "p", "escape", "enter"].includes(
+          key,
+        )
+      ) {
         event.preventDefault();
       }
-      heldRef.current.add(key);
-      if (!event.repeat && (key === "p" || key === "escape")) {
-        const runtime = runtimeRef.current;
-        if (runtime && pveLevel) {
+      const runtime = runtimeRef.current;
+      if (runtime && !event.repeat) {
+        if (key === "p" || key === "escape") {
           togglePvePause(runtime);
-          setHud(pveHud(runtime, pveLevel));
+          setHud(pveHud(runtime));
+          return;
+        }
+        if (key === "enter" && runtime.phase === "cleared") {
+          advancePveStage(runtime);
+          setHud(pveHud(runtime));
+          return;
+        }
+        if (key === "r" && runtime.phase === "campaign_lost") {
+          retryPveStage(runtime);
+          setHud(pveHud(runtime));
+          return;
         }
       }
-      if (!event.repeat && (key === "f" || key === "j") && !runtimeRef.current?.paused) {
+      heldRef.current.add(key);
+      if (!event.repeat && (key === "f" || key === "j") && !runtime?.paused) {
         shotRequestRef.current = true;
       }
     };
@@ -403,22 +451,20 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       window.removeEventListener("keyup", onUp);
       window.removeEventListener("blur", clear);
     };
-  }, [pveLevel]);
+  }, []);
 
-  function startSequenceEditing() {
-    if (!pveLevel) return;
+  function startSequenceEditing(stage: PveStage) {
     setSequenceDraft(
       Object.fromEntries(
-        pveLevel.enemies.map((enemy) => [enemy.id, matchingProfileId(enemy, readyEnemyProfiles)]),
+        stage.enemies.map((enemy) => [enemy.id, matchingProfileId(enemy, readyEnemyProfiles)]),
       ),
     );
-    setSequenceEditing(true);
+    setSequenceStageId(stage.id);
   }
 
-  function saveEnemySequence() {
-    if (!pveLevel) return;
+  function saveEnemySequence(stage: PveStage) {
     const profileIds: string[] = [];
-    for (const enemy of pveLevel.enemies) {
+    for (const enemy of stage.enemies) {
       const profileId = sequenceDraft[enemy.id];
       if (!profileId) {
         toast({ tone: "warning", title: "请为每个敌人槽位选择可用敌人" });
@@ -426,14 +472,28 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       }
       profileIds.push(profileId);
     }
-    saveSequence.mutate(profileIds);
+    saveSequence.mutate({ stageId: stage.id, profileIds });
   }
 
-  function restart() {
-    if (!pveLevel) return;
-    runtimeRef.current = createPveRuntime(pveLevel);
+  function restartCampaign() {
+    if (!campaign) return;
+    runtimeRef.current = createPveRuntime(campaign);
     shotRequestRef.current = false;
-    setHud(pveHud(runtimeRef.current, pveLevel));
+    setHud(pveHud(runtimeRef.current));
+  }
+
+  function advanceStage() {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    advancePveStage(runtime);
+    setHud(pveHud(runtime));
+  }
+
+  function retryStage() {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+    retryPveStage(runtime);
+    setHud(pveHud(runtime));
   }
 
   function selectAsset(assetId: string) {
@@ -450,9 +510,9 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
 
   function togglePause() {
     const runtime = runtimeRef.current;
-    if (!runtime || !pveLevel) return;
+    if (!runtime) return;
     togglePvePause(runtime);
-    setHud(pveHud(runtime, pveLevel));
+    setHud(pveHud(runtime));
   }
 
   if (!sceneId) {
@@ -461,13 +521,13 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
         <PageHeader
           overline="PVE Arcade"
           title="PVE 关卡试玩"
-          description="从场景工坊选择 PVE 模式生成战斗场景，再选择角色进入关卡。"
+          description="从场景工坊选择 PVE 模式生成三关战役，再选择角色进入竞技场。"
         />
         <div className="mt-5">
           <EmptyState
             icon="zap"
             title="还没有选择 PVE 场景"
-            description="先在工作坊里描述敌人与战场主题，生成场景后会带着关卡直接进入这里。"
+            description="先在工作坊里描述敌人与战场主题，生成后会直接进入三关 2.5D 战役。"
             action={
               <Button variant="primary" icon="grid" onClick={() => navigate("/scenes")}>
                 去场景工坊
@@ -513,7 +573,26 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     );
   }
 
-  const encounterPlan = scene.gameplay.level ? pveEncounters(scene.gameplay.level) : [];
+  if (legacy || !campaign) {
+    return (
+      <div className="mx-auto w-full max-w-[1440px] px-4 py-5 md:px-6">
+        <PageHeader overline="PVE Arcade" title={scene.title} description={scene.theme.summary} />
+        <Card title="旧版 PVE 场景" icon="alert" bodyClassName="p-4" className="mt-5">
+          <EmptyState
+            icon="alert"
+            title="旧版 PVE，需重新生成"
+            description="该场景使用旧的横版单关卡数据，无法进入新版 2.5D 三关战役。请在场景工坊用相同提示词重新生成。"
+            action={
+              <Button variant="primary" icon="grid" onClick={() => navigate("/scenes")}>
+                返回场景工坊
+              </Button>
+            }
+          />
+        </Card>
+      </div>
+    );
+  }
+
   const playerLoadFailed =
     playerPreviews.isError ||
     (!playerPreviews.isLoading &&
@@ -526,7 +605,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       <PageHeader
         overline="PVE Arcade"
         title={scene.title}
-        description={`${scene.theme.summary} · 远程攻击、逐区清场，再挑战提示词匹配的守关 Boss。`}
+        description={`${scene.theme.summary} · 2.5D 固定竞技场，三关连续推进，第三关挑战守关 Boss。`}
         actions={
           <>
             <Badge tone="success" icon="zap">
@@ -542,18 +621,14 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       <div className="grid grid-cols-12 items-start gap-4">
         <div className="col-span-12 flex min-w-0 flex-col gap-3 xl:col-span-8">
           <Card
-            title="PVE 战斗 · 侧卷轴"
+            title="PVE 战斗 · 2.5D 竞技场"
             icon="play"
             bodyClassName="p-3"
             right={
               <div className="flex items-center gap-1.5">
-                {hud?.bossActive ? (
-                  <Badge tone="danger">Boss 战</Badge>
-                ) : (
-                  <Badge tone="neutral">
-                    {hud ? `${hud.encounterIndex}/${hud.encounterCount}` : "准备"}
-                  </Badge>
-                )}
+                <Badge tone="neutral">
+                  第 {hud?.stageIndex ?? 1}/{hud?.stageCount ?? 3} 关
+                </Badge>
                 <button
                   type="button"
                   aria-label={hud?.paused ? "继续游戏" : "暂停游戏"}
@@ -574,7 +649,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 width={stageWidth}
                 height={STAGE_HEIGHT}
                 role="img"
-                aria-label="PVE 横版战斗画面"
+                aria-label="PVE 2.5D 竞技场战斗画面"
                 className="block h-auto w-full touch-none"
                 onPointerDown={() => {
                   if (assetsReady) shoot();
@@ -584,8 +659,8 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
               {hud && (
                 <div className="pointer-events-none absolute left-3 top-3 z-[5] flex flex-wrap gap-1.5">
                   <HudChip icon="shield" text={`${hud.hp}/${PVE_PLAYER_HP}`} danger={hud.hp <= 2} />
-                  <HudChip icon="crosshair" text={`敌人 ${hud.defeated}/${hud.total}`} />
-                  <HudChip icon="clock" text={`${hud.elapsed.toFixed(1)}s`} />
+                  <HudChip icon="crosshair" text={`敌人 ${hud.kills}/${hud.stageTotal}`} />
+                  <HudChip icon="clock" text={`总 ${hud.elapsed.toFixed(1)}s`} />
                   <HudChip
                     icon="shield"
                     text={
@@ -599,8 +674,8 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
               {hud && (
                 <div className="pointer-events-none absolute left-1/2 top-12 z-[5] -translate-x-1/2 text-center">
                   <div className="rounded-full border border-line/60 bg-paper/90 px-3 py-1 text-[10.5px] font-medium text-ink-2 shadow-sm backdrop-blur-sm">
-                    {hud.encounterTitle}
-                    {hud.encounterRemaining > 0 ? ` · 剩余 ${hud.encounterRemaining}` : ""}
+                    {hud.stageTitle}
+                    {hud.stageRemaining > 0 ? ` · 剩余 ${hud.stageRemaining}` : ""}
                   </div>
                   {hud.notice && (
                     <div className="mt-1 text-[10px] font-semibold text-warning drop-shadow-sm">
@@ -631,7 +706,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 </div>
               )}
 
-              <div className="absolute bottom-2 left-2 right-2 z-[5] flex items-end justify-end gap-1 sm:bottom-3 sm:left-auto sm:right-3 sm:gap-2">
+              <div className="absolute bottom-2 left-2 right-2 z-[5] flex flex-wrap items-end justify-end gap-1 sm:bottom-3 sm:left-auto sm:right-3 sm:gap-2">
                 <TouchButton
                   label="向左"
                   icon="arrow-left"
@@ -651,8 +726,22 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                   onUp={() => heldRef.current.delete("arrowright")}
                 />
                 <TouchButton
+                  label="向上（靠后）"
+                  icon="arrow-up"
+                  onDown={() => heldRef.current.add("arrowup")}
+                  onUp={() => heldRef.current.delete("arrowup")}
+                />
+                <TouchButton
+                  label="向下（靠近）"
+                  icon="arrow-up"
+                  iconClassName="rotate-180"
+                  onDown={() => heldRef.current.add("arrowdown")}
+                  onUp={() => heldRef.current.delete("arrowdown")}
+                />
+                <TouchButton
                   label="跳跃"
                   icon="arrow-up"
+                  iconClassName="rotate-45"
                   onDown={() => {
                     ensureAudio();
                     heldRef.current.add(" ");
@@ -668,6 +757,25 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                   }}
                   onUp={() => heldRef.current.delete("k")}
                 />
+                <TouchButton
+                  label={`闪避，冷却 ${Math.ceil(hud?.dodgeCooldown ?? 0)} 秒`}
+                  icon="arrow-right"
+                  onDown={() => heldRef.current.add("l")}
+                  onUp={() => heldRef.current.delete("l")}
+                />
+                <TouchButton
+                  label="向上瞄准"
+                  icon="arrow-up"
+                  onDown={() => heldRef.current.add("q")}
+                  onUp={() => heldRef.current.delete("q")}
+                />
+                <TouchButton
+                  label="向下瞄准"
+                  icon="arrow-up"
+                  iconClassName="rotate-180"
+                  onDown={() => heldRef.current.add("e")}
+                  onUp={() => heldRef.current.delete("e")}
+                />
                 <button
                   type="button"
                   aria-label="发射攻击"
@@ -676,10 +784,6 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 >
                   <Icon name="crosshair" className="h-5 w-5" />
                 </button>
-                <TouchButton label={`闪避，冷却 ${Math.ceil(hud?.dodgeCooldown ?? 0)} 秒`} icon="arrow-right" onDown={() => heldRef.current.add("l")} onUp={() => heldRef.current.delete("l")} />
-                <TouchButton label="向上瞄准" icon="arrow-up" onDown={() => heldRef.current.add("w")} onUp={() => heldRef.current.delete("w")} />
-                <TouchButton label="向下瞄准" icon="arrow-up" onDown={() => heldRef.current.add("s")} onUp={() => heldRef.current.delete("s")} />
-                <span className="hidden text-xs xl:inline">闪避 {(hud?.dodgeCooldown ?? 0) > 0 ? `${hud?.dodgeCooldown.toFixed(1)}s` : "就绪"}</span>
               </div>
 
               {playerLoadFailed ? (
@@ -727,7 +831,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                 </div>
               ) : null}
 
-              {hud?.paused && hud.status === "playing" && (
+              {hud?.paused && hud.phase === "playing" && (
                 <div className="absolute inset-0 z-30 grid place-items-center bg-canvas/88 p-4 backdrop-blur-[2px]">
                   <div className="w-[min(340px,88%)] rounded-xl border border-line bg-paper p-5 text-center shadow-e3">
                     <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-primary/12 text-primary">
@@ -735,35 +839,50 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                     </span>
                     <h3 className="mt-3 font-serif text-[20px] font-black text-ink">战斗暂停</h3>
                     <p className="mt-1 text-[11.5px] leading-5 text-ink-3">
-                      当前遭遇战：{hud.encounterTitle}
+                      当前关卡：{hud.stageTitle}
                     </p>
                     <div className="mt-4 flex justify-center gap-2">
                       <Button variant="primary" size="sm" icon="play" onClick={togglePause}>
                         继续游戏
                       </Button>
-                      <Button variant="secondary" size="sm" icon="refresh" onClick={restart}>
-                        重新开始
+                      <Button variant="secondary" size="sm" icon="refresh" onClick={restartCampaign}>
+                        重新开始战役
                       </Button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {hud?.status === "won" && (
-                <ResultOverlay
-                  won
-                  title={`${hud.grade} 级 · 守关 Boss 已被击败`}
-                  detail={`清除 ${hud.defeated}/${hud.total} · ${hud.elapsed.toFixed(1)}s · 受伤 ${hud.damageTaken} · 防御 ${hud.guardsUsed} · 命中率 ${Math.round(hud.accuracy * 100)}%${bestTime ? ` · 最佳 ${bestTime.toFixed(1)}s` : ""}`}
-                  onRestart={restart}
+              {hud?.phase === "cleared" && (
+                <StageClearedOverlay
+                  stageTitle={hud.stageTitle}
+                  stageIndex={hud.stageIndex}
+                  stageCount={hud.stageCount}
+                  kills={hud.kills}
+                  total={hud.stageTotal}
+                  elapsed={hud.elapsed}
+                  hp={hud.hp}
+                  onAdvance={advanceStage}
+                  onRestart={restartCampaign}
                   onBack={() => navigate("/scenes")}
                 />
               )}
-              {hud?.status === "lost" && (
+              {hud?.phase === "campaign_won" && (
+                <ResultOverlay
+                  won
+                  title={`${hud.grade} 级 · 战役通关`}
+                  detail={`三关全部完成 · ${hud.elapsed.toFixed(1)}s · 受伤 ${hud.damageTaken} · 防御 ${hud.guardsUsed} · 命中率 ${Math.round(hud.accuracy * 100)}%${bestTime ? ` · 最佳 ${bestTime.toFixed(1)}s` : ""}`}
+                  onRestart={restartCampaign}
+                  onBack={() => navigate("/scenes")}
+                />
+              )}
+              {hud?.phase === "campaign_lost" && (
                 <ResultOverlay
                   won={false}
-                  title="本轮挑战失败"
-                  detail={`已清除 ${hud.defeated}/${hud.total} 个敌人 · 调整走位后重试`}
-                  onRestart={restart}
+                  title={`第 ${hud.stageIndex} 关失败`}
+                  detail={`已清除 ${hud.kills}/${hud.stageTotal} 个敌人 · 重试本关会恢复到进入该关时的生命与统计`}
+                  onRestart={retryStage}
+                  restartLabel={`重试第 ${hud.stageIndex} 关`}
                   onBack={() => navigate("/scenes")}
                 />
               )}
@@ -772,46 +891,46 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
 
           <section className="rounded-lg border border-line bg-paper px-3.5 py-3 shadow-e1">
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="primary" size="sm" icon="refresh" onClick={restart}>
-                重新开始
+              <Button variant="primary" size="sm" icon="refresh" onClick={restartCampaign}>
+                重新开始战役
               </Button>
               <Button variant="secondary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
                 更换出战角色
               </Button>
               <span className="text-[11px] text-ink-4">
-                A / D 或 ← → 移动 · Shift 奔跑 · ↑ / 空格跳跃 · F / J 单发攻击 · W / S 瞄准 · K 防御 · L 闪避 · P 暂停
+                WASD / 方向键八向移动 · Shift 奔跑 · 空格跳跃 · F / J 单发攻击 · Q / E 上下瞄准 · K 防御 · L 闪避 · P 暂停 · Enter 进入下一关
               </span>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <RuleItem
                 icon="crosshair"
-                title="单次远程攻击"
-                text="每次按键或点击只发射一枚能量弹，无需角色攻击动作。"
+                title="2.5D 地面战斗"
+                text="x 水平、y 纵深、z 跳跃高度；地面距离按纵深压缩计算，跳跃可以躲过低矮震击。"
               />
               <RuleItem
                 icon="shield"
                 title="单格防御"
-                text="按住 K 可抵挡一次伤害；防御碎裂后冷却 4 秒，HUD 会显示恢复进度。"
+                text="按住 K 可抵挡一次伤害；防御碎裂后冷却 2 秒，HUD 会显示恢复进度。"
               />
               <RuleItem
                 icon="flame"
-                title="逐区突破"
-                text="进入战斗区后封锁出口，清除当前敌人才会开放下一处战场与守关 Boss。"
+                title="手动推进三关"
+                text="清场后战斗冻结并显示结算；只有点击“进入下一关”或按 Enter 才会加载下一关。"
               />
             </div>
           </section>
         </div>
 
         <aside className="col-span-12 flex flex-col gap-3 xl:col-span-4">
-          <EnemySequenceCard
-            encounters={encounterPlan}
-            enemies={pveLevel?.enemies ?? []}
+          <CampaignSequenceCard
+            stages={campaign.stages}
             profiles={readyEnemyProfiles}
-            editing={sequenceEditing}
+            editingStageId={sequenceStageId}
             draft={sequenceDraft}
             saving={saveSequence.isPending}
+            error={saveSequence.error instanceof Error ? saveSequence.error.message : null}
             onStart={startSequenceEditing}
-            onCancel={() => setSequenceEditing(false)}
+            onCancel={() => setSequenceStageId(null)}
             onChange={(enemyId, profileId) =>
               setSequenceDraft((current) => ({ ...current, [enemyId]: profileId }))
             }
@@ -820,8 +939,8 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
 
           <Card title="战斗说明" icon="info" bodyClassName="p-4">
             <p className="text-[11.5px] leading-5 text-ink-3">
-              这是独立的轻量 PVE 模式，不会改动跑酷关卡。战场、遭遇战和敌人会按提示词语义生成；
-              自定义敌人通过独立敌人工坊生成模型与动作，不与玩家角色混用。
+              三关战役使用固定斜俯视竞技场：第 1、2 关清剿小怪，第 3 关挑战守关 Boss。
+              生命、受伤、命中与累计用时跨关保留；切换关卡会重置站位、弹幕与技能冷却。
             </p>
             {scene.generation.warnings.length > 0 && (
               <p className="mt-2 text-[10.5px] leading-4 text-warning">
@@ -852,141 +971,584 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   );
 }
 
-function EnemySequenceCard({
-  encounters,
-  enemies,
+/** 八向移动 + 跳跃 + 攻击/防御/闪避的统一输入映射。 */
+function readInput(keys: Set<string>, shot: boolean): PveInput {
+  return {
+    left: keys.has("arrowleft") || keys.has("a"),
+    right: keys.has("arrowright") || keys.has("d"),
+    up: keys.has("arrowup") || keys.has("w"),
+    down: keys.has("arrowdown") || keys.has("s"),
+    run: keys.has("shift"),
+    jump: keys.has(" "),
+    shoot: shot,
+    guard: keys.has("k"),
+    dodge: keys.has("l"),
+    aimZ: keys.has("q") ? -0.7 : keys.has("e") ? 0.7 : 0,
+  };
+}
+
+function makeProjection(arena: { width: number; depth: number }, width: number, height: number): Projection {
+  const top = Math.round(height * HORIZON_BAND);
+  return {
+    arenaWidth: arena.width,
+    arenaDepth: arena.depth,
+    scale: width / arena.width,
+    depthScale: (height - top) / (arena.depth * PVE_DEPTH_SCALE),
+    offsetX: 0,
+    top,
+    spriteScale: Math.max(0.55, Math.min(1.15, width / 860)),
+  };
+}
+
+/** 越靠地平线（y 小）立绘越小，越靠近镜头越大，形成 2.5D 纵深。 */
+function depthPerspective(projection: Projection, y: number) {
+  const t = Math.min(1, Math.max(0, y / projection.arenaDepth));
+  return PERSPECTIVE_FAR + (1 - PERSPECTIVE_FAR) * t;
+}
+
+/** 立绘不能高过脚底到画布顶部的可用空间，避免远端角色被裁切。 */
+function actorHeight(natural: number, feetY: number) {
+  return Math.max(24, Math.min(natural, feetY - 2));
+}
+
+/** y 越大越靠近镜头，屏幕 y 越大；与升序深度排序一致。 */
+function projectGround(projection: Projection, x: number, y: number) {
+  return {
+    x: projection.offsetX + x * projection.scale,
+    y: projection.top + y * projection.depthScale,
+  };
+}
+
+function projectPoint(projection: Projection, x: number, y: number, z: number) {
+  const ground = projectGround(projection, x, y);
+  return { x: ground.x, y: ground.y - z * projection.depthScale };
+}
+
+function drawPveScene(
+  context: CanvasRenderingContext2D,
+  canvas: HTMLCanvasElement,
+  campaign: PveCampaign,
+  runtime: PveRuntime,
+  assets: RenderAssets,
+  reduceMotion: boolean,
+  palette: { skyTop?: string; skyBottom?: string; ground?: string; accent?: string } | undefined,
+) {
+  const width = canvas.width;
+  const height = canvas.height;
+  const stage = pveStage(campaign, runtime.stageIndex);
+  const projection = makeProjection(stage.arena, width, height);
+  context.clearRect(0, 0, width, height);
+  drawBackground(context, width, height, assets.backgrounds[stage.id], palette);
+
+  for (const enemy of runtime.enemies) {
+    if (enemy.hp > 0 || (enemy.deathAt !== null && runtime.stageTime - enemy.deathAt < PVE_DEATH_VISIBLE)) {
+      drawTelegraph(context, enemy, runtime, projection);
+    }
+  }
+
+  const actors = pveSortByDepth([
+    ...runtime.enemies
+      .filter(
+        (enemy) =>
+          enemy.hp > 0 ||
+          (enemy.deathAt !== null && runtime.stageTime - enemy.deathAt < PVE_DEATH_VISIBLE),
+      )
+      .map((enemy) => ({ y: enemy.y, enemy })),
+    { y: runtime.player.y, enemy: null as PveRuntimeEnemy | null },
+  ]);
+  for (const actor of actors) {
+    if (actor.enemy) {
+      drawEnemy(context, actor.enemy, runtime, assets.enemies[actor.enemy.asset_id], projection);
+    } else {
+      drawPlayer(context, runtime, assets.player, projection);
+    }
+  }
+
+  for (const particle of runtime.particles) {
+    const point = projectPoint(projection, particle.x, particle.y, particle.z);
+    context.save();
+    context.globalAlpha = Math.max(0, particle.life / 0.35);
+    context.fillStyle = particle.color;
+    context.beginPath();
+    context.arc(point.x, point.y, particle.size, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+  for (const projectile of runtime.projectiles) {
+    const point = projectPoint(projection, projectile.x, projectile.y, projectile.z);
+    context.save();
+    context.shadowColor = projectile.color;
+    context.shadowBlur = 14;
+    context.strokeStyle = projectile.color;
+    context.globalAlpha = 0.35;
+    context.lineWidth = Math.max(2, projectile.radius * 0.8);
+    context.beginPath();
+    context.moveTo(
+      point.x - projectile.vx * 0.045 * projection.scale,
+      point.y + projectile.vz * 0.045 * projection.depthScale,
+    );
+    context.lineTo(point.x, point.y);
+    context.stroke();
+    context.globalAlpha = 1;
+    context.fillStyle = projectile.color;
+    context.beginPath();
+    context.arc(point.x, point.y, Math.max(2, projectile.radius * 0.8), 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  }
+
+  if (!reduceMotion && runtime.noticeUntil > runtime.stageTime) {
+    const strength = Math.min(1, runtime.noticeUntil - runtime.stageTime);
+    context.save();
+    context.fillStyle = `rgba(13, 20, 33, ${0.16 * strength})`;
+    context.fillRect(0, 0, width, height);
+    context.restore();
+  }
+}
+
+const PVE_DEATH_VISIBLE = 0.9;
+
+function drawBackground(
+  context: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  image: HTMLImageElement | undefined,
+  palette: { skyTop?: string; skyBottom?: string } | undefined,
+) {
+  if (image) {
+    const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
+    const drawWidth = image.naturalWidth * scale;
+    const drawHeight = image.naturalHeight * scale;
+    context.drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+    return;
+  }
+  const gradient = context.createLinearGradient(0, 0, 0, height);
+  gradient.addColorStop(0, palette?.skyTop ?? "#25345a");
+  gradient.addColorStop(1, palette?.skyBottom ?? "#dce6ef");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, width, height);
+}
+
+function drawTelegraph(
+  context: CanvasRenderingContext2D,
+  enemy: PveRuntimeEnemy,
+  runtime: PveRuntime,
+  projection: Projection,
+) {
+  if (!enemy.ability || enemy.abilityStage !== "windup") return;
+  const ability = enemy.ability;
+  const config = PVE_ABILITIES[ability];
+  const base = projectGround(projection, enemy.x, enemy.y);
+  context.save();
+  context.globalAlpha = 0.3 + Math.sin(runtime.stageTime * 8) * 0.08;
+  context.strokeStyle = "#fff1b6";
+  context.fillStyle = "rgba(255, 130, 65, .35)";
+  context.lineWidth = 2.5;
+  context.setLineDash([7, 5]);
+  if (ability === "slam") {
+    const radius = config.range * projection.scale;
+    context.beginPath();
+    context.ellipse(base.x, base.y, radius, config.range * projection.depthScale, 0, 0, Math.PI * 2);
+    context.fill();
+    context.stroke();
+    context.setLineDash([]);
+    context.fillStyle = "rgba(255, 245, 210, .92)";
+    context.font = "bold 11px sans-serif";
+    context.textAlign = "center";
+    context.fillText("震地 · 跳跃躲避", base.x, base.y - 6);
+  } else if (ability === "shot") {
+    const target = projectGround(projection, enemy.abilityTargetX, enemy.abilityTargetY);
+    context.beginPath();
+    context.moveTo(base.x, base.y);
+    context.lineTo(target.x, target.y);
+    context.stroke();
+    context.setLineDash([]);
+    context.beginPath();
+    context.ellipse(
+      target.x,
+      target.y,
+      12,
+      12 * (projection.depthScale / projection.scale),
+      0,
+      0,
+      Math.PI * 2,
+    );
+    context.fill();
+    context.stroke();
+  } else {
+    const distance = ability === "charge" ? 420 * config.active : 260 * config.active;
+    const endX = enemy.x + enemy.abilityDirectionX * distance;
+    const endY = enemy.y + (enemy.abilityDirectionY * distance) / PVE_DEPTH_SCALE;
+    const end = projectGround(projection, endX, endY);
+    const half = enemy.radiusX * projection.scale;
+    const normalX = -enemy.abilityDirectionY * half;
+    const normalY = enemy.abilityDirectionX * half * (projection.depthScale / projection.scale);
+    context.beginPath();
+    context.moveTo(base.x + normalX, base.y + normalY);
+    context.lineTo(end.x + normalX, end.y + normalY);
+    context.lineTo(end.x - normalX, end.y - normalY);
+    context.lineTo(base.x - normalX, base.y - normalY);
+    context.closePath();
+    context.fill();
+    context.stroke();
+    context.setLineDash([]);
+    context.fillStyle = "rgba(255, 245, 210, .92)";
+    context.font = "bold 11px sans-serif";
+    context.textAlign = "center";
+    context.fillText("冲刺！", base.x, base.y - 6);
+  }
+  context.restore();
+}
+
+function drawShadow(
+  context: CanvasRenderingContext2D,
+  projection: Projection,
+  x: number,
+  y: number,
+  z: number,
+  radius: number,
+) {
+  const ground = projectGround(projection, x, y);
+  const shrink = Math.max(0.45, 1 - z / 320);
+  const radiusPx = radius * projection.spriteScale * depthPerspective(projection, y) * shrink;
+  context.save();
+  context.fillStyle = "rgba(9, 14, 24, .28)";
+  context.beginPath();
+  context.ellipse(
+    ground.x,
+    ground.y + 2,
+    radiusPx,
+    radiusPx * 0.32,
+    0,
+    0,
+    Math.PI * 2,
+  );
+  context.fill();
+  context.restore();
+}
+
+function drawPlayer(
+  context: CanvasRenderingContext2D,
+  runtime: PveRuntime,
+  sprites: Record<string, SpriteSet | undefined>,
+  projection: Projection,
+) {
+  const player = runtime.player;
+  drawShadow(context, projection, player.x, player.y, player.z, 34);
+  const speed = Math.hypot(player.vx, player.vy);
+  const action = !player.onGround
+    ? "jump"
+    : speed > 220
+      ? "run"
+      : speed > 1
+        ? "walk"
+        : "idle";
+  const sprite = sprites[action] ?? sprites.idle ?? sprites.walk;
+  const point = projectPoint(projection, player.x, player.y, player.z);
+  const natural = PLAYER_HEIGHT * projection.spriteScale * depthPerspective(projection, player.y);
+  const height = actorHeight(natural, point.y);
+  if (sprite) {
+    if (runtime.invulnerableUntil > runtime.stageTime && Math.floor(runtime.stageTime * 14) % 2 === 0) {
+      context.globalAlpha = 0.45;
+    }
+    drawSprite(context, sprite, point.x, point.y, height, player.facing, runtime.stageTime);
+    context.globalAlpha = 1;
+  } else {
+    drawFallbackActor(context, point.x, point.y, height * 0.24, height, "#e2b759");
+  }
+  if (runtime.guarding && runtime.guardAvailable) {
+    context.save();
+    context.strokeStyle = "#9edff2";
+    context.lineWidth = 3;
+    context.globalAlpha = 0.75;
+    context.beginPath();
+    context.ellipse(point.x, point.y - height * 0.5, height * 0.3, height * 0.52, 0, -Math.PI / 2, Math.PI / 2);
+    context.stroke();
+    context.restore();
+  }
+}
+
+function drawEnemy(
+  context: CanvasRenderingContext2D,
+  enemy: PveRuntimeEnemy,
+  runtime: PveRuntime,
+  sprites: Record<string, SpriteSet | undefined> | undefined,
+  projection: Projection,
+) {
+  const pose = pveEnemyPose(enemy, runtime.stageTime);
+  const sprite = sprites?.[pose] ?? sprites?.[PVE_ACTION_FALLBACK[pose]] ?? sprites?.walk ?? sprites?.idle;
+  const point = projectPoint(projection, enemy.x, enemy.y, 0);
+  const natural =
+    enemy.display_height * projection.spriteScale * depthPerspective(projection, enemy.y);
+  const height = actorHeight(natural, point.y);
+  drawShadow(context, projection, enemy.x, enemy.y, 0, enemy.kind === "boss" ? 56 : 24);
+  context.save();
+  context.translate(point.x, point.y);
+  if (pose === "windup") context.scale(1.12, 0.88);
+  if (pose === "hurt") context.rotate(-enemy.facing * 0.16);
+  if (pose === "death") {
+    const progress = Math.min(1, (runtime.stageTime - (enemy.deathAt ?? runtime.stageTime)) / 0.6);
+    context.rotate(enemy.facing * (0.3 + progress * 1.2));
+    context.scale(1, Math.max(0.12, 1 - progress));
+  }
+  context.translate(-point.x, -point.y);
+  if (sprite) {
+    drawSprite(
+      context,
+      sprite,
+      point.x,
+      point.y,
+      height,
+      enemy.facing,
+      pveSpriteTime(pose, enemy, runtime.stageTime, sprite.strip.frames, sprite.strip.fps ?? 10),
+    );
+  } else {
+    drawFallbackActor(
+      context,
+      point.x,
+      point.y,
+      height * (enemy.kind === "boss" ? 0.28 : 0.24),
+      height,
+      enemy.kind === "boss" ? "#6ccde5" : "#7fa25e",
+    );
+  }
+  if (enemy.hitFlashUntil > runtime.stageTime) {
+    if (sprite) {
+      context.save();
+      context.filter = "brightness(3.2) saturate(.15)";
+      drawSprite(
+        context,
+        sprite,
+        point.x,
+        point.y,
+        height,
+        enemy.facing,
+        pveSpriteTime(pose, enemy, runtime.stageTime, sprite.strip.frames, sprite.strip.fps ?? 10),
+      );
+      context.restore();
+    } else {
+      context.save();
+      context.globalCompositeOperation = "screen";
+      context.globalAlpha = 0.5;
+      context.fillStyle = "#fff5e3";
+      context.fillRect(
+        point.x - enemyHalfWidth(enemy) * projection.scale,
+        point.y - height,
+        enemyHalfWidth(enemy) * 2 * projection.scale,
+        height,
+      );
+      context.restore();
+    }
+  }
+  context.restore();
+  if (pose === "death") return;
+  const barWidth = (enemy.kind === "boss" ? 150 : 48) * projection.spriteScale;
+  const barY = Math.max(6, point.y - height - 12);
+  context.save();
+  context.fillStyle = "rgba(21, 30, 47, .78)";
+  context.fillRect(point.x - barWidth / 2, barY, barWidth, 5);
+  context.fillStyle = enemy.kind === "boss" ? "#8be8f7" : "#b7d88d";
+  context.fillRect(point.x - barWidth / 2, barY, barWidth * Math.max(0, enemy.hp / enemy.max_hp), 5);
+  context.restore();
+}
+
+function drawSprite(
+  context: CanvasRenderingContext2D,
+  sprite: SpriteSet,
+  x: number,
+  feetY: number,
+  targetHeight: number,
+  facing: 1 | -1,
+  time: number,
+) {
+  const frames = Math.max(1, sprite.strip.frames);
+  const fps = Math.max(1, sprite.strip.fps ?? 10);
+  const frame = Math.floor(time * fps) % frames;
+  const sourceWidth = sprite.image.naturalWidth / frames;
+  const sourceHeight = sprite.image.naturalHeight;
+  const displayWidth = targetHeight * (sourceWidth / Math.max(1, sourceHeight));
+  context.save();
+  context.translate(x, feetY);
+  context.scale(facing, 1);
+  context.drawImage(
+    sprite.image,
+    frame * sourceWidth,
+    0,
+    sourceWidth,
+    sourceHeight,
+    -displayWidth / 2,
+    -targetHeight,
+    displayWidth,
+    targetHeight,
+  );
+  context.restore();
+}
+
+function drawFallbackActor(
+  context: CanvasRenderingContext2D,
+  x: number,
+  feetY: number,
+  halfWidth: number,
+  height: number,
+  color: string,
+) {
+  context.save();
+  context.fillStyle = color;
+  context.beginPath();
+  context.roundRect(x - halfWidth, feetY - height, halfWidth * 2, height, 18);
+  context.fill();
+  context.restore();
+}
+
+function CampaignSequenceCard({
+  stages,
   profiles,
-  editing,
+  editingStageId,
   draft,
   saving,
+  error,
   onStart,
   onCancel,
   onChange,
   onSave,
 }: {
-  encounters: PveEncounter[];
-  enemies: PveEnemy[];
+  stages: PveStage[];
   profiles: PveEnemyProfile[];
-  editing: boolean;
+  editingStageId: PveStageId | null;
   draft: Record<string, string>;
   saving: boolean;
-  onStart: () => void;
+  error: string | null;
+  onStart: (stage: PveStage) => void;
   onCancel: () => void;
   onChange: (enemyId: string, profileId: string) => void;
-  onSave: () => void;
+  onSave: (stage: PveStage) => void;
 }) {
   return (
     <Card
-      title="敌人序列"
+      title="三关敌人序列"
       icon="layers"
       bodyClassName="p-3"
-      right={
-        editing ? (
-          <Badge tone="primary">编辑中</Badge>
-        ) : (
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="pencil"
-            disabled={profiles.length === 0}
-            onClick={onStart}
-          >
-            自定义
-          </Button>
-        )
-      }
+      right={<Badge tone="neutral">{stages.length} 关</Badge>}
     >
       <p className="mb-2 text-[10.5px] leading-4 text-ink-4">
-        {editing
-          ? "为每个战斗槽位选择敌人。小怪与 Boss 角色会按槽位类型筛选，保存后立即重新载入关卡。"
-          : "按遭遇战顺序列出当前阵容，可从敌人池替换每个槽位的敌人。"}
+        按关卡列出当前阵容。自定义只替换目标关，小怪与 Boss 槽位会按类型筛选敌人池。
       </p>
-      <div className="flex flex-col gap-1.5">
-        {encounters.map((encounter, index) => (
-          <div key={encounter.id} className="rounded-md border border-line-subtle bg-canvas p-2">
-            <div className="mb-1.5 flex items-center gap-1.5">
-              <span className="font-mono text-[9px] text-ink-4">
-                {String(index + 1).padStart(2, "0")}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[10.5px] font-semibold text-ink-2">
-                {encounter.title}
-              </span>
-              <Badge tone={encounter.kind === "boss" ? "danger" : "neutral"}>
-                {encounter.kind === "boss" ? "BOSS" : "遭遇战"}
-              </Badge>
-            </div>
-            <div className="flex flex-col gap-1">
-              {encounter.enemy_ids.map((enemyId) => {
-                const enemy = enemies.find((candidate) => candidate.id === enemyId);
-                if (!enemy) return null;
-                const role = enemy.kind === "boss" ? "boss" : "minion";
-                const choices = profiles.filter((profile) => profile.role === role);
-                return (
-                  <div
-                    key={enemy.id}
-                    className="flex items-center gap-2 rounded-sm bg-paper/70 px-2 py-1.5"
+      <div className="flex flex-col gap-2">
+        {stages.map((stage, index) => {
+          const editing = editingStageId === stage.id;
+          return (
+            <div key={stage.id} className="rounded-md border border-line-subtle bg-canvas p-2">
+              <div className="mb-1.5 flex items-center gap-1.5">
+                <span className="font-mono text-[9px] text-ink-4">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-[10.5px] font-semibold text-ink-2">
+                  {stage.title}
+                </span>
+                <Badge tone={stage.kind === "boss" ? "danger" : "neutral"}>
+                  {stage.kind === "boss" ? "BOSS" : `${stage.enemies.length} 小怪`}
+                </Badge>
+                {!editing && editingStageId === null && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="pencil"
+                    disabled={profiles.length === 0}
+                    onClick={() => onStart(stage)}
                   >
-                    <Icon
-                      name={enemy.kind === "boss" ? "flame" : "zap"}
-                      className={cx(
-                        "h-3 w-3 shrink-0",
-                        enemy.kind === "boss" ? "text-danger" : "text-success",
-                      )}
-                    />
-                    {editing ? (
-                      <select
-                        aria-label={`${enemy.id} 敌人`}
-                        value={draft[enemy.id] ?? ""}
-                        onChange={(event) => onChange(enemy.id, event.target.value)}
-                        className="min-w-0 flex-1 rounded-sm border border-line bg-canvas px-1.5 py-1 text-[10.5px] text-ink outline-none focus:border-primary/60"
-                      >
-                        <option value="">选择敌人</option>
-                        {choices.map((profile) => (
-                          <option key={profile.id} value={profile.id}>
-                            {profile.name} · {profile.stats.max_hp} HP
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <>
-                        <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-2">
-                          {enemy.name}
+                    替换
+                  </Button>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                {stage.enemies.map((enemy) => {
+                  const choices = profiles.filter((profile) =>
+                    profile.role === (enemy.kind === "boss" ? "boss" : "minion"),
+                  );
+                  return (
+                    <div
+                      key={enemy.id}
+                      className="flex items-center gap-2 rounded-sm bg-paper/70 px-2 py-1.5"
+                    >
+                      <Icon
+                        name={enemy.kind === "boss" ? "flame" : "zap"}
+                        className={cx(
+                          "h-3 w-3 shrink-0",
+                          enemy.kind === "boss" ? "text-danger" : "text-success",
+                        )}
+                      />
+                      {editing && choices.length > 0 ? (
+                        <select
+                          aria-label={`${enemy.id} 敌人`}
+                          value={draft[enemy.id] ?? ""}
+                          onChange={(event) => onChange(enemy.id, event.target.value)}
+                          className="min-w-0 flex-1 rounded-sm border border-line bg-canvas px-1.5 py-1 text-[10.5px] text-ink outline-none focus:border-primary/60"
+                        >
+                          <option value="">选择敌人</option>
+                          {choices.map((profile) => (
+                            <option key={profile.id} value={profile.id}>
+                              {profile.name} · {profile.stats.max_hp} HP
+                            </option>
+                          ))}
+                        </select>
+                      ) : editing ? (
+                        <span className="min-w-0 flex-1 text-[10px] leading-4 text-warning">
+                          敌人池暂无可用{enemy.kind === "boss" ? " Boss" : "小怪"}，请先在敌人工坊生成或重试失败的敌人
                         </span>
-                        <span className="text-[9.5px] text-ink-4">{enemy.max_hp} HP</span>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
+                      ) : (
+                        <>
+                          <span className="min-w-0 flex-1 truncate text-[10.5px] text-ink-2">
+                            {enemy.name}
+                          </span>
+                          <span className="text-[9.5px] text-ink-4">{enemy.max_hp} HP</span>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {editing && (
+                <div className="mt-2 flex justify-end gap-2">
+                  <Button variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
+                    取消
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    icon="check"
+                    loading={saving}
+                    onClick={() => onSave(stage)}
+                  >
+                    保存本关
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
-        {enemies.length === 0 && <p className="text-[11px] text-ink-4">该场景尚未配置敌人。</p>}
+          );
+        })}
       </div>
-      {editing && (
-        <div className="mt-3 flex justify-end gap-2 border-t border-line-subtle pt-3">
-          <Button variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
-            取消
-          </Button>
-          <Button variant="primary" size="sm" icon="check" loading={saving} onClick={onSave}>
-            保存序列
-          </Button>
-        </div>
+      {error && (
+        <p className="mt-2 text-[10.5px] leading-4 text-danger" role="alert">
+          {error}
+        </p>
       )}
     </Card>
   );
 }
 
-function matchingProfileId(enemy: PveEnemy, profiles: PveEnemyProfile[]) {
+function matchingProfileId(enemy: PveEnemySpawn, profiles: PveEnemyProfile[]) {
   const role = enemy.kind === "boss" ? "boss" : "minion";
   const current = profiles.find(
     (profile) => profile.id === enemy.profile_id && profile.role === role,
   );
   if (current) return current.id;
-  return (
-    profiles.find((profile) => profile.role === role && profile.asset_id === enemy.asset_id)?.id ??
-    ""
+  const sameAsset = profiles.find(
+    (profile) => profile.role === role && profile.asset_id === enemy.asset_id,
   );
+  if (sameAsset) return sameAsset.id;
+  // 原 profile 已从敌人池删除时，回退到同角色的第一个可用敌人，
+  // 保证进入编辑就有一组可直接保存的默认值。
+  return profiles.find((profile) => profile.role === role)?.id ?? "";
 }
 
 function difficultyLabel(value: "easy" | "normal" | "hard") {
@@ -1007,10 +1569,19 @@ function PveEnemyForge({
   const queryClient = useQueryClient();
   const [prompt, setPrompt] = useState("");
   const [role, setRole] = useState<"minion" | "boss">("minion");
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const rebuild = useMutation({
     mutationFn: ({ id, action }: { id: string; action: string }) => api.rebuildPveAction(id, action),
-    onSuccess: () => { onRefresh(); void queryClient.invalidateQueries({ queryKey: ["pve-enemies"] }); },
-    onError: (error) => toast({ tone: "danger", title: "动作重建失败", description: error instanceof Error ? error.message : "请稍后重试" }),
+    onSuccess: () => {
+      onRefresh();
+      void queryClient.invalidateQueries({ queryKey: ["pve-enemies"] });
+    },
+    onError: (error) =>
+      toast({
+        tone: "danger",
+        title: "动作重建失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+      }),
   });
   const generate = useMutation({
     mutationFn: () => api.generatePveEnemy(prompt.trim(), role, difficulty),
@@ -1019,11 +1590,25 @@ function PveEnemyForge({
       onRefresh();
     },
   });
+  const retry = useMutation({
+    mutationFn: (enemyId: string) => api.retryPveEnemy(enemyId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["pve-enemies"] });
+      onRefresh();
+    },
+    onError: (error) =>
+      toast({
+        tone: "danger",
+        title: "敌人重试失败",
+        description: error instanceof Error ? error.message : "请稍后重试",
+      }),
+  });
   const remove = useMutation({
     mutationFn: (enemyId: string) => api.deletePveEnemy(enemyId),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["pve-enemies"] });
       onRefresh();
+      setPendingDelete(null);
       toast({ tone: "success", title: "敌人已从池中删除", description: result.removed });
     },
     onError: (error) => {
@@ -1043,7 +1628,7 @@ function PveEnemyForge({
     <Card title="PVE 敌人工坊" icon="spark" bodyClassName="p-3">
       <p className="text-[11px] leading-[18px] text-ink-3">
         独立生成小怪或 Boss 模型与待机、移动、攻击动作，不进入玩家角色列表。场景会根据提示词语义，
-        从已完成的敌人池中自动匹配。
+        从已完成的敌人池中自动匹配三关阵容。
       </p>
       <div className="mt-3 grid grid-cols-2 gap-1.5" role="group" aria-label="敌人类型">
         {(
@@ -1112,7 +1697,7 @@ function PveEnemyForge({
           <Skeleton className="mt-2 h-12 w-full rounded-md" />
         ) : customProfiles.length === 0 ? (
           <p className="mt-2 text-[10.5px] leading-4 text-ink-4">
-            还没有自定义敌人，当前场景继续使用森林史莱姆与冰霜巨龙。
+            还没有自定义敌人，当前战役继续使用默认小怪与 Boss。
           </p>
         ) : (
           <div className="mt-2 flex max-h-72 flex-col gap-1.5 overflow-y-auto pr-1">
@@ -1143,6 +1728,7 @@ function PveEnemyForge({
                       </span>
                     )}
                   </div>
+                  <EnemyGenerationProgress enemy={enemy} />
                   <div className="mt-0.5 truncate text-[9px] text-ink-4">
                     {enemy.tags?.join(" · ") || "语义待提取"} · {enemy.stats.max_hp} HP ·{" "}
                     {enemy.stats.speed} 速
@@ -1160,30 +1746,73 @@ function PveEnemyForge({
                       {enemy.action_warning}
                     </p>
                   )}
+                  {remove.isError && remove.variables === enemy.id && (
+                    <p
+                      className="mt-0.5 truncate text-[9px] text-danger"
+                      title={remove.error instanceof Error ? remove.error.message : "删除失败"}
+                    >
+                      {remove.error instanceof Error ? remove.error.message : "删除失败"}
+                    </p>
+                  )}
                   <div className="mt-1 flex gap-2">
                     {(["idle", "walk", "attack"] as const).map((action) => (
-                      <button key={action} type="button" disabled={rebuild.isPending || enemy.status !== "ready"} className="text-[10px] text-primary disabled:opacity-40" onClick={() => rebuild.mutate({ id: enemy.id, action })}>
+                      <button
+                        key={action}
+                        type="button"
+                        disabled={
+                          rebuild.isPending ||
+                          retry.isPending ||
+                          !enemy.asset_id ||
+                          !["ready", "failed"].includes(enemy.status)
+                        }
+                        className="text-[10px] text-primary disabled:opacity-40"
+                        onClick={() => rebuild.mutate({ id: enemy.id, action })}
+                      >
                         重建{action === "idle" ? "待机" : action === "walk" ? "行走" : "攻击"}
                       </button>
                     ))}
+                    {enemy.status === "failed" && (
+                      <button
+                        type="button"
+                        disabled={retry.isPending || retry.variables === enemy.id}
+                        className="text-[10px] font-medium text-warning disabled:opacity-40"
+                        onClick={() => retry.mutate(enemy.id)}
+                      >
+                        {retry.isPending && retry.variables === enemy.id ? "重试中" : "重试生成"}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <IconButton
-                  icon="trash"
-                  label={`从敌人池删除 ${enemy.name}`}
-                  disabled={
-                    remove.isPending ||
-                    ["analyzing", "generating_model", "generating_actions"].includes(enemy.status)
-                  }
-                  onClick={() => {
-                    if (
-                      window.confirm(`从敌人池删除“${enemy.name}”？已有场景中的敌人快照不会改变。`)
-                    ) {
-                      remove.mutate(enemy.id);
+                {pendingDelete === enemy.id ? (
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <button
+                      type="button"
+                      className="text-[10px] font-medium text-danger disabled:opacity-40"
+                      disabled={remove.isPending}
+                      onClick={() => remove.mutate(enemy.id)}
+                    >
+                      确认删除
+                    </button>
+                    <button
+                      type="button"
+                      className="text-[10px] text-ink-4"
+                      onClick={() => setPendingDelete(null)}
+                    >
+                      取消
+                    </button>
+                  </div>
+                ) : (
+                  <IconButton
+                    icon="trash"
+                    label={`从敌人池删除 ${enemy.name}`}
+                    disabled={
+                      remove.isPending ||
+                      ["analyzing", "generating_model", "generating_actions"].includes(enemy.status)
                     }
-                  }}
-                  className="h-7 w-7 shrink-0"
-                />
+                    onClick={() => setPendingDelete(enemy.id)}
+                    className="h-7 w-7 shrink-0"
+                  />
+                )}
                 <Badge
                   tone={
                     enemy.status === "ready"
@@ -1193,7 +1822,7 @@ function PveEnemyForge({
                         : "neutral"
                   }
                 >
-                  {enemy.status === "ready" ? "可用" : enemy.role === "boss" ? "Boss" : "GEN"}
+                  {enemy.status === "ready" ? "可用" : enemy.status === "failed" ? "失败" : "生成中"}
                 </Badge>
               </div>
             ))}
@@ -1202,6 +1831,44 @@ function PveEnemyForge({
       </div>
     </Card>
   );
+}
+
+function EnemyGenerationProgress({ enemy }: { enemy: PveEnemyProfile }) {
+  const progress = enemyGenerationProgress(enemy.status);
+  if (!progress) return null;
+  return (
+    <div
+      className="mt-1"
+      role="progressbar"
+      aria-label={`${enemy.name} 生成进度`}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={progress.pct}
+    >
+      <div className="flex items-center justify-between text-[9px] leading-3 text-ink-3">
+        <span>{progress.label}</span>
+        <span className="font-mono">{progress.pct}%</span>
+      </div>
+      <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+        <div
+          className="h-full rounded-full bg-primary transition-[width] duration-(--motion-progress) ease-linear"
+          style={{ width: `${progress.pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+const ENEMY_GENERATION_PROGRESS: Partial<
+  Record<PveEnemyProfile["status"], { pct: number; label: string }>
+> = {
+  analyzing: { pct: 15, label: "解析敌人设定" },
+  generating_model: { pct: 45, label: "生成敌人模型" },
+  generating_actions: { pct: 80, label: "补齐待机 / 行走 / 攻击动作" },
+};
+
+function enemyGenerationProgress(status: PveEnemyProfile["status"]) {
+  return ENEMY_GENERATION_PROGRESS[status] ?? null;
 }
 
 function enemyStatusLabel(status: PveEnemyProfile["status"]) {
@@ -1252,11 +1919,13 @@ function HudChip({
 function TouchButton({
   label,
   icon,
+  iconClassName,
   onDown,
   onUp,
 }: {
   label: string;
   icon: "arrow-left" | "arrow-right" | "arrow-up" | "shield";
+  iconClassName?: string;
   onDown: () => void;
   onUp: () => void;
 }) {
@@ -1270,7 +1939,7 @@ function TouchButton({
       onPointerLeave={onUp}
       className="grid h-8 w-8 shrink-0 touch-none place-items-center rounded-full border border-line/70 bg-paper/90 text-ink-2 shadow-sm backdrop-blur-sm active:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary sm:h-10 sm:w-10"
     >
-      <Icon name={icon} className="h-4 w-4" />
+      <Icon name={icon} className={cx("h-4 w-4", iconClassName)} />
     </button>
   );
 }
@@ -1295,17 +1964,73 @@ function RuleItem({
   );
 }
 
+function StageClearedOverlay({
+  stageTitle,
+  stageIndex,
+  stageCount,
+  kills,
+  total,
+  elapsed,
+  hp,
+  onAdvance,
+  onRestart,
+  onBack,
+}: {
+  stageTitle: string;
+  stageIndex: number;
+  stageCount: number;
+  kills: number;
+  total: number;
+  elapsed: number;
+  hp: number;
+  onAdvance: () => void;
+  onRestart: () => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-30 grid place-items-center bg-canvas/70 p-4 backdrop-blur-[1px]">
+      <div className="w-[min(380px,92%)] rounded-xl border border-line bg-paper p-5 text-center shadow-e3">
+        <span className="mx-auto grid h-11 w-11 place-items-center rounded-full bg-success/15 text-success">
+          <Icon name="check" className="h-5 w-5" />
+        </span>
+        <h3 className="mt-3 font-serif text-[20px] font-black text-ink">第 {stageIndex} 关完成</h3>
+        <p className="mt-1 text-[11.5px] leading-5 text-ink-3">
+          {stageTitle} · 清除 {kills}/{total} · 累计 {elapsed.toFixed(1)}s · 剩余生命 {hp}
+        </p>
+        <div className="mt-4 flex flex-wrap justify-center gap-2">
+          {stageIndex < stageCount ? (
+            <Button variant="primary" size="sm" icon="play" onClick={onAdvance}>
+              进入第 {stageIndex + 1} 关
+            </Button>
+          ) : null}
+          <Button variant="secondary" size="sm" icon="refresh" onClick={onRestart}>
+            重启战役
+          </Button>
+          <Button variant="ghost" size="sm" icon="grid" onClick={onBack}>
+            返回工坊
+          </Button>
+        </div>
+        <p className="mt-2 text-[10px] text-ink-4">
+          只有点击按钮或按 Enter 才会进入下一关
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ResultOverlay({
   won,
   title,
   detail,
   onRestart,
+  restartLabel = "再战一次",
   onBack,
 }: {
   won: boolean;
   title: string;
   detail: string;
   onRestart: () => void;
+  restartLabel?: string;
   onBack: () => void;
 }) {
   return (
@@ -1323,7 +2048,7 @@ function ResultOverlay({
         <p className="mt-1 text-[11.5px] leading-5 text-ink-3">{detail}</p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           <Button variant="primary" size="sm" icon="refresh" onClick={onRestart}>
-            再战一次
+            {restartLabel}
           </Button>
           <Button variant="secondary" size="sm" icon="grid" onClick={onBack}>
             返回场景工坊
@@ -1334,377 +2059,7 @@ function ResultOverlay({
   );
 }
 
-function drawPveScene(
-  context: CanvasRenderingContext2D,
-  canvas: HTMLCanvasElement,
-  level: PveLevel,
-  runtime: PveRuntime,
-  assets: RenderAssets,
-  reduceMotion: boolean,
-) {
-  const width = canvas.width;
-  const height = canvas.height;
-  context.clearRect(0, 0, width, height);
-  drawBackground(context, width, height, runtime, level, assets.backgrounds, reduceMotion);
-  context.save();
-  context.translate(-runtime.camera, 0);
-  drawPlatforms(context, level);
-  for (const cover of level.covers ?? []) {
-    context.save();
-    context.fillStyle = "#3f4e5b";
-    context.fillRect(cover.x, cover.y - cover.height, cover.width, cover.height);
-    context.fillStyle = "#98a9b4";
-    context.fillRect(cover.x, cover.y - cover.height, cover.width, 6);
-    context.strokeStyle = "rgba(255,255,255,.28)";
-    context.strokeRect(cover.x, cover.y - cover.height, cover.width, cover.height);
-    context.restore();
-  }
-  for (const hazard of level.hazards ?? []) {
-    const stage = pveVentStage(runtime.elapsed);
-    context.save();
-    context.fillStyle = stage === "active" ? "#ff8050" : "#533b36";
-    context.fillRect(hazard.x, hazard.y - (stage === "active" ? 28 : 6), hazard.width, stage === "active" ? 28 : 6);
-    context.strokeStyle = "#fff0b0";
-    context.lineWidth = 2;
-    context.strokeRect(hazard.x, hazard.y - 28, hazard.width, 28);
-    context.fillStyle = "#fff";
-    context.font = "12px sans-serif";
-    context.textAlign = "center";
-    context.fillText(stage === "warning" ? "⚠ 即将喷发" : stage === "active" ? "喷发！" : "间歇喷口", hazard.x + hazard.width / 2, hazard.y - 34);
-    context.restore();
-  }
-
-  const active = activePveEncounter(runtime, level);
-  if (active) {
-    const barrierX = active.lock_x;
-    context.save();
-    context.globalAlpha = 0.34 + Math.sin(runtime.elapsed * 3) * 0.08;
-    context.strokeStyle = active.kind === "boss" ? "#76dff2" : "#d9bd7e";
-    context.lineWidth = 5;
-    context.beginPath();
-    context.moveTo(barrierX, level.groundY - 190);
-    context.lineTo(barrierX, level.groundY);
-    context.stroke();
-    context.globalAlpha = 0.16;
-    context.lineWidth = 1;
-    for (let offset = 8; offset < 190; offset += 18) {
-      context.beginPath();
-      context.moveTo(barrierX - 7, level.groundY - offset);
-      context.lineTo(barrierX + 7, level.groundY - offset + 8);
-      context.stroke();
-    }
-    context.restore();
-  }
-
-  for (const enemy of runtime.enemies) {
-    const dying = enemy.deathAt !== null && runtime.elapsed - enemy.deathAt < 0.6;
-    if (enemy.hp <= 0 && !dying) continue;
-    if (!dying && !active?.enemy_ids.includes(enemy.id)) continue;
-    if (enemy.ability && enemy.abilityStage === "windup") {
-      const ability = enemy.ability;
-      context.save();
-      context.strokeStyle = "#fff1b6";
-      context.fillStyle = "rgba(255, 130, 65, .25)";
-      context.lineWidth = 3;
-      context.setLineDash([8, 5]);
-      context.beginPath();
-      if (ability === "shot") {
-        context.moveTo(enemy.x, enemy.y - enemyHeight(enemy) * 0.55);
-        context.lineTo(enemy.abilityTargetX, enemy.abilityTargetY);
-      } else if (ability === "slam") {
-        context.rect(enemy.x - PVE_ABILITIES.slam.range, enemy.y - 24, PVE_ABILITIES.slam.range * 2, 24);
-        context.fill();
-      } else {
-        const distance = ability === "charge" ? 420 * PVE_ABILITIES.charge.active : 260 * PVE_ABILITIES.lunge.active;
-        const start = enemy.x + (enemy.abilityDirection < 0 ? -distance : 0);
-        context.rect(start - enemyHalfWidth(enemy), enemy.y - enemyHeight(enemy), distance + enemyHalfWidth(enemy) * 2, enemyHeight(enemy));
-        context.fill();
-      }
-      context.stroke();
-      context.setLineDash([]);
-      context.fillStyle = "#fff";
-      context.font = "bold 14px sans-serif";
-      context.textAlign = "center";
-      context.fillText(ability === "shot" ? "瞄准！" : ability === "slam" ? "震地！跳跃" : "冲刺！", enemy.x, enemy.y - enemyHeight(enemy) - 24);
-      context.restore();
-    }
-    drawEnemy(context, enemy, runtime, assets.enemies[enemy.asset_id]);
-  }
-  drawPlayer(context, runtime, assets.player);
-  for (const particle of runtime.particles) {
-    context.save();
-    context.globalAlpha = Math.max(0, particle.life / 0.35);
-    context.fillStyle = particle.color;
-    context.beginPath();
-    context.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
-  }
-  for (const projectile of runtime.projectiles) {
-    context.save();
-    context.shadowColor = projectile.color;
-    context.shadowBlur = 14;
-    context.strokeStyle = projectile.color;
-    context.globalAlpha = 0.35;
-    context.lineWidth = Math.max(2, projectile.radius * 0.8);
-    context.beginPath();
-    context.moveTo(projectile.x - projectile.vx * 0.045, projectile.y - projectile.vy * 0.045);
-    context.lineTo(projectile.x, projectile.y);
-    context.stroke();
-    context.globalAlpha = 1;
-    context.fillStyle = projectile.color;
-    context.beginPath();
-    context.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
-  }
-  context.restore();
-  const transitionRemaining = runtime.transitionUntil - runtime.elapsed;
-  if (!reduceMotion && transitionRemaining > 0) {
-    const strength = Math.min(1, transitionRemaining / 0.55);
-    context.save();
-    context.fillStyle = `rgba(13, 20, 33, ${0.28 * strength * strength})`;
-    context.fillRect(0, 0, width, height);
-    context.restore();
-  }
-}
-
-function drawBackground(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  runtime: PveRuntime,
-  level: PveLevel,
-  backgrounds: HTMLImageElement[],
-  reduceMotion: boolean,
-) {
-  if (backgrounds.length === 0) {
-    const gradient = context.createLinearGradient(0, 0, 0, height);
-    gradient.addColorStop(0, "#25345a");
-    gradient.addColorStop(0.72, "#8497b1");
-    gradient.addColorStop(1, "#dce6ef");
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, width, height);
-    return;
-  }
-  const progress = Math.max(0, Math.min(1, runtime.player.x / Math.max(1, level.width)));
-  if (reduceMotion) {
-    const index = Math.round(progress * (backgrounds.length - 1));
-    paintBackgroundLayer(context, width, height, backgrounds[index], runtime.camera, 1);
-    return;
-  }
-  const blend = backgroundLayerBlend(progress, backgrounds.length);
-  paintBackgroundLayer(context, width, height, backgrounds[blend.from], runtime.camera, 1);
-  if (blend.to !== blend.from && blend.mix > 0) {
-    paintBackgroundLayer(context, width, height, backgrounds[blend.to], runtime.camera, blend.mix);
-  }
-}
-
-function paintBackgroundLayer(
-  context: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  image: HTMLImageElement,
-  camera: number,
-  alpha: number,
-) {
-  context.save();
-  context.globalAlpha = alpha;
-  const scale = Math.max(width / image.naturalWidth, height / image.naturalHeight);
-  const drawWidth = image.naturalWidth * scale;
-  const drawHeight = image.naturalHeight * scale;
-  const drift = -((camera * 0.18) % drawWidth);
-  context.drawImage(image, drift, (height - drawHeight) / 2, drawWidth, drawHeight);
-  if (drawWidth < width + 1) {
-    context.drawImage(image, drift + drawWidth, (height - drawHeight) / 2, drawWidth, drawHeight);
-  }
-  context.restore();
-}
-
-function drawPlatforms(context: CanvasRenderingContext2D, level: PveLevel) {
-  for (const platform of level.platforms) {
-    context.save();
-    if (platform.kind === "floating") {
-      context.fillStyle = "rgba(24, 36, 52, .24)";
-      context.fillRect(platform.x + 8, platform.y + platform.height + 4, platform.width - 16, 8);
-    }
-    context.fillStyle = platform.kind === "ground" ? "#596b7d" : "#92a7b7";
-    context.fillRect(platform.x, platform.y, platform.width, platform.height);
-    context.fillStyle = platform.kind === "ground" ? "#b8c8d2" : "#d7e2e8";
-    context.fillRect(platform.x, platform.y, platform.width, 6);
-    context.restore();
-  }
-}
-
-function drawPlayer(
-  context: CanvasRenderingContext2D,
-  runtime: PveRuntime,
-  sprites: Record<string, SpriteSet | undefined>,
-) {
-  const player = runtime.player;
-  context.save();
-  context.fillStyle = "rgba(22, 32, 50, .18)";
-  context.beginPath();
-  context.ellipse(player.x, player.y + 3, 34, 7, 0, 0, Math.PI * 2);
-  context.fill();
-  context.restore();
-  const action: ArcadeAction = !player.onGround ? "jump" : Math.abs(player.vx) > 0 ? "run" : "idle";
-  const sprite = sprites[action] ?? sprites.idle ?? sprites.walk;
-  if (sprite) {
-    if (runtime.invulnerableUntil > runtime.elapsed && Math.floor(runtime.elapsed * 14) % 2 === 0) {
-      context.globalAlpha = 0.45;
-    }
-    drawSprite(context, sprite, player.x, player.y, PLAYER_HEIGHT, player.facing, runtime.elapsed);
-    context.globalAlpha = 1;
-  } else {
-    drawFallbackActor(context, player.x, player.y, 38, PLAYER_HEIGHT, "#e2b759");
-  }
-  if (runtime.guarding && runtime.guardAvailable) {
-    context.save();
-    context.strokeStyle = "#9edff2";
-    context.lineWidth = 3;
-    context.globalAlpha = 0.75;
-    context.beginPath();
-    context.ellipse(player.x, player.y - 88, 48, 94, 0, -Math.PI / 2, Math.PI / 2);
-    context.stroke();
-    context.restore();
-  }
-}
-
-function drawEnemy(
-  context: CanvasRenderingContext2D,
-  enemy: PveRuntimeEnemy,
-  runtime: PveRuntime,
-  sprites: Record<string, SpriteSet | undefined> | undefined,
-) {
-  const pose = pveEnemyPose(enemy, runtime.elapsed);
-  const sprite = sprites?.[pose] ?? sprites?.[PVE_ACTION_FALLBACK[pose]] ?? sprites?.walk ?? sprites?.idle;
-  const attackProgress = enemy.ability && enemy.abilityStage === "active"
-    ? Math.max(0, Math.min(0.999, 1 - (enemy.abilityUntil - runtime.elapsed) / PVE_ABILITIES[enemy.ability].active))
-    : 0;
-  const animationTime = pose === "attack" && sprite
-    ? attackProgress * sprite.strip.frames / Math.max(1, sprite.strip.fps ?? 10)
-    : pose === "windup" || pose === "death" ? 0 : runtime.elapsed;
-  context.save();
-  // Dedicated procedural poses remain available when generated slots are absent.
-  context.translate(enemy.x, enemy.y);
-  if (pose === "windup") context.scale(1.12, 0.88);
-  if (pose === "hurt") context.rotate(-enemy.facing * 0.16);
-  if (pose === "death") {
-    const progress = Math.min(1, (runtime.elapsed - (enemy.deathAt ?? runtime.elapsed)) / 0.6);
-    context.rotate(enemy.facing * (0.3 + progress * 1.2));
-    context.scale(1, Math.max(0.12, 1 - progress));
-  }
-  context.translate(-enemy.x, -enemy.y);
-  if (sprite) {
-    drawSprite(
-      context,
-      sprite,
-      enemy.x,
-      enemy.y,
-      enemy.display_height,
-      enemy.facing,
-      animationTime,
-    );
-  } else {
-    drawFallbackActor(
-      context,
-      enemy.x,
-      enemy.y,
-      enemy.kind === "boss" ? 68 : 28,
-      enemy.display_height,
-      enemy.kind === "boss" ? "#6ccde5" : "#7fa25e",
-    );
-  }
-  if (enemy.hitFlashUntil > runtime.elapsed) {
-    if (sprite) {
-      context.save();
-      context.filter = "brightness(3.2) saturate(.15)";
-      drawSprite(
-        context,
-        sprite,
-        enemy.x,
-        enemy.y,
-        enemy.display_height,
-        enemy.facing,
-        animationTime,
-      );
-      context.restore();
-    } else {
-      context.save();
-      context.globalCompositeOperation = "screen";
-      context.globalAlpha = 0.5;
-      context.fillStyle = "#fff5e3";
-      context.fillRect(
-        enemy.x - enemyHalfWidth(enemy),
-        enemy.y - enemyHeight(enemy),
-        enemyHalfWidth(enemy) * 2,
-        enemyHeight(enemy),
-      );
-      context.restore();
-    }
-  }
-  context.restore();
-  if (pose === "death") return;
-  const barWidth = enemy.kind === "boss" ? 190 : 54;
-  const barY = enemy.y - enemyHeight(enemy) - 14;
-  context.save();
-  context.fillStyle = "rgba(21, 30, 47, .78)";
-  context.fillRect(enemy.x - barWidth / 2, barY, barWidth, 6);
-  context.fillStyle = enemy.kind === "boss" ? "#8be8f7" : "#b7d88d";
-  context.fillRect(
-    enemy.x - barWidth / 2,
-    barY,
-    barWidth * Math.max(0, enemy.hp / enemy.max_hp),
-    6,
-  );
-  context.restore();
-}
-
-function drawSprite(
-  context: CanvasRenderingContext2D,
-  sprite: SpriteSet,
-  x: number,
-  feetY: number,
-  targetHeight: number,
-  facing: 1 | -1,
-  time: number,
-) {
-  const frames = Math.max(1, sprite.strip.frames);
-  const fps = Math.max(1, sprite.strip.fps ?? 10);
-  const frame = Math.floor(time * fps) % frames;
-  const sourceWidth = sprite.image.naturalWidth / frames;
-  const sourceHeight = sprite.image.naturalHeight;
-  const displayWidth = targetHeight * (sourceWidth / Math.max(1, sourceHeight));
-  context.save();
-  context.translate(x, feetY);
-  context.scale(facing, 1);
-  context.drawImage(
-    sprite.image,
-    frame * sourceWidth,
-    0,
-    sourceWidth,
-    sourceHeight,
-    -displayWidth / 2,
-    -targetHeight,
-    displayWidth,
-    targetHeight,
-  );
-  context.restore();
-}
-
-function drawFallbackActor(
-  context: CanvasRenderingContext2D,
-  x: number,
-  feetY: number,
-  halfWidth: number,
-  height: number,
-  color: string,
-) {
-  context.save();
-  context.fillStyle = color;
-  context.beginPath();
-  context.roundRect(x - halfWidth, feetY - height, halfWidth * 2, height, 18);
-  context.fill();
-  context.restore();
-}
+/** 让 PveStagePhase 在页面类型检查里保持显式引用。 */
+export type { PveStagePhase };
+/** 供调试与后续扩展的纯函数再导出。 */
+export { pveGroundDistance, PVE_SLAM_MAX_Z };

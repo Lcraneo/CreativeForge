@@ -105,7 +105,7 @@ class PveEnemyServiceTests(unittest.TestCase):
             ],
         )
 
-    def test_scene_selects_custom_enemy_by_prompt_and_builds_encounters(self):
+    def test_scene_selects_custom_enemy_by_prompt_and_builds_campaign(self):
         profile = {
             "id": "pve_mechanic",
             "name": "霜甲冲锋兽",
@@ -140,12 +140,12 @@ class PveEnemyServiceTests(unittest.TestCase):
             "hard",
         )
         level = compile_pve(intent, 42, "冰原上的霜甲冲锋兽", [profile])
-        minion = next(enemy for enemy in level["enemies"] if enemy["kind"] == "slime")
+        minion = level["stages"][0]["enemies"][0]
         self.assertEqual(minion["asset_id"], "ast_custom_minion")
         self.assertEqual(minion["max_hp"], 7)
         self.assertEqual(minion["behavior"], "charger")
-        self.assertGreaterEqual(len(level["encounters"]), 2)
-        self.assertEqual(level["encounters"][-1]["kind"], "boss")
+        self.assertEqual(level["stages"][2]["kind"], "boss")
+        self.assertEqual(len(level["stages"][2]["enemies"]), 1)
 
     def test_enemy_api_lists_independent_roster_and_validates_role(self):
         service = PveEnemyService(_Runtime(), store=self.store)
@@ -222,9 +222,56 @@ class PveEnemyServiceTests(unittest.TestCase):
             "机械冰霜狼巡逻，尽头由熔岩巨像守关",
             [boss],
         )
-        scene_boss = next(enemy for enemy in level["enemies"] if enemy["kind"] == "boss")
+        scene_boss = level["stages"][2]["enemies"][0]
         self.assertEqual(scene_boss["name"], "熔岩巨像")
         self.assertEqual(scene_boss["asset_id"], "ast_custom_boss")
+
+
+    def test_interrupted_generation_is_marked_failed_and_persisted(self):
+        payload = {
+            "enemies": [
+                {
+                    "id": "pve_stuck",
+                    "name": "霜铠巨像王",
+                    "role": "boss",
+                    "prompt": "守关巨像",
+                    "asset_id": "ast_stuck",
+                    "status": "generating_actions",
+                    "builtin": False,
+                    "stats": {"max_hp": 28},
+                    "created_at": 1,
+                    "updated_at": 1,
+                }
+            ]
+        }
+        Path(self.path).write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+        store = PveEnemyStore(self.path)
+        self.assertEqual(store.get("pve_stuck")["status"], "failed")
+        saved = json.loads(Path(self.path).read_text(encoding="utf-8"))
+        self.assertEqual(saved["enemies"][0]["status"], "failed")
+
+    def test_retry_requeues_failed_enemy_with_existing_asset(self):
+        record = {
+            "id": "pve_retry",
+            "name": "霜铠巨像王",
+            "role": "boss",
+            "prompt": "守关巨像",
+            "asset_id": "ast_retry",
+            "status": "failed",
+            "builtin": False,
+            "stats": {"max_hp": 28},
+            "created_at": 1,
+            "updated_at": 1,
+        }
+        self.store.save(record)
+        service = PveEnemyService(_Runtime(), store=self.store)
+        app = FastAPI()
+        app.include_router(build_pve_router(service))
+        client = TestClient(app)
+
+        response = client.post("/api/pve/enemies/pve_retry/retry")
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["status"], "generating_actions")
 
 
 if __name__ == "__main__":

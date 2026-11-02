@@ -25,6 +25,21 @@ PVE_ENEMY_ASSETS = {
     "boss": {"asset_id": "ast60574", "name": "冰霜巨龙"},
 }
 
+# Fixed three-stage campaign. Each arena uses a slanted top-down plane; x is
+# horizontal, y is depth and z is reserved for the runtime jump height.
+PVE_STAGE_COUNTS = (4, 6, 1)
+PVE_ARENA_WIDTH = 1400
+PVE_ARENA_DEPTH = 760
+PVE_BEHAVIORS = ("chaser", "shooter", "charger", "guardian")
+PVE_REMOVED_KEYS = (
+    "arena_segments",
+    "hazards",
+    "covers",
+    "encounters",
+    "platforms",
+    "coins",
+)
+
 _HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
 _PALETTES = {
     "castle": {
@@ -339,117 +354,98 @@ def compile_parkour(intent: dict, seed: int) -> dict:
     return level
 
 
-def validate_pve(level: dict, difficulty: str) -> dict:
-    """Validate the first PVE slice: a connected combat lane with one boss."""
+def validate_pve(campaign: dict, difficulty: str) -> dict:
+    """Validate the three-stage 2.5D arena campaign."""
 
     issues: list[str] = []
-    platforms = level.get("platforms") or []
-    enemies = level.get("enemies") or []
-    encounters = level.get("encounters") or []
-    templates = {"open", "dual_platform", "hazard_corridor", "boss_cover"}
-    segments = level.get("arena_segments") or []
-    if {segment.get("template") for segment in segments} != templates:
-        issues.append("战场必须包含开放场、双层平台、危险走廊和 Boss 掩体四种模板")
-    previous_end = -1
-    for segment in segments:
-        start, end = segment.get("start_x", -1), segment.get("end_x", -1)
-        if start < previous_end or start < 0 or end <= start or end > level.get("width", 0):
-            issues.append("战场模板边界无效或重叠")
-        previous_end = end
-    for platform in platforms:
-        if platform.get("kind") == "floating":
-            rise = level.get("groundY", GROUND_Y) - platform.get("y", 0)
-            if not 0 < rise <= 100 or platform.get("width", 0) < 80:
-                issues.append("浮台超出单次跳跃可达范围或过窄")
-    for hazard in level.get("hazards") or []:
-        x, width = hazard.get("x", -1), hazard.get("width", 0)
-        if hazard.get("kind") != "vent" or not 0 < width <= 80 or x < 0 or x + width > level.get("width", 0):
-            issues.append("危险区域类型或范围无效")
-        if not any(p.get("kind") == "floating" and p["x"] <= x - 22 and
-                   p["x"] + p["width"] >= x + width + 22 and
-                   28 < hazard.get("y", 0) - p["y"] <= 100 for p in platforms):
-            issues.append("危险区域缺少可达的安全桥面")
-    covers = level.get("covers") or []
-    if not covers:
-        issues.append("Boss 战缺少可阻挡直线弹道的掩体")
-    for cover in covers:
-        if cover.get("width", 0) < 24 or not 60 <= cover.get("height", 0) <= 150:
-            issues.append("Boss 掩体尺寸无效")
-        if not 0 <= cover.get("x", -1) < level.get("width", 0):
-            issues.append("Boss 掩体位置无效")
-    enemy_ids = {str(enemy.get("id")) for enemy in enemies}
-    if len(enemy_ids) != len(enemies) or any(not enemy.get("id") for enemy in enemies):
-        issues.append("敌人 ID 缺失或重复")
-    if len(platforms) < 1:
-        issues.append("战斗路线缺少地面")
-    if not _supports(level, level.get("spawnX", -1)):
-        issues.append("出生点没有落点")
-    if not enemies:
-        issues.append("没有配置敌人")
-    if not any(enemy.get("kind") == "boss" for enemy in enemies):
-        issues.append("缺少 Boss")
-    if not encounters:
-        issues.append("缺少遭遇战序列")
-    assigned: set[str] = set()
-    previous_lock = -1
-    encounter_ids: set[str] = set()
-    for encounter in encounters:
-        encounter_id = encounter.get("id")
-        if not encounter_id or encounter_id in encounter_ids:
-            issues.append("遭遇战 ID 缺失或重复")
-        encounter_ids.add(encounter_id)
-        if encounter.get("trigger_x", 0) >= encounter.get("lock_x", 0):
-            issues.append("遭遇战触发点越过了封锁点")
-        if encounter.get("trigger_x", 0) < previous_lock:
-            issues.append("遭遇战顺序或边界重叠")
-        previous_lock = encounter.get("lock_x", 0)
-        ids = encounter.get("enemy_ids") or []
-        if not ids:
-            issues.append("遭遇战没有敌人")
-        if len(set(ids)) != len(ids) or assigned.intersection(ids):
-            issues.append("敌人被重复分配到遭遇战")
-        assigned.update(ids)
-        missing = set(ids) - enemy_ids
-        if missing:
-            issues.append("遭遇战引用了不存在的敌人")
-    if enemy_ids - assigned:
-        issues.append("存在未分配遭遇战的敌人")
-    if encounters and encounters[-1].get("kind") != "boss":
-        issues.append("最后一个遭遇战必须是 Boss")
-    if encounters:
-        boss_ids = {enemy.get("id") for enemy in enemies if enemy.get("kind") == "boss"}
-        if not boss_ids or not boss_ids.issubset(set(encounters[-1].get("enemy_ids") or [])):
-            issues.append("Boss 必须全部分配到最后的守关战")
-        if any(encounter.get("kind") == "boss" for encounter in encounters[:-1]):
-            issues.append("只有最后一个遭遇战可以是 Boss 战")
-    for enemy in enemies:
-        if not _supports(level, enemy.get("x", -1)):
-            issues.append("{} 没有落点".format(enemy.get("name") or enemy.get("id")))
-        if enemy.get("max_hp", 0) <= 0:
-            issues.append("{} 生命值无效".format(enemy.get("name") or enemy.get("id")))
+    stages = campaign.get("stages") or []
+    if campaign.get("schema_version") != 2:
+        issues.append("PVE 战役必须使用 schema_version 2")
+    if not campaign.get("seed"):
+        issues.append("PVE 战役缺少 seed")
+    if len(stages) != 3:
+        issues.append("PVE 战役必须恰好包含三个关卡")
+
+    for key in PVE_REMOVED_KEYS:
+        if key in campaign:
+            issues.append("PVE 战役不再生成 {}".format(key))
+
+    expected = (("stage_1", "minion"), ("stage_2", "minion"), ("stage_3", "boss"))
+    projectile_budget = 0
+    for index, (stage_id, kind) in enumerate(expected):
+        if index >= len(stages):
+            break
+        stage = stages[index] or {}
+        label = "第 {} 关".format(index + 1)
+        if stage.get("id") != stage_id:
+            issues.append("{} 的 ID 必须为 {}".format(label, stage_id))
+        if stage.get("kind") != kind:
+            issues.append("{} 的类型必须为 {}".format(label, kind))
+        for key in PVE_REMOVED_KEYS:
+            if key in stage:
+                issues.append("{} 不再生成 {}".format(label, key))
+        arena = stage.get("arena") or {}
+        width = arena.get("width", 0)
+        depth = arena.get("depth", 0)
+        if not 400 <= width <= 4000 or not 300 <= depth <= 2000:
+            issues.append("{} 的竞技场尺寸无效".format(label))
+        spawn_x, spawn_y = arena.get("spawn_x", -1), arena.get("spawn_y", -1)
+        if not (0 <= spawn_x <= width and 0 <= spawn_y <= depth):
+            issues.append("{} 的出生点越界".format(label))
+        enemies = stage.get("enemies") or []
+        if kind == "boss":
+            if len(enemies) != 1:
+                issues.append("第三关必须有且只有一个 Boss")
+            elif enemies[0].get("kind") != "boss":
+                issues.append("第三关的敌人必须是 Boss")
+        else:
+            if not enemies:
+                issues.append("{} 没有配置敌人".format(label))
+            if any(enemy.get("kind") == "boss" for enemy in enemies):
+                issues.append("{} 不能出现 Boss".format(label))
+        ids: set[str] = set()
+        stage_budget = 0
+        for enemy in enemies:
+            enemy_id = str(enemy.get("id") or "")
+            if not enemy_id or enemy_id in ids:
+                issues.append("{} 存在缺失或重复的敌人 ID".format(label))
+            ids.add(enemy_id)
+            if not enemy.get("asset_id") or not enemy.get("name"):
+                issues.append("{} 缺少敌人素材或名称".format(label))
+            if enemy.get("behavior") not in PVE_BEHAVIORS:
+                issues.append("{} 敌人行为无效".format(label))
+            x, y = enemy.get("x", -1), enemy.get("y", -1)
+            if not (40 <= x <= max(40, width - 40) and 40 <= y <= max(40, depth - 40)):
+                issues.append("{} 敌人越出竞技场".format(label))
+            if enemy.get("max_hp", 0) <= 0:
+                issues.append("{} 敌人生命值无效".format(label))
+            if enemy.get("speed", 0) < 0:
+                issues.append("{} 敌人移动速度无效".format(label))
+            if enemy.get("damage", 0) <= 0:
+                issues.append("{} 敌人伤害无效".format(label))
+            if enemy.get("attack_interval", 0) <= 0:
+                issues.append("{} 敌人攻击间隔无效".format(label))
+            if enemy.get("display_height", 0) <= 0:
+                issues.append("{} 敌人显示尺寸无效".format(label))
+            stage_budget += max(
+                1, round(4 / max(0.5, float(enemy.get("attack_interval", 2))))
+            )
+        projectile_budget = max(projectile_budget, stage_budget)
+
     if difficulty not in DIFFICULTIES:
         issues.append("难度无效")
-    duration_factor = {"easy": 3.6, "normal": 3.0, "hard": 2.0}.get(difficulty, 3.0)
-    total_hp = sum(max(0, float(enemy.get("max_hp", 0))) for enemy in enemies)
-    estimated_duration = round(
-        total_hp * duration_factor + level.get("width", 0) / 220 + len(encounters) * 4,
-        1,
+    duration_factor = {"easy": 3.0, "normal": 2.6, "hard": 1.8}.get(difficulty, 2.6)
+    total_hp = sum(
+        max(0, float(enemy.get("max_hp", 0)))
+        for stage in stages
+        for enemy in (stage.get("enemies") or [])
     )
-    projectile_budget = max(
-        (
-            sum(
-                max(1, round(4 / max(0.5, float(enemy.get("attack_interval", 2)))))
-                for enemy in enemies if enemy.get("id") in (encounter.get("enemy_ids") or [])
-            )
-            for encounter in encounters
-        ),
-        default=0,
-    )
+    estimated_duration = round(total_hp * duration_factor + len(stages) * 4, 1)
     recommendations = []
     if estimated_duration < 90:
-        recommendations.append("预计战斗偏短，建议提高敌人生命或增加遭遇战")
+        recommendations.append("预计战斗偏短，建议提高敌人生命")
     elif estimated_duration > 160:
-        recommendations.append("预计战斗偏长，建议降低生命或缩短路线")
+        recommendations.append("预计战斗偏长，建议降低敌人生命")
     if projectile_budget > 20:
         recommendations.append("同屏投射物预算过高，建议延长攻击间隔")
     return {
@@ -467,9 +463,43 @@ def validate_pve(level: dict, difficulty: str) -> dict:
     }
 
 
-def _select_pve_profile(
-    prompt: str, role: str, enemy_pool: list[dict] | None
-) -> dict:
+_PVE_KEYWORDS = {
+    "fast": ("快速", "迅捷", "轻巧", "fast", "swift"),
+    "ranged": ("远程", "射击", "法术", "ranged", "shoot"),
+    "flying": ("飞行", "翼", "龙", "flying", "wing", "dragon"),
+    "armored": ("重甲", "盔甲", "机械", "armored", "armor"),
+    "ice": ("冰", "霜", "雪", "ice", "frost"),
+    "fire": ("火", "熔岩", "fire", "lava"),
+    "toxic": ("毒", "酸", "toxic", "acid"),
+    "beast": ("兽", "狼", "虫", "史莱姆", "beast", "wolf", "slime"),
+    "undead": ("亡灵", "骷髅", "幽魂", "undead", "skeleton", "ghost"),
+    "construct": ("机械", "魔像", "构装", "construct", "golem"),
+}
+
+
+def _profile_score(profile: dict, prompt: str) -> int:
+    lowered = prompt.lower()
+    text = "{} {} {}".format(
+        profile.get("name") or "",
+        profile.get("prompt") or "",
+        " ".join(profile.get("tags") or []),
+    ).lower()
+    value = 12 if profile.get("name") and str(profile["name"]).lower() in lowered else 0
+    value += sum(3 if tag in text else 0 for tag in profile.get("tags") or [])
+    value += sum(
+        2
+        for tag, words in _PVE_KEYWORDS.items()
+        if tag in (profile.get("tags") or [])
+        and any(word in lowered for word in words)
+    )
+    element = profile.get("element")
+    value += 2 if element and element in lowered else 0
+    return value
+
+
+def _pve_profiles(prompt: str, role: str, enemy_pool: list[dict] | None) -> list[dict]:
+    """Rank ready profiles for one role; the fallback is always available."""
+
     fallback = PVE_ENEMY_ASSETS["slime" if role == "minion" else "boss"]
     candidates = [
         item
@@ -479,43 +509,78 @@ def _select_pve_profile(
         and item.get("asset_id")
     ]
     if not candidates:
-        return fallback
-    lowered = prompt.lower()
-    keywords = {
-        "fast": ("快速", "迅捷", "轻巧", "fast", "swift"),
-        "ranged": ("远程", "射击", "法术", "ranged", "shoot"),
-        "flying": ("飞行", "翼", "龙", "flying", "wing", "dragon"),
-        "armored": ("重甲", "盔甲", "机械", "armored", "armor"),
-        "ice": ("冰", "霜", "雪", "ice", "frost"),
-        "fire": ("火", "熔岩", "fire", "lava"),
-        "toxic": ("毒", "酸", "toxic", "acid"),
-        "beast": ("兽", "狼", "虫", "史莱姆", "beast", "wolf", "slime"),
-        "undead": ("亡灵", "骷髅", "幽魂", "undead", "skeleton", "ghost"),
-        "construct": ("机械", "魔像", "构装", "construct", "golem"),
+        return [fallback]
+    ranked = sorted(candidates, key=lambda item: _profile_score(item, prompt), reverse=True)
+    meaningful = [
+        item for item in ranked
+        if _profile_score(item, prompt) > 0 or item.get("builtin")
+    ]
+    return meaningful or [fallback]
+
+
+def _select_pve_profile(prompt: str, role: str, enemy_pool: list[dict] | None) -> dict:
+    return _pve_profiles(prompt, role, enemy_pool)[0]
+
+
+def _pve_stats(profile: dict, difficulty: str, role: str) -> dict:
+    defaults = (
+        {
+            "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty],
+            "speed": 42,
+            "damage": 2,
+            "attack_interval": 1.35,
+            "display_height": 224,
+        }
+        if role == "boss"
+        else {
+            "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
+            "speed": {"easy": 58, "normal": 72, "hard": 88}[difficulty],
+            "damage": 1,
+            "attack_interval": 2.4,
+            "display_height": 92,
+        }
+    )
+    stats = profile.get("stats") or {}
+    merged = {key: stats.get(key, value) for key, value in defaults.items()}
+    # Builtin profiles store normal-mode defaults; the chosen scene difficulty
+    # must still affect their combat values. Custom profiles keep user stats.
+    if profile.get("builtin"):
+        merged["max_hp"] = defaults["max_hp"]
+        if role != "boss":
+            merged["speed"] = defaults["speed"]
+    return merged
+
+
+def _pve_positions(rng: random.Random, count: int, width: int, depth: int) -> list[tuple[int, int]]:
+    positions: list[tuple[int, int]] = []
+    for index in range(count):
+        row = index // 3
+        column = index % 3
+        x = width * (0.2 + 0.6 * (column + 0.5) / 3) + rng.randint(-40, 40)
+        y = depth * (0.32 + row * 0.16) + rng.randint(-24, 24)
+        positions.append((round(x), round(y)))
+    return positions
+
+
+def _pve_enemy(
+    profile: dict, stats: dict, enemy_id: str, kind: str, x: int, y: int
+) -> dict:
+    fallback = PVE_ENEMY_ASSETS["slime" if kind == "minion" else "boss"]
+    return {
+        "id": enemy_id,
+        "profile_id": profile.get("id"),
+        "asset_id": profile.get("asset_id") or fallback["asset_id"],
+        "name": profile.get("name") or fallback["name"],
+        "kind": kind,
+        "x": x,
+        "y": y,
+        "behavior": profile.get("behavior") or ("guardian" if kind == "boss" else "chaser"),
+        "element": profile.get("element") or ("ice" if kind == "boss" else "physical"),
+        "projectile_color": profile.get("projectile_color")
+        or ("#8feaff" if kind == "boss" else "#e8d49d"),
+        "tags": profile.get("tags") or [],
+        **stats,
     }
-
-    def score(profile: dict) -> int:
-        text = "{} {} {}".format(
-            profile.get("name") or "",
-            profile.get("prompt") or "",
-            " ".join(profile.get("tags") or []),
-        ).lower()
-        value = 12 if profile.get("name") and str(profile["name"]).lower() in lowered else 0
-        value += sum(3 if tag in text else 0 for tag in profile.get("tags") or [])
-        value += sum(
-            2
-            for tag, words in keywords.items()
-            if tag in (profile.get("tags") or [])
-            and any(word in lowered for word in words)
-        )
-        element = profile.get("element")
-        value += 2 if element and element in lowered else 0
-        return value
-
-    best = max(candidates, key=score)
-    if score(best) <= 0 and not any(item.get("builtin") for item in candidates):
-        return fallback
-    return best
 
 
 def compile_pve(
@@ -524,170 +589,75 @@ def compile_pve(
     prompt: str = "",
     enemy_pool: list[dict] | None = None,
 ) -> dict:
-    """Compile a lightweight side-scrolling combat lane without collectibles."""
+    """Compile the fixed three-stage 2.5D arena campaign."""
 
     difficulty = intent["difficulty"]
-    base_slimes = {"short": 2, "medium": 3, "long": 5}[intent["length"]]
-    slime_count = max(1, base_slimes + {"easy": -1, "normal": 0, "hard": 1}[difficulty])
-    width = 2200 + slime_count * 520
-    ground_y = GROUND_Y
-    platforms = [
-        {
-            "x": 0,
-            "y": ground_y,
-            "width": width,
-            "height": 72,
-            "kind": "ground",
-        }
-    ]
+    rng = random.Random(seed)
+    width = PVE_ARENA_WIDTH
+    depth = PVE_ARENA_DEPTH
+    arena = {
+        "width": width,
+        "depth": depth,
+        "spawn_x": round(width * 0.5),
+        "spawn_y": round(depth * 0.8),
+    }
 
-    minion_profile = _select_pve_profile(prompt, "minion", enemy_pool)
+    minion_candidates = _pve_profiles(prompt, "minion", enemy_pool)
+    stage1_profile = minion_candidates[0]
+    stage1_key = (stage1_profile.get("id"), stage1_profile.get("asset_id"))
+    stage2_profile = next(
+        (
+            item
+            for item in minion_candidates
+            if (item.get("id"), item.get("asset_id")) != stage1_key
+        ),
+        stage1_profile,
+    )
     boss_profile = _select_pve_profile(prompt, "boss", enemy_pool)
-    minion_stats = minion_profile.get("stats") or {
-        "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
-        "speed": {"easy": 58, "normal": 72, "hard": 88}[difficulty],
-        "damage": 1,
-        "attack_interval": 2.4,
-        "display_height": 92,
-    }
-    boss_stats = boss_profile.get("stats") or {
-        "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty],
-        "speed": 42,
-        "damage": 2,
-        "attack_interval": 1.35,
-        "display_height": 224,
-    }
-    enemies = []
-    # Builtin profiles store normal-mode defaults. Scene difficulty must still
-    # affect their combat values; custom profiles retain explicit user stats.
-    if minion_profile.get("builtin"):
-        minion_stats = {**minion_stats, "max_hp": {"easy": 2, "normal": 3, "hard": 4}[difficulty],
-                        "speed": {"easy": 58, "normal": 72, "hard": 88}[difficulty]}
-    if boss_profile.get("builtin"):
-        boss_stats = {**boss_stats, "max_hp": {"easy": 18, "normal": 24, "hard": 32}[difficulty]}
-    boss_x = width - 420
-    room1_lock = min(1380, boss_x - 1300)
-    room2_start = room1_lock + 180
-    room2_lock = boss_x - 640
-    half = max(1, (slime_count + 1) // 2)
-    rooms = [
-        (620, room1_lock, list(range(half))),
-        (room2_start, room2_lock, list(range(half, slime_count))),
-    ]
-    room_encounters = []
-    hazards = []
-    covers = []
-    boss_start = boss_x - 520
-    dual_start = room2_start
-    dual_end = min(room2_lock, dual_start + 360)
-    corridor_end = boss_start - 40
-    corridor_start = max(dual_end + 40, corridor_end - 240)
-    arena_segments = [
-        {"id": "arena_open", "template": "open", "start_x": 620, "end_x": room1_lock},
-        {"id": "arena_dual", "template": "dual_platform", "start_x": dual_start, "end_x": dual_end},
-        {"id": "arena_hazard", "template": "hazard_corridor", "start_x": corridor_start, "end_x": corridor_end},
-        {"id": "arena_boss", "template": "boss_cover", "start_x": boss_start, "end_x": boss_x + 100},
-    ]
-    # Dual-level template: two reachable one-way platforms with overlapping jump arcs.
-    platforms.extend([
-        {"x": dual_start + 20, "y": ground_y - 64, "width": 190, "height": 16, "kind": "floating"},
-        {"x": dual_start + 190, "y": ground_y - 96, "width": 190, "height": 16, "kind": "floating"},
-    ])
-    # Hazard corridor: a bridge spans the vent and leaves a ground-level jump route.
-    bridge_x = corridor_start + 10
-    bridge_width = max(150, corridor_end - corridor_start - 20)
-    platforms.append({"x": bridge_x, "y": ground_y - 64,
-                      "width": bridge_width, "height": 16, "kind": "floating"})
-    vent_width = min(64, max(40, bridge_width - 60))
-    hazards.append({"id": "vent_corridor", "x": bridge_x + (bridge_width - vent_width) // 2,
-                    "y": ground_y, "width": vent_width, "kind": "vent"})
-    # Boss cover blocks projectiles; positions leave a readable lane between covers.
-    covers.extend([
-        {"id": "boss_cover_1", "x": boss_start + 125, "y": ground_y, "width": 34, "height": 104},
-        {"id": "boss_cover_2", "x": boss_start + 290, "y": ground_y, "width": 38, "height": 124},
-    ])
-    for room_index, (room_start, room_lock, indexes) in enumerate(rooms, start=1):
-        if not indexes:
-            continue
-        enemy_ids = []
-        lane_start = room_start + 180
-        lane_end = max(lane_start, room_lock - 240)
-        for offset, enemy_index in enumerate(indexes):
-            ratio = (offset + 1) / (len(indexes) + 1)
-            x = round(lane_start + (lane_end - lane_start) * ratio)
-            enemy_id = "slime_{}".format(enemy_index + 1)
-            enemy_ids.append(enemy_id)
-            enemies.append(
-                {
-                    "id": enemy_id,
-                    "profile_id": minion_profile.get("id"),
-                    "asset_id": minion_profile.get("asset_id")
-                    or PVE_ENEMY_ASSETS["slime"]["asset_id"],
-                    "name": minion_profile.get("name")
-                    or PVE_ENEMY_ASSETS["slime"]["name"],
-                    "kind": "slime",
-                    "x": x,
-                    "y": ground_y,
-                    "behavior": minion_profile.get("behavior") or "chaser",
-                    "element": minion_profile.get("element") or "physical",
-                    "projectile_color": minion_profile.get("projectile_color")
-                    or "#e8d49d",
-                    "tags": minion_profile.get("tags") or [],
-                    **minion_stats,
-                }
-            )
-        room_encounters.append(
+
+    stages = []
+    for index, (stage_id, kind, title) in enumerate(
+        (
+            ("stage_1", "minion", "第 1 关 · 前哨清剿"),
+            ("stage_2", "minion", "第 2 关 · 纵深围猎"),
+            (
+                "stage_3",
+                "boss",
+                "第 3 关 · 守关战 · {}".format(
+                    boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"]
+                ),
+            ),
+        )
+    ):
+        if kind == "boss":
+            stats = _pve_stats(boss_profile, difficulty, "boss")
+            enemies = [
+                _pve_enemy(
+                    boss_profile,
+                    stats,
+                    "stage_3_boss",
+                    "boss",
+                    round(width * 0.5),
+                    round(depth * 0.42),
+                )
+            ]
+        else:
+            profile = stage1_profile if index == 0 else stage2_profile
+            stats = _pve_stats(profile, difficulty, "minion")
+            enemies = [
+                _pve_enemy(profile, stats, "{}_enemy_{}".format(stage_id, slot + 1), "minion", x, y)
+                for slot, (x, y) in enumerate(
+                    _pve_positions(rng, PVE_STAGE_COUNTS[index], width, depth)
+                )
+            ]
+        stages.append(
             {
-                "id": "encounter_{}".format(room_index),
-                "title": "战斗区域 {}".format(room_index),
-                "kind": "combat",
-                "trigger_x": room_start,
-                "lock_x": room_lock,
-                "enemy_ids": enemy_ids,
-                "arena_template": "open" if room_index == 1 else "dual_platform",
+                "id": stage_id,
+                "title": title,
+                "kind": kind,
+                "background_url": None,
+                "arena": dict(arena),
+                "enemies": enemies,
             }
         )
-
-    enemies.append(
-        {
-            "id": "boss_1",
-            "profile_id": boss_profile.get("id"),
-            "asset_id": boss_profile.get("asset_id")
-            or PVE_ENEMY_ASSETS["boss"]["asset_id"],
-            "name": boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"],
-            "kind": "boss",
-            "x": boss_x,
-            "y": ground_y,
-            "behavior": boss_profile.get("behavior") or "guardian",
-            "element": boss_profile.get("element") or "ice",
-            "projectile_color": boss_profile.get("projectile_color") or "#8feaff",
-            "tags": boss_profile.get("tags") or [],
-            **boss_stats,
-        }
-    )
-    room_encounters.append(
-        {
-            "id": "encounter_boss",
-            "title": "守关战 · {}".format(
-                boss_profile.get("name") or PVE_ENEMY_ASSETS["boss"]["name"]
-            ),
-            "kind": "boss",
-            "trigger_x": boss_x - 520,
-            "lock_x": boss_x - 105,
-            "enemy_ids": ["boss_1"],
-            "arena_template": "boss_cover",
-        }
-    )
-    return {
-        "seed": str(seed),
-        "width": width,
-        "groundY": ground_y,
-        "spawnX": 120,
-        "goalX": width - 420,
-        "platforms": platforms,
-        "enemies": enemies,
-        "encounters": room_encounters,
-        "hazards": hazards,
-        "covers": covers,
-        "arena_segments": arena_segments,
-    }
+    return {"schema_version": 2, "seed": str(seed), "stages": stages}

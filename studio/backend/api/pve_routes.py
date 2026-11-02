@@ -24,6 +24,15 @@ def build_pve_router(service: PveEnemyService) -> APIRouter:
         except ValueError as error:
             raise HTTPException(status_code=409, detail=str(error))
 
+    @router.post("/pve/enemies/{enemy_id}/retry", status_code=202)
+    def retry_pve_enemy(enemy_id: str):
+        try:
+            return service.retry(enemy_id)
+        except KeyError:
+            raise HTTPException(status_code=404, detail="unknown enemy")
+        except ValueError as error:
+            raise HTTPException(status_code=409, detail=str(error))
+
     @router.get("/pve/enemies")
     def list_pve_enemies():
         return {"enemies": service.store.list()}

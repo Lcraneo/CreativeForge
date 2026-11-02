@@ -273,10 +273,10 @@ export const api = {
       { method: "DELETE" },
     ),
 
-  updatePveEnemySequence: (sceneId: string, profileIds: string[]) =>
+  updatePveEnemySequence: (sceneId: string, profileIds: string[], stageId?: string) =>
     request<GameScene>(`/api/scenes/${encodeURIComponent(sceneId)}/pve/enemy-sequence`, {
       method: "PUT",
-      body: JSON.stringify({ profile_ids: profileIds }),
+      body: JSON.stringify({ profile_ids: profileIds, stage_id: stageId ?? null }),
     }),
 
   retrySceneBackground: (sceneId: string) =>
@@ -303,6 +303,12 @@ export const api = {
 
   rebuildPveAction: (enemyId: string, action: string) =>
     request<import("../types").PveEnemyProfile>(`/api/pve/enemies/${encodeURIComponent(enemyId)}/actions/${encodeURIComponent(action)}/rebuild`, { method: "POST" }),
+
+  retryPveEnemy: (enemyId: string) =>
+    request<import("../types").PveEnemyProfile>(
+      `/api/pve/enemies/${encodeURIComponent(enemyId)}/retry`,
+      { method: "POST" },
+    ),
 
   generatePveEnemy: (
     prompt: string,
@@ -400,11 +406,17 @@ export const api = {
       body: JSON.stringify({ asset_id: assetId, engine }),
     }),
 
-  listHistory: (params: { engine?: string; q?: string; limit?: number } = {}) => {
+  listHistory: (params: {
+    engine?: string;
+    q?: string;
+    limit?: number;
+    kind?: "character" | "pve_enemy";
+  } = {}) => {
     const search = new URLSearchParams();
     if (params.engine) search.set("engine", params.engine);
     if (params.q) search.set("q", params.q);
     if (params.limit) search.set("limit", String(params.limit));
+    if (params.kind) search.set("kind", params.kind);
     const query = search.toString();
     return request<{ records: HistorySummary[]; total: number }>(
       `/api/history${query ? `?${query}` : ""}`,

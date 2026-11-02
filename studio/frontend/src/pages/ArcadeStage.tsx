@@ -244,7 +244,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
 
   const history = useQuery({
     queryKey: ["arcade-people"],
-    queryFn: () => api.listHistory({ limit: 12 }),
+    queryFn: () => api.listHistory({ kind: "character", limit: 12 }),
     enabled: pickerOpen,
   });
   const people = useMemo(

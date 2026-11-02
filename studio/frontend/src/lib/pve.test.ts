@@ -1,382 +1,542 @@
 import { describe, expect, it } from "vitest";
-import { backgroundLayerBlend, createPveRuntime, pveHud, stepPve, togglePvePause, pveEnemyPose, pveActionSlot, PVE_ACTION_SLOTS } from "./pve";
-import type { PveLevel } from "../types";
+import {
+  PVE_ACTION_SLOTS,
+  PVE_DEPTH_SCALE,
+  PVE_MOVE_SPEED,
+  PVE_SLAM_MAX_Z,
+  advancePveStage,
+  createPveRuntime,
+  pveActionSlot,
+  pveEnemyPose,
+  pveGroundDistance,
+  pveHud,
+  pvePoseProgress,
+  pveSegmentHitsBox,
+  pveSortByDepth,
+  pveSpriteTime,
+  retryPveStage,
+  stepPve,
+  togglePvePause,
+  type PveInput,
+  type PveRuntime,
+} from "./pve";
+import type { PveCampaign, PveEnemySpawn, PveStage, PveStageId } from "../types";
 
-const level: PveLevel = {
+function enemy(id: string, overrides: Partial<PveEnemySpawn> = {}): PveEnemySpawn {
+  return {
+    id,
+    profile_id: `profile_${id}`,
+    asset_id: `asset_${id}`,
+    name: `敌人 ${id}`,
+    kind: "minion",
+    x: 1100,
+    y: 620,
+    max_hp: 4,
+    speed: 0,
+    damage: 1,
+    attack_interval: 2.2,
+    display_height: 92,
+    behavior: "chaser",
+    element: "nature",
+    projectile_color: "#a9df72",
+    tags: ["test"],
+    ...overrides,
+  };
+}
+
+function stage(
+  id: PveStageId,
+  kind: "minion" | "boss",
+  enemies: PveEnemySpawn[],
+  arena: Partial<PveStage["arena"]> = {},
+): PveStage {
+  return {
+    id,
+    title: `第 ${Number(id.slice(-1))} 关`,
+    kind,
+    background_url: `bg-${id}.png`,
+    arena: { width: 1400, depth: 760, spawn_x: 700, spawn_y: 380, ...arena },
+    enemies,
+  };
+}
+
+const campaign: PveCampaign = {
+  schema_version: 2,
   seed: "test",
-  width: 1800,
-  groundY: 348,
-  spawnX: 120,
-  goalX: 1380,
-  platforms: [{ x: 0, y: 348, width: 1800, height: 72, kind: "ground" }],
-  enemies: [
-    {
-      id: "slime_1",
-      asset_id: "ast64960",
-      name: "森林史莱姆",
-      kind: "slime",
-      x: 700,
-      y: 348,
-      max_hp: 2,
-      speed: 60,
-      damage: 1,
-      attack_interval: 2.4,
-      display_height: 92,
-    },
-    {
-      id: "boss_1",
-      asset_id: "ast60574",
-      name: "冰霜巨龙",
-      kind: "boss",
-      x: 1380,
-      y: 348,
-      max_hp: 2,
-      speed: 42,
-      damage: 2,
-      attack_interval: 1.35,
-      display_height: 224,
-    },
-  ],
-  encounters: [
-    {
-      id: "encounter_1",
-      title: "前庭",
-      kind: "combat",
-      trigger_x: 500,
-      lock_x: 850,
-      enemy_ids: ["slime_1"],
-    },
-    {
-      id: "encounter_boss",
-      title: "守关战",
-      kind: "boss",
-      trigger_x: 1200,
-      lock_x: 1275,
-      enemy_ids: ["boss_1"],
-    },
+  stages: [
+    stage("stage_1", "minion", [enemy("a")]),
+    stage("stage_2", "minion", [
+      enemy("b"),
+      enemy("c", { x: 1200, y: 300, profile_id: "profile_c", asset_id: "asset_c" }),
+    ]),
+    stage("stage_3", "boss", [
+      enemy("boss", {
+        kind: "boss",
+        x: 1150,
+        y: 500,
+        max_hp: 20,
+        damage: 2,
+        display_height: 224,
+        behavior: "guardian",
+      }),
+    ]),
   ],
 };
 
-const input = {
+const idle: PveInput = {
   left: false,
   right: false,
+  up: false,
+  down: false,
   run: false,
   jump: false,
   shoot: false,
   guard: false,
+  dodge: false,
 };
 
-describe("PVE runtime", () => {
-  it("maps the six-action package without overwriting base actions", () => {
+/** 把敌人调成静止且永不主动出手，只保留玩家可控的测试环境。 */
+function quietRuntime(): PveRuntime {
+  const runtime = createPveRuntime(campaign);
+  for (const item of runtime.enemies) {
+    item.speed = 0;
+    item.shootCooldown = Number.POSITIVE_INFINITY;
+  }
+  return runtime;
+}
+
+function slamRuntime(playerZ: number, playerOffsetY = 0): PveRuntime {
+  const runtime = quietRuntime();
+  const item = runtime.enemies[0];
+  item.ability = "slam";
+  item.abilityStage = "active";
+  item.abilityStartedAt = runtime.stageTime;
+  item.abilityStageStartedAt = runtime.stageTime;
+  item.abilityUntil = runtime.stageTime + 5;
+  item.abilityHit = false;
+  runtime.player.x = item.x;
+  runtime.player.y = item.y + playerOffsetY;
+  runtime.player.z = playerZ;
+  runtime.player.vz = 0;
+  runtime.player.onGround = playerZ === 0;
+  return runtime;
+}
+
+describe("PVE 2.5D 地面移动", () => {
+  it("supports eight ground directions with compressed depth speed", () => {
+    const combos: Array<[Partial<PveInput>, number, number]> = [
+      [{ right: true }, 1, 0],
+      [{ left: true }, -1, 0],
+      [{ down: true }, 0, 1],
+      [{ up: true }, 0, -1],
+      [{ right: true, down: true }, 1, 1],
+      [{ left: true, up: true }, -1, -1],
+      [{ right: true, up: true }, 1, -1],
+      [{ left: true, down: true }, -1, 1],
+    ];
+    for (const [input, signX, signY] of combos) {
+      const runtime = quietRuntime();
+      const start = { x: runtime.player.x, y: runtime.player.y };
+      stepPve(runtime, { ...idle, ...input }, 0.05);
+      const dx = runtime.player.x - start.x;
+      const dy = runtime.player.y - start.y;
+      if (signX === 0) expect(Math.abs(dx)).toBeLessThan(1e-9);
+      else expect(Math.sign(dx)).toBe(signX);
+      if (signY === 0) expect(Math.abs(dy)).toBeLessThan(1e-9);
+      else expect(Math.sign(dy)).toBe(signY);
+      // 纵深方向上 1.6 的压缩让地面实际位移保持恒定速度。
+      expect(Math.hypot(dx, dy * PVE_DEPTH_SCALE)).toBeCloseTo(PVE_MOVE_SPEED * 0.05, 6);
+    }
+  });
+
+  it("clamps the player inside the fixed arena", () => {
+    const runtime = quietRuntime();
+    for (let index = 0; index < 80; index += 1) {
+      stepPve(runtime, { ...idle, left: true, up: true }, 0.05);
+    }
+    expect(runtime.player.x).toBeGreaterThanOrEqual(20);
+    expect(runtime.player.y).toBeGreaterThanOrEqual(20);
+    expect(runtime.player.x).toBeLessThanOrEqual(1380);
+    expect(runtime.player.y).toBeLessThanOrEqual(740);
+  });
+
+  it("jumps in z and returns to the ground", () => {
+    const runtime = quietRuntime();
+    stepPve(runtime, { ...idle, jump: true }, 0.05);
+    expect(runtime.player.z).toBeGreaterThan(0);
+    expect(runtime.player.onGround).toBe(false);
+    for (let index = 0; index < 40; index += 1) stepPve(runtime, idle, 0.05);
+    expect(runtime.player.z).toBe(0);
+    expect(runtime.player.onGround).toBe(true);
+  });
+});
+
+describe("PVE 2.5D 碰撞", () => {
+  it("compresses y distance by 1.6 on the ground plane", () => {
+    expect(pveGroundDistance(0, 0, 100, 0)).toBe(100);
+    expect(pveGroundDistance(0, 0, 0, 100)).toBeCloseTo(160, 6);
+    expect(pveGroundDistance(0, 0, 100, 100)).toBeCloseTo(Math.hypot(100, 160), 6);
+  });
+
+  it("tracks a nearby depth-offset enemy with homing shots", () => {
+    const runtime = quietRuntime();
+    const target = runtime.enemies[0];
+    runtime.player.x = target.x - 200;
+    runtime.player.y = target.y + 200;
+    runtime.player.facing = 1;
+    stepPve(runtime, { ...idle, shoot: true }, 0.05);
+    for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
+    expect(target.hp).toBe(target.max_hp - 1);
+  });
+
+  it("keeps a straight shot when the target is outside homing range", () => {
+    const runtime = quietRuntime();
+    const target = runtime.enemies[0];
+    runtime.player.x = target.x - 200;
+    runtime.player.y = 20;
+    runtime.player.facing = 1;
+    target.y = 740;
+    stepPve(runtime, { ...idle, shoot: true }, 0.05);
+    const shot = runtime.projectiles.find((item) => item.owner === "player");
+    expect(shot?.vy).toBe(0);
+    for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
+    expect(target.hp).toBe(target.max_hp);
+  });
+
+  it("uses the compressed distance for slam range", () => {
+    const near = slamRuntime(0, 0);
+    stepPve(near, idle, 0.01);
+    expect(near.playerHp).toBe(5);
+
+    // 纵深偏移 100 会按 1.6 变成 160，超出 150 的震地半径。
+    const offset = slamRuntime(0, 100);
+    stepPve(offset, idle, 0.01);
+    expect(offset.playerHp).toBe(6);
+  });
+
+  it("lets a jump above the low slam height dodge ground damage", () => {
+    const grounded = slamRuntime(0);
+    stepPve(grounded, idle, 0.01);
+    expect(grounded.playerHp).toBe(5);
+
+    const airborne = slamRuntime(120);
+    stepPve(airborne, idle, 0.01);
+    expect(airborne.player.z).toBeGreaterThan(PVE_SLAM_MAX_Z);
+    expect(airborne.playerHp).toBe(6);
+  });
+});
+
+describe("PVE 2.5D 弹道", () => {
+  it("sweeps projectiles in x/y/z and hits an aligned enemy", () => {
+    const runtime = quietRuntime();
+    const target = runtime.enemies[0];
+    runtime.player.x = target.x - 200;
+    runtime.player.y = target.y;
+    runtime.player.facing = 1;
+    stepPve(runtime, { ...idle, shoot: true }, 0.05);
+    const shot = runtime.projectiles.find((item) => item.owner === "player");
+    expect(shot).toBeTruthy();
+    expect(shot?.y).toBeCloseTo(runtime.player.y, 6);
+    // 追踪会在同一帧把 z 向目标中心修正，允许一帧的偏移。
+    expect(shot?.z).toBeGreaterThan(runtime.player.z + 40);
+    expect(shot?.z).toBeLessThanOrEqual(runtime.player.z + 42);
+    for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
+    expect(target.hp).toBe(target.max_hp - 1);
+    expect(runtime.shotsHit).toBeGreaterThan(0);
+  });
+
+  it("curves an upward aimed shot back onto the target", () => {
+    const runtime = quietRuntime();
+    const target = runtime.enemies[0];
+    runtime.player.x = target.x - 200;
+    runtime.player.y = target.y;
+    runtime.player.facing = 1;
+    stepPve(runtime, { ...idle, shoot: true, aimZ: 1 }, 0.05);
+    const shot = runtime.projectiles.find((item) => item.owner === "player");
+    expect(shot?.vz).toBeGreaterThan(0);
+    for (let index = 0; index < 20; index += 1) stepPve(runtime, idle, 0.05);
+    expect(target.hp).toBe(target.max_hp - 1);
+  });
+
+  it("detects a 3D segment crossing a box only when all axes overlap", () => {
+    const box = { minX: 100, maxX: 140, minY: 100, maxY: 130, minZ: 0, maxZ: 80 };
+    expect(pveSegmentHitsBox({ x: 0, y: 112, z: 40 }, { x: 200, y: 0, z: 0 }, box)).toBe(0.5);
+    expect(pveSegmentHitsBox({ x: 0, y: 112, z: 140 }, { x: 200, y: 0, z: 0 }, box)).toBeNull();
+    expect(pveSegmentHitsBox({ x: 0, y: 300, z: 40 }, { x: 200, y: 0, z: 0 }, box)).toBeNull();
+  });
+
+  it("damages the player with an enemy projectile in the same 3D cell", () => {
+    const runtime = quietRuntime();
+    stepPve(runtime, idle, 1 / 60);
+    runtime.projectiles.push({
+      id: 99,
+      owner: "enemy",
+      x: runtime.player.x,
+      y: runtime.player.y,
+      z: 40,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      radius: 8,
+      damage: 1,
+      ttl: 2,
+      color: "#fff",
+    });
+    stepPve(runtime, idle, 1 / 60);
+    expect(runtime.playerHp).toBe(5);
+  });
+
+  it("restores the guard after a two second cooldown", () => {
+    const runtime = quietRuntime();
+    stepPve(runtime, { ...idle, guard: true }, 1 / 60);
+    expect(runtime.guarding).toBe(true);
+    expect(runtime.playerHp).toBe(6);
+    runtime.projectiles.push({
+      id: 98,
+      owner: "enemy",
+      x: runtime.player.x,
+      y: runtime.player.y,
+      z: 40,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      radius: 8,
+      damage: 1,
+      ttl: 2,
+      color: "#fff",
+    });
+    stepPve(runtime, { ...idle, guard: true }, 1 / 60);
+    expect(runtime.guardAvailable).toBe(false);
+    expect(runtime.guardCooldownUntil - runtime.stageTime).toBeCloseTo(2, 6);
+    expect(pveHud(runtime).guardAvailable).toBe(false);
+    for (let index = 0; index < 50; index += 1) stepPve(runtime, idle, 0.05);
+    expect(pveHud(runtime).guardAvailable).toBe(true);
+  });
+});
+
+describe("PVE 2.5D 渲染排序", () => {
+  it("sorts actors from far to near by y", () => {
+    const items = [{ y: 300, id: "front" }, { y: 120, id: "far" }, { y: 240, id: "mid" }];
+    expect(pveSortByDepth(items).map((item) => item.id)).toEqual(["far", "mid", "front"]);
+    expect(items[0].id).toBe("front");
+  });
+});
+
+describe("PVE 三关推进", () => {
+  it("enters cleared after a wipe and never auto-loads the next stage", () => {
+    const runtime = quietRuntime();
+    runtime.projectiles.push({
+      id: 7,
+      owner: "enemy",
+      x: 120,
+      y: 120,
+      z: 10,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      radius: 6,
+      damage: 1,
+      ttl: 5,
+      color: "#fff",
+    });
+    runtime.enemies[0].hp = 0;
+    runtime.enemies[0].deathAt = runtime.stageTime;
+    stepPve(runtime, idle, 0.05);
+    expect(runtime.phase).toBe("cleared");
+    expect(runtime.stageIndex).toBe(0);
+    expect(runtime.projectiles).toHaveLength(0);
+    for (let index = 0; index < 12; index += 1) stepPve(runtime, idle, 0.05);
+    expect(runtime.phase).toBe("cleared");
+    expect(runtime.stageIndex).toBe(0);
+  });
+
+  it("only loads the next stage when advance is called", () => {
+    const runtime = quietRuntime();
+    expect(advancePveStage(runtime)).toBe(false);
+    runtime.enemies[0].hp = 0;
+    stepPve(runtime, idle, 0.05);
+    expect(advancePveStage(runtime)).toBe(true);
+    expect(runtime.stageIndex).toBe(1);
+    expect(runtime.phase).toBe("playing");
+    expect(runtime.enemies.map((item) => item.id)).toEqual(["b", "c"]);
+    expect(runtime.stageTime).toBe(0);
+  });
+
+  it("keeps hp and cumulative stats across stages while resetting cooldowns", () => {
+    const runtime = quietRuntime();
+    runtime.playerHp = 4;
+    runtime.damageTaken = 2;
+    runtime.shotsFired = 5;
+    runtime.shotsHit = 3;
+    runtime.shotCooldown = 5;
+    runtime.guardAvailable = false;
+    runtime.guardCooldownUntil = 3;
+    for (let index = 0; index < 4; index += 1) stepPve(runtime, idle, 0.05);
+    runtime.enemies[0].hp = 0;
+    stepPve(runtime, idle, 0.05);
+    const totalTime = runtime.totalTime;
+    expect(advancePveStage(runtime)).toBe(true);
+    expect(runtime.playerHp).toBe(4);
+    expect(runtime.damageTaken).toBe(2);
+    expect(runtime.shotsFired).toBe(5);
+    expect(runtime.shotsHit).toBe(3);
+    expect(runtime.totalTime).toBeCloseTo(totalTime, 6);
+    expect(runtime.stageTime).toBe(0);
+    expect(runtime.shotCooldown).toBe(0);
+    expect(runtime.guardAvailable).toBe(true);
+  });
+
+  it("wins the campaign only after the stage 3 boss dies", () => {
+    const runtime = quietRuntime();
+    runtime.enemies[0].hp = 0;
+    stepPve(runtime, idle, 0.05);
+    expect(advancePveStage(runtime)).toBe(true);
+
+    for (const item of runtime.enemies) item.hp = 0;
+    stepPve(runtime, idle, 0.05);
+    expect(runtime.phase).toBe("cleared");
+    expect(advancePveStage(runtime)).toBe(true);
+    expect(runtime.stageIndex).toBe(2);
+    expect(runtime.phase).toBe("playing");
+
+    const boss = runtime.enemies[0];
+    expect(boss.kind).toBe("boss");
+    expect(pveHud(runtime).bossActive).toBe(true);
+    expect(pveHud(runtime).stageCount).toBe(3);
+    boss.hp = 0;
+    boss.deathAt = runtime.stageTime;
+    stepPve(runtime, idle, 0.05);
+    expect(runtime.phase).toBe("campaign_won");
+  });
+
+  it("switches the boss to phase two at half hp", () => {
+    const runtime = quietRuntime();
+    runtime.enemies[0].hp = 0;
+    stepPve(runtime, idle, 0.05);
+    expect(advancePveStage(runtime)).toBe(true);
+    for (const item of runtime.enemies) item.hp = 0;
+    stepPve(runtime, idle, 0.05);
+    expect(advancePveStage(runtime)).toBe(true);
+
+    const boss = runtime.enemies[0];
+    expect(boss.kind).toBe("boss");
+    boss.hp = boss.max_hp / 2;
+    boss.shootCooldown = 0;
+    stepPve(runtime, idle, 0.01);
+    expect(boss.phase).toBe(2);
+    expect(runtime.notice).toContain("第二阶段");
+  });
+
+  it("retries the current stage and restores the entry snapshot", () => {
+    const runtime = quietRuntime();
+    runtime.playerHp = 1;
+    runtime.projectiles.push({
+      id: 11,
+      owner: "enemy",
+      x: runtime.player.x,
+      y: runtime.player.y,
+      z: 40,
+      vx: 0,
+      vy: 0,
+      vz: 0,
+      radius: 8,
+      damage: 1,
+      ttl: 2,
+      color: "#fff",
+    });
+    stepPve(runtime, idle, 1 / 60);
+    expect(runtime.phase).toBe("campaign_lost");
+    expect(runtime.playerHp).toBe(0);
+
+    expect(retryPveStage(runtime)).toBe(true);
+    expect(runtime.phase).toBe("playing");
+    expect(runtime.stageIndex).toBe(0);
+    expect(runtime.playerHp).toBe(6);
+    expect(runtime.damageTaken).toBe(0);
+    expect(runtime.projectiles).toHaveLength(0);
+    expect(runtime.stageTime).toBe(0);
+    expect(retryPveStage(runtime)).toBe(false);
+  });
+});
+
+describe("PVE 自定义敌人与动作", () => {
+  it("loads custom enemies into every stage by profile and asset", () => {
+    const runtime = quietRuntime();
+    expect(runtime.enemies[0]).toMatchObject({ profile_id: "profile_a", asset_id: "asset_a" });
+    runtime.enemies[0].hp = 0;
+    stepPve(runtime, idle, 0.05);
+    advancePveStage(runtime);
+    expect(runtime.enemies.map((item) => [item.profile_id, item.asset_id])).toEqual([
+      ["profile_b", "asset_b"],
+      ["profile_c", "asset_c"],
+    ]);
+    for (const item of runtime.enemies) item.hp = 0;
+    stepPve(runtime, idle, 0.05);
+    advancePveStage(runtime);
+    expect(runtime.enemies[0]).toMatchObject({
+      kind: "boss",
+      profile_id: "profile_boss",
+      asset_id: "asset_boss",
+    });
+  });
+
+  it("maps all six action slots without overwriting base actions", () => {
     expect(PVE_ACTION_SLOTS).toEqual(["idle", "walk", "windup", "attack", "hurt", "death"]);
     expect(pveActionSlot("custom:windup")).toBe("windup");
     expect(pveActionSlot("custom:hurt")).toBe("hurt");
     expect(pveActionSlot("custom:death")).toBe("death");
     expect(pveActionSlot("custom:celebrate")).toBe("custom:celebrate");
     expect(pveActionSlot("attack")).toBe("attack");
-  });
-  it("lets ground melee enemies jump toward a reachable platform", () => {
-    const arena: PveLevel = {
-      ...level,
-      platforms: [...level.platforms, { x: 520, y: 284, width: 220, height: 16, kind: "floating" }],
-    };
-    const runtime = createPveRuntime(arena);
-    runtime.player.x = 600;
-    runtime.player.y = 284;
-    runtime.player.onGround = true;
-    runtime.enemies[0].behavior = "chaser";
-    runtime.enemies[0].shootCooldown = 99;
-    stepPve(runtime, arena, input, 0.05);
-    expect(runtime.enemies[0].navOnGround).toBe(false);
-    expect(runtime.enemies[0].navVy).toBeLessThan(0);
-    for (let index = 0; index < 30; index += 1) stepPve(runtime, arena, input, 0.05);
-    expect(runtime.enemies[0].y).toBeLessThan(level.groundY);
+    expect(pveActionSlot("idle")).toBe("idle");
   });
 
-  it("uses boss cover as real projectile collision", () => {
-    const arena: PveLevel = {
-      ...level,
-      covers: [{ id: "cover", x: 620, y: 348, width: 40, height: 120 }],
-    };
-    const runtime = createPveRuntime(arena);
-    runtime.player.x = 530;
-    runtime.projectiles.push({ id: 77, owner: "player", x: 600, y: 300, vx: 1000, vy: 0, radius: 5, damage: 1, ttl: 1, color: "#fff" });
-    const enemyHp = runtime.enemies[0].hp;
-    stepPve(runtime, arena, input, 0.05);
-    expect(runtime.projectiles).toHaveLength(0);
-    expect(runtime.enemies[0].hp).toBe(enemyHp);
-  });
-  it("exposes separate windup, hurt and death poses with death priority", () => {
-    const enemy = createPveRuntime(level).enemies[0];
-    enemy.abilityStage = "windup";
-    expect(pveEnemyPose(enemy, 1)).toBe("windup");
-    enemy.hitFlashUntil = 2;
-    expect(pveEnemyPose(enemy, 1)).toBe("hurt");
-    enemy.hp = 0;
-    expect(pveEnemyPose(enemy, 1)).toBe("death");
-  });
-  it("guardians can contest a player on a platform instead of endlessly slamming below", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 600;
-    runtime.player.y = 284;
-    runtime.player.onGround = false;
-    runtime.enemies[0].behavior = "guardian";
-    runtime.enemies[0].shootCooldown = 0;
-    stepPve(runtime, level, input, 0.01);
-    expect(runtime.enemies[0].ability).toBe("shot");
-    expect(runtime.enemies[0].abilityStage).toBe("windup");
-  });
-  it("vents warn before damage and the bridge stays safe", () => {
-    const arena = { ...level, hazards: [{ id: "vent", x: 90, y: 348, width: 64, kind: "vent" as const }] };
-    const runtime = createPveRuntime(arena);
-    runtime.elapsed = 1.5;
-    stepPve(runtime, arena, input, 0.05);
-    expect(runtime.playerHp).toBe(6);
-    runtime.elapsed = 2.3;
-    stepPve(runtime, arena, input, 0.05);
-    expect(runtime.playerHp).toBe(5);
-    const safe = createPveRuntime(arena);
-    safe.elapsed = 2.3;
-    safe.player.y = 284;
-    safe.player.onGround = false;
-    stepPve(safe, arena, input, 0.05);
-    expect(safe.playerHp).toBe(6);
-  });
-  it("dodges with a finite invulnerability window and cannot repeat while held", () => {
-    const runtime = createPveRuntime(level);
-    const start = runtime.player.x;
-    stepPve(runtime, level, { ...input, dodge: true }, 0.05);
-    expect(runtime.player.x).toBeGreaterThan(start + 20);
-    expect(runtime.invulnerableUntil).toBeGreaterThan(runtime.elapsed);
-    const cooldown = runtime.dodgeCooldownUntil;
-    for (let i = 0; i < 40; i++) stepPve(runtime, level, { ...input, dodge: true }, 0.05);
-    expect(runtime.dodgeCooldownUntil).toBe(cooldown);
-    expect(runtime.invulnerableUntil).toBeLessThan(runtime.elapsed);
+  it("prioritizes death, hurt and windup poses", () => {
+    const runtime = quietRuntime();
+    const item = runtime.enemies[0];
+    item.abilityStage = "windup";
+    expect(pveEnemyPose(item, 1)).toBe("windup");
+    item.hitFlashUntil = 2;
+    expect(pveEnemyPose(item, 1)).toBe("hurt");
+    item.hp = 0;
+    expect(pveEnemyPose(item, 1)).toBe("death");
   });
 
-  it("lands on floating platforms and can aim upward", () => {
-    const arena = { ...level, platforms: [...level.platforms, { x: 50, y: 240, width: 200, height: 16, kind: "floating" as const }] };
-    const runtime = createPveRuntime(arena);
-    runtime.player.y = 230;
-    runtime.player.vy = 200;
-    runtime.player.onGround = false;
-    stepPve(runtime, arena, input, 0.05);
-    expect(runtime.player.y).toBe(240);
-    expect(runtime.player.onGround).toBe(true);
-    stepPve(runtime, arena, { ...input, shoot: true, aimY: -0.7 }, 0.05);
-    expect(runtime.projectiles[0].vy).toBeLessThan(0);
-  });
-  it("crossfades between scene backgrounds instead of snapping", () => {
-    expect(backgroundLayerBlend(0.5, 5)).toEqual({ from: 2, to: 3, mix: 0 });
-    expect(backgroundLayerBlend(0.625, 5).mix).toBeCloseTo(0.5);
-    expect(backgroundLayerBlend(1, 5)).toEqual({ from: 4, to: 4, mix: 0 });
-  });
+  it("advances windup, hurt and death strips instead of freezing on frame 0", () => {
+    const runtime = quietRuntime();
+    const item = runtime.enemies[0];
+    item.ability = "shot";
+    item.abilityStartedAt = 0.5;
+    const startFrame = pveSpriteTime("windup", item, 0.5, 8, 10);
+    const midFrame = pveSpriteTime("windup", item, 0.8, 8, 10);
+    expect(startFrame).toBe(0);
+    expect(midFrame).toBeCloseTo(0.4, 6);
+    expect(midFrame).toBeGreaterThan(startFrame);
+    expect(pvePoseProgress("windup", item, 0.8)).toBeCloseTo(0.5, 6);
 
-  it("starts with all enemies alive and the boss asleep", () => {
-    const runtime = createPveRuntime(level);
-    const hud = pveHud(runtime, level);
-    expect(hud.defeated).toBe(0);
-    expect(hud.total).toBe(2);
-    expect(hud.bossActive).toBe(false);
-  });
+    item.hitFlashUntil = 1;
+    const hurtEarly = pveSpriteTime("hurt", item, 0.91, 6, 10);
+    const hurtLate = pveSpriteTime("hurt", item, 0.97, 6, 10);
+    expect(hurtEarly).toBeCloseTo(0.3, 6);
+    expect(hurtLate).toBeGreaterThan(hurtEarly);
 
-  it("fires exactly one projectile for one attack input", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 530;
-    stepPve(runtime, level, { ...input, shoot: true }, 1 / 60);
-    expect(runtime.projectiles.filter((item) => item.owner === "player")).toHaveLength(1);
-    stepPve(runtime, level, input, 1 / 60);
-    expect(runtime.projectiles.filter((item) => item.owner === "player")).toHaveLength(1);
+    item.deathAt = 0;
+    const deathEarly = pveSpriteTime("death", item, 0.15, 4, 10);
+    const deathLate = pveSpriteTime("death", item, 0.45, 4, 10);
+    expect(deathEarly).toBeCloseTo(0.1, 6);
+    expect(deathLate).toBeCloseTo(0.3, 6);
+    expect(deathLate).toBeGreaterThan(deathEarly);
   });
+});
 
-  it("locks the player inside the active encounter", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 800;
-    stepPve(runtime, level, { ...input, right: true, run: true }, 0.05);
-    expect(runtime.activeEncounterIndex).toBe(0);
-    expect(runtime.player.x).toBeLessThanOrEqual(850);
-    expect(runtime.transitionUntil).toBeGreaterThan(runtime.elapsed);
-  });
-
-  it("hits a slime with the horizontal energy shot", () => {
-    const runtime = createPveRuntime(level);
-    const slime = runtime.enemies.find((enemy) => enemy.kind === "slime");
-    expect(slime).toBeTruthy();
-    if (!slime) return;
-    runtime.player.x = slime.x - 120;
-    runtime.player.y = level.groundY;
-    runtime.player.facing = 1;
-    stepPve(runtime, level, { ...input, shoot: true }, 1 / 60);
-    let sawHitstop = false;
-    for (let index = 0; index < 20; index += 1) {
-      stepPve(runtime, level, input, 1 / 60);
-      sawHitstop ||= runtime.hitstopRemaining > 0;
-    }
-    expect(slime.hp).toBeLessThan(slime.max_hp);
-    expect(sawHitstop).toBe(true);
-    expect(runtime.audioEvents).toContain("hit");
-  });
-
-  it("wakes and defeats the boss only after the slimes are cleared", () => {
-    const runtime = createPveRuntime(level);
-    expect(pveHud(runtime, level).bossActive).toBe(false);
-    const slime = runtime.enemies.find((enemy) => enemy.kind === "slime");
-    const boss = runtime.enemies.find((enemy) => enemy.kind === "boss");
-    expect(slime && boss).toBeTruthy();
-    if (!slime || !boss) return;
-    boss.hp = 1;
-    runtime.player.x = 550;
-    stepPve(runtime, level, input, 1 / 60);
-    slime.hp = 0;
-    stepPve(runtime, level, input, 1 / 60);
-    runtime.player.x = boss.x - 105;
-    stepPve(runtime, level, input, 1 / 60);
-    expect(boss.awake).toBe(true);
-    expect(pveHud(runtime, level).bossActive).toBe(true);
-    runtime.shotCooldown = 0;
-    stepPve(runtime, level, { ...input, shoot: true }, 1 / 60);
-    for (let index = 0; index < 120 && runtime.status === "playing"; index += 1) {
-      stepPve(runtime, level, input, 1 / 60);
-    }
-    expect(runtime.status).toBe("won");
-  });
-
-  it("uses the single guard cell to negate one hit", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 600;
-    stepPve(runtime, level, input, 1 / 60);
-    runtime.projectiles.push({
-      id: 99,
-      owner: "enemy",
-      x: runtime.player.x,
-      y: runtime.player.y - 88,
-      vx: 0,
-      vy: 0,
-      radius: 8,
-      damage: 2,
-      ttl: 1,
-      color: "#fff",
-    });
-    stepPve(runtime, level, { ...input, guard: true }, 1 / 60);
-    expect(runtime.playerHp).toBe(6);
-    expect(runtime.guardAvailable).toBe(false);
-    expect(runtime.audioEvents).toContain("guard");
-  });
-
-  it("freezes gameplay while paused", () => {
-    const runtime = createPveRuntime(level);
+describe("PVE 暂停", () => {
+  it("freezes the fight while paused", () => {
+    const runtime = quietRuntime();
     togglePvePause(runtime);
-    const before = runtime.elapsed;
-    stepPve(runtime, level, input, 1 / 60);
-    expect(runtime.elapsed).toBe(before);
-    expect(pveHud(runtime, level).paused).toBe(true);
-  });
-
-  it("does not damage enemies outside the active encounter", () => {
-    const runtime = createPveRuntime(level);
-    const boss = runtime.enemies[1];
-    runtime.player.x = boss.x - 100;
-    runtime.player.facing = 1;
-    stepPve(runtime, level, { ...input, shoot: true }, 0.05);
-    for (let i = 0; i < 10; i++) stepPve(runtime, level, input, 0.05);
-    expect(boss.hp).toBe(boss.max_hp);
-  });
-
-  it("sweeps fast shots and knocks the closest active enemy away", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 530;
-    stepPve(runtime, level, input, 0.01);
-    const enemy = runtime.enemies[0];
-    enemy.speed = 0;
-    const startX = enemy.x;
-    runtime.projectiles.push({ id: 100, owner: "player", x: 600, y: 300, vx: 4000, vy: 0, radius: 2, damage: 1, ttl: 1, color: "#fff" });
-    stepPve(runtime, level, input, 0.05);
-    expect(enemy.hp).toBe(enemy.max_hp - 1);
-    expect(enemy.x).toBeGreaterThan(startX);
-  });
-
-  it("does not apply contact damage when the player is above the enemy", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 700;
-    runtime.player.y = 200;
-    runtime.player.onGround = false;
-    stepPve(runtime, level, input, 0.01);
-    expect(runtime.playerHp).toBe(6);
-  });
-
-  it("detects fast enemy shots crossing the player", () => {
-    const runtime = createPveRuntime(level);
-    runtime.projectiles.push({ id: 101, owner: "enemy", x: 20, y: 260, vx: 4000, vy: 0, radius: 2, damage: 1, ttl: 1, color: "#fff" });
-    stepPve(runtime, level, input, 0.05);
-    expect(runtime.playerHp).toBe(5);
-  });
-
-  it("telegraphs a locked shot before firing and lets the player move away", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 530;
-    const enemy = runtime.enemies[0];
-    enemy.behavior = "shooter";
-    enemy.speed = 0;
-    enemy.shootCooldown = 0;
-    stepPve(runtime, level, input, 0.01);
-    expect(enemy.abilityStage).toBe("windup");
-    expect(runtime.projectiles).toHaveLength(0);
-    const target = enemy.abilityTargetX;
-    for (let i = 0; i < 10; i++) stepPve(runtime, level, { ...input, left: true }, 0.05);
-    expect(runtime.projectiles).toHaveLength(0);
-    expect(enemy.abilityTargetX).toBe(target);
-    for (let i = 0; i < 3; i++) stepPve(runtime, level, input, 0.05);
-    expect(runtime.projectiles.some((item) => item.owner === "enemy")).toBe(true);
-  });
-
-  it("uses different abilities for charger and chaser", () => {
-    for (const [behavior, expected] of [["charger", "charge"], ["chaser", "lunge"]] as const) {
-      const runtime = createPveRuntime(level);
-      runtime.player.x = 600;
-      const enemy = runtime.enemies[0];
-      enemy.behavior = behavior;
-      enemy.speed = 0;
-      enemy.shootCooldown = 0;
-      stepPve(runtime, level, input, 0.01);
-      expect(enemy.ability).toBe(expected);
-      expect(enemy.abilityStage).toBe("windup");
-    }
-  });
-
-  it("applies melee damage only during the active window and guard blocks it", () => {
-    const runtime = createPveRuntime(level);
-    runtime.player.x = 660;
-    const enemy = runtime.enemies[0];
-    enemy.behavior = "chaser";
-    enemy.speed = 0;
-    enemy.shootCooldown = 0;
-    stepPve(runtime, level, input, 0.01);
-    for (let i = 0; i < 8; i++) stepPve(runtime, level, input, 0.05);
-    expect(runtime.playerHp).toBe(6);
-    expect(runtime.guardAvailable).toBe(true);
-    for (let i = 0; i < 4; i++) stepPve(runtime, level, { ...input, guard: true }, 0.05);
-    expect(runtime.playerHp).toBe(6);
-    expect(runtime.guardAvailable).toBe(false);
-  });
-
-  it("switches the boss to phase two and telegraphs a dodgeable slam", () => {
-    const runtime = createPveRuntime(level);
-    runtime.enemies[0].hp = 0;
-    runtime.nextEncounterIndex = 1;
-    runtime.player.x = 1270;
-    const boss = runtime.enemies[1];
-    boss.hp = boss.max_hp / 2;
-    boss.attacks = 1;
-    boss.shootCooldown = 0;
-    stepPve(runtime, level, input, 0.01);
-    expect(boss.phase).toBe(2);
-    expect(boss.ability).toBe("slam");
-    expect(boss.abilityStage).toBe("windup");
-    expect(runtime.encounterNotice).toContain("第二阶段");
-    for (let i = 0; i < 15; i++) stepPve(runtime, level, input, 0.05);
-    expect(runtime.playerHp).toBe(6);
-    stepPve(runtime, level, { ...input, jump: true }, 0.05);
-    for (let i = 0; i < 5; i++) stepPve(runtime, level, input, 0.05);
-    expect(runtime.playerHp).toBe(6);
+    const before = runtime.stageTime;
+    stepPve(runtime, idle, 0.05);
+    expect(runtime.stageTime).toBe(before);
+    expect(pveHud(runtime).paused).toBe(true);
+    togglePvePause(runtime);
+    expect(pveHud(runtime).paused).toBe(false);
   });
 });

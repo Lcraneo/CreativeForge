@@ -614,12 +614,20 @@ export interface SceneLevel {
   coins: SceneCoin[];
 }
 
-export interface PveEnemy {
+/** 2.5D 竞技场：x 为水平轴，y 为纵深轴，z 为跳跃高度 */
+export interface PveArena {
+  width: number;
+  depth: number;
+  spawn_x: number;
+  spawn_y: number;
+}
+
+export interface PveEnemySpawn {
   id: string;
   profile_id?: string | null;
   asset_id: string;
   name: string;
-  kind: "slime" | "boss";
+  kind: "minion" | "boss";
   x: number;
   y: number;
   max_hp: number;
@@ -633,30 +641,34 @@ export interface PveEnemy {
   tags?: string[];
 }
 
-export interface PveEncounter {
-  id: string;
+export type PveStageId = "stage_1" | "stage_2" | "stage_3";
+
+export interface PveStage {
+  id: PveStageId;
   title: string;
-  kind: "combat" | "boss";
-  trigger_x: number;
-  lock_x: number;
-  enemy_ids: string[];
-  arena_template?: "open" | "dual_platform" | "boss_cover";
+  kind: "minion" | "boss";
+  background_url: string | null;
+  arena: PveArena;
+  enemies: PveEnemySpawn[];
 }
 
-export type PveArenaTemplate = "open" | "dual_platform" | "hazard_corridor" | "boss_cover";
-
-export interface PveLevel {
+/** 固定三关战役：第 1/2 关小怪，第 3 关 Boss */
+export interface PveCampaign {
+  schema_version: 2;
   seed: string;
-  width: number;
-  groundY: number;
-  spawnX: number;
-  goalX: number;
-  platforms: ScenePlatform[];
-  enemies: PveEnemy[];
-  encounters?: PveEncounter[];
-  hazards?: Array<{ id: string; x: number; y: number; width: number; kind: "vent" }>;
-  covers?: Array<{ id: string; x: number; y: number; width: number; height: number }>;
-  arena_segments?: Array<{ id: string; template: PveArenaTemplate; start_x: number; end_x: number }>;
+  stages: [PveStage, PveStage, PveStage];
+}
+
+/** 旧版横版 PVE 关卡：仅用于 legacy 提示，不再进入 2.5D 运行时 */
+export interface PveLegacyLevel {
+  seed?: string;
+  width?: number;
+  groundY?: number;
+  spawnX?: number;
+  goalX?: number;
+  platforms?: ScenePlatform[];
+  enemies?: Array<Record<string, unknown>>;
+  [key: string]: unknown;
 }
 
 export interface PveEnemyProfile {
@@ -721,7 +733,10 @@ export interface PveGameplay {
   difficulty: "easy" | "normal" | "hard";
   length?: "short" | "medium" | "long";
   features?: string[];
-  level: PveLevel | null;
+  campaign: PveCampaign | null;
+  /** 旧版横版 PVE：需要重新生成后才能进入新版运行时 */
+  legacy?: boolean;
+  level?: PveLegacyLevel | null;
   validation?: SceneValidation;
 }
 
@@ -775,6 +790,8 @@ export interface SceneSummary {
   status: GameScene["status"];
   stage: string;
   gameplay_type?: "parkour" | "pve";
+  /** 旧版横版 PVE 场景标记，不可进入新版 2.5D 运行时 */
+  legacy?: boolean;
   difficulty: GameScene["gameplay"]["difficulty"];
   background_url: string | null;
   background_count?: number;

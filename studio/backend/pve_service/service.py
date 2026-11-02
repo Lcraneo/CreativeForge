@@ -22,6 +22,10 @@ DEFAULT_PVE_ENEMY_PATH = os.path.join(
 DIFFICULTIES = ("easy", "normal", "hard")
 ROLES = ("minion", "boss")
 BEHAVIORS = ("chaser", "shooter", "charger", "guardian")
+# 生成过程中可能停留的状态。线程丢失后会一直停在这里，因此需要超时兜底。
+IN_FLIGHT_STATUSES = ("analyzing", "generating_model", "generating_actions")
+# 超过该时长仍未推进，视为生成线程已丢失，转为失败以便重试或删除。
+STALE_GENERATION_SECONDS = 20 * 60
 TAGS = (
     "fast",
     "ranged",
@@ -108,17 +112,17 @@ class PveEnemyStore:
         records = data.get("enemies") if isinstance(data, dict) else None
         if not isinstance(records, list):
             return
+        interrupted = False
         for record in records:
             if not isinstance(record, dict) or not record.get("id"):
                 continue
-            if record.get("status") in {
-                "analyzing",
-                "generating_model",
-                "generating_actions",
-            }:
+            if record.get("status") in IN_FLIGHT_STATUSES:
                 record["status"] = "failed"
-                record["error"] = "服务重启导致生成中断，请重新生成"
+                record["error"] = "服务重启导致生成中断，请点击重试"
+                interrupted = True
             self._custom[str(record["id"])] = record
+        if interrupted:
+            self._save_locked()
 
     def _save_locked(self):
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
@@ -128,8 +132,24 @@ class PveEnemyStore:
             indent=2,
         )
 
+    def _sweep_stale_locked(self) -> None:
+        now = time.time()
+        changed = False
+        for record in self._custom.values():
+            if record.get("status") not in IN_FLIGHT_STATUSES:
+                continue
+            if now - float(record.get("updated_at") or 0) <= STALE_GENERATION_SECONDS:
+                continue
+            record["status"] = "failed"
+            record["error"] = "生成超时中断，请点击重试"
+            record["updated_at"] = now
+            changed = True
+        if changed:
+            self._save_locked()
+
     def list(self) -> list[dict]:
         with self._lock:
+            self._sweep_stale_locked()
             custom = [dict(item) for item in self._custom.values()]
         return _builtin_profiles() + sorted(
             custom, key=lambda item: item.get("created_at", 0), reverse=True
@@ -143,6 +163,7 @@ class PveEnemyStore:
             if item["id"] == enemy_id:
                 return item
         with self._lock:
+            self._sweep_stale_locked()
             item = self._custom.get(enemy_id)
             return dict(item) if item else None
 
@@ -270,6 +291,58 @@ class PveEnemyService:
             self.store.update(enemy_id, {"status": "ready", "action_warning": warning, "error": None})
         except Exception as error:
             self.store.update(enemy_id, {"status": "ready", "action_warning": "动作重建失败，保留已有资源", "error": str(error)[:500]})
+
+    def retry(self, enemy_id: str) -> dict:
+        """失败或中断的敌人重新跑一遍生成，成功后回到可用状态。"""
+
+        with self._rebuild_lock:
+            record = self.store.get(enemy_id)
+            if not record:
+                raise KeyError(enemy_id)
+            if record.get("builtin"):
+                raise ValueError("内置敌人无需重试")
+            if record.get("status") in IN_FLIGHT_STATUSES:
+                raise ValueError("敌人仍在生成中")
+            if record.get("asset_id"):
+                record = self.store.update(
+                    enemy_id,
+                    {"status": "generating_actions", "error": None, "action_warning": None},
+                )
+                threading.Thread(
+                    target=self._resume_actions,
+                    args=(enemy_id, record["asset_id"]),
+                    name=f"creativeforge-pve-resume-{enemy_id}",
+                    daemon=True,
+                ).start()
+            else:
+                record = self.store.update(
+                    enemy_id,
+                    {
+                        "status": "analyzing",
+                        "error": None,
+                        "asset_id": None,
+                        "task_id": None,
+                        "action_batch_id": None,
+                    },
+                )
+                threading.Thread(
+                    target=self._run,
+                    args=(enemy_id,),
+                    name=f"creativeforge-pve-enemy-{enemy_id}",
+                    daemon=True,
+                ).start()
+            return record
+
+    def _resume_actions(self, enemy_id: str, asset_id: str) -> None:
+        try:
+            warning = self._generate_actions(enemy_id, asset_id)
+            if not warning:
+                warning = self._prepack_ai_strips(asset_id)
+            self.store.update(
+                enemy_id, {"status": "ready", "action_warning": warning, "error": None}
+            )
+        except Exception as error:  # noqa: BLE001 - async retry must reach terminal state
+            self.store.update(enemy_id, {"status": "failed", "error": str(error)[:500]})
 
     def start_generation(
         self, prompt: str, role: str, difficulty: str = "normal"

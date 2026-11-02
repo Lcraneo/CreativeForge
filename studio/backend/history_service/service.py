@@ -12,6 +12,13 @@ from studio.backend.persistence import atomic_write_json, read_json_recover
 DEFAULT_HISTORY_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "history.json")
 
 
+def _is_pve_enemy(record):
+    """历史记录内部的资产是否标记为 PVE 敌人（与玩家角色分开归档）。"""
+
+    asset = record.get("asset")
+    return bool(isinstance(asset, dict) and asset.get("pve_enemy"))
+
+
 class HistoryStore:
     def __init__(self, path=None):
         self.path = path or DEFAULT_HISTORY_PATH
@@ -99,7 +106,7 @@ class HistoryStore:
                     return record
         return None
 
-    def list(self, limit=100, engine=None, keyword=None):
+    def list(self, limit=100, engine=None, keyword=None, kind=None):
         with self._lock:
             items = list(self._records)
         items.sort(
@@ -108,14 +115,23 @@ class HistoryStore:
         )
         if engine:
             items = [r for r in items if r.get("engine") == engine]
+        if kind == "pve_enemy":
+            items = [r for r in items if _is_pve_enemy(r)]
+        elif kind == "character":
+            items = [r for r in items if not _is_pve_enemy(r)]
         if keyword:
             needle = str(keyword).lower()
             items = [r for r in items if needle in str(r.get("goal", "")).lower()]
         return items[:limit]
 
-    def count(self):
+    def count(self, kind=None):
         with self._lock:
-            return len(self._records)
+            records = list(self._records)
+        if kind == "pve_enemy":
+            return sum(1 for record in records if _is_pve_enemy(record))
+        if kind == "character":
+            return sum(1 for record in records if not _is_pve_enemy(record))
+        return len(records)
 
     def clear(self):
         with self._lock:

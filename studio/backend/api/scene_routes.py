@@ -16,6 +16,7 @@ class CreateSceneRequest(BaseModel):
 
 class UpdatePveSequenceRequest(BaseModel):
     profile_ids: list[str]
+    stage_id: str | None = None
 
 
 def build_scene_router(service: SceneService) -> APIRouter:
@@ -59,7 +60,9 @@ def build_scene_router(service: SceneService) -> APIRouter:
     @router.put("/scenes/{scene_id}/pve/enemy-sequence")
     def update_pve_enemy_sequence(scene_id: str, request: UpdatePveSequenceRequest):
         try:
-            scene = service.update_pve_enemy_sequence(scene_id, request.profile_ids)
+            scene = service.update_pve_enemy_sequence(
+                scene_id, request.profile_ids, request.stage_id
+            )
         except ValueError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         if scene is None:

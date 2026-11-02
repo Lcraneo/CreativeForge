@@ -188,7 +188,7 @@ class SceneApiTests(unittest.TestCase):
         self.assertFalse((self.root / f"{scene_id}_0.png").exists())
         self.assertFalse((self.root / f"{scene_id}_4.png").exists())
 
-    def test_pve_scene_has_enemies_but_no_coins(self):
+    def test_pve_scene_has_three_stage_campaign(self):
         with patch(
             "studio.backend.scene_service.service.safe_generated_path",
             side_effect=lambda _name: str(self.source),
@@ -207,26 +207,43 @@ class SceneApiTests(unittest.TestCase):
                 time.sleep(0.01)
 
         self.assertEqual(scene["status"], "ready", scene)
-        self.assertEqual(scene["gameplay"]["type"], "pve")
-        self.assertTrue(scene["gameplay"]["validation"]["ok"])
-        enemies = scene["gameplay"]["level"]["enemies"]
-        self.assertEqual({enemy["kind"] for enemy in enemies}, {"slime", "boss"})
-        self.assertIn("ast64960", {enemy["asset_id"] for enemy in enemies})
-        self.assertIn("ast60574", {enemy["asset_id"] for enemy in enemies})
-        encounters = scene["gameplay"]["level"]["encounters"]
-        self.assertGreaterEqual(len(encounters), 2)
-        self.assertEqual(encounters[-1]["kind"], "boss")
-        self.assertTrue(all(encounter["enemy_ids"] for encounter in encounters))
-        platforms = scene["gameplay"]["level"]["platforms"]
-        self.assertEqual(platforms[0]["kind"], "ground")
-        self.assertTrue(any(platform["kind"] == "floating" for platform in platforms))
-        self.assertTrue(scene["gameplay"]["level"]["hazards"])
-        self.assertNotIn("coins", scene["gameplay"]["level"])
+        gameplay = scene["gameplay"]
+        self.assertEqual(gameplay["type"], "pve")
+        self.assertTrue(gameplay["validation"]["ok"])
+        self.assertIsNone(gameplay["level"])
+        self.assertFalse(gameplay.get("legacy"))
+        campaign = gameplay["campaign"]
+        self.assertEqual(campaign["schema_version"], 2)
+        stages = campaign["stages"]
+        self.assertEqual(len(stages), 3)
+        self.assertEqual([stage["id"] for stage in stages], ["stage_1", "stage_2", "stage_3"])
+        self.assertEqual([stage["kind"] for stage in stages], ["minion", "minion", "boss"])
+        self.assertEqual(len(stages[0]["enemies"]), 4)
+        self.assertEqual(len(stages[1]["enemies"]), 6)
+        self.assertEqual(len(stages[2]["enemies"]), 1)
+        self.assertEqual(stages[2]["enemies"][0]["kind"], "boss")
+        self.assertTrue(all(enemy["kind"] == "minion" for enemy in stages[0]["enemies"]))
+        self.assertTrue(all(enemy["kind"] == "minion" for enemy in stages[1]["enemies"]))
+        for stage in stages:
+            for key in ("arena_segments", "hazards", "covers", "encounters", "platforms"):
+                self.assertNotIn(key, stage)
+            self.assertTrue(stage["background_url"])
+
+        background_urls = scene["theme"]["background_urls"]
+        self.assertEqual(len(background_urls), 3)
+        self.assertEqual(len(set(background_urls)), 3)
+        self.assertEqual(scene["generation"]["background_total"], 3)
+        self.assertEqual(len(self.image_prompts), 3)
+        for stage, url in zip(stages, background_urls):
+            self.assertEqual(stage["background_url"], url)
+
         listed = self.client.get("/api/scenes").json()["scenes"]
         self.assertEqual(listed[0]["gameplay_type"], "pve")
-        self.assertGreater(listed[0]["enemy_count"], 0)
+        self.assertEqual(listed[0]["enemy_count"], 11)
+        self.assertEqual(listed[0]["background_count"], 3)
+        self.assertFalse(listed[0]["legacy"])
 
-    def test_pve_enemy_sequence_can_be_replaced_and_validated(self):
+    def test_pve_enemy_sequence_can_be_replaced_per_stage(self):
         with patch(
             "studio.backend.scene_service.service.safe_generated_path",
             side_effect=lambda _name: str(self.source),
@@ -234,10 +251,35 @@ class SceneApiTests(unittest.TestCase):
             scene = self.service.create_sync(
                 "冰霜古堡战斗", "normal", seed=17, gameplay="pve"
             )
-        enemies = scene["gameplay"]["level"]["enemies"]
+        stages = scene["gameplay"]["campaign"]["stages"]
+        stage_one_ids = [enemy["id"] for enemy in stages[0]["enemies"]]
+        stage_two_ids = [
+            "alt_minion" if enemy["kind"] != "boss" else "alt_boss"
+            for enemy in stages[1]["enemies"]
+        ]
+        response = self.client.put(
+            f"/api/scenes/{scene['id']}/pve/enemy-sequence",
+            json={"profile_ids": stage_two_ids, "stage_id": "stage_2"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        updated = response.json()
+        updated_stages = updated["gameplay"]["campaign"]["stages"]
+        self.assertEqual(
+            [enemy["id"] for enemy in updated_stages[0]["enemies"]], stage_one_ids
+        )
+        self.assertTrue(
+            all(enemy["name"] == "替换小怪" for enemy in updated_stages[1]["enemies"])
+        )
+        self.assertEqual(
+            updated_stages[2]["enemies"][0]["name"],
+            stages[2]["enemies"][0]["name"],
+        )
+        self.assertTrue(updated["gameplay"]["validation"]["ok"])
+
         profile_ids = [
             "alt_boss" if enemy["kind"] == "boss" else "alt_minion"
-            for enemy in enemies
+            for stage in updated_stages
+            for enemy in stage["enemies"]
         ]
         response = self.client.put(
             f"/api/scenes/{scene['id']}/pve/enemy-sequence",
@@ -245,21 +287,10 @@ class SceneApiTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200, response.text)
         updated = response.json()
-        updated_enemies = updated["gameplay"]["level"]["enemies"]
-        self.assertTrue(
-            all(
-                enemy["name"] == "替换小怪"
-                for enemy in updated_enemies
-                if enemy["kind"] != "boss"
-            )
-        )
-        boss = next(enemy for enemy in updated_enemies if enemy["kind"] == "boss")
+        boss = updated["gameplay"]["campaign"]["stages"][2]["enemies"][0]
         self.assertEqual(boss["name"], "替换 Boss")
         self.assertEqual(boss["max_hp"], 32)
-        self.assertEqual(
-            updated["gameplay"]["level"]["encounters"][-1]["title"],
-            "守关战 · 替换 Boss",
-        )
+        self.assertIn("替换 Boss", updated["gameplay"]["campaign"]["stages"][2]["title"])
 
         invalid = [*profile_ids]
         invalid[-1] = "alt_minion"
@@ -268,6 +299,69 @@ class SceneApiTests(unittest.TestCase):
             json={"profile_ids": invalid},
         )
         self.assertEqual(rejected.status_code, 422)
+
+    def test_legacy_pve_scene_is_marked_and_cannot_play(self):
+        record = {
+            "id": "scene_0123456789ab",
+            "title": "旧版战斗关卡",
+            "prompt": "旧版 PVE",
+            "status": "ready",
+            "theme": {"background_url": None, "background_urls": []},
+            "created_at": 1,
+            "updated_at": 1,
+            "intent": {"difficulty": "normal", "length": "medium"},
+            "gameplay": {
+                "type": "pve",
+                "difficulty": "normal",
+                "level": {
+                    "seed": "1",
+                    "width": 3000,
+                    "groundY": 348,
+                    "spawnX": 120,
+                    "goalX": 2900,
+                    "platforms": [{"kind": "ground", "x": 0, "y": 348, "width": 3000}],
+                    "enemies": [
+                        {
+                            "id": "slime_1",
+                            "asset_id": "ast64960",
+                            "name": "森林史莱姆",
+                            "kind": "slime",
+                            "x": 400,
+                            "y": 300,
+                        }
+                    ],
+                    "encounters": [],
+                    "hazards": [],
+                    "covers": [],
+                    "arena_segments": [],
+                },
+            },
+        }
+        path = str(self.root / "legacy.json")
+        (self.root / "legacy.json").write_text(
+            json.dumps([record], ensure_ascii=False), encoding="utf-8"
+        )
+        store = SceneStore(path)
+        loaded = store.get("scene_0123456789ab")
+        self.assertTrue(loaded["gameplay"]["legacy"])
+        self.assertTrue(loaded["gameplay"]["level"])
+
+        service = SceneService(
+            store=store,
+            pve_enemy_provider=lambda: self.pve_profiles,
+            settings_provider=lambda: {},
+        )
+        app = FastAPI()
+        app.include_router(build_scene_router(service))
+        client = TestClient(app)
+        listed = client.get("/api/scenes").json()["scenes"]
+        self.assertTrue(listed[0]["legacy"])
+        rejected = client.put(
+            "/api/scenes/scene_0123456789ab/pve/enemy-sequence",
+            json={"profile_ids": ["alt_minion"]},
+        )
+        self.assertEqual(rejected.status_code, 422)
+        self.assertIn("旧版 PVE", rejected.json()["detail"])
 
     def test_rejects_unknown_gameplay_and_invalid_difficulty(self):
         unknown = self.client.post(
@@ -303,6 +397,9 @@ class SceneApiTests(unittest.TestCase):
         self.assertEqual(self.service.background_count("short"), 3)
         self.assertEqual(self.service.background_count("medium"), 5)
         self.assertEqual(self.service.background_count("long"), 7)
+        self.assertEqual(self.service.background_count("short", "pve"), 3)
+        self.assertEqual(self.service.background_count("medium", "pve"), 3)
+        self.assertEqual(self.service.background_count("long", "pve"), 3)
 
 
 if __name__ == "__main__":

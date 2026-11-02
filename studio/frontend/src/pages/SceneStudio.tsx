@@ -15,7 +15,7 @@ import {
   cx,
 } from "../components/ui";
 import { platformMaterialFor, type PlatformMaterial } from "../lib/sceneVisuals";
-import type { GameScene, ScenePalette, SceneSummary } from "../types";
+import type { GameScene, PveCampaign, ScenePalette, SceneSummary } from "../types";
 import { toast } from "../stores/toastStore";
 
 const EXAMPLES = [
@@ -45,6 +45,8 @@ const DIFFICULTY_LABEL = {
   hard: "挑战",
 } as const;
 const EXPECTED_BACKGROUNDS = { short: 3, medium: 5, long: 7 } as const;
+/** PVE 三关战役固定一张背景一关。 */
+const PVE_EXPECTED_BACKGROUNDS = 3;
 
 export default function SceneStudio() {
   const navigate = useNavigate();
@@ -127,7 +129,7 @@ export default function SceneStudio() {
       <PageHeader
         overline="Scene Atelier"
         title="场景工坊"
-        description="描述想去的世界，生成可玩的横版跑酷路线或 PVE 战斗关卡。场景完成后选择已有角色，直接进入对应试玩模式。"
+        description="描述想去的世界，生成可玩的横版跑酷路线，或固定竞技场的 2.5D 三关 PVE 战役。场景完成后选择已有角色，直接进入对应试玩模式。"
         actions={
           <Badge tone="primary" icon="spark">
             百炼 · 场景策划 + 背景生成
@@ -199,7 +201,7 @@ export default function SceneStudio() {
                     {
                       value: "pve",
                       label: "PVE",
-                      note: "史莱姆与冰霜巨龙",
+                      note: "三关 · 2.5D 竞技场",
                     },
                   ] as const
                 ).map((mode) => (
@@ -232,7 +234,7 @@ export default function SceneStudio() {
               </div>
               <p className="mt-2 text-[10.5px] leading-4 text-ink-4">
                 {gameplay === "pve"
-                  ? "生成分段遭遇战，不包含金币；会从 PVE 敌人工坊的完成资产中按提示词语义匹配小怪与 Boss。"
+                  ? "生成固定竞技场的三关战役（两关小怪 + 一关 Boss），不包含金币；会从 PVE 敌人工坊的完成资产中按提示词语义匹配阵容。"
                   : "生成奔跑、跳跃、金币与终点路线；平台坐标由确定性编译器生成并经过连通性检查。"}
               </p>
             </fieldset>
@@ -375,8 +377,15 @@ function ScenePreview({
 }) {
   const palette = paletteFor(scene);
   const isPve = scene.gameplay.type === "pve";
-  const enemyCount =
-    scene.gameplay.type === "pve" ? (scene.gameplay.level?.enemies.length ?? 0) : 0;
+  const campaign = scene.gameplay.type === "pve" ? scene.gameplay.campaign : null;
+  const legacy = Boolean(
+    scene.gameplay.type === "pve" && (scene.gameplay.legacy || !scene.gameplay.campaign),
+  );
+  const enemyCount = campaign
+    ? campaign.stages.reduce((sum, stage) => sum + stage.enemies.length, 0)
+    : scene.gameplay.type === "pve"
+      ? (scene.gameplay.level?.enemies?.length ?? 0)
+      : 0;
   const backgroundUrls = scene.theme.background_urls?.length
     ? scene.theme.background_urls
     : scene.theme.background_url
@@ -466,6 +475,16 @@ function ScenePreview({
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           <Badge tone="neutral">{DIFFICULTY_LABEL[scene.gameplay.difficulty]}</Badge>
           <Badge tone="neutral">{isPve ? "PVE 战斗" : "跑酷"}</Badge>
+          {isPve &&
+            (legacy ? (
+              <Badge tone="warning" icon="alert">
+                旧版 PVE
+              </Badge>
+            ) : (
+              <Badge tone="success" icon="layers">
+                三关战役
+              </Badge>
+            ))}
           <Badge tone="neutral">
             {scene.gameplay.type === "pve"
               ? `敌人 ${enemyCount}`
@@ -516,7 +535,9 @@ function ScenePreview({
         ))}
         <Badge tone="success" icon="check">
           {isPve
-            ? `战斗路线可玩 · ${enemyCount} 个敌人`
+            ? legacy
+              ? "旧版 PVE 数据，需重新生成"
+              : `三关战役可玩 · ${enemyCount} 个敌人`
             : `路线连通 · 最大间隙 ${scene.gameplay.validation?.max_gap ?? 0}px`}
         </Badge>
       </div>
@@ -526,11 +547,13 @@ function ScenePreview({
         </p>
       )}
       <div className="mt-4 flex flex-wrap items-center gap-2">
-        <Button variant="primary" icon="play" onClick={onPlay}>
-          {isPve ? "选择人物进入 PVE" : "选择人物开始闯关"}
+        <Button variant="primary" icon="play" onClick={onPlay} disabled={legacy}>
+          {legacy ? "旧版 PVE，需重新生成" : isPve ? "选择人物进入 PVE" : "选择人物开始闯关"}
         </Button>
         {backgroundUrls.length <
-          EXPECTED_BACKGROUNDS[scene.gameplay.length ?? "medium"] && (
+          (isPve
+            ? PVE_EXPECTED_BACKGROUNDS
+            : EXPECTED_BACKGROUNDS[scene.gameplay.length ?? "medium"]) && (
           <Button
             variant="secondary"
             size="sm"
@@ -538,12 +561,16 @@ function ScenePreview({
             loading={retryingBackground}
             onClick={onRetryBackground}
           >
-            生成连续背景
+            {isPve ? "补齐三关背景" : "生成连续背景"}
           </Button>
         )}
         <span className="text-[10.5px] text-ink-4">
           {scene.generation.chat_model ?? "对话模型"} ·{" "}
-          {isPve ? "战斗配置已通过检查" : "路线已通过可玩性检查"}
+          {legacy
+            ? "旧版横版数据，不能进入新版 2.5D 运行时"
+            : isPve
+              ? "三关战役配置已通过检查"
+              : "路线已通过可玩性检查"}
         </span>
       </div>
     </Card>
@@ -580,8 +607,16 @@ function SceneCard({
           <div className="flex items-center gap-2 pr-8">
             <strong className="truncate text-[12.5px] text-ink">{scene.title}</strong>
             <span className="ml-auto shrink-0">
-              <Badge tone={scene.status === "ready" ? "success" : "neutral"}>
-                {scene.status === "ready" ? "可玩" : (STAGE_LABEL[scene.stage] ?? scene.status)}
+              <Badge
+                tone={
+                  scene.status !== "ready" ? "neutral" : scene.legacy ? "warning" : "success"
+                }
+              >
+                {scene.status === "ready"
+                  ? scene.legacy
+                    ? "旧版"
+                    : "可玩"
+                  : (STAGE_LABEL[scene.stage] ?? scene.status)}
               </Badge>
             </span>
           </div>
@@ -610,6 +645,81 @@ function SceneCard({
   );
 }
 
+/** 三关固定竞技场概览：一关一张地面，按纵深坐标摆放敌人。 */
+function CampaignRoutePreview({
+  campaign,
+  palette,
+}: {
+  campaign: PveCampaign;
+  palette: ScenePalette;
+}) {
+  const panelWidth = 360;
+  const panelHeight = 180;
+  const gap = 12;
+  const width = campaign.stages.length * panelWidth + (campaign.stages.length - 1) * gap;
+  return (
+    <svg
+      viewBox={`0 0 ${width} ${panelHeight}`}
+      role="img"
+      aria-label="三关 2.5D 竞技场预览"
+      className="h-20 w-full"
+      preserveAspectRatio="none"
+    >
+      {campaign.stages.map((stage, index) => {
+        const left = index * (panelWidth + gap);
+        const innerWidth = panelWidth - 8;
+        const innerHeight = panelHeight - 8;
+        const scaleX = innerWidth / Math.max(1, stage.arena.width);
+        const scaleY = innerHeight / Math.max(1, stage.arena.depth);
+        return (
+          <g key={stage.id}>
+            <rect x={left} y={0} width={panelWidth} height={panelHeight} rx={6} fill="#141b2a" opacity={0.3} />
+            <rect
+              x={left + 4}
+              y={4}
+              width={innerWidth}
+              height={innerHeight}
+              rx={4}
+              fill={palette.ground}
+              opacity={0.34}
+              stroke={palette.accent}
+              strokeWidth={1}
+            />
+            <circle
+              cx={left + 4 + stage.arena.spawn_x * scaleX}
+              cy={4 + (stage.arena.depth - stage.arena.spawn_y) * scaleY}
+              r={4}
+              fill="#f1c66c"
+              stroke="#1a2438"
+              strokeWidth={1}
+            />
+            {stage.enemies.map((enemy) => (
+              <circle
+                key={enemy.id}
+                cx={left + 4 + enemy.x * scaleX}
+                cy={4 + (stage.arena.depth - enemy.y) * scaleY}
+                r={enemy.kind === "boss" ? 6 : 3}
+                fill={enemy.kind === "boss" ? palette.accent : "#cfe0b2"}
+                stroke="#1a2438"
+                strokeWidth={1}
+              />
+            ))}
+            <text
+              x={left + 8}
+              y={16}
+              fill={palette.accent}
+              fontSize={9}
+              fontFamily="monospace"
+            >
+              {`${index + 1} · ${stage.kind === "boss" ? "BOSS" : `${stage.enemies.length} 小怪`}`}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function SceneRoutePreview({
   scene,
   palette,
@@ -617,9 +727,14 @@ function SceneRoutePreview({
   scene: GameScene;
   palette: ScenePalette;
 }) {
+  if (scene.gameplay.type === "pve") {
+    // 旧版 PVE 不再绘制横版路线，只保留 legacy 提示。
+    return scene.gameplay.campaign ? (
+      <CampaignRoutePreview campaign={scene.gameplay.campaign} palette={palette} />
+    ) : null;
+  }
   const level = scene.gameplay.level;
   if (!level) return null;
-  const isPve = scene.gameplay.type === "pve";
   const environment = scene.intent?.environment ?? "castle";
   const features = scene.gameplay.features ?? [];
   const groundMaterial = platformMaterialFor("ground", palette, environment, features);
@@ -639,10 +754,7 @@ function SceneRoutePreview({
         <PlatformTexturePattern id={floatingPattern} material={floatingMaterial} />
       </defs>
       <rect width={level.width} height="420" fill={palette.skyBottom} opacity="0.16" />
-      {(isPve
-        ? level.platforms.filter((platform) => platform.kind === "ground")
-        : level.platforms
-      ).map((platform, index) => (
+      {level.platforms.map((platform, index) => (
         <g key={`p-${index}`}>
           {platform.kind === "floating" && (
             <rect
@@ -682,40 +794,17 @@ function SceneRoutePreview({
           />
         </g>
       ))}
-      {scene.gameplay.type === "parkour"
-        ? scene.gameplay.level?.coins.map((coin) => (
-            <circle key={coin.id} cx={coin.x} cy={coin.y} r="11" fill={palette.accent} />
-          ))
-        : scene.gameplay.level?.enemies.map((enemy) => (
-            <g key={enemy.id}>
-              <circle
-                cx={enemy.x}
-                cy={enemy.y - (enemy.kind === "boss" ? 42 : 18)}
-                r={enemy.kind === "boss" ? 13 : 8}
-                fill={enemy.kind === "boss" ? palette.accent : "#65764b"}
-                stroke="#25345a"
-                strokeWidth="3"
-              />
-              {enemy.kind === "boss" && (
-                <path
-                  d={`M${enemy.x - 26} ${enemy.y - 78}l8-18 10 12 10-18 10 18 10-12 8 18`}
-                  fill="none"
-                  stroke={palette.accent}
-                  strokeWidth="5"
-                />
-              )}
-            </g>
-          ))}
-      {!isPve && (
-        <line
-          x1={level.goalX}
-          x2={level.goalX}
-          y1={170}
-          y2={level.groundY}
-          stroke={palette.accent}
-          strokeWidth="10"
-        />
-      )}
+      {level.coins.map((coin) => (
+        <circle key={coin.id} cx={coin.x} cy={coin.y} r="11" fill={palette.accent} />
+      ))}
+      <line
+        x1={level.goalX}
+        x2={level.goalX}
+        y1={170}
+        y2={level.groundY}
+        stroke={palette.accent}
+        strokeWidth="10"
+      />
     </svg>
   );
 }

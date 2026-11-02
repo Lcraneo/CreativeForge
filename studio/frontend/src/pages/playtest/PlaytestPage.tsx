@@ -40,7 +40,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
 
   const history = useQuery({
     queryKey: ["playtest-people"],
-    queryFn: () => api.listHistory({ limit: 12 }),
+    queryFn: () => api.listHistory({ kind: "character", limit: 12 }),
   });
   const people = useMemo(
     () =>

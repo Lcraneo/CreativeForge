@@ -687,12 +687,16 @@ def build_router(runtime):
         engine: str = None,
         q: str = None,
         limit: int = 100,
+        kind: str = None,
     ):
+        if kind not in (None, "", "all", "character", "pve_enemy"):
+            raise HTTPException(status_code=422, detail="kind must be character or pve_enemy")
+        kind = kind or None
         records = [
             _localize_history_record(record)
-            for record in runtime.history.list(limit=limit, engine=engine, keyword=q)
+            for record in runtime.history.list(limit=limit, engine=engine, keyword=q, kind=kind)
         ]
-        return {"records": records, "total": runtime.history.count()}
+        return {"records": records, "total": runtime.history.count(kind=kind)}
 
     @router.get("/history/{record_id}")
     def get_history(record_id: str):

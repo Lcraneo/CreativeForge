@@ -30,6 +30,13 @@ const ENGINES = [
   { id: "godot", label: "Godot" },
 ];
 
+const KINDS = [
+  { id: "character", label: "角色档案" },
+  { id: "pve_enemy", label: "PVE 敌人" },
+] as const;
+
+type HistoryKind = (typeof KINDS)[number]["id"];
+
 function statusTone(status: string) {
   return status === "pass" || status === "success"
     ? "success"
@@ -54,6 +61,7 @@ export default function HistoryCenter() {
   const queryClient = useQueryClient();
   const setAsset = useAssetStore((state) => state.set);
   const [engine, setEngine] = useState("all");
+  const [kind, setKind] = useState<HistoryKind>("character");
   const [query, setQuery] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   // 深链支持：/history?open=<id> 直达某条档案（首页「最近出炉」等入口）
@@ -62,12 +70,13 @@ export default function HistoryCenter() {
   const [deleting, setDeleting] = useState(false);
 
   const records = useQuery({
-    queryKey: ["history", engine, query],
+    queryKey: ["history", kind, engine, query],
     queryFn: () =>
       api.listHistory({
         engine: engine === "all" ? undefined : engine,
         q: query.trim() || undefined,
         limit: 80,
+        kind,
       }),
   });
 
@@ -96,6 +105,14 @@ export default function HistoryCenter() {
       else next.add(id);
       return next;
     });
+  }
+
+  function switchKind(next: HistoryKind) {
+    if (next === kind) return;
+    setKind(next);
+    setSelectedId(null);
+    setSelected(new Set());
+    if (searchParams.get("open")) setSearchParams({}, { replace: true });
   }
 
   async function deleteSelected() {
@@ -161,7 +178,7 @@ export default function HistoryCenter() {
       <PageHeader
         overline="History"
         title="历史记录"
-        description="每次资产生产的完整档案：目标、角色规格、质量分数与导出引擎"
+        description="角色与 PVE 敌人档案分开归档：目标、角色规格、质量分数与导出引擎"
       />
 
       {/* 筛选条：搜索 + 引擎筛选 + 批量操作，独立于页头，贴近数据表 */}
@@ -177,6 +194,13 @@ export default function HistoryCenter() {
           aria-label="搜索历史档案"
           className="h-9 min-w-[200px] flex-1"
         />
+        <div role="group" aria-label="按档案类型筛选" className="flex flex-wrap gap-1.5">
+          {KINDS.map((item) => (
+            <Chip key={item.id} active={kind === item.id} onClick={() => switchKind(item.id)}>
+              {item.label}
+            </Chip>
+          ))}
+        </div>
         <div role="group" aria-label="按引擎筛选" className="flex flex-wrap gap-1.5">
           {ENGINES.map((item) => (
             <Chip key={item.id} active={engine === item.id} onClick={() => setEngine(item.id)}>
@@ -208,7 +232,7 @@ export default function HistoryCenter() {
       <div className="grid grid-cols-12 gap-5">
         <Card
           className={cx("col-span-12", selectedId ? "xl:col-span-7" : "xl:col-span-12")}
-          title={`生产档案${records.data ? ` · ${records.data.total} 条` : ""}`}
+          title={`${kind === "pve_enemy" ? "PVE 敌人档案" : "角色生产档案"}${records.data ? ` · ${records.data.total} 条` : ""}`}
           icon="clock"
           bodyClassName="p-0"
         >
@@ -221,11 +245,20 @@ export default function HistoryCenter() {
           ) : rows.length === 0 ? (
             <EmptyState
               icon="clock"
-              title="暂无历史记录"
-              description="完成一次资产生成后，档案会自动归档到这里，可随时回看与重跑。"
+              title={kind === "pve_enemy" ? "暂无 PVE 敌人档案" : "暂无角色档案"}
+              description={
+                kind === "pve_enemy"
+                  ? "在场景工坊的 PVE 敌人工坊生成敌人后，档案会自动归档到这里。"
+                  : "完成一次角色生成后，档案会自动归档到这里，可随时回看与重跑。"
+              }
               action={
-                <Button variant="primary" size="sm" icon="spark" onClick={() => navigate("/workspace")}>
-                  去生成资产
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon="spark"
+                  onClick={() => navigate(kind === "pve_enemy" ? "/scenes" : "/workspace")}
+                >
+                  {kind === "pve_enemy" ? "去场景工坊" : "去生成资产"}
                 </Button>
               }
             />

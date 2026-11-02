@@ -30,6 +30,7 @@ SCENE_DIR = os.path.join(
 DEFAULT_SCENE_PATH = os.path.join(SCENE_DIR, "scenes.json")
 _SAFE_ID = re.compile(r"^scene_[0-9a-f]{12}$")
 BACKGROUND_COUNT_BY_LENGTH = {"short": 3, "medium": 5, "long": 7}
+PVE_BACKGROUND_COUNT = 3
 _BACKGROUND_SHOTS = (
     "opening establishing panorama at the entrance of the route",
     "early route with the first foreground landmarks and layered depth",
@@ -38,6 +39,18 @@ _BACKGROUND_SHOTS = (
     "approach to the final area with the destination visible ahead",
     "final ascent with a strong vertical landmark and colder light",
     "destination gate or exit vista that concludes the environment",
+)
+_PVE_BACKGROUND_SHOTS = (
+    "stage 1 battlefield establishing shot: one continuous seamless ground plane "
+    "stretching from the immediate foreground to the distant horizon, strong "
+    "perspective depth with a low horizon line, distant landmarks and clear "
+    "foreground-to-background scale",
+    "stage 2 battlefield view: the same continuous ground plane pushing deeper "
+    "into hostile territory, different landmarks from stage 1, clear depth "
+    "layers and a fully walkable floor",
+    "stage 3 boss lair: a continuous ground floor leading to a distant focal "
+    "landmark, ominous rim light and strong depth from foreground to the boss "
+    "position",
 )
 
 
@@ -73,6 +86,7 @@ class SceneStore:
                 if isinstance(record, dict) and isinstance(record.get("id"), str)
             }
         interrupted = False
+        legacy = False
         for record in self._records.values():
             if record.get("status") == "generating":
                 record["status"] = "failed"
@@ -82,7 +96,17 @@ class SceneStore:
                     "stage": "interrupted",
                 }
                 interrupted = True
-        if interrupted:
+            gameplay = record.get("gameplay") or {}
+            if (
+                gameplay.get("type") == "pve"
+                and gameplay.get("level")
+                and not gameplay.get("campaign")
+                and not gameplay.get("legacy")
+            ):
+                gameplay["legacy"] = True
+                record["gameplay"] = gameplay
+                legacy = True
+        if interrupted or legacy:
             self._save_locked()
 
     def _save_locked(self) -> None:
@@ -122,9 +146,15 @@ class SceneStore:
         for record in records:
             gameplay = record.get("gameplay") or {}
             level = gameplay.get("level") or {}
+            campaign = gameplay.get("campaign") or {}
             theme = record.get("theme") or {}
             background_urls = theme.get("background_urls") or (
                 [theme["background_url"]] if theme.get("background_url") else []
+            )
+            enemy_count = (
+                sum(len(stage.get("enemies") or []) for stage in campaign.get("stages") or [])
+                if campaign.get("stages")
+                else len(level.get("enemies") or [])
             )
             summaries.append(
                 {
@@ -134,11 +164,12 @@ class SceneStore:
                     "status": record.get("status"),
                     "stage": (record.get("generation") or {}).get("stage"),
                     "gameplay_type": gameplay.get("type") or "parkour",
+                    "legacy": bool(gameplay.get("legacy")),
                     "difficulty": gameplay.get("difficulty"),
                     "background_url": theme.get("background_url"),
                     "background_count": len(background_urls),
                     "coin_count": len(level.get("coins") or []),
-                    "enemy_count": len(level.get("enemies") or []),
+                    "enemy_count": enemy_count,
                     "created_at": record.get("created_at"),
                     "error": record.get("error"),
                 }
@@ -281,15 +312,20 @@ class SceneService:
             )
 
     @staticmethod
-    def background_count(length: str) -> int:
+    def background_count(length: str, gameplay: str = "parkour") -> int:
+        if gameplay == "pve":
+            return PVE_BACKGROUND_COUNT
         return BACKGROUND_COUNT_BY_LENGTH.get(length, BACKGROUND_COUNT_BY_LENGTH["medium"])
 
     @classmethod
     def _background_prompts(
         cls, prompt: str, intent: dict, gameplay: str = "parkour"
     ) -> list[str]:
-        count = cls.background_count(str(intent.get("length") or "medium"))
-        if count == 1:
+        is_pve = gameplay == "pve"
+        count = cls.background_count(str(intent.get("length") or "medium"), gameplay)
+        if is_pve:
+            shot_indexes = list(range(len(_PVE_BACKGROUND_SHOTS)))
+        elif count == 1:
             shot_indexes = [0]
         else:
             shot_indexes = [
@@ -299,21 +335,34 @@ class SceneService:
         palette = intent["palette"]
         prompts = []
         composition = (
-            "2D side-scrolling PVE battle background, wide 16:9 composition, "
-            "no characters, no creatures, no monsters, no text, no UI, "
-            "no gameplay obstacles, no floating platforms, no ledges, "
-            "clear continuous ground-level combat lane. "
-            if gameplay == "pve"
+            "2.5D fixed oblique top-down arena game background, wide 16:9 "
+            "composition, one continuous seamless ground plane filling the "
+            "entire frame from the immediate foreground to the distant horizon, "
+            "strong perspective depth with a low horizon line, high three-quarter "
+            "camera angle, no floating islands, no separated platforms, no "
+            "split-level layers, no arena ring or border, no characters, no "
+            "creatures, no monsters, no text, no UI, no gameplay obstacles, "
+            "no ledges, no hazards, no cover props. "
+            if is_pve
             else "2D side-scrolling platformer background, wide 16:9 composition, "
             "no characters, no creatures, no monsters, no text, no UI, "
             "no gameplay obstacles, clear foreground lane. "
         )
         for index, shot_index in enumerate(shot_indexes):
+            if is_pve:
+                shot_text = _PVE_BACKGROUND_SHOTS[index]
+                shared = (
+                    "Each image is one independent campaign stage and must read as "
+                    "a single continuous walkable floor of the same world, not a "
+                    "floating platform or a closed arena pit."
+                )
+            else:
+                shot_text = _BACKGROUND_SHOTS[shot_index]
+                shared = "Same continuous world and art direction across the sequence."
             prompts.append(
                 composition
-                +
-                f"Same continuous world and art direction across the sequence. "
-                f"Shot {index + 1} of {count}: {_BACKGROUND_SHOTS[shot_index]}. "
+                + shared
+                + f" Shot {index + 1} of {count}: {shot_text}. "
                 f"Theme: {intent['summary']}. Environment: {intent['environment']}. "
                 f"Palette: sky {palette['skyTop']} to {palette['skyBottom']}, "
                 f"ground {palette['ground']}, accent {palette['accent']}. "
@@ -384,7 +433,10 @@ class SceneService:
             return None
         if scene.get("status") == "generating":
             raise RuntimeError("场景仍在生成中")
-        if not ((scene.get("gameplay") or {}).get("level")):
+        if not (
+            (scene.get("gameplay") or {}).get("level")
+            or (scene.get("gameplay") or {}).get("campaign")
+        ):
             raise RuntimeError("场景路线尚未生成")
         self.store.update(
             scene_id,
@@ -429,25 +481,28 @@ class SceneService:
         theme = dict(current.get("theme") or {})
         theme["background_urls"] = background_urls
         theme["background_url"] = background_urls[0] if background_urls else None
-        self.store.update(
-            scene_id,
-            {
-                "status": "ready",
-                "theme": theme,
-                "generation": {
-                    **(current.get("generation") or {}),
-                    "stage": "ready",
-                    "warnings": warning,
-                    "background_total": total,
-                    "background_done": total,
-                    "duration_ms": round((time.time() - started) * 1000),
-                },
-                "updated_at": time.time(),
+        gameplay = (current.get("gameplay") or {}).get("type") or "parkour"
+        payload = {
+            "status": "ready",
+            "theme": theme,
+            "generation": {
+                **(current.get("generation") or {}),
+                "stage": "ready",
+                "warnings": warning,
+                "background_total": total,
+                "background_done": total,
+                "duration_ms": round((time.time() - started) * 1000),
             },
-        )
+            "updated_at": time.time(),
+        }
+        if gameplay == "pve":
+            payload["gameplay"] = self._campaign_with_backgrounds(
+                dict(current.get("gameplay") or {}), background_urls
+            )
+        self.store.update(scene_id, payload)
 
     def update_pve_enemy_sequence(
-        self, scene_id: str, profile_ids: list[str]
+        self, scene_id: str, profile_ids: list[str], stage_id: str | None = None
     ) -> dict | None:
         scene = self.store.get(scene_id)
         if scene is None:
@@ -455,61 +510,74 @@ class SceneService:
         if scene.get("status") != "ready":
             raise ValueError("场景尚未生成完成")
         gameplay = scene.get("gameplay") or {}
-        level = gameplay.get("level")
-        if gameplay.get("type") != "pve" or not isinstance(level, dict):
-            raise ValueError("该场景不是 PVE 关卡")
+        campaign = gameplay.get("campaign")
+        if gameplay.get("type") != "pve" or not isinstance(campaign, dict):
+            if gameplay.get("legacy"):
+                raise ValueError("旧版 PVE 场景需要重新生成后才能替换敌人")
+            raise ValueError("该场景不是 PVE 战役")
 
         updated = copy.deepcopy(scene)
-        updated_level = updated["gameplay"]["level"]
-        enemies = updated_level.get("enemies") or []
-        if len(profile_ids) != len(enemies):
-            raise ValueError("敌人序列与关卡槽位数量不一致")
+        updated_campaign = updated["gameplay"]["campaign"]
+        stages = updated_campaign.get("stages") or []
+        if stage_id:
+            stage = next((item for item in stages if item.get("id") == stage_id), None)
+            if stage is None:
+                raise ValueError("目标关卡不存在")
+            if len(profile_ids) != len(stage.get("enemies") or []):
+                raise ValueError("敌人序列与关卡槽位数量不一致")
+            bindings = [(stage, profile_ids)]
+        else:
+            total_slots = sum(len(item.get("enemies") or []) for item in stages)
+            if len(profile_ids) != total_slots:
+                raise ValueError("敌人序列与战役槽位数量不一致")
+            bindings = []
+            offset = 0
+            for item in stages:
+                count = len(item.get("enemies") or [])
+                bindings.append((item, profile_ids[offset : offset + count]))
+                offset += count
 
         profiles = {
             str(profile.get("id")): profile
             for profile in self._pve_enemy_provider()
             if profile.get("status") == "ready" and profile.get("asset_id")
         }
-        for enemy, profile_id in zip(enemies, profile_ids):
-            profile = profiles.get(str(profile_id))
-            role = "boss" if enemy.get("kind") == "boss" else "minion"
-            if profile is None:
-                raise ValueError("所选敌人不在可用敌人池中")
-            if profile.get("role") != role:
-                raise ValueError("所选敌人与关卡槽位类型不匹配")
-            stats = profile.get("stats") or {}
-            if stats.get("max_hp", 0) <= 0:
-                raise ValueError("所选敌人生命值无效")
-            enemy.update(
-                {
-                    "profile_id": profile_id,
-                    "asset_id": profile["asset_id"],
-                    "name": profile.get("name") or enemy.get("name"),
-                    "behavior": profile.get("behavior") or enemy.get("behavior"),
-                    "element": profile.get("element") or enemy.get("element"),
-                    "projectile_color": profile.get("projectile_color")
-                    or enemy.get("projectile_color"),
-                    "tags": profile.get("tags") or [],
-                    "max_hp": stats.get("max_hp", enemy.get("max_hp")),
-                    "speed": stats.get("speed", enemy.get("speed")),
-                    "damage": stats.get("damage", enemy.get("damage")),
-                    "attack_interval": stats.get(
-                        "attack_interval", enemy.get("attack_interval")
-                    ),
-                    "display_height": stats.get(
-                        "display_height", enemy.get("display_height")
-                    ),
-                }
-            )
-            if role == "boss":
-                for encounter in updated_level.get("encounters") or []:
-                    if (
-                        encounter.get("kind") == "boss"
-                        and enemy.get("id") in (encounter.get("enemy_ids") or [])
-                    ):
-                        encounter["title"] = "守关战 · {}".format(profile["name"])
+        for stage, ids in bindings:
+            for enemy, profile_id in zip(stage.get("enemies") or [], ids):
+                profile = profiles.get(str(profile_id))
+                role = "boss" if enemy.get("kind") == "boss" else "minion"
+                if profile is None:
+                    raise ValueError("所选敌人不在可用敌人池中")
+                if profile.get("role") != role:
+                    raise ValueError("所选敌人与关卡槽位类型不匹配")
+                stats = profile.get("stats") or {}
+                if stats.get("max_hp", 0) <= 0:
+                    raise ValueError("所选敌人生命值无效")
+                enemy.update(
+                    {
+                        "profile_id": profile_id,
+                        "asset_id": profile["asset_id"],
+                        "name": profile.get("name") or enemy.get("name"),
+                        "behavior": profile.get("behavior") or enemy.get("behavior"),
+                        "element": profile.get("element") or enemy.get("element"),
+                        "projectile_color": profile.get("projectile_color")
+                        or enemy.get("projectile_color"),
+                        "tags": profile.get("tags") or [],
+                        "max_hp": stats.get("max_hp", enemy.get("max_hp")),
+                        "speed": stats.get("speed", enemy.get("speed")),
+                        "damage": stats.get("damage", enemy.get("damage")),
+                        "attack_interval": stats.get(
+                            "attack_interval", enemy.get("attack_interval")
+                        ),
+                        "display_height": stats.get(
+                            "display_height", enemy.get("display_height")
+                        ),
+                    }
+                )
+                if role == "boss":
+                    stage["title"] = "第 3 关 · 守关战 · {}".format(profile["name"])
 
-        validation = validate_pve(updated_level, gameplay.get("difficulty") or "normal")
+        validation = validate_pve(updated_campaign, gameplay.get("difficulty") or "normal")
         if not validation["ok"]:
             raise ValueError("敌人序列校验失败：" + "；".join(validation["issues"]))
         updated["gameplay"]["validation"] = validation
@@ -596,7 +664,11 @@ class SceneService:
 
         current = self.store.get(scene_id) or {}
         game = dict(current.get("gameplay") or {})
-        game["level"] = level
+        if gameplay == "pve":
+            game["campaign"] = level
+            game["level"] = None
+        else:
+            game["level"] = level
         game["validation"] = validation
         self.store.update(
             scene_id,
@@ -619,32 +691,57 @@ class SceneService:
         theme = dict(current.get("theme") or {})
         theme["background_urls"] = background_urls
         theme["background_url"] = background_urls[0] if background_urls else None
-        self.store.update(
-            scene_id,
-            {
-                "status": "ready",
-                "theme": theme,
-                "generation": {
-                    "stage": "ready",
-                    "warnings": warning,
-                    "attempts": attempts,
-                    "background_total": background_total,
-                    "background_done": background_total,
-                    "duration_ms": round((time.time() - started) * 1000),
-                    "chat_model": model,
-                    "image_model": settings.get("model"),
-                },
-                "updated_at": time.time(),
+        payload = {
+            "status": "ready",
+            "theme": theme,
+            "generation": {
+                "stage": "ready",
+                "warnings": warning,
+                "attempts": attempts,
+                "background_total": background_total,
+                "background_done": background_total,
+                "duration_ms": round((time.time() - started) * 1000),
+                "chat_model": model,
+                "image_model": settings.get("model"),
             },
-        )
+            "updated_at": time.time(),
+        }
+        if gameplay == "pve":
+            payload["gameplay"] = self._campaign_with_backgrounds(game, background_urls)
+        self.store.update(scene_id, payload)
+
+    @staticmethod
+    def _campaign_with_backgrounds(gameplay: dict, background_urls: list[str]) -> dict:
+        """One independent background per stage: PVE campaign never blends shots."""
+        game = dict(gameplay)
+        campaign = game.get("campaign")
+        if not isinstance(campaign, dict):
+            return game
+        stages = campaign.get("stages")
+        if not isinstance(stages, list):
+            return game
+        campaign = dict(campaign)
+        campaign["stages"] = [
+            {
+                **stage,
+                "background_url": (
+                    background_urls[index] if index < len(background_urls) else None
+                ),
+            }
+            if isinstance(stage, dict)
+            else stage
+            for index, stage in enumerate(stages)
+        ]
+        game["campaign"] = campaign
+        return game
 
     @staticmethod
     def _intent_prompt(
         prompt: str, difficulty: str, gameplay: str = "parkour"
     ) -> str:
-        runtime_label = "横版战斗关卡" if gameplay == "pve" else "横版跑酷游戏"
+        runtime_label = "2.5D 斜俯视竞技场战斗关卡" if gameplay == "pve" else "2D 横版跑酷游戏"
         return (
-            f"你是 2D {runtime_label}关卡策划。根据用户提示词生成关卡语义，"
+            f"你是 {runtime_label}关卡策划。根据用户提示词生成关卡语义，"
             "不要生成坐标、代码、平台列表或碰撞数据。只返回一个 JSON 对象。\n"
             "字段：title(中文短标题)、environment(castle/snow/forest/lava/desert/city)、"
             "mood(中文场景氛围)、difficulty(easy/normal/hard)、length(short/medium/long)、"
