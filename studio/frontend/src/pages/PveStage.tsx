@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../api/client";
+import { api, backendUrl } from "../api/client";
 import { Icon } from "../components/icons";
 import { TouchButton, TouchControlsLayer, TouchJoystick, useTouchControls } from "../components/TouchControls";
 import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
@@ -1669,7 +1669,11 @@ function PveEnemyForge({
                 className="flex items-center gap-2 rounded-md border border-line-subtle bg-canvas p-1.5"
               >
                 <SafeImage
-                  src={enemy.asset_id ? `/api/assets/${enemy.asset_id}/image.png` : undefined}
+                  src={
+                    enemy.asset_id
+                      ? backendUrl(`/api/assets/${encodeURIComponent(enemy.asset_id)}/image.png`)
+                      : undefined
+                  }
                   alt={enemy.name}
                   className="h-10 w-10 shrink-0 rounded-sm bg-paper object-contain"
                 />
