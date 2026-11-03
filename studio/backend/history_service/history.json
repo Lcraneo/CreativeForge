@@ -1,0 +1,3584 @@
+[
+  {
+    "task_id": "T0001",
+    "created_at": 1793581779.325326,
+    "finished_at": 1793581788.3736007,
+    "goal": "全身角色设定图，动漫魔法少女，正面视角，直立面向镜头，双臂自然垂在身体两侧，对称站姿，构图居中，纯白色背景，柔和平光，背景无投影，赛璐璐动漫上色风格，线条干净清晰，色彩鲜艳，大眼闪亮瞳孔，长双马尾发型带发带，层叠裙摆的华丽魔法少女服装，蝴蝶结缎带，星星与月亮元素，镶嵌发光宝石的魔法棒，过膝长靴，精致配饰，高细节，画面锐利清晰，从头到脚完整全身可见，角色设计概念原画，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast73781",
+    "name": "全身角色设定图_动漫魔法少女_正面视角_直立面向",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.047,
+    "character": {
+      "id": "ast73781",
+      "name": "全身角色设定图_动漫魔法少女_正面视角_直立面向",
+      "type": "character",
+      "role": "npc",
+      "seed": 665373781,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#1d451f",
+        "base": "#6cb06f",
+        "highlight": "#cbf1b4",
+        "accent": "#e9c03a",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1793581787331.png",
+      "url": "/api/generated/img_1793581787331.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793581787331.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast73781",
+      "name": "全身角色设定图_动漫魔法少女_正面视角_直立面向",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 665373781,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1d451f",
+          "base": "#6cb06f",
+          "highlight": "#cbf1b4",
+          "accent": "#e9c03a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793581787331.png",
+          "url": "/api/generated/img_1793581787331.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793581787331.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast73781",
+        "name": "全身角色设定图_动漫魔法少女_正面视角_直立面向",
+        "type": "character",
+        "role": "npc",
+        "seed": 665373781,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1d451f",
+          "base": "#6cb06f",
+          "highlight": "#cbf1b4",
+          "accent": "#e9c03a",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast73781",
+          "type": "character",
+          "resources": {
+            "texture": "ast73781.png",
+            "animation": "ast73781.anim",
+            "prefab": "ast73781.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast73781.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast73781.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast73781.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast73781.png",
+          "Animation": "Assets/Animation/ast73781.anim",
+          "Prefab": "Assets/Prefab/ast73781.prefab",
+          "Controller": "Assets/Controller/ast73781.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "全身角色设定图，动漫魔法少女，正面视角，直立面向镜头，双臂自然垂在身体两侧，对称站姿，构图居中，纯白色背景，柔和平光，背景无投影，赛璐璐动漫上色风格，线条干净清晰，色彩鲜艳，大眼闪亮瞳孔，长双马尾发型带发带，层叠裙摆的华丽魔法少女服装，蝴蝶结缎带，星星与月亮元素，镶嵌发光宝石的魔法棒，过膝长靴，精致配饰，高细节，画面锐利清晰，从头到脚完整全身可见，角色设计概念原画，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793581787331.png",
+        "url": "/api/generated/img_1793581787331.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793581787331.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "review": {
+        "approved": true,
+        "note": null,
+        "at": 1793581835.3031979
+      },
+      "design_views": {
+        "front": {
+          "file": "img_1793581787331.png",
+          "url": "/api/generated/img_1793581787331.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793581863163.png",
+          "url": "/api/generated/turnaround_side_1793581863163.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793581861436.png",
+          "bbox": [
+            0,
+            0,
+            1133,
+            1776
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793581863163.png",
+          "url": "/api/generated/turnaround_back_1793581863163.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793581861436.png",
+          "bbox": [
+            1133,
+            0,
+            2368,
+            1776
+          ]
+        }
+      },
+      "design_views_error": null
+    },
+    "id": "T0001"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1793585010.4730437,
+    "finished_at": 1793585020.6840463,
+    "goal": "菌伞射手，站在巨型蘑菇伞下的远程小怪。伞盖中央像炮口一样张开，\n喷射直线飞行的孢子弹；菌盖表面覆盖坚硬菌甲，颜色鲜艳，移动缓慢。。PVE 小怪，ranged、armored、toxic。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast49215",
+    "name": "菌伞射手_站在巨型蘑菇伞下的远程小怪_伞盖中央像",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.926
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 10.208,
+    "character": {
+      "id": "ast49215",
+      "name": "菌伞射手_站在巨型蘑菇伞下的远程小怪_伞盖中央像",
+      "type": "character",
+      "role": "npc",
+      "seed": 468449215,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#701c10",
+        "base": "#ea6128",
+        "highlight": "#ffd755",
+        "accent": "#fbe588",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#e0dad9",
+      "#a78883",
+      "#d0c9c8",
+      "#fafafa",
+      "#2a1e1b",
+      "#373131",
+      "#413938",
+      "#9b9493",
+      "#eeeded",
+      "#a8a5a4",
+      "#8a8686",
+      "#57504e",
+      "#ccc1bf",
+      "#d5d5d4"
+    ],
+    "image": {
+      "file": "img_1793585019461.png",
+      "url": "/api/generated/img_1793585019461.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585019461.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast49215",
+      "name": "菌伞射手_站在巨型蘑菇伞下的远程小怪_伞盖中央像",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 468449215,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#701c10",
+          "base": "#ea6128",
+          "highlight": "#ffd755",
+          "accent": "#fbe588",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793585019461.png",
+          "url": "/api/generated/img_1793585019461.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585019461.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast49215",
+        "name": "菌伞射手_站在巨型蘑菇伞下的远程小怪_伞盖中央像",
+        "type": "character",
+        "role": "npc",
+        "seed": 468449215,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#701c10",
+          "base": "#ea6128",
+          "highlight": "#ffd755",
+          "accent": "#fbe588",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.88,
+          "contour_score": 0.92,
+          "overall": 0.926
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.926
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#e0dad9",
+            "#a78883",
+            "#d0c9c8",
+            "#fafafa",
+            "#2a1e1b",
+            "#373131",
+            "#413938",
+            "#9b9493",
+            "#eeeded",
+            "#a8a5a4",
+            "#8a8686",
+            "#57504e",
+            "#ccc1bf",
+            "#d5d5d4"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#701c10",
+            "base": "#ea6128",
+            "highlight": "#ffd755",
+            "accent": "#fbe588",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#e0dad9",
+            "#a78883",
+            "#a78883",
+            "#d0c9c8",
+            "#fafafa",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#d0c9c8",
+            "#2a1e1b",
+            "#373131",
+            "#373131",
+            "#413938",
+            "#9b9493",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#eeeded",
+            "#a8a5a4",
+            "#8a8686",
+            "#57504e",
+            "#e0dad9",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#fafafa",
+            "#373131",
+            "#2a1e1b",
+            "#ccc1bf",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ccc1bf",
+            "#57504e",
+            "#413938",
+            "#8a8686",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ccc1bf",
+            "#8a8686",
+            "#8a8686",
+            "#d0c9c8",
+            "#fafafa",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#a8a5a4",
+            "#a8a5a4",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#eeeded",
+            "#d5d5d4",
+            "#9b9493",
+            "#9b9493",
+            "#d5d5d4",
+            "#eeeded",
+            "#ffffff"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "菌伞射手，站在巨型蘑菇伞下的远程小怪。伞盖中央像炮口一样张开，\n喷射直线飞行的孢子弹；菌盖表面覆盖坚硬菌甲，颜色鲜艳，移动缓慢。。PVE 小怪，ranged、armored、toxic。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793585019461.png",
+        "url": "/api/generated/img_1793585019461.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585019461.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "minion",
+      "design_views": {
+        "front": {
+          "file": "img_1793585019461.png",
+          "url": "/api/generated/img_1793585019461.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793585046570.png",
+          "url": "/api/generated/turnaround_side_1793585046570.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793585041670.png",
+          "bbox": [
+            0,
+            0,
+            1012,
+            2048
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793585046570.png",
+          "url": "/api/generated/turnaround_back_1793585046570.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793585041670.png",
+          "bbox": [
+            1012,
+            0,
+            2048,
+            2048
+          ]
+        }
+      },
+      "design_views_error": null,
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0001-2"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1793585061.7493038,
+    "finished_at": 1793585070.8507683,
+    "goal": "腐心菌王，蘑菇森林守关 Boss。巨大伞盖像一顶腐朽王冠，边缘垂落发光孢子帘；\n躯干由粗壮菌柄和缠绕菌根构成，胸口裂开一张孢子巨口。战斗中以缓慢逼近为主，\n持续抛射三连孢子弹。\n体型厚重、轮廓清晰，有强烈压迫感。。PVE 守关 Boss，压迫感体型，ranged、armored。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast87416",
+    "name": "腐心菌王_蘑菇森林守关_boss_巨大伞盖像一顶",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.101,
+    "character": {
+      "id": "ast87416",
+      "name": "腐心菌王_蘑菇森林守关_boss_巨大伞盖像一顶",
+      "type": "character",
+      "role": "npc",
+      "seed": 923487416,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#1c421e",
+        "base": "#59a55d",
+        "highlight": "#b7dca1",
+        "accent": "#ffd449",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#f1f1f1",
+      "#a8a6a5",
+      "#605f5c",
+      "#939291",
+      "#e6e5e5",
+      "#4e4e4d",
+      "#333332",
+      "#282827",
+      "#1d1d1d",
+      "#f9f9f9",
+      "#bbbbbb",
+      "#555555",
+      "#d7d7d6",
+      "#7c7b7b",
+      "#d0cdcd"
+    ],
+    "image": {
+      "file": "img_1793585069680.png",
+      "url": "/api/generated/img_1793585069680.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585069680.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast87416",
+      "name": "腐心菌王_蘑菇森林守关_boss_巨大伞盖像一顶",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 923487416,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1c421e",
+          "base": "#59a55d",
+          "highlight": "#b7dca1",
+          "accent": "#ffd449",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793585069680.png",
+          "url": "/api/generated/img_1793585069680.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585069680.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast87416",
+        "name": "腐心菌王_蘑菇森林守关_boss_巨大伞盖像一顶",
+        "type": "character",
+        "role": "npc",
+        "seed": 923487416,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#1c421e",
+          "base": "#59a55d",
+          "highlight": "#b7dca1",
+          "accent": "#ffd449",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#f1f1f1",
+            "#a8a6a5",
+            "#605f5c",
+            "#939291",
+            "#e6e5e5",
+            "#4e4e4d",
+            "#333332",
+            "#282827",
+            "#1d1d1d",
+            "#f9f9f9",
+            "#bbbbbb",
+            "#555555",
+            "#d7d7d6",
+            "#7c7b7b",
+            "#d0cdcd"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#1c421e",
+            "base": "#59a55d",
+            "highlight": "#b7dca1",
+            "accent": "#ffd449",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#f1f1f1",
+            "#f1f1f1",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#f1f1f1",
+            "#a8a6a5",
+            "#605f5c",
+            "#605f5c",
+            "#939291",
+            "#e6e5e5",
+            "#ffffff"
+          ],
+          [
+            "#f1f1f1",
+            "#4e4e4d",
+            "#333332",
+            "#282827",
+            "#1d1d1d",
+            "#1d1d1d",
+            "#333332",
+            "#e6e5e5"
+          ],
+          [
+            "#f9f9f9",
+            "#bbbbbb",
+            "#555555",
+            "#282827",
+            "#333332",
+            "#939291",
+            "#d7d7d6",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#e6e5e5",
+            "#7c7b7b",
+            "#555555",
+            "#4e4e4d",
+            "#7c7b7b",
+            "#d7d7d6",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#d7d7d6",
+            "#bbbbbb",
+            "#555555",
+            "#555555",
+            "#a8a6a5",
+            "#d7d7d6",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#a8a6a5",
+            "#d0cdcd",
+            "#bbbbbb",
+            "#a8a6a5",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#d7d7d6",
+            "#939291",
+            "#a8a6a5",
+            "#a8a6a5",
+            "#7c7b7b",
+            "#d0cdcd",
+            "#f9f9f9"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "腐心菌王，蘑菇森林守关 Boss。巨大伞盖像一顶腐朽王冠，边缘垂落发光孢子帘；\n躯干由粗壮菌柄和缠绕菌根构成，胸口裂开一张孢子巨口。战斗中以缓慢逼近为主，\n持续抛射三连孢子弹。\n体型厚重、轮廓清晰，有强烈压迫感。。PVE 守关 Boss，压迫感体型，ranged、armored。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793585069680.png",
+        "url": "/api/generated/img_1793585069680.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793585069680.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "boss",
+      "design_views": {
+        "front": {
+          "file": "img_1793585069680.png",
+          "url": "/api/generated/img_1793585069680.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793585098306.png",
+          "url": "/api/generated/turnaround_side_1793585098306.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793585093962.png",
+          "bbox": [
+            0,
+            0,
+            1256,
+            1680
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793585098306.png",
+          "url": "/api/generated/turnaround_back_1793585098306.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793585093962.png",
+          "bbox": [
+            1256,
+            0,
+            2512,
+            1680
+          ]
+        }
+      },
+      "design_views_error": null,
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0003"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1793603658.1754496,
+    "finished_at": 1793603667.921397,
+    "goal": "浅紫长卷发的人类女术士，琥珀色竖瞳，冷白肤色，暗紫镶银边的法术长袍，流苏肩甲，星纹刺绣，手握黑曜石魔法权杖，银月吊坠配饰，清冷孤傲气质，2D动漫风，全身立绘，居中站姿，并导入Unity",
+    "engine": "unity",
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast49659",
+    "name": "浅紫长卷发的人类女术士_琥珀色竖瞳_冷白肤色_暗",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "engine": 1.0
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.745,
+    "character": {
+      "id": "ast49659",
+      "name": "浅紫长卷发的人类女术士_琥珀色竖瞳_冷白肤色_暗",
+      "type": "character",
+      "role": "npc",
+      "seed": 981149659,
+      "static": true,
+      "style": "2d",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#842f23",
+        "base": "#ff753a",
+        "highlight": "#f1c63c",
+        "accent": "#ffeb95",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [],
+    "image": {
+      "file": "img_1793603666609.png",
+      "url": "/api/generated/img_1793603666609.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793603666609.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast49659",
+      "name": "浅紫长卷发的人类女术士_琥珀色竖瞳_冷白肤色_暗",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 16,
+        "seed": 981149659,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#842f23",
+          "base": "#ff753a",
+          "highlight": "#f1c63c",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793603666609.png",
+          "url": "/api/generated/img_1793603666609.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793603666609.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast49659",
+        "name": "浅紫长卷发的人类女术士_琥珀色竖瞳_冷白肤色_暗",
+        "type": "character",
+        "role": "npc",
+        "seed": 981149659,
+        "static": true,
+        "style": "2d",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#842f23",
+          "base": "#ff753a",
+          "highlight": "#f1c63c",
+          "accent": "#ffeb95",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "engine": {
+          "overall": 1.0,
+          "status": "success"
+        },
+        "report": {
+          "scores": {
+            "engine": 1.0
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "engine": {
+        "target": "unity",
+        "manifest": {
+          "asset_id": "ast49659",
+          "type": "character",
+          "resources": {
+            "texture": "ast49659.png",
+            "animation": "ast49659.anim",
+            "prefab": "ast49659.prefab"
+          },
+          "valid": true
+        },
+        "validation": {
+          "status": "success",
+          "score": 1.0,
+          "checks": [
+            {
+              "name": "resource:texture",
+              "passed": true,
+              "detail": "ast49659.png"
+            },
+            {
+              "name": "resource:animation",
+              "passed": true,
+              "detail": "ast49659.anim"
+            },
+            {
+              "name": "resource:prefab",
+              "passed": true,
+              "detail": "ast49659.prefab"
+            },
+            {
+              "name": "manifest:contract",
+              "passed": true,
+              "detail": []
+            },
+            {
+              "name": "animation:frame_count",
+              "passed": true,
+              "detail": 8
+            },
+            {
+              "name": "animation:loop",
+              "passed": true,
+              "detail": true
+            },
+            {
+              "name": "engine:unity",
+              "passed": true,
+              "detail": [
+                "Texture",
+                "Animation",
+                "Prefab",
+                "Controller"
+              ]
+            }
+          ]
+        },
+        "resources": {
+          "Texture": "Assets/Texture/ast49659.png",
+          "Animation": "Assets/Animation/ast49659.anim",
+          "Prefab": "Assets/Prefab/ast49659.prefab",
+          "Controller": "Assets/Controller/ast49659.controller"
+        }
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": "unity"
+        },
+        "checkpoint": {
+          "goal": "浅紫长卷发的人类女术士，琥珀色竖瞳，冷白肤色，暗紫镶银边的法术长袍，流苏肩甲，星纹刺绣，手握黑曜石魔法权杖，银月吊坠配饰，清冷孤傲气质，2D动漫风，全身立绘，居中站姿，并导入Unity",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793603666609.png",
+        "url": "/api/generated/img_1793603666609.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793603666609.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "review": {
+        "approved": true,
+        "note": null,
+        "at": 1793603674.8999465
+      },
+      "design_views": {
+        "front": {
+          "file": "img_1793603666609.png",
+          "url": "/api/generated/img_1793603666609.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793603706569.png",
+          "url": "/api/generated/turnaround_side_1793603706569.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793603704017.png",
+          "bbox": [
+            0,
+            0,
+            891,
+            2288
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793603706569.png",
+          "url": "/api/generated/turnaround_back_1793603706569.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793603704017.png",
+          "bbox": [
+            891,
+            0,
+            1824,
+            2288
+          ]
+        }
+      }
+    },
+    "id": "T0001-3"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1793608409.9824774,
+    "finished_at": 1793608420.2566612,
+    "goal": "节肢甲壳冲锋怪物，中等体型，厚重铁灰色甲壳外壳，六条坚硬节肢肢体，背部遍布发光橙红色裂纹，擅长短距离高速向前冲撞，没有额外手臂结构。PVE 小怪，fast、armored、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast87216",
+    "name": "节肢甲壳冲锋怪物_中等体型_厚重铁灰色甲壳外壳_",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.926
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 10.273,
+    "character": {
+      "id": "ast87216",
+      "name": "节肢甲壳冲锋怪物_中等体型_厚重铁灰色甲壳外壳_",
+      "type": "character",
+      "role": "npc",
+      "seed": 639787216,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#843024",
+        "base": "#ff7337",
+        "highlight": "#e9c03a",
+        "accent": "#f3de84",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#f7f5e8",
+      "#eeede0",
+      "#838077",
+      "#97938a",
+      "#e7e5d8",
+      "#5f605c",
+      "#423f38",
+      "#6f716c",
+      "#f4f2e5",
+      "#9b9b94",
+      "#4a4944",
+      "#bdbcb3",
+      "#cfcec3",
+      "#e2e0d4",
+      "#dfded0"
+    ],
+    "image": {
+      "file": "img_1793608418672.png",
+      "url": "/api/generated/img_1793608418672.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608418672.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast87216",
+      "name": "节肢甲壳冲锋怪物_中等体型_厚重铁灰色甲壳外壳_",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 639787216,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#843024",
+          "base": "#ff7337",
+          "highlight": "#e9c03a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793608418672.png",
+          "url": "/api/generated/img_1793608418672.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608418672.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast87216",
+        "name": "节肢甲壳冲锋怪物_中等体型_厚重铁灰色甲壳外壳_",
+        "type": "character",
+        "role": "npc",
+        "seed": 639787216,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#843024",
+          "base": "#ff7337",
+          "highlight": "#e9c03a",
+          "accent": "#f3de84",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.88,
+          "contour_score": 0.92,
+          "overall": 0.926
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.926
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#f7f5e8",
+            "#eeede0",
+            "#838077",
+            "#97938a",
+            "#e7e5d8",
+            "#5f605c",
+            "#423f38",
+            "#6f716c",
+            "#f4f2e5",
+            "#9b9b94",
+            "#4a4944",
+            "#bdbcb3",
+            "#cfcec3",
+            "#e2e0d4",
+            "#dfded0"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#843024",
+            "base": "#ff7337",
+            "highlight": "#e9c03a",
+            "accent": "#f3de84",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8"
+          ],
+          [
+            "#f7f5e8",
+            "#f7f5e8",
+            "#eeede0",
+            "#838077",
+            "#97938a",
+            "#f7f5e8",
+            "#f7f5e8",
+            "#f7f5e8"
+          ],
+          [
+            "#f7f5e8",
+            "#e7e5d8",
+            "#5f605c",
+            "#423f38",
+            "#423f38",
+            "#6f716c",
+            "#f4f2e5",
+            "#f7f5e8"
+          ],
+          [
+            "#f7f5e8",
+            "#9b9b94",
+            "#5f605c",
+            "#423f38",
+            "#4a4944",
+            "#5f605c",
+            "#bdbcb3",
+            "#f7f5e8"
+          ],
+          [
+            "#e7e5d8",
+            "#6f716c",
+            "#bdbcb3",
+            "#4a4944",
+            "#4a4944",
+            "#cfcec3",
+            "#5f605c",
+            "#f7f5e8"
+          ],
+          [
+            "#eeede0",
+            "#97938a",
+            "#e2e0d4",
+            "#838077",
+            "#838077",
+            "#e2e0d4",
+            "#97938a",
+            "#f7f5e8"
+          ],
+          [
+            "#f7f5e8",
+            "#f4f2e5",
+            "#cfcec3",
+            "#9b9b94",
+            "#9b9b94",
+            "#dfded0",
+            "#f4f2e5",
+            "#f7f5e8"
+          ],
+          [
+            "#f7f5e8",
+            "#f7f5e8",
+            "#e2e0d4",
+            "#dfded0",
+            "#dfded0",
+            "#e7e5d8",
+            "#f7f5e8",
+            "#f7f5e8"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "节肢甲壳冲锋怪物，中等体型，厚重铁灰色甲壳外壳，六条坚硬节肢肢体，背部遍布发光橙红色裂纹，擅长短距离高速向前冲撞，没有额外手臂结构。PVE 小怪，fast、armored、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793608418672.png",
+        "url": "/api/generated/img_1793608418672.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608418672.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "minion",
+      "design_views": {
+        "front": {
+          "file": "img_1793608418672.png",
+          "url": "/api/generated/img_1793608418672.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793608461614.png",
+          "url": "/api/generated/turnaround_side_1793608461614.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793608455962.png",
+          "bbox": [
+            0,
+            0,
+            1266,
+            1536
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793608461614.png",
+          "url": "/api/generated/turnaround_back_1793608461614.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793608455962.png",
+          "bbox": [
+            1266,
+            0,
+            2736,
+            1536
+          ]
+        }
+      },
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0002-2"
+  },
+  {
+    "task_id": "T0004",
+    "created_at": 1793608932.0437937,
+    "finished_at": 1793608932.1085277,
+    "goal": "巨型熔岩岩石构装生物，庞大魁梧躯体，由熔融火山岩石拼接而成，多处躯体缝隙溢出流动炽红岩浆，四根粗壮岩石巨肢，肩膀生长巨型熔岩晶簇，挥动巨型熔岩巨拳，行动厚重缓慢。PVE 守关 Boss，压迫感体型，construct、fire、armored。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast13614",
+    "name": "巨型熔岩岩石构装生物_庞大魁梧躯体_由熔融火山岩",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 0.064,
+    "character": {
+      "id": "ast13614",
+      "name": "巨型熔岩岩石构装生物_庞大魁梧躯体_由熔融火山岩",
+      "type": "character",
+      "role": "npc",
+      "seed": 108613614,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#701d11",
+        "base": "#ff7a42",
+        "highlight": "#ffd651",
+        "accent": "#ffe98b",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#c0bfc1",
+      "#dbdada",
+      "#aeacae",
+      "#fbfbfb",
+      "#60575c",
+      "#574545",
+      "#a19c9e",
+      "#3b2b2b",
+      "#423638",
+      "#e5e5e6",
+      "#4b4349",
+      "#8e8a8c",
+      "#d2d0d1",
+      "#eeeeee",
+      "#756e71"
+    ],
+    "image": {
+      "file": "img_1793608443655.png",
+      "url": "/api/generated/img_1793608443655.png",
+      "model": "wanx2.1-t2i-turbo",
+      "cached": true,
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608443655.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast13614",
+      "name": "巨型熔岩岩石构装生物_庞大魁梧躯体_由熔融火山岩",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 108613614,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#701d11",
+          "base": "#ff7a42",
+          "highlight": "#ffd651",
+          "accent": "#ffe98b",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793608443655.png",
+          "url": "/api/generated/img_1793608443655.png",
+          "model": "wanx2.1-t2i-turbo",
+          "cached": true,
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608443655.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast13614",
+        "name": "巨型熔岩岩石构装生物_庞大魁梧躯体_由熔融火山岩",
+        "type": "character",
+        "role": "npc",
+        "seed": 108613614,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#701d11",
+          "base": "#ff7a42",
+          "highlight": "#ffd651",
+          "accent": "#ffe98b",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#c0bfc1",
+            "#dbdada",
+            "#aeacae",
+            "#fbfbfb",
+            "#60575c",
+            "#574545",
+            "#a19c9e",
+            "#3b2b2b",
+            "#423638",
+            "#e5e5e6",
+            "#4b4349",
+            "#8e8a8c",
+            "#d2d0d1",
+            "#eeeeee",
+            "#756e71"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#701d11",
+            "base": "#ff7a42",
+            "highlight": "#ffd651",
+            "accent": "#ffe98b",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#c0bfc1",
+            "#c0bfc1",
+            "#dbdada",
+            "#aeacae",
+            "#fbfbfb",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#dbdada",
+            "#60575c",
+            "#574545",
+            "#574545",
+            "#60575c",
+            "#dbdada",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#a19c9e",
+            "#3b2b2b",
+            "#423638",
+            "#574545",
+            "#423638",
+            "#a19c9e",
+            "#ffffff"
+          ],
+          [
+            "#e5e5e6",
+            "#4b4349",
+            "#a19c9e",
+            "#423638",
+            "#423638",
+            "#8e8a8c",
+            "#574545",
+            "#dbdada"
+          ],
+          [
+            "#fbfbfb",
+            "#574545",
+            "#8e8a8c",
+            "#4b4349",
+            "#4b4349",
+            "#a19c9e",
+            "#60575c",
+            "#d2d0d1"
+          ],
+          [
+            "#ffffff",
+            "#eeeeee",
+            "#756e71",
+            "#756e71",
+            "#a19c9e",
+            "#60575c",
+            "#fbfbfb",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#eeeeee",
+            "#423638",
+            "#a19c9e",
+            "#aeacae",
+            "#4b4349",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#eeeeee",
+            "#c0bfc1",
+            "#8e8a8c",
+            "#aeacae",
+            "#aeacae",
+            "#8e8a8c",
+            "#c0bfc1",
+            "#eeeeee"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "巨型熔岩岩石构装生物，庞大魁梧躯体，由熔融火山岩石拼接而成，多处躯体缝隙溢出流动炽红岩浆，四根粗壮岩石巨肢，肩膀生长巨型熔岩晶簇，挥动巨型熔岩巨拳，行动厚重缓慢。PVE 守关 Boss，压迫感体型，construct、fire、armored。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793608443655.png",
+        "url": "/api/generated/img_1793608443655.png",
+        "model": "wanx2.1-t2i-turbo",
+        "cached": true,
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793608443655.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "boss",
+      "design_views": {
+        "front": {
+          "file": "img_1793608443655.png",
+          "url": "/api/generated/img_1793608443655.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793608965193.png",
+          "url": "/api/generated/turnaround_side_1793608965193.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793608961296.png",
+          "bbox": [
+            0,
+            0,
+            852,
+            2048
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793608965193.png",
+          "url": "/api/generated/turnaround_back_1793608965193.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793608961296.png",
+          "bbox": [
+            852,
+            0,
+            2048,
+            2048
+          ]
+        }
+      },
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0004"
+  },
+  {
+    "task_id": "T0001",
+    "created_at": 1793664980.2872868,
+    "finished_at": 1793664990.1326253,
+    "goal": "被苍白感染侵蚀的残破虫躯，数根纤细尖锐节肢，壳身遍布流淌的惨白感染脓光裂隙，外壳多处残缺破损，小体型，弹射破碎感染晶刺进行攻击，虫壳表面布满斑驳腐蚀痕迹。PVE 小怪，ranged、toxic、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast45966",
+    "name": "被苍白感染侵蚀的残破虫躯_数根纤细尖锐节肢_壳身",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 9.845,
+    "character": {
+      "id": "ast45966",
+      "name": "被苍白感染侵蚀的残破虫躯_数根纤细尖锐节肢_壳身",
+      "type": "character",
+      "role": "npc",
+      "seed": 715145966,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#7c2215",
+        "base": "#f16429",
+        "highlight": "#ffd343",
+        "accent": "#ffea90",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#fcfcfc",
+      "#f9f8f8",
+      "#f1f1f0",
+      "#b2b5ae",
+      "#83877c",
+      "#d9dad8",
+      "#f7f7f6",
+      "#c5c5c3",
+      "#90958c",
+      "#656b5f",
+      "#4e5549",
+      "#fefefe",
+      "#525945",
+      "#e4e4e4",
+      "#d3d4d2"
+    ],
+    "image": {
+      "file": "img_1793664988084.png",
+      "url": "/api/generated/img_1793664988084.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793664988084.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast45966",
+      "name": "被苍白感染侵蚀的残破虫躯_数根纤细尖锐节肢_壳身",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 715145966,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7c2215",
+          "base": "#f16429",
+          "highlight": "#ffd343",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793664988084.png",
+          "url": "/api/generated/img_1793664988084.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793664988084.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast45966",
+        "name": "被苍白感染侵蚀的残破虫躯_数根纤细尖锐节肢_壳身",
+        "type": "character",
+        "role": "npc",
+        "seed": 715145966,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#7c2215",
+          "base": "#f16429",
+          "highlight": "#ffd343",
+          "accent": "#ffea90",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "attack"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#fcfcfc",
+            "#f9f8f8",
+            "#f1f1f0",
+            "#b2b5ae",
+            "#83877c",
+            "#d9dad8",
+            "#f7f7f6",
+            "#c5c5c3",
+            "#90958c",
+            "#656b5f",
+            "#4e5549",
+            "#fefefe",
+            "#525945",
+            "#e4e4e4",
+            "#d3d4d2"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#7c2215",
+            "base": "#f16429",
+            "highlight": "#ffd343",
+            "accent": "#ffea90",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#fcfcfc",
+            "#fcfcfc",
+            "#f9f8f8",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#f1f1f0",
+            "#b2b5ae",
+            "#83877c",
+            "#d9dad8",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#f7f7f6",
+            "#c5c5c3",
+            "#90958c",
+            "#656b5f",
+            "#90958c",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#fcfcfc",
+            "#d9dad8",
+            "#4e5549",
+            "#4e5549",
+            "#83877c",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#fefefe",
+            "#c5c5c3",
+            "#4e5549",
+            "#525945",
+            "#90958c",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#656b5f",
+            "#83877c",
+            "#e4e4e4",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#f7f7f6",
+            "#656b5f",
+            "#c5c5c3",
+            "#d3d4d2",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#ffffff",
+            "#fefefe",
+            "#f9f8f8",
+            "#d9dad8",
+            "#e4e4e4",
+            "#ffffff",
+            "#ffffff"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "被苍白感染侵蚀的残破虫躯，数根纤细尖锐节肢，壳身遍布流淌的惨白感染脓光裂隙，外壳多处残缺破损，小体型，弹射破碎感染晶刺进行攻击，虫壳表面布满斑驳腐蚀痕迹。PVE 小怪，ranged、toxic、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793664988084.png",
+        "url": "/api/generated/img_1793664988084.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793664988084.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "minion",
+      "design_views": {
+        "front": {
+          "file": "img_1793664988084.png",
+          "url": "/api/generated/img_1793664988084.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793665015722.png",
+          "url": "/api/generated/turnaround_side_1793665015722.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665011166.png",
+          "bbox": [
+            0,
+            0,
+            1212,
+            1680
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793665015722.png",
+          "url": "/api/generated/turnaround_back_1793665015722.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665011166.png",
+          "bbox": [
+            1212,
+            0,
+            2512,
+            1680
+          ]
+        }
+      },
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0001-4"
+  },
+  {
+    "task_id": "T0002",
+    "created_at": 1793665016.9519386,
+    "finished_at": 1793665028.367216,
+    "goal": "硬化虫壳守卫畸变体，厚重层叠的老旧虫甲外壳，多根粗壮节肢支撑躯体，甲壳缝隙溢出惨白感染光晕，体型中等，行动沉稳，能够向前猛冲撞击目标，甲壳边缘碎裂尖锐。PVE 小怪，armored、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast74320",
+    "name": "硬化虫壳守卫畸变体_厚重层叠的老旧虫甲外壳_多根",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 11.415,
+    "character": {
+      "id": "ast74320",
+      "name": "硬化虫壳守卫畸变体_厚重层叠的老旧虫甲外壳_多根",
+      "type": "character",
+      "role": "npc",
+      "seed": 35574320,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#873529",
+        "base": "#f36529",
+        "highlight": "#e8bf39",
+        "accent": "#ffeb97",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#bbb3aa",
+      "#b2aba3",
+      "#968f87",
+      "#bbb4aa",
+      "#4d4741",
+      "#3c3731",
+      "#bdb5ac",
+      "#332e29",
+      "#8e8a85",
+      "#655f59",
+      "#c1bbb3",
+      "#7b756e",
+      "#1a1614",
+      "#d0c9c3",
+      "#b9b4ae",
+      "#ddd7d1"
+    ],
+    "image": {
+      "file": "img_1793665025650.png",
+      "url": "/api/generated/img_1793665025650.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665025650.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast74320",
+      "name": "硬化虫壳守卫畸变体_厚重层叠的老旧虫甲外壳_多根",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 35574320,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#873529",
+          "base": "#f36529",
+          "highlight": "#e8bf39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793665025650.png",
+          "url": "/api/generated/img_1793665025650.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665025650.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast74320",
+        "name": "硬化虫壳守卫畸变体_厚重层叠的老旧虫甲外壳_多根",
+        "type": "character",
+        "role": "npc",
+        "seed": 35574320,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#873529",
+          "base": "#f36529",
+          "highlight": "#e8bf39",
+          "accent": "#ffeb97",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#bbb3aa",
+            "#b2aba3",
+            "#968f87",
+            "#bbb4aa",
+            "#4d4741",
+            "#3c3731",
+            "#bdb5ac",
+            "#332e29",
+            "#8e8a85",
+            "#655f59",
+            "#c1bbb3",
+            "#7b756e",
+            "#1a1614",
+            "#d0c9c3",
+            "#b9b4ae",
+            "#ddd7d1"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#873529",
+            "base": "#f36529",
+            "highlight": "#e8bf39",
+            "accent": "#ffeb97",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#bbb3aa",
+            "#bbb3aa",
+            "#b2aba3",
+            "#968f87",
+            "#968f87",
+            "#bbb3aa",
+            "#bbb3aa",
+            "#bbb3aa"
+          ],
+          [
+            "#bbb4aa",
+            "#bbb3aa",
+            "#4d4741",
+            "#3c3731",
+            "#3c3731",
+            "#4d4741",
+            "#bbb3aa",
+            "#bbb3aa"
+          ],
+          [
+            "#bdb5ac",
+            "#b2aba3",
+            "#3c3731",
+            "#3c3731",
+            "#332e29",
+            "#3c3731",
+            "#bbb3aa",
+            "#bdb5ac"
+          ],
+          [
+            "#bdb5ac",
+            "#8e8a85",
+            "#655f59",
+            "#332e29",
+            "#332e29",
+            "#4d4741",
+            "#968f87",
+            "#bdb5ac"
+          ],
+          [
+            "#c1bbb3",
+            "#655f59",
+            "#7b756e",
+            "#1a1614",
+            "#1a1614",
+            "#655f59",
+            "#7b756e",
+            "#c1bbb3"
+          ],
+          [
+            "#d0c9c3",
+            "#b2aba3",
+            "#655f59",
+            "#332e29",
+            "#4d4741",
+            "#655f59",
+            "#b9b4ae",
+            "#d0c9c3"
+          ],
+          [
+            "#ddd7d1",
+            "#ddd7d1",
+            "#655f59",
+            "#968f87",
+            "#968f87",
+            "#7b756e",
+            "#ddd7d1",
+            "#ddd7d1"
+          ],
+          [
+            "#ddd7d1",
+            "#d0c9c3",
+            "#8e8a85",
+            "#c1bbb3",
+            "#b9b4ae",
+            "#8e8a85",
+            "#d0c9c3",
+            "#ddd7d1"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "硬化虫壳守卫畸变体，厚重层叠的老旧虫甲外壳，多根粗壮节肢支撑躯体，甲壳缝隙溢出惨白感染光晕，体型中等，行动沉稳，能够向前猛冲撞击目标，甲壳边缘碎裂尖锐。PVE 小怪，armored、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793665025650.png",
+        "url": "/api/generated/img_1793665025650.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665025650.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "minion",
+      "design_views": {
+        "front": {
+          "file": "img_1793665025650.png",
+          "url": "/api/generated/img_1793665025650.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793665079029.png",
+          "url": "/api/generated/turnaround_side_1793665079029.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665045723.png",
+          "bbox": [
+            0,
+            0,
+            844,
+            2048
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793665079029.png",
+          "url": "/api/generated/turnaround_back_1793665079029.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665045723.png",
+          "bbox": [
+            844,
+            0,
+            2048,
+            2048
+          ]
+        }
+      },
+      "pve_action_views": {
+        "idle": "side",
+        "walk": "side",
+        "attack": "side"
+      },
+      "pve_action_view": "side"
+    },
+    "id": "T0002-3"
+  },
+  {
+    "task_id": "T0003",
+    "created_at": 1793665046.6429636,
+    "finished_at": 1793665057.162648,
+    "goal": "受感染腐化的远古虫族领主巨兽，巨大层叠龟裂虫壳躯体，大量修长锋利的虫肢，壳体布满破碎缺口与古老刻纹，体型庞大充满压迫感，移动缓慢，大范围挥扫虫肢，喷射大片感染晶屑。PVE 守关 Boss，压迫感体型，armored、toxic、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+    "engine": null,
+    "status": "pass",
+    "report_status": "PASS",
+    "error": null,
+    "asset_id": "ast47213",
+    "name": "受感染腐化的远古虫族领主巨兽_巨大层叠龟裂虫壳躯",
+    "type": "character",
+    "role": "npc",
+    "action": "idle",
+    "frames": null,
+    "fps": 12,
+    "scores": {
+      "pixel": 0.9312
+    },
+    "qa_rounds": 0,
+    "elapsed_seconds": 10.519,
+    "character": {
+      "id": "ast47213",
+      "name": "受感染腐化的远古虫族领主巨兽_巨大层叠龟裂虫壳躯",
+      "type": "character",
+      "role": "npc",
+      "seed": 575647213,
+      "static": true,
+      "style": "pixel",
+      "palette": {
+        "outline": "#07090d",
+        "shadow": "#832e22",
+        "base": "#e55f27",
+        "highlight": "#ffd651",
+        "accent": "#ffeb96",
+        "hair": "#a16207",
+        "skin": "#f4d58d",
+        "eyes": "#ff6a2b",
+        "metal": "#94a3b8"
+      }
+    },
+    "palette": [
+      "#ffffff",
+      "#d5d2d1",
+      "#fcfcfc",
+      "#93908f",
+      "#494340",
+      "#655e59",
+      "#8a8889",
+      "#f0f0f0",
+      "#3d3835",
+      "#312d2c",
+      "#1f1c1d",
+      "#a9a8a9",
+      "#e9e9e9",
+      "#9c9b9d",
+      "#7b7a7b",
+      "#c5c5c7"
+    ],
+    "image": {
+      "file": "img_1793665054445.png",
+      "url": "/api/generated/img_1793665054445.png",
+      "model": "wanx2.1-t2i-turbo",
+      "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665054445.png",
+      "width": 1024,
+      "height": 1024
+    },
+    "enhanced_prompt": null,
+    "model_image_error": null,
+    "asset": {
+      "id": "ast47213",
+      "name": "受感染腐化的远古虫族领主巨兽_巨大层叠龟裂虫壳躯",
+      "type": "character",
+      "role": "npc",
+      "source": {
+        "width": 64,
+        "height": 64,
+        "frame_size": {
+          "width": 64,
+          "height": 64
+        },
+        "grid_size": 8,
+        "seed": 575647213,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#832e22",
+          "base": "#e55f27",
+          "highlight": "#ffd651",
+          "accent": "#ffeb96",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        },
+        "ai_image": {
+          "file": "img_1793665054445.png",
+          "url": "/api/generated/img_1793665054445.png",
+          "model": "wanx2.1-t2i-turbo",
+          "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665054445.png",
+          "width": 1024,
+          "height": 1024
+        }
+      },
+      "character": {
+        "id": "ast47213",
+        "name": "受感染腐化的远古虫族领主巨兽_巨大层叠龟裂虫壳躯",
+        "type": "character",
+        "role": "npc",
+        "seed": 575647213,
+        "static": true,
+        "style": "pixel",
+        "palette": {
+          "outline": "#07090d",
+          "shadow": "#832e22",
+          "base": "#e55f27",
+          "highlight": "#ffd651",
+          "accent": "#ffeb96",
+          "hair": "#a16207",
+          "skin": "#f4d58d",
+          "eyes": "#ff6a2b",
+          "metal": "#94a3b8"
+        }
+      },
+      "animation": {
+        "action": "idle",
+        "actions": [
+          "idle"
+        ],
+        "frames": [
+          {
+            "id": 0,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 1,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 2,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 3,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 4,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 5,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 6,
+            "image": null,
+            "action": "idle"
+          },
+          {
+            "id": 7,
+            "image": null,
+            "action": "idle"
+          }
+        ],
+        "fps": 12,
+        "loop": true
+      },
+      "quality": {
+        "pixel": {
+          "grid_accuracy": 0.97,
+          "palette_score": 0.895,
+          "contour_score": 0.92,
+          "overall": 0.9312
+        },
+        "report": {
+          "scores": {
+            "pixel": 0.9312
+          },
+          "thresholds": {
+            "pixel": 0.8,
+            "animation": 0.85,
+            "engine": 0.9
+          },
+          "checks": {
+            "structure": {
+              "verdict": "SKIP",
+              "detail": "manifest 未产出"
+            },
+            "timeline": {
+              "verdict": "PASS",
+              "detail": "帧无时长提示，无矛盾可查"
+            },
+            "performance": {
+              "verdict": "SKIP",
+              "detail": "无性能打点"
+            }
+          },
+          "retry": [],
+          "status": "PASS",
+          "sections": {
+            "pixel": "palette / outline / style",
+            "animation": "drift / jitter / phase",
+            "engine": "missing asset / runtime error"
+          }
+        }
+      },
+      "pixel": {
+        "grid": {
+          "size": 8,
+          "phase_x": 0,
+          "phase_y": 0,
+          "confidence": 0.97
+        },
+        "palette": {
+          "max_colors": 16,
+          "colors": [
+            "#ffffff",
+            "#d5d2d1",
+            "#fcfcfc",
+            "#93908f",
+            "#494340",
+            "#655e59",
+            "#8a8889",
+            "#f0f0f0",
+            "#3d3835",
+            "#312d2c",
+            "#1f1c1d",
+            "#a9a8a9",
+            "#e9e9e9",
+            "#9c9b9d",
+            "#7b7a7b",
+            "#c5c5c7"
+          ],
+          "semantic_roles": {
+            "outline": "#07090d",
+            "shadow": "#832e22",
+            "base": "#e55f27",
+            "highlight": "#ffd651",
+            "accent": "#ffeb96",
+            "hair": "#a16207",
+            "skin": "#f4d58d",
+            "eyes": "#ff6a2b",
+            "metal": "#94a3b8"
+          },
+          "source": "ai-image"
+        },
+        "contour": {
+          "thickness": 1,
+          "connectivity": 8,
+          "style": "hard",
+          "repaired": true,
+          "repaired_pixels": 0
+        },
+        "pixels": [
+          [
+            "#ffffff",
+            "#ffffff",
+            "#ffffff",
+            "#d5d2d1",
+            "#d5d2d1",
+            "#ffffff",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#ffffff",
+            "#fcfcfc",
+            "#93908f",
+            "#494340",
+            "#655e59",
+            "#8a8889",
+            "#ffffff",
+            "#ffffff"
+          ],
+          [
+            "#f0f0f0",
+            "#d5d2d1",
+            "#3d3835",
+            "#312d2c",
+            "#1f1c1d",
+            "#312d2c",
+            "#f0f0f0",
+            "#ffffff"
+          ],
+          [
+            "#d5d2d1",
+            "#494340",
+            "#655e59",
+            "#312d2c",
+            "#1f1c1d",
+            "#494340",
+            "#8a8889",
+            "#ffffff"
+          ],
+          [
+            "#d5d2d1",
+            "#3d3835",
+            "#a9a8a9",
+            "#3d3835",
+            "#1f1c1d",
+            "#8a8889",
+            "#3d3835",
+            "#e9e9e9"
+          ],
+          [
+            "#fcfcfc",
+            "#494340",
+            "#9c9b9d",
+            "#3d3835",
+            "#7b7a7b",
+            "#7b7a7b",
+            "#a9a8a9",
+            "#c5c5c7"
+          ],
+          [
+            "#fcfcfc",
+            "#c5c5c7",
+            "#7b7a7b",
+            "#7b7a7b",
+            "#93908f",
+            "#7b7a7b",
+            "#e9e9e9",
+            "#f0f0f0"
+          ],
+          [
+            "#f0f0f0",
+            "#c5c5c7",
+            "#93908f",
+            "#9c9b9d",
+            "#a9a8a9",
+            "#8a8889",
+            "#c5c5c7",
+            "#f0f0f0"
+          ]
+        ],
+        "style": "pixel"
+      },
+      "memory": {
+        "user_style": {
+          "style": "pixel",
+          "palette": 16,
+          "engine": null
+        },
+        "checkpoint": {
+          "goal": "受感染腐化的远古虫族领主巨兽，巨大层叠龟裂虫壳躯体，大量修长锋利的虫肢，壳体布满破碎缺口与古老刻纹，体型庞大充满压迫感，移动缓慢，大范围挥扫虫肢，喷射大片感染晶屑。PVE 守关 Boss，压迫感体型，armored、toxic、beast。2D 横版游戏敌人，单人全身，轮廓清晰，适合游戏剪影识别，像素风与动漫平涂均可，纯白背景，无地面、无文字、无边框、无其他人物。",
+          "completed_steps": [
+            "M01",
+            "M01",
+            "M01"
+          ],
+          "errors": [],
+          "checkpoints": [
+            "M01"
+          ]
+        }
+      },
+      "image": {
+        "file": "img_1793665054445.png",
+        "url": "/api/generated/img_1793665054445.png",
+        "model": "wanx2.1-t2i-turbo",
+        "path": "D:\\pyProject\\creative-forge\\studio\\backend\\generated\\img_1793665054445.png",
+        "width": 1024,
+        "height": 1024
+      },
+      "pve_enemy": true,
+      "pve_role": "boss",
+      "design_views": {
+        "front": {
+          "file": "img_1793665054445.png",
+          "url": "/api/generated/img_1793665054445.png",
+          "model": "wanx2.1-t2i-turbo",
+          "view": "front"
+        },
+        "side": {
+          "file": "turnaround_side_1793665093774.png",
+          "url": "/api/generated/turnaround_side_1793665093774.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "side",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665076059.png",
+          "bbox": [
+            0,
+            0,
+            1459,
+            1456
+          ],
+          "facing": "right"
+        },
+        "back": {
+          "file": "turnaround_back_1793665093774.png",
+          "url": "/api/generated/turnaround_back_1793665093774.png",
+          "model": "qwen-image-2.1-turbo",
+          "view": "back",
+          "source": "qwen-turnaround-sheet",
+          "sheet_file": "edit_1793665076059.png",
+          "bbox": [
+            1459,
+            0,
+            2896,
+            1456
+          ]
+        }
+      }
+    },
+    "id": "T0003-3"
+  }
+]

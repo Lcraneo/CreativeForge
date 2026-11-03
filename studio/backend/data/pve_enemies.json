@@ -126,6 +126,67 @@
       "action_warning": null,
       "task_id": "T0004",
       "action_batch_id": "8142335a"
+    },
+    {
+      "id": "pve_fc5befd848",
+      "name": "感染虫仆",
+      "role": "minion",
+      "prompt": "被苍白感染侵蚀的残破虫躯，数根纤细尖锐节肢，壳身遍布流淌的惨白感染脓光裂隙，外壳多处残缺破损，小体型，弹射破碎感染晶刺进行攻击，虫壳表面布满斑驳腐蚀痕迹",
+      "summary": "小型虫类仆从，弹射破碎感染晶刺攻击玩家。",
+      "tags": [
+        "ranged",
+        "toxic",
+        "beast"
+      ],
+      "behavior": "shooter",
+      "element": "toxic",
+      "projectile_color": "#9fe56f",
+      "asset_id": "ast45966",
+      "status": "ready",
+      "difficulty": "hard",
+      "stats": {
+        "max_hp": 4,
+        "speed": 76,
+        "damage": 1,
+        "attack_interval": 2.05,
+        "display_height": 92
+      },
+      "created_at": 1793664977.432064,
+      "updated_at": 1793665527.393732,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0001",
+      "action_batch_id": "56f780c7"
+    },
+    {
+      "id": "pve_bb03a0148f",
+      "name": "硬化虫壳守卫",
+      "role": "minion",
+      "prompt": "硬化虫壳守卫畸变体，厚重层叠的老旧虫甲外壳，多根粗壮节肢支撑躯体，甲壳缝隙溢出惨白感染光晕，体型中等，行动沉稳，能够向前猛冲撞击目标，甲壳边缘碎裂尖锐",
+      "summary": "厚重虫甲外壳的中等体型敌人，能猛冲撞击目标并释放感染光晕。",
+      "tags": [
+        "armored",
+        "beast"
+      ],
+      "behavior": "charger",
+      "element": "physical",
+      "projectile_color": "#e8d49d",
+      "asset_id": "ast74320",
+      "status": "ready",
+      "difficulty": "hard",
+      "stats": {
+        "max_hp": 4,
+        "speed": 106,
+        "damage": 1,
+        "attack_interval": 1.9999999999999998,
+        "display_height": 92
+      },
+      "created_at": 1793665015.6705673,
+      "updated_at": 1793665532.8090072,
+      "error": null,
+      "action_warning": null,
+      "task_id": "T0002",
+      "action_batch_id": "92d36c5d"
     }
   ]
 }
