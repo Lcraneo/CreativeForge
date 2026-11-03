@@ -10,9 +10,11 @@ services:
     healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
-      - key: MODEL_ENABLED
-        value: "false"
       - key: STUDIO_RATE_LIMIT
         value: "120"
       - key: STUDIO_CORS_ORIGINS
+        sync: false
+      # 百炼凭证：值需在 Render Dashboard 的 Environment 中填写（不入库）
+      # 后端 model_service 检测到该变量会自动启用 AI 管线
+      - key: DASHSCOPE_API_KEY
         sync: false
