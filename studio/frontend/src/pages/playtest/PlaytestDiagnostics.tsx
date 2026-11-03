@@ -8,7 +8,7 @@
  */
 import { Badge, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
-import type { ActionBatchTask, PlaytestCharacter, PlaytestCustomAction, PlaytestStrip } from "../../types";
+import type { ActionBatchTask, PlaytestCharacter, PlaytestStrip } from "../../types";
 import { BASE_ACTION_LABEL, ERROR_KIND_LABEL } from "./PlaytestActionDock";
 import type { StripPhase } from "./usePlaytestAssets";
 
@@ -17,7 +17,6 @@ export interface PlaytestDiagnosticsProps {
   character?: PlaytestCharacter | null;
   actions: string[];
   strips: Record<string, PlaytestStrip>;
-  customActions: PlaytestCustomAction[];
   phase: (key: string) => StripPhase;
   progress: { ready: number; total: number; pct: number };
   batchTasks: ActionBatchTask[];
@@ -46,7 +45,7 @@ function PhaseDot({ phase }: { phase: StripPhase }) {
 }
 
 export function PlaytestDiagnostics(props: PlaytestDiagnosticsProps) {
-  const { source, character, actions, strips, customActions, phase, progress, batchTasks, onClose } = props;
+  const { source, character, actions, strips, phase, progress, batchTasks, onClose } = props;
   const chibi = character?.proportion === "chibi";
   const activeTasks = batchTasks.filter(
     (task) => task.status === "generating" || task.status === "failed",
@@ -104,17 +103,6 @@ export function PlaytestDiagnostics(props: PlaytestDiagnosticsProps) {
                 <PhaseDot phase={itemPhase} />
                 <span className="flex-1">{BASE_ACTION_LABEL[name] ?? name}</span>
                 {strips[name]?.engine === "ai-video" && <Badge tone="primary">AI</Badge>}
-                <span className="font-mono text-[10px] text-ink-4">{itemPhase}</span>
-              </li>
-            );
-          })}
-          {customActions.map((item) => {
-            const key = `custom:${item.name}`;
-            const itemPhase = phase(key);
-            return (
-              <li key={key} className="flex items-center gap-2 text-[11px]">
-                <PhaseDot phase={itemPhase} />
-                <span className="flex-1 truncate text-ink-2">{item.name}</span>
                 <span className="font-mono text-[10px] text-ink-4">{itemPhase}</span>
               </li>
             );

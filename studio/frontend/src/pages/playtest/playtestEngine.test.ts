@@ -35,30 +35,14 @@ describe("playtest engine state machine", () => {
     expect(engine.update(33.4).action).toBe("run");
   });
 
-  it("prioritizes attack over movement while the one-shot is playing", () => {
+  it("prioritizes jump over movement while the one-shot is playing", () => {
     const { engine, input } = createTestEngine();
     input.left = true;
     engine.update(0);
-    engine.press("attack", 10);
-    expect(engine.update(20).action).toBe("attack");
-    expect(engine.update(500).action).toBe("attack");
-  });
-
-  it("falls back to the locomotion action after attack ends", () => {
-    const { engine, input } = createTestEngine();
-    input.left = true;
-    engine.update(0);
-    engine.press("attack", 10); // 默认 8 帧 @10fps + 150ms 余量 → until 960
-    engine.update(20);
-    const settled = engine.update(1000);
-    expect(settled.action).toBe("walk");
-  });
-
-  it("falls back to idle after attack when standing still", () => {
-    const { engine } = createTestEngine();
-    engine.press("attack", 0);
-    expect(engine.update(10).action).toBe("attack");
-    expect(engine.update(1000).action).toBe("idle");
+    engine.press("jump", 10);
+    expect(engine.update(20).action).toBe("jump");
+    expect(engine.update(500).action).toBe("jump");
+    expect(engine.update(1000).action).toBe("walk");
   });
 
   it("returns to the pinned preview action after jump ends", () => {
@@ -95,9 +79,9 @@ describe("playtest engine state machine", () => {
     expect(engine.update(0).frame).toBe(0);
     expect(engine.update(11).frame).toBe(1);
 
-    engine.setStripTiming("attack", { frames: 4, fps: 100 });
+    engine.setStripTiming("jump", { frames: 4, fps: 100 });
     input.left = false;
-    engine.press("attack", 40); // until = 40 + 40 + 150
+    engine.press("jump", 40); // until = 40 + 40 + 150
     engine.update(50);
     expect(engine.update(90).frame).toBe(3);
     expect(engine.update(100).frame).toBe(3); // 停在末帧直到 until
@@ -359,15 +343,7 @@ describe("PlaytestActionDock structure", () => {
 
   async function renderDock(overrides: Partial<Parameters<typeof PlaytestActionDock>[0]> = {}) {
     const props: Parameters<typeof PlaytestActionDock>[0] = {
-      actions: ["idle", "walk", "run", "attack", "jump"],
-      customActions: [
-        {
-          name: "旋风踢",
-          base_action: "attack",
-          engine: "procedural",
-          strip: { url: "/custom.png", frames: 8, width: 96, height: 96, engine: "procedural" },
-        },
-      ],
+      actions: ["idle", "walk", "run", "jump"],
       strips: {
         idle: { url: "/idle.png", frames: 16, fps: 16, width: 256, height: 256, engine: "rigged" },
       },
@@ -380,18 +356,15 @@ describe("PlaytestActionDock structure", () => {
       batchDoneCount: 0,
       batchTotal: 0,
       batchSyncError: null,
-      missingCount: 2,
+      missingCount: 1,
       aiReadyCount: 3,
       phase: (() => "ready") as (key: string) => StripPhase,
-      customLoading: false,
-      libraryOpen: true,
       assetSelected: true,
       onSelect: vi.fn(),
       onResumeLive: vi.fn(),
       onGenerateAi: vi.fn(),
       onGenerateAll: vi.fn(),
       onRefreshBatch: vi.fn(),
-      onOpenLibrary: vi.fn(),
       onRetry: vi.fn(),
       ...overrides,
     };
@@ -399,7 +372,7 @@ describe("PlaytestActionDock structure", () => {
     return props;
   }
 
-  it("renders built-in and custom action cards without nested buttons", async () => {
+  it("renders built-in action cards without nested buttons", async () => {
     await renderDock();
     const buttons = Array.from(container.querySelectorAll("button"));
     expect(buttons.length).toBeGreaterThan(5);
@@ -407,10 +380,10 @@ describe("PlaytestActionDock structure", () => {
       expect(button.querySelector("button")).toBeNull();
     }
     const labels = buttons.map((button) => button.textContent ?? "");
-    expect(container.textContent).toContain("本角色 AI 3/5");
+    expect(container.textContent).toContain("本角色 AI 3/4");
     expect(labels.some((text) => text.includes("待机"))).toBe(true);
-    expect(labels.some((text) => text.includes("攻击"))).toBe(true);
-    expect(labels.some((text) => text.includes("旋风踢"))).toBe(true);
+    expect(labels.some((text) => text.includes("攻击"))).toBe(false);
+    expect(labels.some((text) => text.includes("跳跃"))).toBe(true);
     // 选择按钮与「生成 AI 动画」次级按钮同级存在
     expect(labels.some((text) => text.includes("生成 AI 动画"))).toBe(true);
     expect(labels.some((text) => text.includes("到动画工作台"))).toBe(false);

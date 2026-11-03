@@ -211,7 +211,6 @@ export interface CreativeAsset {
     side?: DesignViewImage;
     back?: DesignViewImage;
   };
-  restyle?: RestyleInfo;
   cutout_png?: string;
   review?: ReviewInfo;
   prompt_enhance?: PromptEnhance;
@@ -499,13 +498,6 @@ export interface ReviewInfo {
   at?: number;
 }
 
-export interface RestyleInfo {
-  style: string;
-  url: string;
-  file?: string;
-  model?: string;
-}
-
 export interface ActionBatchTask {
   action: string;
   /** 本动作实际使用的生成视角：idle/attack=front，walk/run/jump=side */
@@ -564,8 +556,6 @@ export interface PlaytestPreviews {
   fps?: number;
   source?: "rigged" | "sprite" | "procedural" | string;
   character?: PlaytestCharacter | null;
-  /** 自定义动作陈列（命名空间隔离）：条带键 custom:<名称>，与内置槽位互不占用 */
-  custom_actions?: PlaytestCustomAction[];
 }
 
 export interface ScenePalette {
@@ -785,17 +775,6 @@ export interface SceneSummary {
   enemy_count?: number;
   created_at: number;
   error: string | null;
-}
-
-/** 试玩舞台自定义动作条目 */
-export interface PlaytestCustomAction {
-  name: string;
-  base_action?: string;
-  view?: string;
-  description?: string;
-  /** ai-video = AI 动画帧；rigged = 骨骼按保存参数渲染；procedural = 姿态引擎 */
-  engine: string;
-  strip: PlaytestStrip;
 }
 
 /* ── 云生成能力（A 部分）─────────────────────────────────────────────── */

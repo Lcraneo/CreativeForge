@@ -2,8 +2,8 @@
 
 固化的契约：
 
-1. cutout_white_background：白底彩色主体 → 四角透明、主体不透明；已有
-   透明区域原样返回；非白复杂背景返回 None；下半身封闭白洞被回收；
+1. cutout_white_background：白底/浅灰渐变底彩色主体 → 四角透明、主体
+   不透明；已有透明区域原样返回；彩色复杂背景返回 None；下半身封闭白洞被回收；
 2. collect_ai_strips(view_by_action=)：设置了期望视角的动作只接受
    meta.view 完全匹配的记录；正面记录再新也不能顶替 side；同动作同视角
    仍取 created_at 最新；未设置视角的 attack 保持旧行为。
@@ -72,6 +72,20 @@ class CutoutWhiteBackgroundTests(unittest.TestCase):
         image = Image.new("RGB", (128, 128), (40, 80, 150))
         ImageDraw.Draw(image).ellipse((34, 20, 94, 110), fill=(255, 210, 60))
         self.assertIsNone(cutout_white_background(image))
+
+    def test_neutral_gradient_background_is_matted(self):
+        # i2v 模型会稳定地把白底源图生成为带暗角的浅灰渐变底；动作已成功
+        # 落盘时不能因为“不是纯白”就把整条动画丢弃。
+        image = Image.new("RGB", (128, 128))
+        draw = ImageDraw.Draw(image)
+        for y in range(128):
+            value = 150 + round(y * 45 / 127)
+            draw.line((0, y, 127, y), fill=(value, value, value))
+        draw.ellipse((34, 20, 94, 110), fill=(35, 40, 45))
+        result = cutout_white_background(image)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.getchannel("A").getpixel((64, 64)), 255)
+        self.assertLessEqual(max(_alpha_corners(result)), 8)
 
     def test_letterboxed_white_video_content_is_matted(self):
         # AI 视频经 _fit 后常见：透明左右边栏 + 不透明白底内容矩形。

@@ -186,11 +186,6 @@ export const api = {
       "/api/assets/review",
       { method: "POST", body: JSON.stringify({ asset_id: assetId, approved, note }) },
     ),
-  restyleAsset: (assetId: string, style: string) =>
-    request<import("../types").RestyleInfo>("/api/design/restyle", {
-      method: "POST",
-      body: JSON.stringify({ asset_id: assetId, style }),
-    }),
   cutoutAsset: (assetId: string) =>
     request<{ status: string; cutout_png: string; asset_id: string | null }>("/api/design/cutout", {
       method: "POST",
@@ -224,16 +219,14 @@ export const api = {
     request<ActionBatchSnapshot>(`/api/animation/batch-actions/${batchId}`, {
       timeoutMs: 15_000,
     }),
-  /** 试玩舞台预览。V2 渐进式加载：actions 过滤内置动作（缺省=全部），
-   * includeCustom=false 跳过自定义动作条带渲染——两者均向后兼容 */
+  /** 试玩舞台预览。V2 渐进式加载：actions 过滤内置动作（缺省=全部）。 */
   playtestPreviews: (
     assetId?: string | null,
-    opts?: { actions?: string[]; includeCustom?: boolean },
+    opts?: { actions?: string[] },
   ) => {
     const search = new URLSearchParams();
     if (assetId) search.set("asset_id", assetId);
     if (opts?.actions) search.set("actions", opts.actions.join(","));
-    if (opts?.includeCustom === false) search.set("include_custom", "0");
     const query = search.toString();
     return request<import("../types").PlaytestPreviews>(
       `/api/playtest/previews${query ? `?${query}` : ""}`,

@@ -3,10 +3,8 @@
  *
  * 元数据三段式（替代旧的"一次全量预载"）：
  * 1. core：idle + walk 立即请求——首帧可操作的最快路径；
- * 2. rest：run/attack/jump 在 core 就绪后等浏览器空闲再请求；用户提前
+ * 2. rest：run/jump 在 core 就绪后等浏览器空闲再请求；用户提前
  *    点击未加载的动作时立即发起（eager 旁路）；
- * 3. custom：仅当用户打开动作库时请求（后端 include_custom=0 跳过昂贵
- *    的自定义条带渲染）。
  *
  * 图片解码逐张进行（无上限 Promise.all 会把五条条带的解码内存一次推
  * 满）；单动作失败只标记该动作并提供重试，不阻塞其他动作。切换角色时
@@ -15,11 +13,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../api/client";
-import type { PlaytestCharacter, PlaytestCustomAction, PlaytestStrip } from "../../types";
+import type { PlaytestCharacter, PlaytestStrip } from "../../types";
 
-export const BUILT_IN_ACTIONS = ["idle", "walk", "run", "attack", "jump"] as const;
+export const BUILT_IN_ACTIONS = ["idle", "walk", "run", "jump"] as const;
 const PRIORITY_ACTIONS = ["idle", "walk"];
-const REST_ACTIONS = ["run", "attack", "jump"];
+const REST_ACTIONS = ["run", "jump"];
 
 export type StripPhase = "pending" | "loading" | "ready" | "error";
 
@@ -81,7 +79,6 @@ export interface PlaytestAssetMeta {
   actions: string[];
   strips: Record<string, PlaytestStrip>;
   previews: Record<string, string>;
-  customActions: PlaytestCustomAction[];
   source?: string;
   fps?: number;
   character?: PlaytestCharacter | null;
@@ -93,7 +90,6 @@ function mergeMeta(
   const knownActions = new Set<string>();
   const strips: Record<string, PlaytestStrip> = {};
   const previews: Record<string, string> = {};
-  const customByKey = new Map<string, PlaytestCustomAction>();
   let source: string | undefined;
   let fps: number | undefined;
   let character: PlaytestCharacter | null | undefined;
@@ -102,7 +98,6 @@ function mergeMeta(
     for (const action of data.actions ?? []) knownActions.add(action);
     Object.assign(strips, data.strips ?? {});
     Object.assign(previews, data.previews ?? {});
-    for (const item of data.custom_actions ?? []) customByKey.set(item.name, item);
     if (data.source) source = data.source;
     if (data.fps) fps = data.fps;
     if (data.character !== undefined) character = data.character;
@@ -111,7 +106,6 @@ function mergeMeta(
     actions: BUILT_IN_ACTIONS.filter((action) => knownActions.has(action)),
     strips,
     previews,
-    customActions: [...customByKey.values()],
     source,
     fps,
     character,
@@ -144,9 +138,7 @@ class Deferred {
 
 /* ── Hook ───────────────────────────────────────────────────────── */
 
-export function usePlaytestAssets(assetId: string | null, options: { libraryOpen: boolean }) {
-  const { libraryOpen } = options;
-
+export function usePlaytestAssets(assetId: string | null) {
   // eager 旁路：用户点击未加载动作时立即放行 rest 请求（不等空闲）
   const [eagerGate] = useState(() => new Deferred());
   const requestedRef = useRef<Set<string>>(new Set());
@@ -154,26 +146,21 @@ export function usePlaytestAssets(assetId: string | null, options: { libraryOpen
   const core = useQuery({
     queryKey: ["playtest-previews-core", assetId],
     queryFn: () =>
-      api.playtestPreviews(assetId!, { actions: PRIORITY_ACTIONS, includeCustom: false }),
+      api.playtestPreviews(assetId!, { actions: PRIORITY_ACTIONS }),
     enabled: Boolean(assetId),
   });
   const rest = useQuery({
     queryKey: ["playtest-previews-rest", assetId],
     queryFn: async () => {
       await Promise.race([idleWait(1500), eagerGate]);
-      return api.playtestPreviews(assetId!, { actions: REST_ACTIONS, includeCustom: false });
+      return api.playtestPreviews(assetId!, { actions: REST_ACTIONS });
     },
     enabled: Boolean(assetId && core.data),
   });
-  const custom = useQuery({
-    queryKey: ["playtest-previews-custom", assetId],
-    queryFn: () => api.playtestPreviews(assetId!),
-    enabled: Boolean(assetId && libraryOpen),
-  });
 
   const meta = useMemo(
-    () => mergeMeta([core.data, rest.data, custom.data]),
-    [core.data, rest.data, custom.data],
+    () => mergeMeta([core.data, rest.data]),
+    [core.data, rest.data],
   );
 
   /** 条带地址表：内置动作以 strips 优先（旧响应回落 previews）；自定义
@@ -184,9 +171,6 @@ export function usePlaytestAssets(assetId: string | null, options: { libraryOpen
       const strip = meta.strips[name];
       if (strip?.url) urls[name] = strip.url;
       else if (meta.previews[name]) urls[name] = meta.previews[name];
-    }
-    for (const item of meta.customActions) {
-      if (item.strip?.url) urls[`custom:${item.name}`] = item.strip.url;
     }
     return urls;
   }, [meta]);
@@ -261,7 +245,6 @@ export function usePlaytestAssets(assetId: string | null, options: { libraryOpen
     if (!assetId) return;
     void queryClient.invalidateQueries({ queryKey: ["playtest-previews-core", assetId] });
     void queryClient.invalidateQueries({ queryKey: ["playtest-previews-rest", assetId] });
-    void queryClient.invalidateQueries({ queryKey: ["playtest-previews-custom", assetId] });
   }, [assetId, queryClient]);
 
   return {
@@ -279,6 +262,5 @@ export function usePlaytestAssets(assetId: string | null, options: { libraryOpen
     },
     metadataLoading: core.isLoading || rest.isPending,
     metadataError: core.error ?? rest.error,
-    customLoading: custom.isPending,
   };
 }

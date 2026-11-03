@@ -255,7 +255,7 @@ class TurnaroundServiceTests(unittest.TestCase):
         self.assertEqual(seen["edit_model"], TURNAROUND_MODEL)
 
     def test_other_edit_chains_keep_default_model(self):
-        # 只在三视图里指定 turbo；风格迁移/抠图/发层仍走原有默认模型
+        # 只在三视图里指定 turbo；抠图/发层仍走原有默认模型
         self.assertEqual(svc.ImageEditProvider.QWEN_EDIT_MODEL, "qwen-image-edit")
 
 

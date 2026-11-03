@@ -1,11 +1,10 @@
 """Q3 3.1 — /api/playtest/previews guest/demo mode (Studio, no server needed).
 
-不传 asset_id 必须返回完整可玩的演示条带（5 动作 × 8 帧，程序化引擎），
+不传 asset_id 必须返回完整可玩的演示条带（4 动作 × 16 帧，程序化引擎），
 且整个路径只读、不触碰任何资产存储。
 
 另覆盖 V2 渐进式加载参数（缺省=旧行为，向后兼容）：
 - ?actions=idle,walk 只返回这两个动作；空/全部非法时回退全集；
-- ?include_custom=0 被正常接受（guest 路径 custom_actions 恒为空）；
 - 条带静态响应带 immutable 长缓存头（内容哈希命名，可零请求重访）。
 
 Run: python studio/backend/tests/test_playtest_demo_api.py
@@ -41,15 +40,16 @@ async def main() -> int:
         strips = payload.get("strips") or {}
         demo_ok = (
             response.status_code == 200
-            and set(actions) >= {"idle", "walk", "run", "attack", "jump"}
+            and set(actions) == {"idle", "walk", "run", "jump"}
             and all(name in strips for name in actions)
             and all(strips[name].get("frames", 0) >= 16 for name in actions)
             and all(strips[name].get("fps", 0) >= 16 for name in actions)
             and payload.get("fps", 0) >= 16
             and all(strips[name].get("engine") == "procedural" for name in actions)
+            and "custom_actions" not in payload
         )
         if demo_ok:
-            print("[PASS] guest demo previews: 5 actions, procedural strips @16f/16fps")
+            print("[PASS] guest demo previews: 4 actions, procedural strips @16f/16fps")
             ok += 1
         else:
             print(
@@ -69,7 +69,7 @@ async def main() -> int:
         else:
             print("[FAIL] demo previews changed across calls")
 
-        full_set = {"idle", "walk", "run", "attack", "jump"}
+        full_set = {"idle", "walk", "run", "jump"}
 
         # ── V2 参数：actions 过滤 ─────────────────────────────────
         total += 1
@@ -101,6 +101,20 @@ async def main() -> int:
             print("[FAIL] actions mixed filter", response.status_code, names)
 
         total += 1
+        # 普通试玩即使旧前端显式请求 attack，也不再把冗余攻击动作带回舞台；
+        # PVE 敌人请求走 asset.pve_enemy 分支，仍保留其战斗动作。
+        response = await client.get(
+            "/api/playtest/previews", params={"actions": "idle,walk,attack"}
+        )
+        names = response.json().get("actions") or []
+        no_attack_ok = response.status_code == 200 and names == ["idle", "walk"]
+        if no_attack_ok:
+            print("[PASS] normal playtest ignores legacy attack requests")
+            ok += 1
+        else:
+            print("[FAIL] normal playtest attack filter", response.status_code, names)
+
+        total += 1
         # 全部非法 → 回退全集（与缺省行为一致，不 422）
         response = await client.get("/api/playtest/previews", params={"actions": "bogus"})
         names = response.json().get("actions") or []
@@ -122,21 +136,9 @@ async def main() -> int:
         else:
             print("[FAIL] empty actions param", response.status_code, names)
 
-        # ── V2 参数：include_custom 门控（guest 路径恒空，仅验证接受参数）──
-        total += 1
-        response = await client.get(
-            "/api/playtest/previews", params={"include_custom": "0"}
-        )
-        payload = response.json()
-        custom_ok = response.status_code == 200 and payload.get("custom_actions") == []
-        if custom_ok:
-            print("[PASS] ?include_custom=0 accepted, custom_actions stays empty for guest")
-            ok += 1
-        else:
-            print("[FAIL] include_custom=0", response.status_code, payload.get("custom_actions"))
-
         # ── 条带静态响应：immutable 长缓存头 ───────────────────────
         total += 1
+        payload = (await client.get("/api/playtest/previews")).json()
         strip_url = (payload.get("previews") or {}).get("idle")
         response = await client.get(strip_url) if strip_url else None
         cache_ok = (

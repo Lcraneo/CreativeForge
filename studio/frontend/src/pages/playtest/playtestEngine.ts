@@ -1,7 +1,7 @@
 /**
  * 试玩舞台 V2 · 纯状态机（无 React 依赖）
  *
- * 职责集中：键盘输入 → 动作优先级仲裁（attack/jump 一次性动作 > 移动 >
+ * 职责集中：键盘输入 → 动作优先级仲裁（jump 一次性动作 > 移动 >
  * 钉住的预览动作 > idle）→ 帧游标推进 → 位置/朝向积分 → Live/Preview
  * 模式管理。rAF 循环内的全部状态都住在 engine 内部；React 只通过
  * onStateChange 收到低频（动作/模式变化）通知——帧推进、移动和朝向
@@ -9,7 +9,7 @@
  */
 
 export type PlaytestMode = "live" | "preview";
-export type OneShotAction = "attack" | "jump";
+export type OneShotAction = "jump";
 
 /** 键盘输入快照（页面从 useHeldKeys 的键集合映射而来） */
 export interface PlaytestInput {
@@ -43,7 +43,7 @@ export interface PlaytestSnapshot {
 // 旧实现 3.2 / 5.6 px 每 60fps 帧，换算为 px/s 后与帧率解耦
 export const WALK_SPEED_PX_S = 192;
 export const RUN_SPEED_PX_S = 336;
-/** attack/jump 播完帧序列后额外停留的余量 */
+/** jump 播完帧序列后额外停留的余量 */
 export const ONE_SHOT_TAIL_MS = 150;
 /** 后台标签页回来时单次 tick 最多推进 50ms，防跳变 */
 export const MAX_TICK_MS = 50;
@@ -114,7 +114,7 @@ export class PlaytestEngine {
     else this.timings.set(action, timing);
   }
 
-  /** 键盘一次性动作（空格/J 攻击、↑/W 跳跃）：播完整帧序列 + 余量后回落；
+  /** 键盘一次性动作（↑/W 跳跃）：播完整帧序列 + 余量后回落；
    * 按住连发（keydown repeat）= 旧语义，每次重置 until */
   press(name: OneShotAction, now: number = performance.now()) {
     const { frames, fps } = this.timingFor(name);

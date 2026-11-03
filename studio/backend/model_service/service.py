@@ -466,7 +466,7 @@ class ModelSettingsStore:
         "model": "",  # 图像生成（原画）
         "chat_model": "",  # 文本 / 对话（提示词增强）
         "vl_model": "qwen-vl-plus",  # 视觉对话（装备/服装识别）：看图输出结构化 JSON
-        "edit_model": "",  # 图像编辑（抠图 / 风格迁移 / 发层）；留空用服务商默认
+        "edit_model": "",  # 图像编辑（抠图 / 发层）；留空用服务商默认
         # 三视图是固定模型 TURNAROUND_EDIT_MODEL（qwen-image-2.1-turbo），不受此项控制
         "video_model": "",  # 视频 / 图生视频（当前仅 DashScope）
         # 历史双档字段：视频模型已固定为 VIDEO_MODEL（flash 档），
@@ -1255,7 +1255,7 @@ class TurnaroundError(RuntimeError):
 
 
 # 三视图专用编辑模型：视角变换指令跟随更强。只在 generate_turnaround 里通过
-# scoped settings 显式指定，其它编辑链路（风格迁移 / 抠图 / 发层）仍沿用
+# scoped settings 显式指定，其它编辑链路（抠图 / 发层）仍沿用
 # 用户配置的 edit_model 或 ImageEditProvider 默认模型。
 TURNAROUND_EDIT_MODEL = "qwen-image-2.1-turbo"
 TURNAROUND_VIEW_MIN_SIDE = 96  # 单侧裁切图最小宽高（px）
@@ -1281,7 +1281,7 @@ class ImageEditProvider:
         """编辑图片；``allow_wanx_fallback=False`` 时仅允许 qwen，失败直接抛真实原因。
 
         三视图链路固定走 qwen-image-2.1-turbo，不允许静默换模型；其他编辑功能
-        （风格迁移 / 抠图 / 发层）保持原有 Wanx 兜底行为。
+        （抠图 / 发层）保持原有 Wanx 兜底行为。
         """
 
         base_image_url = _resolve_cloud_image(base_image_url)

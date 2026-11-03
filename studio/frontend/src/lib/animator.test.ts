@@ -24,11 +24,9 @@ describe("clipTable", () => {
     const table = clipTable(
       { idle: strip(16, 16), attack: strip(12) },
       12,
-      [{ key: "custom:wave", strip: strip(6, 8) }],
     );
     expect(clipFor(table, "idle")).toEqual({ frames: 16, fps: 16 });
     expect(clipFor(table, "attack")).toEqual({ frames: 12, fps: 12 });
-    expect(clipFor(table, "custom:wave")).toEqual({ frames: 6, fps: 8 });
     expect(clipFor(table, "missing")).toEqual(FALLBACK_CLIP);
   });
 

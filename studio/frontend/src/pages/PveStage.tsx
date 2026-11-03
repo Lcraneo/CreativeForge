@@ -28,7 +28,6 @@ import {
   consumePveAudioEvents,
   createPveRuntime,
   enemyHalfWidth,
-  pveActionSlot,
   pveEnemyPose,
   pveGroundDistance,
   pveHud,
@@ -202,7 +201,6 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     queryFn: () =>
       api.playtestPreviews(selected?.id, {
         actions: ["idle", "walk", "run", "jump"],
-        includeCustom: false,
       }),
     enabled: Boolean(selected?.id),
   });
@@ -216,7 +214,6 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       queryFn: () =>
         api.playtestPreviews(assetId, {
           actions: ["idle", "walk", "attack"],
-          includeCustom: true,
         }),
       enabled: Boolean(assetId),
     })),
@@ -283,11 +280,10 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           const target = assetId === selected?.id ? player : (enemies[assetId] ??= {});
           return Object.entries(payload.strips ?? {}).map(async ([action, strip]) => {
             if (!strip?.url) return;
-            const slot = pveActionSlot(action);
             try {
-              target[slot] = { image: await preloadImage(strip.url), strip };
+              target[action] = { image: await preloadImage(strip.url), strip };
             } catch {
-              target[slot] = undefined;
+              target[action] = undefined;
             }
           });
         }),

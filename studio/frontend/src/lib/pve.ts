@@ -33,12 +33,6 @@ export type PveEnemyAction = "idle" | "walk" | "attack";
 export type PvePose = PveEnemyAction | "windup" | "hurt" | "death";
 export const PVE_ACTION_SLOTS: PvePose[] = ["idle", "walk", "windup", "attack", "hurt", "death"];
 
-/** 把 `custom:windup` 等自定义动作身份映射回运行时槽位。 */
-export function pveActionSlot(identity: string): string {
-  const custom = identity.startsWith("custom:") ? identity.slice("custom:".length) : identity;
-  return ["windup", "hurt", "death"].includes(custom) ? custom : identity;
-}
-
 export const PVE_ACTION_FALLBACK: Record<PvePose, PveEnemyAction> = {
   idle: "idle",
   walk: "walk",

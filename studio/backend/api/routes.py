@@ -38,13 +38,14 @@ def _view_lock(asset_id: str) -> threading.Lock:
 
 
 # 试玩舞台 rig/分割 mask 缓存（按 source_hash）：V2 渐进式加载会把条带请求
-# 拆成多批（先 idle/walk，再 run/attack/jump），没有这份内存缓存时第二批
+# 拆成多批（先 idle/walk，再 run/jump），没有这份内存缓存时第二批
 # 请求会重复执行 AI 主体分割与骨架提取这两个昂贵步骤。rig 是轻量 dict、
 # mask 是 256×256 单通道图，8 个角色约 0.5MB。
 _PLAYTEST_RIG_CACHE: dict[str, tuple] = {}
 
 # 试玩舞台动作视角策略：idle 用正面（呼吸待机），移动/跳跃用侧面。
-# attack 不在此表（保持旧行为：不按视角过滤，取最新记录）。
+# 试玩舞台默认不含 attack；PVE 敌人显式请求 attack 时仍按 PVE 自身视角
+# 策略收集，避免删除试玩动作影响独立的战斗关卡。
 # 只产出一套面向右侧的侧面素材，向左移动由 Canvas 水平镜像完成。
 PLAYTEST_VIEW_BY_ACTION = {
     "idle": "front",
@@ -229,13 +230,6 @@ class AnimationRequest(BaseModel):
     deform: str | None = None  # V3 网格变形开关："mesh"（默认）| "rigid"；None=跟随后端默认
     secondary_motion: bool = False  # V3 次级运动：发层摆动（首次生成发层约 0.3 元，之后缓存免费）
     equipment_aware: bool = True  # V3.5 装备/服装识别：看图认出武器/服装并贴合动作（首次 ~0.002 元，之后缓存免费）
-    # 自定义动作的用户描述（词表外动作如鞠躬/挥手的唯一表达通道）：仅 i2v
-    # 链消费——经独立润色通道替换词表主体句；骨骼链与内置动作不受影响
-    action_description: str = ""
-    # 自定义动作名称（命名空间隔离）：有值时产物 meta.requested_action 记
-    # "custom:<名称>"，与内置动作槽位（试玩条带/矩阵/补齐跳过）严格分离；
-    # action 字段此时仅作运动族。缺省 = 内置动作生成，行为不变
-    custom_action: str | None = None
 
 
 class PreviewFrameRequest(BaseModel):
@@ -252,18 +246,6 @@ class PreviewFrameRequest(BaseModel):
 class EnhanceRequest(BaseModel):
     goal: str
     overrides: dict | None = None
-
-
-class CustomActionRequest(BaseModel):
-    name: str
-    action: str = "walk"
-    view: str = "front"
-    pose_config: dict
-    # 编辑增强（P2 体验）：description=动作完整描述；original_name 指向被
-    # 编辑的旧记录（同名就地修改=等于 name；改名=旧名），供存储层迁移
-    # 元数据（创建时间/版本数/修改历史）
-    description: str = ""
-    original_name: str = ""
 
 
 class SequenceRequest(BaseModel):
@@ -294,20 +276,6 @@ class ReviewRequest(BaseModel):
 class VersionTagRequest(BaseModel):
     record_id: str
     tag: str  # approved / needs-work / none
-
-
-class RestyleRequest(BaseModel):
-    asset_id: str
-    style: str  # pixel / anime / ink
-
-
-class ActionPackRequest(BaseModel):
-    actions: list
-
-
-class ActionTextRequest(BaseModel):
-    text: str
-    asset_id: str | None = None  # V3.5：注入该资产的装备/服装上下文（只读缓存，绝不触发识别调用）
 
 
 class OpenFolderRequest(BaseModel):
@@ -386,9 +354,6 @@ def _localize_asset(asset):
                 if str(local.get("url", "")).startswith("/api/generated/"):
                     views[view] = {**meta, "url": local["url"]}
 
-    restyle = asset.get("restyle")
-    if isinstance(restyle, dict):
-        asset["restyle"] = localized(restyle)
     return asset
 
 
@@ -877,9 +842,7 @@ def build_router(runtime):
                     enhance_context=_enhance_context_for(asset),
                     final_quality=request.final_quality,
                     equipment_aware=request.equipment_aware,
-                    action_description=(request.action_description or "").strip()[:500],
                     view=request.view,
-                    custom_action=request.custom_action,
                     source_facing=(
                         _side_source_facing(asset) if request.view == "side" else None
                     ),
@@ -968,9 +931,7 @@ def build_router(runtime):
             enhance_context=_enhance_context_for(asset),
             final_quality=request.final_quality,
             equipment_aware=request.equipment_aware,
-            action_description=(request.action_description or "").strip()[:500],
             view=request.view,
-            custom_action=request.custom_action,
             source_facing=(_side_source_facing(asset) if request.view == "side" else None),
         )
         payload = {"task_id": snapshot["id"], "snapshot": snapshot}
@@ -1253,251 +1214,6 @@ def build_router(runtime):
         record_usage("chat", model)
         return response.json()["choices"][0]["message"]["content"].strip()
 
-    @router.post("/animation/custom-actions/enhance")
-    def enhance_action_text(request: ActionTextRequest):
-        """动作描述润色（P1 体验）：对话模型把口语化描述改写成专业、具体的
-        动作说明。失败抛 502，由前端提示。"""
-
-        settings = runtime.model_settings.effective()
-        if not (settings.get("enabled") and settings.get("api_key")):
-            raise HTTPException(status_code=409, detail="自定义模型未启用，无法使用文案增强")
-        text = (request.text or "").strip()
-        if not text:
-            raise HTTPException(status_code=422, detail="text 不能为空")
-        prompt = (
-            "你是资深游戏动作设计指导。把下面这段用户写的角色动作描述润色成清晰、具体、"
-            "专业的动作说明（80 字以内中文，只输出润色后的描述本身，不要任何解释、"
-            "不要列表、不要引号）。保留用户描述的全部意图，补全缺失的动作细节"
-            "（预备、发力、跟随、收势）。\n\n用户描述：" + text
-        )
-        try:
-            polished = _chat_once(settings, prompt)
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
-        return {"text": polished}
-
-    @router.post("/animation/custom-actions/interpret")
-    def interpret_action_text(request: ActionTextRequest):
-        """动作结构化解读（P1 体验）：对话模型把动作描述转成 pose_config 参数
-        JSON，直接套用动作编辑器。解析失败回退安全默认值。"""
-
-        settings = runtime.model_settings.effective()
-        if not (settings.get("enabled") and settings.get("api_key")):
-            raise HTTPException(status_code=409, detail="自定义模型未启用，无法解读动作描述")
-        text = (request.text or "").strip()
-        if not text:
-            raise HTTPException(status_code=422, detail="text 不能为空")
-        import json as _json
-
-        # V3.5 装备上下文（只读缓存）：解读出的动作要贴合角色——「挥砍」对
-        # 持剑角色与徒手角色的参数取向不同。只查 equipment 缓存（同一张
-        # 原画生成过一次动画就有了），绝不在这里触发识别调用烧额度。
-        equipment_note = ""
-        if request.asset_id:
-            from studio.backend.animation_service.equipment import cached_only
-
-            _asset = _resolve_asset(runtime, request.asset_id)
-            if _asset is not None:
-                _source = None
-                try:
-                    from studio.backend.animation_service.service import AnimationService
-
-                    _source = AnimationService(ANIMATION_DIR)._asset_render(_asset)
-                except Exception:  # noqa: BLE001
-                    _source = None
-                if _source:
-                    _equipment = cached_only(_source)
-                    if _equipment and _equipment.get("summary_zh"):
-                        equipment_note = (
-                            "\n角色装备/服装（识别结果，参数取向须贴合）："
-                            + _equipment["summary_zh"]
-                            + "\n"
-                        )
-
-        prompt = (
-            "你是游戏动画参数师。姿态引擎是「循环动作参数引擎」，把用户的动作描述"
-            "转换成 JSON（只输出 JSON 本体，不要 markdown 代码块、不要解释）。\n"
-            "两种表达：\n"
-            "A. 单一循环动作：{\"label\": \"动作名4字内\", \"base_action\": "
-            "\"idle/walk/run/attack/jump 之一\", \"view\": \"front 或 side"
-            "（side=侧视横版步态，仅 walk/run 建议）\", \"pose_config\": {\"bob\": 起伏0~2, "
-            "\"stride\": 步幅0~2, \"arm\": 摆臂0~2, \"lift\": 抬脚0~2, \"lean\": 前倾-15~30, "
-            "\"lag\": 手臂滞后0~1.2, \"cycles\": 周期0.25~3, \"turn\": 转身幅度0~180, "
-            "\"bow\": 弯腰幅度0~90（每循环一次弯下→直起，鞠躬/点头/欠身用）}}\n"
-            "B. 多段编排（描述含先后顺序时必须用，如出现「先/然后/接着/最后/再」等"
-            "顺序词就禁止用单一循环硬套）：pose_config 增加 "
-            "\"phases\": [{\"action\": \"idle/walk/run/attack/jump\", \"weight\": 时长比重1~4, "
-            "\"turn\": 该段转身幅度0~180}]，2~5 段；7 个全局参数仍要给出。\n"
-            "硬性规则：\n"
-            "1. 引擎无平移/位移/镜头能力；「旋转/转身」一律用 turn 度数表达"
-            "（缓慢旋转=60~120，完整转体=180）；\n"
-            "2. 跳跃段的 cycles 不得低于 1（慢周期大弧线会呈悬浮/飞行观感）；\n"
-            "3. 舞蹈类用 idle 基底 + 调大 bob/arm + 适度 lift/turn，不要用 jump 承载舞蹈；\n"
-            "4. 「站立/起立」用 idle 段表达（引擎无起立原语）；\n"
-            "5. 数值必须落在范围内；\n"
-            "6. 礼仪/手势动作：鞠躬/作揖/点头/欠身用 bow 弯腰参数表达（点头 "
-            "15~30、欠身/浅礼 30~60、深鞠躬 60~90，基底 idle、cycles=1）；"
-            "挥手/敬礼/叉腰等无对应参数的动作仍按最近似给出（通常 idle + "
-            "arm/lean），并在 JSON 顶层额外返回 \"suggest_video\": true"
-            "（AI 视频链效果更真实）；常规动作一律返回 \"suggest_video\": false。"
-            + equipment_note
-            + "\n\n用户描述：" + text
-        )
-        try:
-            raw = _chat_once(settings, prompt)
-            start, end = raw.find("{"), raw.rfind("}")
-            if start < 0 or end <= start:
-                raise ValueError("no JSON in model output")
-            data = _json.loads(raw[start : end + 1])
-        except HTTPException:
-            raise
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail="解读失败：{}".format(str(exc)[:120]))
-
-        label = str(data.get("label") or text[:6])
-        base_action = str(data.get("base_action") or "attack")
-        if base_action not in ("idle", "walk", "run", "attack", "jump"):
-            base_action = "attack"
-        view = str(data.get("view") or "front")
-        if view not in ("front", "side"):
-            view = "front"
-
-        raw_pose = data.get("pose_config") or {}
-
-        def clamp(value, lo, hi, default):
-            try:
-                return max(lo, min(hi, float(value)))
-            except (TypeError, ValueError):
-                return default
-
-        pose_config = {
-            "bob": clamp(raw_pose.get("bob"), 0, 2, 1),
-            "stride": clamp(raw_pose.get("stride"), 0, 2, 1),
-            "arm": clamp(raw_pose.get("arm"), 0, 2, 1),
-            "lift": clamp(raw_pose.get("lift"), 0, 2, 1),
-            "lean": clamp(raw_pose.get("lean"), -15, 30, 0),
-            "lag": clamp(raw_pose.get("lag"), 0, 1.2, 0.45),
-            "cycles": clamp(raw_pose.get("cycles"), 0.25, 3, 1),
-            "turn": clamp(raw_pose.get("turn"), 0, 180, 0),
-            "bow": clamp(raw_pose.get("bow"), 0, 90, 0),
-        }
-        # 多段编排（可选）：校验段合法性；「站立后转身跳跃舞蹈」这类顺序
-        # 请求由解读模型映射为 phases，引擎按权重切片跑各段完整原语循环
-        phases_raw = raw_pose.get("phases")
-        if isinstance(phases_raw, list) and len(phases_raw) >= 2:
-            phases = []
-            for item in phases_raw[:5]:
-                if not isinstance(item, dict):
-                    continue
-                act = str(item.get("action") or "")
-                if act not in ("idle", "walk", "run", "attack", "jump"):
-                    continue
-                phases.append({
-                    "action": act,
-                    "weight": clamp(item.get("weight"), 0.5, 4, 1),
-                    "turn": clamp(item.get("turn"), 0, 180, 0),
-                })
-            if len(phases) >= 2:
-                pose_config["phases"] = phases
-        # 反飞行钳制：jump 的弹道弧高 158px，cycles<1 的慢周期会把滞空段
-        # 拉成悬浮——实测「起舞→飞行」的根因。凡跳跃参与（基底或编排段）
-        # 一律把周期抬回 ≥1
-        jumps = base_action == "jump" or any(
-            p["action"] == "jump" for p in pose_config.get("phases", [])
-        )
-        if jumps and float(pose_config["cycles"]) < 1.0:
-            pose_config["cycles"] = 1.0
-        return {
-            "label": label[:12],
-            "base_action": base_action,
-            "view": view,
-            "pose_config": pose_config,
-            "source_text": text,
-            # 词表外动作标记：前端据此提示用户切换 AI 视频驱动（骨骼链只能
-            # 给近似姿态）
-            "suggest_video": data.get("suggest_video") is True,
-        }
-
-    @router.get("/animation/action-pack")
-    def export_action_pack():
-        """动作包导出（扩展性）：全部自定义动作打包为可分享 JSON。"""
-
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        store = CustomActionStore(ANIMATION_DIR + "/custom_actions.json")
-        actions = store.list()
-        return {
-            "format": "creativeforge-action-pack/1",
-            "count": len(actions),
-            "actions": actions,
-        }
-
-    @router.post("/animation/action-pack")
-    def import_action_pack(request: ActionPackRequest):
-        """动作包导入：批量写入自定义动作（同名覆盖）。"""
-
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        store = CustomActionStore(ANIMATION_DIR + "/custom_actions.json")
-        imported = 0
-        errors = []
-        for item in request.actions or []:
-            try:
-                if not isinstance(item, dict) or not item.get("name"):
-                    raise ValueError("missing name")
-                store.save(
-                    {
-                        "name": str(item["name"]),
-                        "action": str(item.get("action") or "walk"),
-                        "view": str(item.get("view") or "front"),
-                        "pose_config": item.get("pose_config") or {},
-                        "description": str(item.get("description") or ""),
-                    },
-                    trigger="import",
-                )
-                imported += 1
-            except Exception as error:  # noqa: BLE001
-                errors.append(str(error)[:80])
-        return {"status": "ok", "imported": imported, "errors": errors}
-
-    @router.get("/animation/custom-actions")
-    def list_custom_actions():
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        # 列表不含 history 快照（投影在存储层统一做）；完整含历史的记录走详情端点
-        return {"actions": CustomActionStore(ANIMATION_DIR + "/custom_actions.json").list()}
-
-    @router.get("/animation/custom-actions/{name}")
-    def get_custom_action(name: str):
-        """自定义动作详情（P2 体验）：完整描述 + 元数据 + 修改历史快照。"""
-
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        record = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").get(name)
-        if record is None:
-            raise HTTPException(status_code=404, detail="unknown custom action")
-        return record
-
-    @router.post("/animation/custom-actions")
-    def save_custom_action(request: CustomActionRequest):
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        try:
-            saved = CustomActionStore(ANIMATION_DIR + "/custom_actions.json").save(
-                request.model_dump()
-            )
-        except ValueError as error:
-            raise HTTPException(status_code=422, detail=str(error))
-        return saved
-
-    @router.delete("/animation/custom-actions/{name}")
-    def delete_custom_action(name: str):
-        from studio.backend.animation_service.custom_actions import CustomActionStore
-
-        if not CustomActionStore(ANIMATION_DIR + "/custom_actions.json").delete(name):
-            raise HTTPException(status_code=404, detail="unknown custom action")
-        return {"status": "deleted"}
-
     @router.post("/animation/sequence")
     def create_sequence_animation(request: SequenceRequest):
         """标准序列帧工作流：导入的帧图按给定顺序合成为循环动画。"""
@@ -1673,50 +1389,6 @@ def build_router(runtime):
         runtime.history.patch_asset(request.asset_id, {"review": review})
         return {"status": "ok", "asset_id": saved.get("id"), "review": review}
 
-    @router.post("/design/restyle")
-    def restyle_asset(request: RestyleRequest):
-        """风格迁移（功能）：保持角色与构图，把原画转成目标风格。"""
-
-        from studio.backend.model_service.service import ImageEditProvider
-
-        asset = _resolve_asset(runtime, request.asset_id)
-        if asset is None:
-            raise HTTPException(status_code=404, detail="unknown asset")
-        base = (asset.get("image") or {}).get("url") or (asset.get("source") or {}).get(
-            "ai_image", {}
-        ).get("url")
-        if not base:
-            raise HTTPException(status_code=409, detail="该资产没有 AI 原画，无法风格迁移")
-        settings = runtime.model_settings.effective()
-        if not (settings.get("enabled") and settings.get("api_key")):
-            raise HTTPException(status_code=409, detail="自定义模型未启用或缺少 API Key")
-
-        prompts = {
-            "pixel": "把这张图转换成像素艺术风格游戏素材：干净的1像素描边、有限的16色调色板、清晰的网格感，保持角色的姿势、服装、配色和所有细节不变，纯色背景",
-            "anime": "把这张图转换成2D动漫赛璐璐上色风格：干净的线稿、平整的色块、柔和阴影，保持角色的姿势、服装、配色和所有细节不变，纯色背景",
-            "ink": "把这张图转换成中国水墨画风格：写意笔触、墨分五色、留白构图，保持角色的姿势、服装和所有细节可辨识，浅色宣纸底",
-        }
-        instruction = prompts.get(request.style)
-        if not instruction:
-            raise HTTPException(status_code=422, detail="style 仅支持 pixel / anime / ink")
-
-        editor = ImageEditProvider(settings)
-        try:
-            result = editor.edit(base, instruction)
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
-        payload = {
-            "style": request.style,
-            "url": result.get("url"),
-            "file": result.get("file"),
-            "model": result.get("model"),
-        }
-        asset["restyle"] = payload
-        saved = dict(asset)
-        runtime.assets.save(saved)
-        runtime.history.patch_asset(request.asset_id, {"restyle": payload})
-        return payload
-
     @router.post("/design/cutout")
     def cutout_asset(request: dict):
         """一键透明底（功能）：AI 分割抠出角色，导出透明底立绘 PNG。"""
@@ -1830,7 +1502,7 @@ def build_router(runtime):
 
     @router.get("/playtest/previews")
     def playtest_previews(
-        asset_id: str | None = None, actions: str | None = None, include_custom: bool = True
+        asset_id: str | None = None, actions: str | None = None
     ):
         """试玩舞台动作预览。
 
@@ -1840,10 +1512,8 @@ def build_router(runtime):
         空白边并返回真实帧尺寸，前端据此按角色实际比例摆放、脚底贴地。
 
         V2 渐进式加载参数（缺省=旧行为，完全向后兼容）：
-        - actions：逗号分隔的内置动作过滤（?actions=idle,walk 只渲染这两个
-          动作的条带），空/全部非法时回退全集；
-        - include_custom=0：跳过自定义动作（条带渲染昂贵，前端打开动作库
-          前不需要）。
+        - actions：逗号分隔的动作过滤（?actions=idle,walk 只渲染这两个
+          动作的条带），空/全部非法时回退试玩默认四动作。
         rig/分割 mask 按 source_hash 进程内缓存，分批请求不重复执行
         昂贵准备。
         """
@@ -1861,21 +1531,26 @@ def build_router(runtime):
         # 下的块状化（角尖悬浮成"虫角"、手臂细断、描边破碎）
         PLAYTEST_FRAMES = 16
         PLAYTEST_FPS = 16
-        requested = actions  # ?actions=idle,walk（逗号分隔过滤；None=全集）
-        actions = ["idle", "walk", "run", "attack", "jump"]
-        if requested is not None:
-            wanted = {part.strip() for part in requested.split(",") if part.strip()}
-            actions = [name for name in actions if name in wanted] or [
-                "idle",
-                "walk",
-                "run",
-                "attack",
-                "jump",
-            ]
-
         # 仅使用显式传入的 asset：没有 asset_id 时一律默认演示角色，
         # 不做 latest 回退（避免历史资产劫持试玩区）
         asset = _resolve_asset(runtime, asset_id) if asset_id else None
+
+        requested = actions  # ?actions=idle,walk（逗号分隔过滤；None=默认全集）
+        playtest_actions = ["idle", "walk", "run", "jump"]
+        actions = list(playtest_actions)
+        if requested is not None:
+            wanted = {part.strip() for part in requested.split(",") if part.strip()}
+            # attack 仍可被 PVE 战斗舞台显式请求；普通试玩默认与前端动作坞
+            # 均只提供四个基础动作。旧前端若缓存了 attack 请求也不会把冗余
+            # 动作带回普通试玩舞台。
+            requestable_actions = (
+                [*playtest_actions, "attack"]
+                if isinstance(asset, dict) and asset.get("pve_enemy")
+                else playtest_actions
+            )
+            actions = [name for name in requestable_actions if name in wanted] or list(
+                playtest_actions
+            )
 
         def _source_is_transparent(data: bytes) -> bool:
             import io as _io
@@ -1998,67 +1673,20 @@ def build_router(runtime):
             )
         ]
 
-        # ── 自定义动作（命名空间隔离下的试玩陈列）────────────────────
-        # 与内置动作同台：条带键为 custom:<名称> 身份，AI 版优先、其次按
-        # 保存的姿态参数程序化渲染。未绑定资产时不提供（试玩对象必须是
-        # 该角色，程序化演示小人没有自定义动作的意义）。
-        # include_custom=0：跳过自定义动作（V2 渐进式加载——动作库打开前
-        # 不触发自定义条带的昂贵渲染）。
-        custom_presets: list[dict] = []
-        if asset is not None and include_custom:
-            from studio.backend.animation_service.custom_actions import CustomActionStore
-
-            custom_presets = CustomActionStore(
-                os.path.join(ANIMATION_DIR, "custom_actions.json")
-            ).list()
-        custom_names = [str(item.get("name")) for item in custom_presets]
-
-        # AI 动画帧收集（内置 + 自定义身份一次完成；只读磁盘，需在骨架
-        # 准备前完成——自定义条带是否要渲染取决于它有没有 AI 版）
-        from studio.backend.animation_service.service import custom_action_identity
-
+        # AI 动画帧收集（只读磁盘，需在骨架准备前完成）
         ai_strips: dict[str, dict] = {}
         if asset_id:
             ai_strips = collect_ai_strips(
                 ANIMATION_DIR,
                 asset_id,
                 actions,
-                custom_names=custom_names,
                 view_by_action=expected_views,
             )
 
         def _safe_label(value: str) -> str:
             import re as _re
 
-            # custom:<名称> 里的冒号与各类符号在 Windows 文件名非法
             return _re.sub(r"[^\w-]+", "_", str(value), flags=_re.UNICODE)
-
-        def _custom_pose_key(item: dict) -> str:
-            payload = json.dumps(
-                {
-                    "a": item.get("action"),
-                    "v": item.get("view"),
-                    "p": item.get("pose_config"),
-                    "r": item.get("revision"),
-                },
-                sort_keys=True,
-            )
-            return hashlib.sha1(payload.encode()).hexdigest()[:8]
-
-        def _custom_strip_path(item: dict, engine_name: str) -> str:
-            safe = _safe_label(item.get("name"))
-            seed = "{}|{}|{}".format(
-                seed_key, item.get("action"), item.get("view"), _custom_pose_key(item)
-            )
-            return os.path.join(
-                cache_dir,
-                "play_custom_{}_{}.png".format(safe, _digest(engine_name, seed, safe)),
-            )
-
-        custom_needs_render = any(
-            ai_strips.get(custom_action_identity(item.get("name"))) is None
-            for item in custom_presets
-        )
 
         # 第二步：真的需要渲染时才做昂贵准备 —— 一次 AI 主体分割（五动作
         # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底。
@@ -2066,7 +1694,7 @@ def build_router(runtime):
         # 重复执行 AI 分割与骨架提取）
         rig = None
         segment_mask = None
-        if source is not None and (pending or custom_needs_render):
+        if source is not None and pending:
             cached = _PLAYTEST_RIG_CACHE.get(source_hash) if source_hash else None
             if cached is not None:
                 rig, segment_mask = cached
@@ -2185,15 +1813,34 @@ def build_router(runtime):
 
             import hashlib as _hashlib
 
-            # matte-v3：透明画布内仍带白底内容区的视频帧也需要抠图；
-            # digest + 文件名双写，旧 matte-v1/v2 白底缓存自动作废。
+            # matte-v4：除纯白底外支持 i2v 常见的浅灰渐变背景；
+            # digest + 文件名双写，旧 matte-v1/v2/v3 缓存自动作废。
             digest = _hashlib.sha1(
-                ("ai|matte-v3|{}|{}".format(meta.get("id"), len(frame_files))).encode()
+                ("ai|matte-v4|{}|{}".format(meta.get("id"), len(frame_files))).encode()
             ).hexdigest()[:10]
-            out_name = "play_ai_{}_{}_matte-v3.png".format(
+            out_name = "play_ai_{}_{}_matte-v4.png".format(
                 _safe_label(label or meta.get("requested_action")), digest
             )
             out_path = os.path.join(cache_dir, out_name)
+            if not os.path.isfile(out_path):
+                # 旧纯白底成功产物仍完全有效；复用 matte-v3，避免升级后
+                # 把整套已可播放动作重新抠图一遍。只有此前失败、没有缓存
+                # 的帧才走 matte-v4 的中性渐变兜底。
+                legacy_digest = _hashlib.sha1(
+                    (
+                        "ai|matte-v3|{}|{}".format(
+                            meta.get("id"), len(frame_files)
+                        )
+                    ).encode()
+                ).hexdigest()[:10]
+                legacy_name = "play_ai_{}_{}_matte-v3.png".format(
+                    _safe_label(label or meta.get("requested_action")),
+                    legacy_digest,
+                )
+                legacy_path = os.path.join(cache_dir, legacy_name)
+                if os.path.isfile(legacy_path):
+                    out_name = legacy_name
+                    out_path = legacy_path
             samples = [f for f in frame_files if f]
             if len(samples) < 4:
                 return None
@@ -2280,97 +1927,10 @@ def build_router(runtime):
                 "width": max(1, strip_w // PLAYTEST_FRAMES),
                 "height": strip_h,
                 "engine": engine,
-                # 回退条带的视角/源图朝向（attack 不在策略表内为 None）
+                # 回退条带的视角/源图朝向（PVE attack 不在默认策略表内为 None）
                 "view": PLAYTEST_VIEW_BY_ACTION.get(action),
                 **({"facing": _facing_for(action)} if _facing_for(action) else {}),
             }
-
-        # ── 自定义动作条带：AI 版优先，其次按保存的姿态参数渲染。
-        # 骨骼可用走 rigged（与内置同一条分区变形链路，config 带姿态参数）；
-        # 骨架缺失时退姿态引擎程序化渲染；仍失败则该动作本轮缺席。
-        custom_out: list[dict] = []
-        for item in custom_presets:
-            name = str(item.get("name") or "")
-            if not name:
-                continue
-            identity = custom_action_identity(name)
-            strip: dict | None = None
-            engine_name = "procedural"
-            ai_meta = ai_strips.get(identity)
-            if ai_meta is not None:
-                packed = _pack_ai_strip(ai_meta, label=identity)
-                if packed:
-                    strip = packed
-                    engine_name = "ai-video"
-            if strip is None and rig is not None and source is not None:
-                try:
-                    from artgen.riganim import animate_rigged
-
-                    strip_path = _custom_strip_path(item, "rigged-custom")
-                    if not os.path.isfile(strip_path):
-                        frames = animate_rigged(
-                            source,
-                            item.get("action") or "idle",
-                            PLAYTEST_FRAMES,
-                            PLAYTEST_SIZE,
-                            rig=rig,
-                            config=item.get("pose_config") or None,
-                            segment_mask=segment_mask,
-                            keep_background=False,
-                            view=item.get("view") or "front",
-                        )[0]
-                        pack_strip(frames).save(strip_path, "PNG")
-                    with PILImage.open(strip_path) as handle:
-                        strip_w, strip_h = handle.size
-                    url = "/api/animation/play_cache/" + os.path.basename(strip_path)
-                    strip = {
-                        "url": url,
-                        "frames": PLAYTEST_FRAMES,
-                        "fps": PLAYTEST_FPS,
-                        "width": max(1, strip_w // PLAYTEST_FRAMES),
-                        "height": strip_h,
-                        "engine": "rigged",
-                    }
-                    engine_name = "rigged"
-                except Exception:  # noqa: BLE001 - 自定义条带失败不拖垮舞台
-                    strip = None
-            if strip is None and asset is not None:
-                try:
-                    strip_path = _custom_strip_path(item, "procedural-custom")
-                    if not os.path.isfile(strip_path):
-                        frames = render_action_frames(
-                            asset_params(asset) or {},
-                            item.get("action") or "idle",
-                            PLAYTEST_FRAMES,
-                            PLAYTEST_SIZE,
-                            config=item.get("pose_config") or None,
-                        )
-                        pack_strip(frames).save(strip_path, "PNG")
-                    with PILImage.open(strip_path) as handle:
-                        strip_w, strip_h = handle.size
-                    url = "/api/animation/play_cache/" + os.path.basename(strip_path)
-                    strip = {
-                        "url": url,
-                        "frames": PLAYTEST_FRAMES,
-                        "fps": PLAYTEST_FPS,
-                        "width": max(1, strip_w // PLAYTEST_FRAMES),
-                        "height": strip_h,
-                        "engine": "procedural",
-                    }
-                except Exception:  # noqa: BLE001
-                    strip = None
-            if strip is None:
-                continue
-            custom_out.append(
-                {
-                    "name": name,
-                    "base_action": item.get("action"),
-                    "view": item.get("view"),
-                    "description": (item.get("description") or "")[:100],
-                    "engine": engine_name,
-                    "strip": strip,
-                }
-            )
 
         character = None
         if source_hash and engine in ("rigged", "sprite"):
@@ -2395,9 +1955,6 @@ def build_router(runtime):
             "fps": PLAYTEST_FPS,
             "source": engine,
             "character": character,
-            # 自定义动作陈列（命名空间隔离）：条带键 custom:<名称>，与内置
-            # 槽位互不占用
-            "custom_actions": custom_out,
         }
 
     # ------------------------------------------------------------------
