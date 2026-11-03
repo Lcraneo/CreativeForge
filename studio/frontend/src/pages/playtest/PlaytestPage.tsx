@@ -15,6 +15,12 @@ import { api } from "../../api/client";
 import { Badge, Button, Card, KV, PageHeader, SafeImage, Skeleton, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
 import { useHeldKeys } from "../../lib/keyboard";
+import {
+  TouchButton,
+  TouchControlsLayer,
+  TouchJoystick,
+  useTouchControls,
+} from "../../components/TouchControls";
 import { toast } from "../../stores/toastStore";
 import type { ActionBatchTask, CreativeAsset, PlaytestStrip } from "../../types";
 import { PlaytestCanvas } from "./PlaytestCanvas";
@@ -63,10 +69,18 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
 
   // 键盘：方向键/WASD 移动，Shift 奔跑，空格/J 攻击、↑/W 跳跃（按住连发）；
   // preventDefault 与输入框保护沿 useHeldKeys（与旧页一致）
-  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup", " "], (key) => {
+  function pressKey(key: string) {
     if (key === " " || key === "j") engine.press("attack");
     if (key === "arrowup" || key === "w") engine.press("jump");
-  });
+  }
+
+  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup", " "], pressKey);
+  const touch = useTouchControls();
+
+  function holdKey(key: string, pressed: boolean) {
+    if (pressed) keysRef.current.add(key);
+    else keysRef.current.delete(key);
+  }
   // 输入接线放在 effect 中（effect 里读 ref 是合法副作用位置）
   useEffect(() => {
     engine.setInputSource(() => ({
@@ -319,7 +333,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
       <div className="grid grid-cols-12 items-start gap-4">
       <section
         aria-label="试玩舞台"
-        className="col-span-12 min-w-0 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 xl:col-span-9"
+        className="col-span-12 min-w-0 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 lg:col-span-9"
       >
         <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle bg-surface-1/40 px-3 py-2">
           <span className="text-[12px] font-medium text-ink">{selected?.name ?? "未选择人物"}</span>
@@ -368,7 +382,10 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
           ref={stageRef}
           className={cx(
             "relative w-full overflow-hidden bg-stage-bg",
-            fullscreen ? "h-full" : "aspect-video max-h-[calc(100dvh-32rem)]",
+            fullscreen
+              ? "h-full"
+              : // max() 兜底：横屏手机 100dvh 减去 32rem 会算出负值，导致上限失效
+                "aspect-video max-h-[max(240px,calc(100dvh-20rem))] lg:max-h-[calc(100dvh-32rem)]",
           )}
         >
           <PlaytestCanvas
@@ -382,11 +399,14 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
             debug={debug}
           />
 
-          {/* Clean / Debug 切换（舞台左下） */}
+          {/* Clean / Debug 切换（舞台左下；触屏时上移让位摇杆） */}
           <div
             role="group"
             aria-label="舞台渲染模式"
-            className="absolute bottom-3 left-3 flex rounded-lg border border-stage-line/40 bg-black/35 p-0.5 backdrop-blur-sm"
+            className={cx(
+              "absolute left-3 flex rounded-lg border border-stage-line/40 bg-black/35 p-0.5 backdrop-blur-sm",
+              touch ? "bottom-32" : "bottom-3",
+            )}
           >
             {(["clean", "debug"] as const).map((value) => (
               <button
@@ -403,11 +423,33 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
             ))}
           </div>
 
+          {/* 触屏设备：左右摇杆 + 跳跃/攻击 */}
+          {touch && selectedAssetId && (
+            <TouchControlsLayer
+              joystick={
+                <TouchJoystick
+                  onDirection={(direction, pressed) => {
+                    // 左右移动；上推等同于跳跃
+                    if (direction === "up") {
+                      if (pressed) pressKey("arrowup");
+                      return;
+                    }
+                    if (direction === "left" || direction === "right") {
+                      holdKey(`arrow${direction}`, pressed);
+                    }
+                  }}
+                />
+              }
+            >
+              <TouchButton label="跳" onPress={() => pressKey("arrowup")} />
+              <TouchButton label="攻" tone="primary" onPress={() => pressKey(" ")} />
+            </TouchControlsLayer>
+          )}
         </div>
       </section>
 
       {/* ── 右侧栏：角色候选 + 舞台参数 + 诊断 ────────────────────── */}
-      <aside className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 xl:col-span-3 xl:grid-cols-1">
+      <aside className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-1">
         <Card
           title="角色"
           icon="cube"
@@ -524,7 +566,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         </Card>
 
         {diagnosticsOpen && (
-          <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+          <div className="min-w-0 sm:col-span-2 lg:col-span-1">
             <PlaytestDiagnostics
               source={meta.source}
               character={meta.character}
@@ -576,19 +618,22 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         id="playtest-stage-help"
         className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11.5px] text-ink-3"
       >
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">→</kbd>
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">A</kbd>
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">D</kbd>
-        移动
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">Shift</kbd>
-        奔跑
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">↑</kbd>
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">W</kbd>
-        跳跃
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">空格</kbd>
-        <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">J</kbd>
-        攻击
+        <span className="contents pointer-coarse:hidden">
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">←</kbd>
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">→</kbd>
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">A</kbd>
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">D</kbd>
+          移动
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">Shift</kbd>
+          奔跑
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">↑</kbd>
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">W</kbd>
+          跳跃
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">空格</kbd>
+          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">J</kbd>
+          攻击
+        </span>
+        <span className="hidden pointer-coarse:inline">触屏：左下摇杆移动，右下按钮跳跃 / 攻击</span>
         <span aria-live="polite" className="text-ink-2">
           {statusText}
         </span>

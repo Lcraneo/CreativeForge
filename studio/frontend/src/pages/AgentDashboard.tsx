@@ -390,7 +390,7 @@ export default function AgentDashboard() {
 
       <div className="grid grid-cols-12 gap-5">
         {/* 左：任务图 + 质量/恢复诊断 */}
-        <div className="col-span-12 flex min-w-0 flex-col gap-5 xl:col-span-8">
+        <div className="col-span-12 flex min-w-0 flex-col gap-5 lg:col-span-8">
           <Card
             title="任务图 Task Graph"
             icon="layers"
@@ -459,7 +459,7 @@ export default function AgentDashboard() {
         </div>
 
         {/* 右：当前任务 + 事件流 */}
-        <div className="col-span-12 flex min-w-0 flex-col gap-5 xl:col-span-4">
+        <div className="col-span-12 flex min-w-0 flex-col gap-5 lg:col-span-4">
           <Card
             title="当前任务"
             icon="spark"
@@ -593,7 +593,7 @@ function RightPanel({
         )}
 
         {tab === "timeline" && (
-          <div className="cf-scroll max-h-[430px] overflow-y-auto">
+          <div className="cf-scroll max-h-[min(430px,62dvh)] overflow-y-auto">
             {recent.length === 0 ? (
               <EmptyState
                 icon="activity"
@@ -628,7 +628,7 @@ function RightPanel({
         )}
 
         {tab === "quality" && (
-          <div className="cf-scroll max-h-[430px] overflow-y-auto">
+          <div className="cf-scroll max-h-[min(430px,62dvh)] overflow-y-auto">
             <div className="space-y-3.5">
               {qualityEvent?.scores ? (
                 Object.entries(qualityEvent.scores).map(([section, score]) => (

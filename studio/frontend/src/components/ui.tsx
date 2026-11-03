@@ -34,10 +34,11 @@ const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
   danger: "border border-danger/45 bg-danger/10 text-danger hover:border-danger/70 hover:bg-danger/15",
 };
 
+// 手指设备上把触控目标抬到 44px（Apple HIG / Material 下限），桌面尺寸不变
 const BUTTON_SIZES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-[34px] px-4 text-[13px]",
-  lg: "h-10 px-5 text-sm",
+  sm: "h-8 px-3 text-xs pointer-coarse:min-h-11",
+  md: "h-[34px] px-4 text-[13px] pointer-coarse:min-h-11",
+  lg: "h-10 px-5 text-sm pointer-coarse:min-h-11",
 };
 
 export function Button({
@@ -87,7 +88,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        "grid h-8 w-8 place-items-center rounded-sm border border-line bg-paper text-ink-2 transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-line-strong hover:bg-surface-1 hover:text-ink active:scale-[0.98]",
+        "grid h-8 w-8 place-items-center rounded-sm border border-line bg-paper text-ink-2 transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard hover:border-line-strong hover:bg-surface-1 hover:text-ink active:scale-[0.98] pointer-coarse:h-11 pointer-coarse:w-11",
         className,
       )}
       {...rest}
@@ -343,7 +344,7 @@ export function Chip({
     <button
       type="button"
       className={cx(
-        "inline-flex h-8 select-none items-center gap-2 rounded-sm border px-3 text-[12.5px] transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard active:scale-[0.98]",
+        "inline-flex h-8 select-none items-center gap-2 rounded-sm border px-3 text-[12.5px] transition-[color,background-color,border-color,box-shadow,transform] duration-(--motion-fast) ease-standard active:scale-[0.98] pointer-coarse:min-h-11",
         active
           ? "border-primary/30 bg-ember-tint font-semibold text-ink"
           : "border-line-subtle bg-paper text-ink-2 hover:border-line hover:bg-surface-1 hover:text-ink",
@@ -369,7 +370,7 @@ export function Input({
   return (
     <label
       className={cx(
-        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-paper px-3 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(174,191,215,.34)]",
+        "flex h-9 items-center gap-2.5 rounded-md border border-line bg-paper px-3 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(174,191,215,.34)] pointer-coarse:min-h-11",
         className,
       )}
     >
@@ -404,7 +405,7 @@ export function Select({
   return (
     <select
       className={cx(
-        "h-9 w-full appearance-none rounded-md border border-line bg-paper bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%235e6b85%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(174,191,215,.34)]",
+        "h-9 w-full appearance-none rounded-md border border-line bg-paper bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 20 20%22 fill=%22none%22 stroke=%22%235e6b85%22 stroke-width=%221.7%22><path d=%22M5 8l5 5 5-5%22/></svg>')] bg-[length:16px] bg-[right_10px_center] bg-no-repeat px-3 pr-8 text-[13px] text-ink outline-none transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard focus:border-primary focus:shadow-[0_0_0_3px_rgba(174,191,215,.34)] pointer-coarse:min-h-11",
         className,
       )}
       {...rest}
@@ -480,7 +481,7 @@ export function Segmented<T extends string>({
           aria-selected={value === option.id}
           onClick={() => onChange(option.id)}
           className={cx(
-            "flex h-7 select-none items-center gap-1.5 rounded-[7px] border px-3.5 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard",
+            "flex h-7 select-none items-center gap-1.5 rounded-[7px] border px-3.5 text-[12.5px] transition-colors duration-(--motion-fast) ease-standard pointer-coarse:min-h-11",
             value === option.id
               ? "border-line-subtle bg-paper font-semibold text-ink shadow-e2"
               : "border-transparent text-ink-2 hover:text-ink",

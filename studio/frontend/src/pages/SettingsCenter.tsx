@@ -541,7 +541,7 @@ export default function SettingsCenter() {
       />
 
       <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-12 flex flex-col gap-5 xl:col-span-7">
+        <div className="col-span-12 flex flex-col gap-5 lg:col-span-7">
           {/* 连接（所有能力共用） */}
           <Card title="连接（所有能力共用）" icon="terminal">
             <div className="flex items-center justify-between gap-4 rounded-lg border border-line-subtle bg-surface-1 px-3 py-2.5">
@@ -971,7 +971,7 @@ export default function SettingsCenter() {
           </Card>
         </div>
 
-        <div className="col-span-12 flex flex-col gap-5 xl:col-span-5">
+        <div className="col-span-12 flex flex-col gap-5 lg:col-span-5">
           <UsageMeter />
           <Card
             title="能力 → 模型 对照"

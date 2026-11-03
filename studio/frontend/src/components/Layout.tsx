@@ -25,6 +25,9 @@ const MOBILE_TABS: NavItem[] = [
   { to: "/playtest", label: "试玩", icon: "play" },
 ];
 
+/** 沉浸玩法页：移动端隐藏底部 Tab 栏，把整个视口让给舞台与虚拟控件。 */
+const GAME_ROUTES = new Set(["/pve", "/arcade", "/playtest", "/playtest-3d"]);
+
 const BREADCRUMBS: Record<string, { group: string; label: string }> = {
   "/": { group: "CreativeForge", label: "首页" },
   "/workspace": { group: "生成", label: "工作台" },
@@ -49,6 +52,7 @@ export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const href = useAssetNavigation();
   const location = useLocation();
+  const immersive = GAME_ROUTES.has(location.pathname);
   const navigate = useNavigate();
 
   const taskId = useAgentStore((state) => state.taskId);
@@ -73,6 +77,15 @@ export default function Layout() {
   }
 
   useEffect(() => localStorage.setItem("cf-rail", rail ? "1" : "0"), [rail]);
+
+  // 平板转屏 / 窗口缩放跨过 1024 时同步侧栏形态（初始化只在挂载时判断一次）
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia("(max-width: 1023px)");
+    const onChange = () => setRail(query.matches);
+    query.addEventListener("change", onChange);
+    return () => query.removeEventListener("change", onChange);
+  }, []);
 
   // 侧栏 kbd 数字 = 真实快捷键（1/2/3 跳转），输入时忽略
   useEffect(() => {
@@ -393,7 +406,16 @@ export default function Layout() {
           <RococoCorner className="absolute right-3 top-14 hidden h-36 w-36 rotate-90 text-line/35 lg:block" />
           <RococoCorner className="absolute bottom-3 left-3 hidden h-32 w-32 rotate-180 text-line/25 lg:block" />
         </div>
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-paper/70 px-4 backdrop-blur-md md:px-6">
+        <header className="flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center gap-4 border-b border-line bg-paper/70 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md md:px-6">
+          {immersive && (
+            <NavLink
+              to={href("/scenes")}
+              aria-label="返回场景工坊"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-sm border border-line bg-paper text-ink-2 md:hidden"
+            >
+              <Icon name="arrow-left" className="h-4 w-4" />
+            </NavLink>
+          )}
           <span className="flex items-center gap-2 md:hidden">
             <RococoCrest className="h-7 w-6 shrink-0" />
             <b className="text-[13px]">{crumb.label}</b>
@@ -467,7 +489,12 @@ export default function Layout() {
         <main
           id="cf-main"
           tabIndex={-1}
-          className="cf-scroll relative min-h-0 flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))] outline-none md:pb-0"
+          className={cx(
+            "cf-scroll relative min-h-0 flex-1 overflow-y-auto outline-none md:pb-0",
+            immersive
+              ? "pb-[env(safe-area-inset-bottom)]"
+              : "pb-[calc(5rem+env(safe-area-inset-bottom))]",
+          )}
         >
           {/* 路由进入过渡：CSS 动画（key 变化触发重放，query 变化不重挂载） */}
           <div key={location.pathname} className="relative z-10 cf-page-enter">
@@ -476,7 +503,14 @@ export default function Layout() {
         </main>
 
         {/* Bottom tabs (mobile) */}
-        <nav aria-label="移动端主导航" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line bg-paper/80 backdrop-blur-md md:hidden" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <nav
+          aria-label="移动端主导航"
+          className={cx(
+            "fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-line bg-paper/80 backdrop-blur-md md:hidden",
+            immersive && "hidden",
+          )}
+          style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+        >
           {MOBILE_TABS.map((tab) => (
             <NavLink
               key={tab.to}

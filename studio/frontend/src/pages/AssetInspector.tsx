@@ -319,7 +319,7 @@ export default function AssetInspector() {
                 label="QA 均值"
                 size={124}
               />
-              <div className="min-w-[220px] flex-1 space-y-3">
+              <div className="min-w-[min(220px,100%)] flex-1 space-y-3">
                 {report ? (
                   Object.entries(report.scores).map(([section, score]) => (
                     <ScoreBar
