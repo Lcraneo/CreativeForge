@@ -26,19 +26,12 @@ const PLAYBACK_BOOST: Record<string, number> = { run: 1.3 };
 export function clipTable(
   strips: Record<string, PlaytestStrip | undefined> | undefined,
   fallbackFps: number,
-  customs: Array<{ key: string; strip?: PlaytestStrip }> = [],
 ): ClipTable {
   const table: ClipTable = {};
   for (const [name, strip] of Object.entries(strips ?? {})) {
     table[name] = {
       frames: Math.max(1, strip?.frames ?? FALLBACK_CLIP.frames),
       fps: strip?.fps ?? fallbackFps ?? FALLBACK_CLIP.fps,
-    };
-  }
-  for (const item of customs) {
-    table[item.key] = {
-      frames: Math.max(1, item.strip?.frames ?? FALLBACK_CLIP.frames),
-      fps: item.strip?.fps ?? fallbackFps ?? FALLBACK_CLIP.fps,
     };
   }
   return table;

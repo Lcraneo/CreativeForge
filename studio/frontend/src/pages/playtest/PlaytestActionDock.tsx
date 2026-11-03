@@ -1,15 +1,14 @@
 /**
  * 试玩舞台 V2 · 底部动作坞
  *
- * 旧版右侧"长画廊"压缩为横向动作卡坞：主按钮（选择动作/Preview）与
- * 次级按钮（生成 AI 动画 / 重试）是同级元素——禁止 button
- * 嵌套 button。自定义动作只在用户打开动作库后出现（渐进式加载）。
+ * 旧版右侧"长画廊"压缩为响应式动作卡坞：主按钮（选择动作/Preview）与
+ * 次级按钮（生成 AI 动画 / 重试）是同级元素——禁止 button 嵌套 button。
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { Badge, Button, Spinner, cx } from "../../components/ui";
 import { Icon } from "../../components/icons";
 import { RococoFleuron } from "../../components/rococo/RococoOrnaments";
-import type { ActionBatchTask, PlaytestCustomAction, PlaytestStrip } from "../../types";
+import type { ActionBatchTask, PlaytestStrip } from "../../types";
 import type { PlaytestMode } from "./playtestEngine";
 import type { StripPhase } from "./usePlaytestAssets";
 
@@ -17,7 +16,6 @@ export const BASE_ACTION_LABEL: Record<string, string> = {
   idle: "待机",
   walk: "行走",
   run: "奔跑",
-  attack: "攻击",
   jump: "跳跃",
 };
 
@@ -25,7 +23,6 @@ const ACTION_HINT: Record<string, string> = {
   idle: "无操作时自动播放",
   walk: "← / → 或 A / D",
   run: "移动 + Shift",
-  attack: "空格 / J",
   jump: "↑ / W",
 };
 
@@ -286,7 +283,6 @@ function GenerationStatus({
 
 export interface PlaytestActionDockProps {
   actions: string[];
-  customActions: PlaytestCustomAction[];
   strips: Record<string, PlaytestStrip>;
   thumbnails: Record<string, string>;
   currentAction: string;
@@ -301,22 +297,18 @@ export interface PlaytestActionDockProps {
   missingCount: number;
   aiReadyCount: number;
   phase: (key: string) => StripPhase;
-  customLoading: boolean;
-  libraryOpen: boolean;
   assetSelected: boolean;
   onSelect: (key: string) => void;
   onResumeLive: () => void;
   onGenerateAi: (name: string) => void;
   onGenerateAll: () => void;
   onRefreshBatch: () => void;
-  onOpenLibrary: () => void;
   onRetry: (key: string) => void;
 }
 
 export function PlaytestActionDock(props: PlaytestActionDockProps) {
   const {
     actions,
-    customActions,
     strips,
     thumbnails,
     currentAction,
@@ -331,15 +323,12 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
     missingCount,
     aiReadyCount,
     phase,
-    customLoading,
-    libraryOpen,
     assetSelected,
     onSelect,
     onResumeLive,
     onGenerateAi,
     onGenerateAll,
     onRefreshBatch,
-    onOpenLibrary,
     onRetry,
   } = props;
 
@@ -364,7 +353,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
         {assetSelected && (
           <span title="AI 动画按角色独立保存；切换角色后需要为该角色补齐">
             <Badge tone={missingCount === 0 ? "success" : "warning"}>
-              本角色 AI {aiReadyCount}/5
+              本角色 AI {aiReadyCount}/{actions.length}
             </Badge>
           </span>
         )}
@@ -374,15 +363,6 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           </Button>
         )}
         <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            icon="grid"
-            aria-expanded={libraryOpen}
-            onClick={onOpenLibrary}
-          >
-            自定义动作库{customActions.length > 0 ? `（${customActions.length}）` : ""}
-          </Button>
           {assetSelected && missingCount > 0 && (
             <Button
               variant="primary"
@@ -419,7 +399,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
           选择人物后，这里会列出该角色的全部动作卡，点卡即切预览。
         </p>
       ) : (
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
           {actions.map((name) => {
             const key = name;
             const strip = strips[name];
@@ -436,7 +416,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
               <div
                 key={key}
                 className={cx(
-                  "flex w-[176px] shrink-0 flex-col rounded-lg border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
+                  "flex min-w-0 flex-col rounded-lg border p-2.5 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
                   currentAction === key
                     ? "border-primary/60 bg-paper shadow-xs"
                     : "border-line-subtle bg-surface-1/25",
@@ -465,7 +445,7 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
                       src={thumbnails[name]}
                       alt={`${name} 预览`}
                       loading="lazy"
-                      className="mt-1.5 h-[44px] w-[128px] rounded-md border border-line-subtle bg-white object-cover object-left"
+                      className="mt-2 h-[52px] w-full rounded-md border border-line-subtle bg-white object-cover object-left"
                     />
                   )}
                 </button>
@@ -501,71 +481,6 @@ export function PlaytestActionDock(props: PlaytestActionDockProps) {
             );
           })}
 
-          {customLoading && (
-            <div className="flex w-[176px] shrink-0 items-center justify-center rounded-lg border border-dashed border-line text-[11px] text-ink-4">
-              正在加载自定义动作…
-            </div>
-          )}
-          {libraryOpen &&
-            customActions.map((item) => {
-              const key = `custom:${item.name}`;
-              const itemPhase = phase(key);
-              return (
-                <div
-                  key={key}
-                  className={cx(
-                    "flex w-[176px] shrink-0 flex-col rounded-lg border p-2 transition-[border-color,box-shadow] duration-(--motion-fast) ease-standard",
-                    currentAction === key
-                      ? "border-ember/60 bg-paper shadow-xs"
-                      : "border-line-subtle bg-surface-1/25",
-                  )}
-                >
-                  <button onClick={() => onSelect(key)} aria-pressed={currentAction === key} className="text-left">
-                    <span className="flex items-center gap-1.5">
-                      <span className="truncate text-[12.5px] font-medium text-ink">{item.name}</span>
-                      <EngineBadge engine={item.engine} />
-                      <PhaseBadge phase={itemPhase} />
-                    </span>
-                    <span className="block truncate text-[10.5px] text-ink-3">
-                      {BASE_ACTION_LABEL[item.base_action ?? ""] ?? item.base_action ?? "自定义"}
-                      {item.view === "side" ? " · 侧视" : ""}
-                      {item.description ? ` · ${item.description}` : ""}
-                    </span>
-                    {item.strip?.url && (
-                      <img
-                        src={item.strip.url}
-                        alt={`${item.name} 预览`}
-                        loading="lazy"
-                        className="mt-1.5 h-[44px] w-[128px] rounded-md border border-line-subtle bg-white object-cover object-left"
-                      />
-                    )}
-                  </button>
-                  {/* 次级按钮与选择按钮同级 */}
-                  {itemPhase === "error" ? (
-                    <button
-                      onClick={() => onRetry(key)}
-                      className="mt-1 inline-flex items-center gap-1 text-[10.5px] font-medium text-danger underline-offset-2 hover:underline"
-                    >
-                      <Icon name="clock" className="h-3 w-3" />
-                      条带加载失败 · 点击重试
-                    </button>
-                  ) : (
-                    item.engine !== "ai-video" && (
-                      <span className="mt-1 text-[10.5px] text-ink-3">可使用上方生成 AI 动画</span>
-                    )
-                  )}
-                </div>
-              );
-            })}
-          {!libraryOpen && (
-            <button
-              onClick={onOpenLibrary}
-              className="flex w-[176px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-line bg-surface-1/40 text-ink-3 hover:border-line-strong"
-            >
-              <Icon name="grid" className="h-4 w-4" />
-              <span className="text-[11px]">打开自定义动作库</span>
-            </button>
-          )}
         </div>
       )}
       </div>

@@ -22,7 +22,7 @@ import {
   useTouchControls,
 } from "../../components/TouchControls";
 import { toast } from "../../stores/toastStore";
-import type { ActionBatchTask, CreativeAsset, PlaytestStrip } from "../../types";
+import type { ActionBatchTask, CreativeAsset } from "../../types";
 import { PlaytestCanvas } from "./PlaytestCanvas";
 import { PlaytestActionDock, BASE_ACTION_LABEL } from "./PlaytestActionDock";
 import { PlaytestDiagnostics } from "./PlaytestDiagnostics";
@@ -34,7 +34,6 @@ const ACTION_VIEW_BY_ACTION: Record<string, "front" | "side"> = {
   idle: "front",
   walk: "side",
   run: "side",
-  attack: "front",
   jump: "side",
 };
 
@@ -60,21 +59,19 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   );
 
   /* ── 渐进式资源（元数据分批 + 逐张解码 + 失败重试） ─────────────── */
-  const [libraryOpen, setLibraryOpen] = useState(false);
-  const assets = usePlaytestAssets(selectedAssetId, { libraryOpen });
+  const assets = usePlaytestAssets(selectedAssetId);
   const { meta } = assets;
 
   /* ── 引擎：输入 → 动作仲裁 → 帧游标/位置/朝向（全部内部维护） ──── */
   const engine = useMemo(() => new PlaytestEngine(), []);
 
-  // 键盘：方向键/WASD 移动，Shift 奔跑，空格/J 攻击、↑/W 跳跃（按住连发）；
+  // 键盘：方向键/WASD 移动，Shift 奔跑，↑/W 跳跃（按住连发）；
   // preventDefault 与输入框保护沿 useHeldKeys（与旧页一致）
   function pressKey(key: string) {
-    if (key === " " || key === "j") engine.press("attack");
     if (key === "arrowup" || key === "w") engine.press("jump");
   }
 
-  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup", " "], pressKey);
+  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup"], pressKey);
   const touch = useTouchControls();
 
   function holdKey(key: string, pressed: boolean) {
@@ -102,14 +99,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
     [engine],
   );
 
-  // 条带元数据（含自定义动作）注入引擎：帧数/帧率
-  const stripMetaByKey = useMemo(() => {
-    const map: Record<string, PlaytestStrip> = { ...meta.strips };
-    for (const item of meta.customActions) {
-      if (item.strip) map[`custom:${item.name}`] = item.strip;
-    }
-    return map;
-  }, [meta]);
+  // 条带元数据注入引擎：帧数/帧率
+  const stripMetaByKey = meta.strips;
   useEffect(() => {
     for (const [key, strip] of Object.entries(stripMetaByKey)) {
       engine.setStripTiming(key, { frames: Math.max(1, strip.frames), fps: strip.fps ?? 10 });
@@ -282,12 +273,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
 
   const actionLabel = useMemo(() => {
     if (BASE_ACTION_LABEL[uiAction]) return BASE_ACTION_LABEL[uiAction];
-    if (uiAction.startsWith("custom:")) {
-      const item = meta.customActions.find((entry) => `custom:${entry.name}` === uiAction);
-      return item?.name ?? uiAction;
-    }
     return uiAction;
-  }, [uiAction, meta.customActions]);
+  }, [uiAction]);
 
   // rigged = 分区骨骼，sprite = 整身形变；两者都是"按角色原画变形"，
   // 仅渲染方式不同，界面统一按角色动画展示
@@ -423,7 +410,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
             ))}
           </div>
 
-          {/* 触屏设备：左右摇杆 + 跳跃/攻击 */}
+          {/* 触屏设备：左右摇杆 + 跳跃 */}
           {touch && selectedAssetId && (
             <TouchControlsLayer
               joystick={
@@ -442,7 +429,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
               }
             >
               <TouchButton label="跳" onPress={() => pressKey("arrowup")} />
-              <TouchButton label="攻" tone="primary" onPress={() => pressKey(" ")} />
             </TouchControlsLayer>
           )}
         </div>
@@ -467,7 +453,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
                 {selected?.name ?? "未选择人物"}
               </div>
               <div className="cf-ref truncate">
-                条带 {assets.progress.ready}/{assets.progress.total} · AI {aiReadyCount}/5
+                条带 {assets.progress.ready}/{assets.progress.total} · AI{" "}
+                {aiReadyCount}/{BUILT_IN_ACTIONS.length}
               </div>
             </div>
           </div>
@@ -572,7 +559,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
               character={meta.character}
               actions={meta.actions}
               strips={meta.strips}
-              customActions={meta.customActions}
               phase={assets.phase}
               progress={assets.progress}
               batchTasks={batchTasks}
@@ -586,7 +572,6 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
       {/* ── 底部动作坞 ────────────────────────────────────────────── */}
       <PlaytestActionDock
         actions={meta.actions.length > 0 ? [...meta.actions] : [...BUILT_IN_ACTIONS]}
-        customActions={meta.customActions}
         strips={meta.strips}
         thumbnails={meta.previews}
         currentAction={uiAction}
@@ -601,15 +586,12 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         missingCount={assets.metadataLoading ? 0 : missingCount}
         aiReadyCount={aiReadyCount}
         phase={assets.phase}
-        customLoading={assets.customLoading}
-        libraryOpen={libraryOpen}
         assetSelected={Boolean(selectedAssetId)}
         onSelect={selectAction}
         onResumeLive={onResumeLive}
         onGenerateAi={(name) => void generateAiAnimation(name)}
         onGenerateAll={() => void generateAllActions()}
         onRefreshBatch={() => void batch.refetch()}
-        onOpenLibrary={() => setLibraryOpen(true)}
         onRetry={onRetry}
       />
 
@@ -629,11 +611,8 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
           <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">↑</kbd>
           <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">W</kbd>
           跳跃
-          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">空格</kbd>
-          <kbd className="rounded-xs border border-line px-1.5 font-mono text-[10px]">J</kbd>
-          攻击
         </span>
-        <span className="hidden pointer-coarse:inline">触屏：左下摇杆移动，右下按钮跳跃 / 攻击</span>
+        <span className="hidden pointer-coarse:inline">触屏：左下摇杆移动，右下按钮跳跃</span>
         <span aria-live="polite" className="text-ink-2">
           {statusText}
         </span>

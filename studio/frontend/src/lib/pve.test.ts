@@ -6,7 +6,6 @@ import {
   PVE_SLAM_MAX_Z,
   advancePveStage,
   createPveRuntime,
-  pveActionSlot,
   pveEnemyPose,
   pveGroundDistance,
   pveHud,
@@ -479,16 +478,6 @@ describe("PVE 自定义敌人与动作", () => {
       profile_id: "profile_boss",
       asset_id: "asset_boss",
     });
-  });
-
-  it("maps all six action slots without overwriting base actions", () => {
-    expect(PVE_ACTION_SLOTS).toEqual(["idle", "walk", "windup", "attack", "hurt", "death"]);
-    expect(pveActionSlot("custom:windup")).toBe("windup");
-    expect(pveActionSlot("custom:hurt")).toBe("hurt");
-    expect(pveActionSlot("custom:death")).toBe("death");
-    expect(pveActionSlot("custom:celebrate")).toBe("custom:celebrate");
-    expect(pveActionSlot("attack")).toBe("attack");
-    expect(pveActionSlot("idle")).toBe("idle");
   });
 
   it("prioritizes death, hurt and windup poses", () => {

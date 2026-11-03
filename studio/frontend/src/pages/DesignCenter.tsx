@@ -34,8 +34,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
   const [pose, setPose] = useState<ViewId>("front");
   const [generating, setGenerating] = useState(false);
   const [viewError, setViewError] = useState<string | null>(null);
-  const [restyleStyle, setRestyleStyle] = useState("anime");
-  const [restyleBusy, setRestyleBusy] = useState(false);
   const [cutoutBusy, setCutoutBusy] = useState(false);
   const patchAsset = useAssetStore((state) => state.patch);
 
@@ -100,24 +98,6 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
       toast({ tone: "danger", title: "三视图生成失败", description: reason.slice(0, 200) });
     } finally {
       setGenerating(false);
-    }
-  }
-
-  async function doRestyle() {
-    if (!asset || restyleBusy) return;
-    setRestyleBusy(true);
-    try {
-      const payload = await api.restyleAsset(asset.id, restyleStyle);
-      patchAsset(asset.id, { restyle: payload });
-      toast({
-        tone: "success",
-        title: "风格迁移完成",
-        description: `${restyleStyle} · ${payload.model ?? ""}`,
-      });
-    } catch (cause) {
-      toast({ tone: "danger", title: "风格迁移失败", description: String(cause).slice(0, 200) });
-    } finally {
-      setRestyleBusy(false);
     }
   }
 
@@ -327,35 +307,13 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
             title="AI 原画 Concept"
             icon="spark"
             right={
-              asset.image ? (
-                <Badge tone="primary">{asset.image.provider}</Badge>
-              ) : (
-                <Badge tone="neutral">未生成</Badge>
-              )
-            }
-          >
-            {aiImageAvailable(asset) && (
-              <div className="mb-3 flex flex-col gap-2 rounded-sm border border-line-subtle bg-surface-1/60 p-2.5">
-                <Segmented
-                  options={[
-                    { id: "anime", label: "动漫" },
-                    { id: "pixel", label: "像素" },
-                    { id: "ink", label: "水墨" },
-                  ]}
-                  value={restyleStyle}
-                  onChange={setRestyleStyle}
-                  className="self-start"
-                />
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    icon="spark"
-                    loading={restyleBusy}
-                    onClick={doRestyle}
-                  >
-                    风格迁移
-                  </Button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                {asset.image ? (
+                  <Badge tone="primary">{asset.image.provider}</Badge>
+                ) : (
+                  <Badge tone="neutral">未生成</Badge>
+                )}
+                {aiImageAvailable(asset) && (
                   <Button
                     variant="secondary"
                     size="sm"
@@ -363,25 +321,12 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                     loading={cutoutBusy}
                     onClick={doCutout}
                   >
-                    透明底
+                    生成透明底
                   </Button>
-                </div>
+                )}
               </div>
-            )}
-            {asset.restyle?.url && (
-              <div className="mb-3 overflow-hidden rounded-[10px] border border-line-subtle bg-canvas">
-                <p className="px-3 pt-2 text-[11px] text-ink-3">
-                  风格迁移 · {asset.restyle.style}（点击放大另存）
-                </p>
-                <a href={asset.restyle.url} target="_blank" rel="noreferrer">
-                  <SafeImage
-                    src={asset.restyle.url}
-                    alt={`restyle ${asset.restyle.style}`}
-                    className="mx-auto h-[200px] object-contain"
-                  />
-                </a>
-              </div>
-            )}
+            }
+          >
             {asset.cutout_png && (
               <div className="mb-3 overflow-hidden rounded-[10px] border border-dashed border-primary/40 bg-white">
                 <p className="px-3 pt-2 text-[11px] text-ink-3">
@@ -418,18 +363,20 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                 原画（离线管线或未启用自定义模型）。三视图与像素资产不依赖原图，仍可正常导出。
               </p>
             )}
-            <button
-              onClick={copyPrompt}
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary transition-opacity hover:opacity-80"
-            >
-              <Icon name="terminal" className="h-3.5 w-3.5" />
-              复制生成提示词
-            </button>
-            {asset.source.prompt && (
-              <p className="mt-2 line-clamp-3 text-[11.5px] leading-[18px] text-ink-3">
-                {asset.source.prompt}
-              </p>
-            )}
+            <div className="mt-3 flex flex-wrap items-start justify-between gap-2 border-t border-line-subtle pt-3">
+              <button
+                onClick={copyPrompt}
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-primary transition-opacity hover:opacity-80"
+              >
+                <Icon name="terminal" className="h-3.5 w-3.5" />
+                复制生成提示词
+              </button>
+              {asset.source.prompt && (
+                <p className="line-clamp-2 min-w-[12rem] flex-1 text-right text-[11.5px] leading-[18px] text-ink-3">
+                  {asset.source.prompt}
+                </p>
+              )}
+            </div>
           </Card>
         </div>
       </div>

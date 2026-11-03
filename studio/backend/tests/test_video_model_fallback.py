@@ -127,7 +127,6 @@ class VideoModelFallbackTests(unittest.TestCase):
                 mock.patch.object(
                     anim_service, "ai_enhance_motion_prompt", return_value="walk in place"
                 ),
-                mock.patch.object(anim_service, "custom_motion_clause", return_value=""),
                 mock.patch.object(
                     anim_service.AnimationService, "_crop_to_subject",
                     return_value=(b"source-image", None),

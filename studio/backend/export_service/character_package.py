@@ -7,7 +7,6 @@
     artwork/front|side|back.png   三视图（design_views，缺失视图自动跳过）
     artwork/source_ai.png    AI 原画
     artwork/cutout.png       透明底立绘（如有）
-    artwork/restyle.png      风格迁移版（如有）
     animations/<action>__<engine>.gif      每个动作的成品动画（每动作取最新）
     animations/<action>__<engine>_sheet.png
     engine/...               GImport 一键导出工程包（Character/Animation/
@@ -121,10 +120,6 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
             missing.remove("view_front")
     if asset.get("cutout_png"):
         _add_artwork(asset["cutout_png"], "cutout.png", "cutout")
-    restyle = asset.get("restyle")
-    if isinstance(restyle, dict):
-        _add_artwork(restyle.get("file"), "restyle.png", "restyle")
-
     # ── 动画：每个动作取最新一条，GIF + 拍板图成对打包 ────────────────────
     animation_entries: list[tuple[str, bytes]] = []
     animation_manifest: list[dict] = []
@@ -205,7 +200,7 @@ def export_character_package(asset, animations, output_dir, engine="cocos"):
         "asset: {aid} · engine: {engine}\n"
         "三视图: {views} · 动作动画: {actions} · 引擎文件: {efiles}\n\n"
         "## 目录\n"
-        "- `artwork/` 原画、三视图、透明底、风格迁移版\n"
+        "- `artwork/` 原画、三视图、透明底\n"
         "- `animations/` 每个动作的成品 GIF + 拍板图（`<动作>__<引擎>.gif`）\n"
         "- `engine/` GImport 一键导出的引擎工程包（可直接导入 {engine}）\n"
         "- `manifest.json` 完整清单与缺失项\n"

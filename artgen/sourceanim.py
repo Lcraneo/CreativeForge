@@ -26,6 +26,10 @@ MATTE_MAX_COVERAGE = 0.85  # 主体覆盖率上限（高于=背景没抠掉）
 MATTE_CORNER_ALPHA = 8  # 四角 alpha 上限（近似透明）
 MATTE_VIDEO_OCCUPANCY = 0.92  # 透明视频内容区占 bbox 比例（识别白底视频画布）
 MATTE_VIDEO_BORDER_WHITE = 0.50  # 角色贴近内容框边缘时仍可识别的白底比例下限
+NEUTRAL_BG_CHROMA = 18  # 中性背景单像素 R/G/B 最大差
+NEUTRAL_BG_MIN_LUMA = 96  # 中性背景最暗中位数（深色背景交给 AI 分割）
+NEUTRAL_BG_MAX_LUMA_SPREAD = 110  # 允许的明暗渐变范围
+NEUTRAL_BG_MIN_BORDER_RATIO = 0.90  # 边框中性色样本占比下限
 
 
 def edge_smoothness(mask):
@@ -294,6 +298,142 @@ def _subject_mask(canvas):
     return _flood_subject(rgb), False, bg
 
 
+def _cutout_neutral_gradient(rgba, rgb):
+    """浅灰/中性渐变背景 → 透明 RGBA。
+
+    i2v 模型即使收到白底源图，也会为部分动作生成带暗角的灰色渐变背景。
+    这类帧不是纯白，但仍可由四周拟合出平滑背景面：先用二次曲面估计背景，
+    再按局部颜色残差分离主体，最后用拟合背景反解边缘 alpha/前景色。相比
+    固定色洪泛，不受渐变方向与亮度变化影响；彩色/复杂背景仍拒绝处理。
+    """
+
+    import numpy as np
+    from PIL import Image as PILImage
+    from PIL import ImageFilter
+
+    arr = np.asarray(rgb, dtype=np.float32)
+    height, width, _ = arr.shape
+    yy, xx = np.mgrid[0:height, 0:width]
+    xn = xx / max(1, width - 1) * 2.0 - 1.0
+    yn = yy / max(1, height - 1) * 2.0 - 1.0
+    border_width = max(4, min(width, height) // 20)
+    border = (
+        (xx < border_width)
+        | (xx >= width - border_width)
+        | (yy < border_width)
+        | (yy >= height - border_width)
+    )
+    border_rgb = arr[border]
+    if border_rgb.size == 0:
+        return None
+
+    chroma = border_rgb.max(axis=1) - border_rgb.min(axis=1)
+    luma = border_rgb.mean(axis=1)
+    neutral_ratio = float((chroma <= NEUTRAL_BG_CHROMA).mean())
+    luma_p05, luma_p50, luma_p95 = np.percentile(luma, [5, 50, 95])
+    if (
+        neutral_ratio < NEUTRAL_BG_MIN_BORDER_RATIO
+        or luma_p50 < NEUTRAL_BG_MIN_LUMA
+        or luma_p95 - luma_p05 > NEUTRAL_BG_MAX_LUMA_SPREAD
+    ):
+        return None
+
+    def design(x_values, y_values):
+        return np.stack(
+            [
+                np.ones_like(x_values),
+                x_values,
+                y_values,
+                x_values * x_values,
+                x_values * y_values,
+                y_values * y_values,
+            ],
+            axis=-1,
+        )
+
+    border_design = design(xn[border], yn[border])
+    keep = np.ones(border_design.shape[0], dtype=bool)
+    coefficients = None
+    for _ in range(2):
+        if int(keep.sum()) < 24:
+            return None
+        coefficients = np.linalg.lstsq(
+            border_design[keep], border_rgb[keep], rcond=None
+        )[0]
+        residual = np.linalg.norm(
+            border_rgb - border_design @ coefficients, axis=1
+        )
+        keep = residual <= max(12.0, float(np.percentile(residual[keep], 85)))
+    background = design(xn, yn) @ coefficients
+    residual = np.linalg.norm(arr - background, axis=2)
+    border_residual = residual[border]
+    # 边框残差含抗锯齿与轻微压缩噪声；高于噪声的局部偏离才视为主体。
+    threshold = max(40.0, float(np.percentile(border_residual, 95)) + 28.0)
+    mask = (residual > threshold).astype(np.uint8) * 255
+    mask_image = PILImage.fromarray(mask, "L").filter(ImageFilter.MedianFilter(3))
+
+    # 渐变拟合在画面最边缘偶尔会把压缩噪声识别成几个孤立像素。只清理
+    # “接触边框且面积很小”的连通块；角色若真的贴边，其主体连通块较大，
+    # 仍会保留，不会被整体裁掉。
+    from collections import deque
+
+    mask_array = np.asarray(mask_image) > 0
+    visited = np.zeros_like(mask_array, dtype=bool)
+    speck_limit = max(24, int(mask_array.size * 0.002))
+    for start_y, start_x in zip(*np.where(mask_array & border)):
+        if visited[start_y, start_x]:
+            continue
+        queue = deque([(int(start_y), int(start_x))])
+        visited[start_y, start_x] = True
+        component = []
+        while queue:
+            y, x = queue.popleft()
+            component.append((y, x))
+            for next_y, next_x in ((y - 1, x), (y + 1, x), (y, x - 1), (y, x + 1)):
+                if (
+                    0 <= next_y < height
+                    and 0 <= next_x < width
+                    and mask_array[next_y, next_x]
+                    and not visited[next_y, next_x]
+                ):
+                    visited[next_y, next_x] = True
+                    queue.append((next_y, next_x))
+        if len(component) < speck_limit:
+            for y, x in component:
+                mask_array[y, x] = False
+    mask_image = PILImage.fromarray(
+        (mask_array.astype(np.uint8) * 255), "L"
+    ).filter(ImageFilter.GaussianBlur(0.8))
+    alpha = np.asarray(mask_image, dtype=np.float32) / 255.0
+    if not MATTE_MIN_COVERAGE <= float((alpha >= 0.5).mean()) <= MATTE_MAX_COVERAGE:
+        return None
+
+    # 局部背景反解：C = F·a + B·(1-a)。只改半透明边缘，主体内部保持原色。
+    edge = (alpha > 0.02) & (alpha < 0.98)
+    foreground = arr.copy()
+    safe_alpha = np.maximum(alpha, 1.0 / 255.0)
+    foreground[edge] = (
+        arr[edge]
+        - background[edge] * (1.0 - safe_alpha[edge])[:, None]
+    ) / safe_alpha[edge][:, None]
+    foreground = np.clip(foreground, 0.0, 255.0)
+    output = np.dstack([foreground, alpha * 255.0]).astype(np.uint8)
+    result = PILImage.fromarray(output, "RGBA")
+    result_alpha = np.asarray(result)[..., 3]
+    if result.getbbox() is None:
+        return None
+    patch = max(1, min(width, height) // 32)
+    corners = (
+        result_alpha[:patch, :patch],
+        result_alpha[:patch, -patch:],
+        result_alpha[-patch:, :patch],
+        result_alpha[-patch:, -patch:],
+    )
+    if max(int(corner.max()) for corner in corners) > MATTE_CORNER_ALPHA:
+        return None
+    return result
+
+
 def cutout_white_background(image):
     """白底视频帧 → 真透明 RGBA（试玩条带打包专用）。
 
@@ -353,7 +493,9 @@ def cutout_white_background(image):
     else:
         bg = _border_bg(PILImage.fromarray(rgb, "RGB"))
     if min(bg) < WHITE_BG_MIN_RGB or max(bg) - min(bg) > WHITE_BG_MAX_SPREAD:
-        return None  # 非白底：本地抠图不可信
+        # 模型从白底源图生成浅灰渐变背景是稳定可见的失败模式。只在边框
+        # 明确为中性灰时走局部背景拟合；彩色/复杂场景仍保持拒绝。
+        return _cutout_neutral_gradient(rgba, PILImage.fromarray(rgb, "RGB"))
 
     work = PILImage.fromarray(rgb, "RGB")
     mask = _flood_subject(work)

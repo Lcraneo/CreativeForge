@@ -42,7 +42,7 @@ import {
   type ClipTable,
 } from "../lib/animator";
 import { useHeldKeys } from "../lib/keyboard";
-import type { CreativeAsset, ParkourScene, PlaytestCustomAction } from "../types";
+import type { CreativeAsset, ParkourScene } from "../types";
 import {
   CHAR_HEIGHT,
   CHAR_MAX_WIDTH,
@@ -265,20 +265,10 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     enabled: Boolean(selectedAssetId),
   });
 
-  const customActions: PlaytestCustomAction[] = useMemo(
-    () => previews.data?.custom_actions ?? [],
-    [previews.data],
-  );
-
   // 动作表：帧数/帧率按动作各自声明，一次性动作不再借用上一个动作的帧长
   const clips: ClipTable = useMemo(
-    () =>
-      clipTable(
-        previews.data?.strips,
-        previews.data?.fps ?? FALLBACK_FPS,
-        customActions.map((item) => ({ key: `custom:${item.name}`, strip: item.strip })),
-      ),
-    [previews.data, customActions],
+    () => clipTable(previews.data?.strips, previews.data?.fps ?? FALLBACK_FPS),
+    [previews.data],
   );
 
   const stripUrls = useMemo(() => {
@@ -292,14 +282,11 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     } else {
       Object.assign(out, data.previews ?? {});
     }
-    for (const item of customActions) {
-      if (item.strip?.url) out[`custom:${item.name}`] = item.strip.url;
-    }
     // 基础试玩不要求额外生成待机；静止时显示行走条带的第一帧即可，避免
     // “少一条 idle 动画就无法进入关卡”这种与核心体验无关的阻断。
     if (!out.idle && out.walk) out.idle = out.walk;
     return out;
-  }, [previews.data, customActions]);
+  }, [previews.data]);
 
   const stripList = useMemo(() => Object.entries(stripUrls), [stripUrls]);
 
@@ -1156,11 +1143,6 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                   </div>
                 );
               })}
-              {customActions.length > 0 && (
-                <p className="mt-1 px-2 text-[10.5px] text-ink-4">
-                  另有 {customActions.length} 个自定义动作，可在试玩舞台逐条检查。
-                </p>
-              )}
             </div>
           </Card>
         </div>
