@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: creativeforge-api
+    runtime: docker
+    plan: free
+    region: singapore
+    branch: zhangmingyang
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: MODEL_ENABLED
+        value: "false"
+      - key: STUDIO_RATE_LIMIT
+        value: "120"
+      - key: STUDIO_CORS_ORIGINS
+        sync: false

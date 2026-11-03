@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../api/client";
+import { api, backendUrl } from "../api/client";
 import { Badge, Button, Card, SafeImage } from "./ui";
 import { toast } from "../stores/toastStore";
 import { assetHref, useAssetStore } from "../stores/assetStore";
@@ -22,7 +22,7 @@ export function GenerationResult({ asset }: Props) {
   const image =
     (asset as { image?: { url?: string; model?: string; cached?: boolean } }).image?.url ||
     asset.source?.ai_image?.url ||
-    `/api/assets/${asset.id}/image.png?view=front&size=512`;
+    backendUrl(`/api/assets/${asset.id}/image.png?view=front&size=512`);
   const model =
     (asset as { image?: { model?: string } }).image?.model ||
     asset.source?.ai_image?.model ||

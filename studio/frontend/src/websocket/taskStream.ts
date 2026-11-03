@@ -1,5 +1,6 @@
 import type { TaskEvent } from "../types";
-import { api } from "../api/client";
+import { api, getStudioToken } from "../api/client";
+import { backendWebSocketUrl } from "../api/endpoints";
 
 export interface StreamHandlers {
   onEvent: (event: TaskEvent) => void;
@@ -85,8 +86,10 @@ export function streamTask(taskId: string, handlers: StreamHandlers): () => void
   }
 
   try {
-    const protocol = location.protocol === "https:" ? "wss" : "ws";
-    ws = new WebSocket(`${protocol}://${location.host}/ws/tasks/${taskId}/stream`);
+    const endpoint = new URL(backendWebSocketUrl(`/ws/tasks/${taskId}/stream`), location.href);
+    const token = getStudioToken();
+    if (token) endpoint.searchParams.set("token", token);
+    ws = new WebSocket(endpoint.toString());
     ws.onmessage = (message) => {
       let event: TaskEvent;
       try {

@@ -13,7 +13,7 @@ import {
 } from "../components/ui";
 import { AssetLoadState } from "../components/AssetLoadState";
 import { Icon } from "../components/icons";
-import { api } from "../api/client";
+import { api, backendUrl } from "../api/client";
 import { toast } from "../stores/toastStore";
 const AssetViewer = lazy(() => import("../three/AssetViewer"));
 
@@ -151,7 +151,9 @@ export default function AssetInspector() {
                   </div>
                 }
               >
-                <AssetViewer textureUrl={`/api/assets/${encodeURIComponent(asset.id)}/image.png`} />
+                <AssetViewer
+                  textureUrl={backendUrl(`/api/assets/${encodeURIComponent(asset.id)}/image.png`)}
+                />
               </Suspense>
             )}
           </div>

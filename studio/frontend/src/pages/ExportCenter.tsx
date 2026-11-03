@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAssetLoader } from "../stores/assetStore";
 import { exportScope, useExportStore } from "../stores/exportStore";
-import { api } from "../api/client";
+import { api, backendUrl } from "../api/client";
 import { toast } from "../stores/toastStore";
 import {
   Badge,
@@ -159,7 +159,7 @@ export default function ExportCenter() {
               </Button>
               {latest && (
                 <a
-                  href={latest.download_url}
+                  href={backendUrl(latest.download_url)}
                   className="inline-flex h-10 items-center gap-2 rounded-md border border-line bg-surface-2 px-5 text-sm font-semibold text-ink transition-colors hover:bg-surface-3"
                 >
                   <Icon name="download" className="h-4 w-4" />
@@ -184,7 +184,7 @@ export default function ExportCenter() {
                     {characterPackage.files.length} files
                   </span>
                   <a
-                    href={characterPackage.download_url}
+                    href={backendUrl(characterPackage.download_url)}
                     className="ml-auto inline-flex items-center gap-1.5 text-[12px] font-medium text-primary underline-offset-2 hover:underline"
                   >
                     <Icon name="download" className="h-3.5 w-3.5" />
@@ -322,7 +322,7 @@ export default function ExportCenter() {
                       </div>
                     </div>
                     <a
-                      href={item.download_url}
+                      href={backendUrl(item.download_url)}
                       className="text-ink-3 transition-colors hover:text-primary"
                       title="重新下载"
                     >

@@ -19,6 +19,9 @@ import type {
   VersionTree,
 } from "../types";
 import { toast } from "../stores/toastStore";
+import { backendUrl } from "./endpoints";
+
+export { backendUrl } from "./endpoints";
 
 /* ── 认证：token 从 VITE_STUDIO_TOKEN 或 localStorage 读取 ──
  * header（fetch 用）与 cookie（<img src="/api/..."> 和 WebSocket 握手用）
@@ -56,6 +59,10 @@ let studioToken = "";
 
 export function authHeaders(): Record<string, string> {
   return studioToken ? { Authorization: `Bearer ${studioToken}` } : {};
+}
+
+export function getStudioToken(): string {
+  return studioToken;
 }
 
 setStudioToken(readStoredToken());
@@ -109,7 +116,7 @@ async function request<T>(path: string, init?: RequestInitInternal): Promise<T> 
   }
   let response: Response;
   try {
-    response = await fetch(path, {
+    response = await fetch(backendUrl(path), {
       ...rest,
       signal: signal ?? undefined,
       headers: { "Content-Type": "application/json", ...authHeaders(), ...rest?.headers },
@@ -510,7 +517,7 @@ export const api = {
       { timeoutMs: 15_000 },
     ),
 
-  cloudArtifactUrl: (relPath: string) => `/api/cloud/artifacts/${relPath}`,
+  cloudArtifactUrl: (relPath: string) => backendUrl(`/api/cloud/artifacts/${relPath}`),
 
   /* ── 试玩舞台 3D POC-0 ── */
   /** 3D 试玩清单：无 assetId 走离网固定夹具；有则从资产 mesh 槽位解析 GLB。 */
