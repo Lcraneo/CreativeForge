@@ -71,7 +71,13 @@ def build_scene_router(service: SceneService) -> APIRouter:
 
     @router.get("/scenes/{scene_id}/background.png")
     def scene_background(scene_id: str):
+        from studio.backend import artifact_store
+
         path = service.store.background_path(scene_id, 0)
+        if path is None:
+            path = artifact_store.ensure_local("data/scenes/{}_{}.png".format(scene_id, 0)) or (
+                artifact_store.ensure_local("data/scenes/{}.png".format(scene_id))
+            )
         if path is None:
             raise HTTPException(status_code=404, detail="background not found")
         return FileResponse(
@@ -82,7 +88,13 @@ def build_scene_router(service: SceneService) -> APIRouter:
 
     @router.get("/scenes/{scene_id}/backgrounds/{index}.png")
     def sequenced_scene_background(scene_id: str, index: int):
+        from studio.backend import artifact_store
+
         path = service.store.background_path(scene_id, index)
+        if path is None and index >= 0:
+            path = artifact_store.ensure_local(
+                "data/scenes/{}_{}.png".format(scene_id, index)
+            )
         if path is None:
             raise HTTPException(status_code=404, detail="background not found")
         return FileResponse(

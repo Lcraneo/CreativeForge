@@ -50,6 +50,13 @@ def create_app():
         allow_credentials=True,
     )
 
+    # 托管容器没有持久盘：先把对象存储里的状态文件（历史库、各类索引）
+    # 回填到本地，再构造 AgentRuntime——历史库在初始化时一次性载入内存，
+    # 晚于构造的回填不会反映到运行时。
+    from studio.backend import artifact_store
+
+    artifact_store.restore_state()
+
     runtime = AgentRuntime()
     app.state.runtime = runtime
     app.include_router(build_router(runtime))
@@ -63,6 +70,10 @@ def create_app():
     app.state.scene_service = scene_service
     app.include_router(build_scene_router(scene_service))
     app.include_router(build_ws_router(runtime))
+
+    # 后台增量同步：新产生的原画 / 动画帧 / 场景图 / 索引进对象存储。
+    # 未配置对象存储时 start_worker 直接返回 False，行为与改造前一致。
+    artifact_store.start_worker()
 
     # 云生成能力（A 部分）：配置面与生成面各挂一组路由，共用同一份加密存储，
     # 避免两个实例各自缓存导致「配置面板改了、生成面看不到」。

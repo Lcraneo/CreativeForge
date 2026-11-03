@@ -347,17 +347,20 @@ def _localize_asset(asset):
 
     远程结果链接有三重裂图风险：浏览器网络环境可能无法直连 OSS、
     防盗链/Referer 策略、24 小时签名过期。生成时图片均已下载落盘
-    （GENERATED_DIR），本地代理同源且永久可达。"""
+    （GENERATED_DIR，并由 artifact_store 同步到对象存储），本地代理同源且
+    永久可达。
+
+    注意：不能以「本地文件此刻是否存在」为改写条件——托管容器重新部署后
+    磁盘是空的，若按存在性判断就会退回已过期的 OSS 链接；只要元数据里有
+    file 名就改写，缺失的文件由 ``/api/generated`` 回源对象存储补齐。"""
 
     if not isinstance(asset, dict):
         return asset
 
-    from studio.backend.model_service.service import safe_generated_path
-
     def localized(meta):
         if isinstance(meta, dict) and meta.get("file"):
             name = os.path.basename(str(meta["file"]))
-            if safe_generated_path(name):
+            if name:
                 return {**meta, "url": "/api/generated/" + name}
         return meta
 
@@ -397,10 +400,8 @@ def _localize_history_record(record):
         record["asset"] = _localize_asset(asset)
     image = record.get("image")
     if isinstance(image, dict) and image.get("file"):
-        from studio.backend.model_service.service import safe_generated_path
-
         name = os.path.basename(str(image["file"]))
-        if safe_generated_path(name):
+        if name:
             record["image"] = {**image, "url": "/api/generated/" + name}
     return record
 
@@ -740,9 +741,13 @@ def build_router(runtime):
 
     @router.get("/generated/{name}")
     def generated_image(name: str):
+        from studio.backend import artifact_store
         from studio.backend.model_service.service import safe_generated_path
 
         path = safe_generated_path(name)
+        if path is None:
+            # 托管容器无持久盘：本地缺失时回源对象存储再落盘
+            path = artifact_store.ensure_local("generated/" + os.path.basename(name))
         if path is None:
             raise HTTPException(status_code=404, detail="unknown image")
         return FileResponse(path)
@@ -1529,9 +1534,13 @@ def build_router(runtime):
 
     @router.get("/animation/{name:path}")
     def get_animation_file(name: str):
+        from studio.backend import artifact_store
         from studio.backend.animation_service.service import AnimationService
 
         path = AnimationService(ANIMATION_DIR).path(name)
+        if path is None:
+            # 本地缺失时回源对象存储（重新部署后动画帧同样需要可恢复）
+            path = artifact_store.ensure_local("data/animation/" + name.replace("\\", "/"))
         if path is None:
             raise HTTPException(status_code=404, detail="unknown animation file")
         if name.endswith(".gif"):
@@ -2454,11 +2463,15 @@ def build_router(runtime):
 
     @router.get("/health")
     def health():
+        from studio.backend import artifact_store
+
         return {
             "status": "ok",
             "service": "creativeforge-studio",
             # 构建过期自检：dist 落后于 src 时前端显示「请重新构建并强刷」角标
             "frontend_stale": _frontend_build_stale(),
+            # 产物对象存储是否就绪（托管容器无持久盘，未就绪时重新部署即丢产物）
+            "artifact_store": artifact_store.configured(),
         }
 
     # ── 对象存储：API 配置（CRUD + 设默认 + 连通性测试） ────────────────────

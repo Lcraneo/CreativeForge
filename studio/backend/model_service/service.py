@@ -1489,10 +1489,19 @@ def _source_meta(front_image, base_url):
 def _resolve_cloud_image(url):
     """把本地代理 URL（/api/generated/<file>）转成可被 DashScope 访问的
     base64 data URI；已是 data URI 或公网 URL 时原样返回，避免把 localhost
-    相对地址直接发到云端导致「Incorrect padding」等解码失败。"""
+    相对地址直接发到云端导致「Incorrect padding」等解码失败。
+
+    本地文件缺失（托管容器重新部署）时先回源对象存储，避免三视图/换装等
+    以原画为输入的链路在重启后直接断掉。"""
     prefix = "/api/generated/"
     if isinstance(url, str) and url.startswith(prefix):
+        from studio.backend import artifact_store
+
         path = safe_generated_path(url[len(prefix):])
+        if path is None:
+            path = artifact_store.ensure_local(
+                "generated/" + os.path.basename(url[len(prefix):])
+            )
         if path:
             ext = os.path.splitext(path)[1].lower()
             mime = {
