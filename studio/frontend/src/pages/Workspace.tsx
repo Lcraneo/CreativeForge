@@ -317,7 +317,7 @@ export default function Workspace() {
       <div className="grid grid-cols-12 gap-5">
         <motion.section
           variants={RISE}
-          className="cf-sheen cf-vellum relative col-span-12 overflow-hidden rounded-lg border border-line bg-[radial-gradient(720px_300px_at_92%_-28%,rgba(174,191,215,.42),transparent_70%),radial-gradient(520px_260px_at_0%_120%,rgba(255,255,255,.7),transparent_72%)] xl:col-span-7"
+          className="cf-sheen cf-vellum relative col-span-12 overflow-hidden rounded-lg border border-line bg-[radial-gradient(720px_300px_at_92%_-28%,rgba(174,191,215,.42),transparent_70%),radial-gradient(520px_260px_at_0%_120%,rgba(255,255,255,.7),transparent_72%)] lg:col-span-7"
         >
           <RococoFrame contentClassName="p-6 xl:p-8">
           {/* 右上角落款：朱印 + 竖排题字，不压正文 */}
@@ -426,7 +426,10 @@ export default function Workspace() {
               >
                 {advanced ? "收起参数" : "高级参数"}
               </Button>
-              <span className="text-[11.5px] text-ink-3">已输入 {goal.length} 字 · ⌘↵ 提交</span>
+              <span className="text-[11.5px] text-ink-3">
+                已输入 {goal.length} 字
+                <span className="pointer-coarse:hidden"> · ⌘↵ 提交</span>
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Button
@@ -489,7 +492,7 @@ export default function Workspace() {
           </RococoFrame>
         </motion.section>
 
-        <motion.div variants={RISE} className="col-span-12 xl:col-span-5">
+        <motion.div variants={RISE} className="col-span-12 lg:col-span-5">
           <Card
             className="cf-dossier flex h-full flex-col"
             title="生产管线"

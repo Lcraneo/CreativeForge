@@ -192,7 +192,7 @@ export default function HistoryCenter() {
           onChange={(event) => setQuery(event.target.value)}
           placeholder="搜索目标 / 资产名"
           aria-label="搜索历史档案"
-          className="h-9 min-w-[200px] flex-1"
+          className="h-9 min-w-[160px] flex-1 sm:min-w-[200px]"
         />
         <div role="group" aria-label="按档案类型筛选" className="flex flex-wrap gap-1.5">
           {KINDS.map((item) => (

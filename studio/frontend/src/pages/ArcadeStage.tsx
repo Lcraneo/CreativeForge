@@ -25,6 +25,7 @@ import {
   cx,
 } from "../components/ui";
 import { Icon } from "../components/icons";
+import { TouchButton, TouchControlsLayer, TouchJoystick, useTouchControls } from "../components/TouchControls";
 import { preloadImage } from "../lib/preload";
 import {
   backgroundSequenceAt,
@@ -391,13 +392,22 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     };
   };
 
-  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup", " "], (key) => {
+  // 键盘与触控共用同一触发路径：一次性动作 = 入队/置窗口，持续动作 = 键集合
+  function triggerKey(key: string) {
     if (key === "arrowup") jumpQueuedAtRef.current = performance.now();
     if (key === " ") {
       // 覆盖窗口按 attack 自己的帧长算，完整播完一套帧再回落
       attackUntilRef.current = performance.now() + clipDurationMs(clips, "attack", ATTACK_TAIL_MS);
     }
-  });
+  }
+
+  function holdKey(key: string, pressed: boolean) {
+    if (pressed) keysRef.current.add(key);
+    else keysRef.current.delete(key);
+  }
+
+  const keysRef = useHeldKeys(["arrowleft", "arrowright", "arrowup", " "], triggerKey);
+  const touch = useTouchControls();
 
   function finish(reached: boolean) {
     if (finishedRef.current) return;
@@ -624,6 +634,13 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
   const issueCount = report.items.length - passCount;
   const progressPct = Math.min(100, Math.max(0, (hud.x / level.goalX) * 100));
   const idleGeometry = images.idle ? geometryFor("idle") : null;
+  // 触控层只在真正可玩的时刻出现，避免盖在载入/空态遮罩上
+  const touchReady =
+    Boolean(images.idle) &&
+    Boolean(selectedAssetId) &&
+    !previews.isLoading &&
+    !sceneQuery.isLoading &&
+    !sceneQuery.isError;
   const initial = initialPlayer(level);
   const goalPlatform = level.platforms.find(
     (platform) => platform.x <= level.goalX && level.goalX <= platform.x + platform.width,
@@ -659,7 +676,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
       />
 
       <div className="grid grid-cols-12 items-start gap-4">
-        <div className="col-span-12 flex min-w-0 flex-col gap-3 xl:col-span-8">
+        <div className="col-span-12 flex min-w-0 flex-col gap-3 lg:col-span-8">
         <Card
           title="关卡试玩 · 侧卷轴"
           icon="play"
@@ -914,6 +931,34 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
               </Layer>
             </Stage>
 
+            {/* 触屏设备：虚拟摇杆 + 跳跃/攻击/奔跑 */}
+            {touch && touchReady && (
+              <TouchControlsLayer
+                joystick={
+                  <TouchJoystick
+                    onDirection={(direction, pressed) => {
+                      // 侧卷轴只需要左右移动；上推等同于跳跃
+                      if (direction === "up") {
+                        if (pressed) triggerKey("arrowup");
+                        return;
+                      }
+                      if (direction === "left" || direction === "right") {
+                        holdKey(`arrow${direction}`, pressed);
+                      }
+                    }}
+                  />
+                }
+              >
+                <TouchButton label="跳" tone="primary" onPress={() => triggerKey("arrowup")} />
+                <TouchButton label="攻" onPress={() => triggerKey(" ")} />
+                <TouchButton
+                  label="跑"
+                  onPress={() => holdKey("shift", true)}
+                  onRelease={() => holdKey("shift", false)}
+                />
+              </TouchControlsLayer>
+            )}
+
             {runResult && (
               <div className="absolute inset-0 z-20 grid place-items-center bg-canvas/[.86] backdrop-blur-[2px]">
                 <div className="w-[min(360px,88%)] rounded-xl border border-line bg-surface-1 p-5 text-center shadow-lg">
@@ -990,7 +1035,12 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
               >
                 选择受检人物
               </Button>
-              <span className="text-[11px] text-ink-4">← → 移动 · Shift 奔跑 · ↑ 跳跃 · 空格 攻击</span>
+              <span className="text-[11px] text-ink-4 pointer-coarse:hidden">
+                ← → 移动 · Shift 奔跑 · ↑ 跳跃 · 空格 攻击
+              </span>
+              <span className="hidden text-[11px] text-ink-4 pointer-coarse:inline">
+                触屏操作：左下摇杆移动，右下按钮跳跃 / 攻击 / 奔跑
+              </span>
             </div>
             <div
               className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink/[.08]"
@@ -1017,7 +1067,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
         </section>
         </div>
 
-        <div className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
+        <div className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
           <Card
             title="角色检查报告"
             icon="check"

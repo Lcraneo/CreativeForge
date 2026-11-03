@@ -142,7 +142,7 @@ export default function VersionCenter() {
             {groupList.length === 0 ? (
               <p className="p-4 text-xs text-ink-3">还没有历史版本，先去工作台生成资产。</p>
             ) : (
-              <div className="cf-scroll max-h-[280px] overflow-y-auto">
+              <div className="cf-scroll max-h-[min(280px,42dvh)] overflow-y-auto">
                 {groupList.map((group) => (
                   <button
                     key={group.name}
@@ -185,7 +185,7 @@ export default function VersionCenter() {
             ) : versions.length === 0 ? (
               <p className="p-4 text-xs text-ink-3">该名称下没有版本记录。</p>
             ) : (
-              <ol className="cf-scroll max-h-[520px] overflow-y-auto">
+              <ol className="cf-scroll max-h-[min(520px,62dvh)] overflow-y-auto">
                 {versions.map((version) => {
                   const isChecked = checked.some(
                     (item) => item.version_no === version.version_no,

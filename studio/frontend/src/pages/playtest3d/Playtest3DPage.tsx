@@ -123,7 +123,7 @@ export default function Playtest3DPage() {
             {/* ── 左：验收舞台 ──────────────────────────────────────── */}
             <section
               aria-label="3D 试玩舞台"
-              className="col-span-12 min-w-0 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 xl:col-span-8"
+              className="col-span-12 min-w-0 overflow-hidden rounded-lg border border-line bg-paper shadow-e1 lg:col-span-8"
             >
               <div className="flex flex-wrap items-center gap-2 border-b border-line-subtle bg-surface-1/40 px-3 py-2">
                 <span className="text-[12px] font-medium text-ink">
@@ -136,7 +136,7 @@ export default function Playtest3DPage() {
                 {missing.length > 0 && (
                   <Badge tone="warning">缺失 {missing.length} 个动作</Badge>
                 )}
-                <span className="ml-auto text-[11px] text-ink-3">拖拽旋转 · 滚轮缩放</span>
+                <span className="ml-auto text-[11px] text-ink-3">拖拽旋转 · 滚轮 / 双指缩放</span>
               </div>
 
               <div className="relative h-[clamp(320px,calc(100dvh-26rem),520px)]">
@@ -203,7 +203,7 @@ export default function Playtest3DPage() {
             </section>
 
             {/* ── 右：动作控制 + 动作播放 ────────────────────────────── */}
-            <aside className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
+            <aside className="col-span-12 grid grid-cols-1 content-start gap-3 sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1">
               <Card
                 title="动作控制"
                 icon="film"

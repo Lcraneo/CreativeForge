@@ -274,7 +274,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
 
           {palette && palette.length > 0 && (
             <Card title="语义调色板" icon="grid" iconClassName="text-precon">
-              <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10 xl:grid-cols-12">
+              <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-10 xl:grid-cols-12">
                 {palette.slice(0, 16).map((color, index) => (
                   <button
                     key={`${color}-${index}`}
@@ -283,7 +283,7 @@ function DesignEditor({ asset }: { asset: CreativeAsset }) {
                       navigator.clipboard?.writeText(color).catch(() => undefined);
                       toast({ tone: "info", title: "已复制色值", description: color });
                     }}
-                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-(--motion-fast) ease-standard hover:scale-110"
+                    className="h-7 rounded-sm border border-ink/[.12] transition-transform duration-(--motion-fast) ease-standard hover:scale-110 pointer-coarse:h-11"
                     style={{ background: color }}
                   />
                 ))}

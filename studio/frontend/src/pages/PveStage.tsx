@@ -3,6 +3,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/rea
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import { Icon } from "../components/icons";
+import { TouchButton, TouchControlsLayer, TouchJoystick, useTouchControls } from "../components/TouchControls";
 import { SelectedAssetBoundary } from "../components/SelectedAssetBoundary";
 import {
   Badge,
@@ -120,6 +121,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
   const [hud, setHud] = useState<PveHud | null>(null);
   const [assetsReady, setAssetsReady] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const touch = useTouchControls();
   const [sequenceStageId, setSequenceStageId] = useState<PveStageId | null>(null);
   const [sequenceDraft, setSequenceDraft] = useState<Record<string, string>>({});
   const [renderAssets, setRenderAssets] = useState<RenderAssets>({
@@ -507,6 +509,12 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
     if (!runtimeRef.current?.paused) shotRequestRef.current = true;
   }
 
+  // 触控与键盘共用同一按键集合（heldRef），不额外维护一套输入状态
+  function holdKey(key: string, pressed: boolean) {
+    if (pressed) heldRef.current.add(key);
+    else heldRef.current.delete(key);
+  }
+
   function togglePause() {
     const runtime = runtimeRef.current;
     if (!runtime) return;
@@ -620,7 +628,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
       />
 
       <div className="grid grid-cols-12 items-start gap-4">
-        <div className="col-span-12 flex min-w-0 flex-col gap-3 xl:col-span-8">
+        <div className="col-span-12 flex min-w-0 flex-col gap-3 lg:col-span-8">
           <Card
             title="PVE 战斗 · 2.5D 竞技场"
             icon="play"
@@ -634,7 +642,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                   type="button"
                   aria-label={hud?.paused ? "继续游戏" : "暂停游戏"}
                   onClick={togglePause}
-                  className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-ink-2 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  className="grid h-7 w-7 place-items-center rounded-full border border-line bg-paper text-ink-2 hover:bg-surface-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary pointer-coarse:h-11 pointer-coarse:w-11"
                 >
                   <Icon name={hud?.paused ? "play" : "pause"} className="h-3.5 w-3.5" />
                 </button>
@@ -656,6 +664,34 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
                   if (assetsReady) shoot();
                 }}
               />
+
+              {/* 触屏设备：八向摇杆 + 射击/跳跃/防御/闪避 */}
+              {touch && assetsReady && (
+                <TouchControlsLayer
+                  joystick={
+                    <TouchJoystick
+                      onDirection={(direction, pressed) => holdKey(`arrow${direction}`, pressed)}
+                    />
+                  }
+                >
+                  <TouchButton label="射" tone="primary" onPress={shoot} />
+                  <TouchButton
+                    label="跳"
+                    onPress={() => holdKey(" ", true)}
+                    onRelease={() => holdKey(" ", false)}
+                  />
+                  <TouchButton
+                    label="防"
+                    onPress={() => holdKey("k", true)}
+                    onRelease={() => holdKey("k", false)}
+                  />
+                  <TouchButton
+                    label="闪"
+                    onPress={() => holdKey("l", true)}
+                    onRelease={() => holdKey("l", false)}
+                  />
+                </TouchControlsLayer>
+              )}
 
               {hud && (
                 <div className="pointer-events-none absolute left-3 top-3 z-[5] flex flex-wrap gap-1.5">
@@ -818,8 +854,14 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
               <Button variant="secondary" size="sm" icon="cube" onClick={() => setPickerOpen(true)}>
                 更换出战角色
               </Button>
-              <span className="text-[11px] text-ink-4">
+              <span className="text-[11px] text-ink-4 pointer-coarse:hidden">
                 WASD / 方向键八向移动 · Shift 奔跑 · 空格跳跃 · F / J 单发攻击 · Q / E 上下瞄准 · K 防御 · L 闪避 · P 暂停 · Enter 进入下一关
+              </span>
+              <span className="hidden text-[11px] text-ink-4 pointer-coarse:inline">
+                触屏操作：左下摇杆移动，右下按钮射击 / 跳跃 / 防御 / 闪避
+              </span>
+              <span className="hidden text-[11px] text-ink-3 pointer-coarse:block landscape:hidden">
+                竖屏舞台偏窄，横屏游玩视野更宽
               </span>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -842,7 +884,7 @@ function PveContent({ selected }: { selected: CreativeAsset | null }) {
           </section>
         </div>
 
-        <aside className="col-span-12 flex flex-col gap-3 xl:col-span-4">
+        <aside className="col-span-12 flex flex-col gap-3 lg:col-span-4">
           <CampaignSequenceCard
             stages={campaign.stages}
             profiles={readyEnemyProfiles}
