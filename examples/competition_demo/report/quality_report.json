@@ -1,0 +1,37 @@
+{
+  "pixel": {
+    "grid_accuracy": 0.9,
+    "palette_score": 0.9,
+    "contour_score": 0.9,
+    "overall": 0.9
+  },
+  "animation": {
+    "anchor_score": 1.0,
+    "motion_score": 1.0,
+    "temporal_score": 0.96,
+    "overall": 0.9867
+  },
+  "engine": {
+    "overall": 1.0,
+    "status": "success"
+  },
+  "report": {
+    "scores": {
+      "pixel": 0.9,
+      "animation": 0.9867,
+      "engine": 1.0
+    },
+    "thresholds": {
+      "pixel": 0.8,
+      "animation": 0.85,
+      "engine": 0.9
+    },
+    "retry": [],
+    "status": "PASS",
+    "sections": {
+      "pixel": "palette / outline / style",
+      "animation": "drift / jitter / phase",
+      "engine": "missing asset / runtime error"
+    }
+  }
+}

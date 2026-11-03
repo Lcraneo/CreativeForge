@@ -1,0 +1,149 @@
+{
+  "manifest": {
+    "asset_id": "mage001",
+    "type": "character",
+    "resources": {
+      "texture": "mage001.png",
+      "animation": "mage001.anim",
+      "prefab": "mage001.prefab"
+    },
+    "valid": true
+  },
+  "atlas": {
+    "atlas": {
+      "name": "mage001",
+      "image": "mage001_sprite_atlas.png",
+      "size": {
+        "width": 256,
+        "height": 64
+      },
+      "frames": [
+        "walk_0",
+        "walk_1",
+        "walk_2",
+        "walk_3"
+      ],
+      "layout": [
+        {
+          "name": "walk_0",
+          "rect": {
+            "x": 0,
+            "y": 0,
+            "w": 64,
+            "h": 64
+          }
+        },
+        {
+          "name": "walk_1",
+          "rect": {
+            "x": 64,
+            "y": 0,
+            "w": 64,
+            "h": 64
+          }
+        },
+        {
+          "name": "walk_2",
+          "rect": {
+            "x": 128,
+            "y": 0,
+            "w": 64,
+            "h": 64
+          }
+        },
+        {
+          "name": "walk_3",
+          "rect": {
+            "x": 192,
+            "y": 0,
+            "w": 64,
+            "h": 64
+          }
+        }
+      ]
+    }
+  },
+  "animation": {
+    "animation": {
+      "name": "walk",
+      "duration": 0.33,
+      "loop": true,
+      "frame_count": 4,
+      "sample": 12
+    }
+  },
+  "prefab": {
+    "prefab": {
+      "name": "mage001.prefab",
+      "root": "mage001",
+      "components": [
+        "SpriteRenderer",
+        "Animator",
+        "Collider",
+        "Script",
+        "AnimationController"
+      ]
+    }
+  },
+  "engine": {
+    "engine": "cocos",
+    "layout": [
+      "textures",
+      "atlas",
+      "animations",
+      "prefabs"
+    ],
+    "resources": {
+      "textures": "assets/textures/mage001.png",
+      "atlas": "assets/atlas/mage001_sprite_atlas.plist",
+      "animations": "assets/animations/mage001.anim",
+      "prefabs": "assets/prefabs/mage001.prefab"
+    }
+  },
+  "validation": {
+    "status": "success",
+    "score": 1.0,
+    "checks": [
+      {
+        "name": "resource:texture",
+        "passed": true,
+        "detail": "mage001.png"
+      },
+      {
+        "name": "resource:animation",
+        "passed": true,
+        "detail": "mage001.anim"
+      },
+      {
+        "name": "resource:prefab",
+        "passed": true,
+        "detail": "mage001.prefab"
+      },
+      {
+        "name": "manifest:contract",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "name": "animation:frame_count",
+        "passed": true,
+        "detail": 4
+      },
+      {
+        "name": "animation:loop",
+        "passed": true,
+        "detail": true
+      },
+      {
+        "name": "engine:cocos",
+        "passed": true,
+        "detail": [
+          "textures",
+          "atlas",
+          "animations",
+          "prefabs"
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<!-- CreativeForge showcase comp · built on onetake (lineage otk-7f3e1c, PolyForm NC 1.0.0)
+     Everything below is a pure function of t (seconds), driven by window.CF (injected by
+     adapters/onetake/timeline_mapper.py). Contract: __seek(t)/__ready/__meta{dur,fps,w,h,
+     inFrame,cuts}/__track(t). Query: ?play (real-time loop) · ?t=6.4&hud (pin a frame).
+     Five beats: hook → art → PReCon pixel rebuild → FAlign action → engine preview → staccato + wordmark.
+     Carry discipline: the header, the hand and the ONE subject card survive every boundary
+     (card morphs rect + swaps content; hand keeps moving) — no display:none slide swaps. -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>CreativeForge · showcase</title>
+<style>
+@font-face{font-family:'CF Serif';src:url('assets/fonts/InstrumentSerif.ttf') format('truetype');font-weight:400}
+@font-face{font-family:'CF Sans';src:url('assets/fonts/Inter.ttf') format('truetype');font-weight:100 900}
+@font-face{font-family:'CF Mono';src:url('assets/fonts/GeistMono.ttf') format('truetype');font-weight:100 900}
+:root{ --bg:#f8f8f6; --ink:#161616; --grey:#8f8f8b; --green:#17a05e; --red:#b42323; --card:#fff; --line:#e8e8e4; }
+html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:var(--bg)}
+body{font-family:'CF Sans',Inter,system-ui,sans-serif;color:var(--ink)}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--bg)}
+.abs{position:absolute;left:0;top:0;will-change:transform,opacity}
+/* beat 0 hook words */
+#hook{left:0;right:0;top:440px;text-align:center;font-size:88px;font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+#hook span{display:inline-block;margin:0 .16em}
+#hook .em{color:var(--green)}
+/* header (persistent carrier) */
+#header{left:72px;top:52px;font-family:'CF Serif',Georgia,serif;font-size:64px;line-height:1;letter-spacing:-.01em;white-space:nowrap;transform-origin:0 50%}
+#header .tag{font-family:'CF Mono',monospace;font-size:22px;color:var(--grey);margin-left:18px;letter-spacing:0}
+/* subject card (THE carrier) */
+#subject{position:absolute;background:var(--card);border:1px solid var(--line);border-radius:18px;
+  box-shadow:0 24px 60px -24px rgba(20,20,20,.22),0 2px 6px rgba(20,20,20,.05);
+  will-change:transform,opacity;transform-origin:50% 50%;overflow:hidden}
+#subject img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:contain;display:none;background:#fff}
+#subject img.on{display:block}
+#subject .bar{position:absolute;left:0;right:0;top:0;height:56px;background:#f1f1ee;border-bottom:1px solid var(--line);display:none}
+#subject.browser .bar{display:block}
+#subject .bar i{position:absolute;top:20px;width:14px;height:14px;border-radius:50%;background:#d9d9d4}
+#subject .bar .url{position:absolute;left:50%;top:14px;transform:translateX(-50%);width:56%;height:32px;border-radius:8px;background:#fff;font-family:'CF Mono',monospace;font-size:18px;color:var(--grey);text-align:center;line-height:32px}
+#subject.browser img{top:56px;height:calc(100% - 56px)}
+#subject .wipe{position:absolute;top:0;bottom:0;width:10px;background:var(--green);opacity:0;will-change:transform}
+#subject .gridlines{position:absolute;inset:0;opacity:0}
+/* beat labels */
+#label{left:72px;top:auto;bottom:64px;font-family:'CF Mono',monospace;font-size:30px;color:var(--ink);white-space:nowrap}
+#label b{color:var(--green);font-weight:400}
+#label .step{color:var(--grey);margin-right:14px}
+/* build panel (ticks through the film, second carrier) */
+#panel{position:absolute;right:72px;top:52px;width:460px;padding:22px 26px;background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 6px rgba(20,20,20,.05)}
+#panel h4{margin:0 0 12px;font-size:20px;font-weight:600}
+#panel .ln{display:flex;align-items:center;gap:12px;height:44px;font-family:'CF Mono',monospace;font-size:19px;border-top:1px solid var(--line)}
+#panel .ln .bx{width:20px;height:20px;border-radius:6px;border:1.5px solid #cfcfca;position:relative;flex:none}
+#panel .ln .bx:after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(45deg);opacity:0}
+#panel .ln.on .bx{background:var(--green);border-color:var(--green)}
+#panel .ln.on .bx:after{opacity:1}
+#panel .ln.on .t{color:var(--grey);text-decoration:line-through;text-decoration-color:#c9c9c4}
+/* staccato + end */
+#stac{left:0;right:0;top:470px;text-align:center;font-size:120px;font-weight:800;letter-spacing:.02em}
+#end{position:absolute;inset:0;background:#0b0b0b;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px}
+#end .mark{font-family:'CF Serif',Georgia,serif;font-size:140px;color:#fff;letter-spacing:-.01em}
+#end .sub{font-family:'CF Mono',monospace;font-size:26px;color:#8f8f8b}
+/* cursor */
+#cursor{position:absolute;left:0;top:0;width:30px;height:40px;will-change:transform;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3))}
+#hud{position:absolute;right:14px;bottom:10px;font:13px 'CF Mono',monospace;color:#c00;display:none}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="hook" class="abs"></div>
+  <div id="header" class="abs"></div>
+  <div id="subject">
+    <div class="bar"><i style="left:18px"></i><i style="left:42px"></i><i style="left:66px"></i><div class="url" id="url"></div></div>
+    <img id="imgArt" alt=""><img id="imgPixel" alt=""><img id="imgAnim" alt=""><img id="imgEngine" alt="">
+    <div class="gridlines" id="gridlines"></div>
+    <div class="wipe" id="wipe"></div>
+  </div>
+  <div id="label" class="abs"></div>
+  <div id="panel"><h4 id="panelTitle">CreativeForge</h4><div id="lines"></div></div>
+  <div id="stac" class="abs"></div>
+  <div id="end"><div class="mark" id="mark"></div><div class="sub" id="markSub"></div></div>
+  <svg id="cursor" viewBox="0 0 34 44"><path d="M4 3 L30 22 L18 24 L26 40 L20 43 L12 27 L4 36 Z" fill="#111" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg>
+  <div id="hud"></div>
+</div>
+<script src="motion.js"></script>
+<script>
+window.CF = {{CF_JSON}};
+// look tokens → CSS 变量（look 按 presentation.look 名选择，默认 paper 暖纸）
+for (const [key, value] of Object.entries(CF.tokens || {})) {
+  document.documentElement.style.setProperty(`--${key}`, value);
+}
+// ───────────────────────────── timeline (all f(t)) ─────────────────────────────
+const FPS = 30;
+const B = CF.beats, DUR = CF.meta.dur;
+window.__meta = {dur: DUR, fps: FPS, w: 1920, h: 1080, cuts: CF.cuts, inFrame: CF.inFrame};
+const T = CF.tokens;
+const {clamp, lerp, sstep, ssstep, spline, ease} = OM;
+const rng = OM.rng(CF.meta.seed || 7);
+const $ = id => document.getElementById(id);
+
+// ───────────────────────────── DOM build (from CF) ─────────────────────────────
+const hookEl = $('hook');
+CF.copy.hook.forEach((word, i) => {
+  const s = document.createElement('span');
+  s.textContent = word;
+  if (i === CF.copy.hook.length - 1) s.className = 'em';
+  hookEl.appendChild(s);
+});
+const headerEl = $('header');
+const headerMain = document.createElement('span');
+headerMain.textContent = CF.copy.name;
+headerEl.appendChild(headerMain);
+const headerTag = document.createElement('span');
+headerTag.className = 'tag';
+headerTag.textContent = CF.copy.headerTag || '';
+headerEl.appendChild(headerTag);
+const linesEl = $('lines');
+const LINE_DEFS = CF.copy.lines.map(html => {
+  const d = document.createElement('div');
+  d.className = 'ln';
+  const bx = document.createElement('div'); bx.className = 'bx';
+  const tx = document.createElement('div'); tx.className = 't'; tx.textContent = html;
+  d.appendChild(bx); d.appendChild(tx); linesEl.appendChild(d);
+  return d;
+});
+$('panelTitle').textContent = CF.copy.panelTitle || 'CreativeForge';
+$('url').textContent = CF.copy.url || '';
+$('mark').textContent = CF.copy.wordmark;
+$('markSub').textContent = CF.copy.wordmarkSub || '';
+const IMGS = {art: $('imgArt'), pixel: $('imgPixel'), anim: $('imgAnim'), engine: $('imgEngine')};
+// CF.assets: {art, pixel, act[frame…], engine[frame…]} —— act 帧组喂给 anim 槽位（逐帧 cycling 由 seek 驱动）
+for (const key of Object.keys(CF.assets)) {
+  const slot = key === "act" ? "anim" : key;
+  if (IMGS[slot] && !Array.isArray(CF.assets[key])) IMGS[slot].src = CF.assets[key];
+}
+IMGS.art.onload = () => { IMGS.art.classList.add('on'); };
+// grid overlay for the pixel-rebuild beat (deterministic)
+{
+  const g = $('gridlines'); const n = 24; let html = '';
+  for (let i = 1; i < n; i++) {
+    const x = Math.round((i / n) * 1000) / 10, y = Math.round((i / n) * 1000) / 10;
+    html += `<div style="position:absolute;left:${x}%;top:0;bottom:0;width:1px;background:var(--line)"></div>`;
+    html += `<div style="position:absolute;top:${y}%;left:0;right:0;height:1px;background:var(--line)"></div>`;
+  }
+  g.innerHTML = html;
+}
+
+// ───────────────────────────── the hand (one continuous path) ─────────────────────────────
+const HAND = CF.hand;                       // knots from timeline_mapper
+const CLICKS = CF.clicks || [];
+// ───────────────────────────── geometry helpers ─────────────────────────────
+function place(el, x, y, s, op, blur, extra) {
+  el.style.opacity = op;
+  el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) scale(${(s == null ? 1 : s).toFixed(4)}) ${extra || ''}`;
+  el.style.filter = blur > 0.2 ? `blur(${blur.toFixed(1)}px)` : 'none';
+}
+// subject card rect per phase, morphing at the boundaries (the carry)
+const R = CF.rects;                          // {art, pixel, anim, engine} = {x,y,w,h}
+function subjectState(t) {
+  // phase boundaries with expoOut morphs — the card visibly travels at every cut
+  const m1 = OM.morphRect(t, B.morphPixel0, B.morphPixel1, R.art, R.pixel, {curve: ease.quintInOut});
+  const m2 = OM.morphRect(t, B.morphAnim0, B.morphAnim1, R.pixel, R.anim, {curve: ease.quintInOut});
+  const m3 = OM.morphRect(t, B.morphEngine0, B.morphEngine1, R.anim, R.engine, {curve: ease.quintInOut});
+  const beforeArt = t < B.artIn;
+  const st = beforeArt ? {x: R.art.x, y: R.art.y + 40, w: R.art.w, h: R.art.h, k: 0} : m1;
+  let r = st;
+  if (t >= B.morphAnim0) r = m2;
+  if (t >= B.morphEngine0) r = m3;
+  const pop = OM.popIn(t, B.artIn, {rise: 44});
+  const op = (t >= B.artIn - 0.05 ? pop.op : 0) * (t >= B.engineOut ? 1 - ssstep(B.engineOut, B.engineOut + 0.25, t) : 1);
+  return {x: r.x, y: r.y + pop.dy * (t < B.morphAnim0 ? 1 : 0), w: r.w, h: r.h, op};
+}
+function phase(t) {
+  if (t < B.sweep) return 'art';
+  if (t < B.morphAnim0) return 'pixel';
+  if (t < B.morphEngine0) return 'anim';
+  return 'engine';
+}
+function frameFor(list, t, t0, t1, fps) {
+  if (!list || !list.length) return null;
+  if (t < t0) return list[0];
+  if (t >= t1 || t >= B.engineHold0) {                      // hold: freeze for the quiet stretch
+    const holdIndex = Math.min(list.length - 1, Math.round((B.engineHold0 - t0) * fps));
+    return list[clamp(holdIndex, 0, list.length - 1)];
+  }
+  return list[clamp(Math.floor((t - t0) * fps) % list.length, 0, list.length - 1)];
+}
+let curSrc = {};
+function swapImg(key, src, pending) {
+  if (!src || curSrc[key] === src) return;
+  curSrc[key] = src;
+  const el = IMGS[key];
+  el.src = src;
+  if (key === 'anim' || key === 'engine') { el.classList.add('on'); }
+  pending.push(el.decode().catch(() => {}));
+}
+// ───────────────────────────── seek ─────────────────────────────
+function seek(t) {
+  const pending = [];
+  // 0 · hook words
+  const hookOut = OM.liftOut(t, B.hookOut, {dist: 70, blur: 12});
+  hookEl.style.opacity = (t < B.hookOut + 0.3 ? 1 : 0) * hookOut.op * (t >= B.artIn ? 0 : 1);
+  [...hookEl.children].forEach((s, i) => {
+    const w = OM.wordRise(t, B.hookIn + i * 0.28);
+    s.style.opacity = w.op * (1 - hookOut.k);
+    s.style.transform = `translateY(${(w.y + hookOut.dy * hookOut.k).toFixed(1)}px) scale(${w.s.toFixed(4)})`;
+  });
+  // header: letters drop + 容器滑入（横跨 hook→原画边界 0.9s，两个边界采样点
+  // 之间盒心位移 ≥2% 对角线——probe 连续性以 header 为 carried 载体）
+  const headerVisible = t >= B.headerIn - 0.02;
+  const headerSlide = (1 - sstep(B.headerIn, B.headerIn + 0.9, t)) * 120;
+  headerEl.style.opacity = headerVisible ? 1 : 0;
+  headerEl.style.transform = `translateX(${(-headerSlide).toFixed(1)}px)`;
+  [...headerMain.textContent].forEach(() => {});
+  const headerChars = headerEl.querySelectorAll('span.cfh');
+  if (!headerChars.length) {
+    headerMain.textContent = '';
+    [...CF.copy.name].forEach(ch => {
+      const s = document.createElement('span'); s.className = 'cfh'; s.textContent = ch;
+      s.style.display = 'inline-block'; s.style.transformOrigin = '50% 88%';
+      headerMain.appendChild(s);
+    });
+  }
+  [...headerMain.children].forEach((s, i) => {
+    // dist 90：header 落位横跨 hook→原画边界（1.0–1.4s 采样对）时质心位移
+    // ≥2% 对角线，probe 连续性以 header 为 carried 载体（anchored 只给半分）
+    const d = OM.letterDrop(t, B.headerIn, i, {stagger: 0.05, dist: 90});
+    s.style.opacity = d.op;
+    s.style.transform = `translateY(${d.y.toFixed(1)}px) scale(${d.sx.toFixed(4)},${d.sy.toFixed(4)})`;
+  });
+  headerTag.style.opacity = sstep(B.headerIn + 0.5, B.headerIn + 0.8, t);
+  // subject card: morphs rect + swaps content per beat
+  const st = subjectState(t);
+  place($('subject'), st.x, st.y, 1, st.op, 0);
+  $('subject').style.width = st.w.toFixed(1) + 'px';
+  $('subject').style.height = st.h.toFixed(1) + 'px';
+  $('subject').classList.toggle('browser', t >= B.morphEngine0);
+  const ph = phase(t);
+  const vis = {art: ph === 'art' ? 1 : 0, pixel: ph === 'pixel' ? 1 : 0, anim: ph === 'anim' ? 1 : 0, engine: ph === 'engine' ? 1 : 0};
+  IMGS.art.classList.toggle('on', ph === 'art');
+  IMGS.pixel.classList.toggle('on', ph === 'pixel');
+  IMGS.anim.classList.toggle('on', ph === 'anim');
+  IMGS.engine.classList.toggle('on', ph === 'engine');
+  // pixel rebuild sweep: gridlines fade in, then a green wipe crosses and the art hard-swaps to pixels
+  {
+    const g0 = sstep(B.sweep - 0.55, B.sweep - 0.2, t) * (ph === 'art' ? 1 : 0);
+    $('gridlines').style.opacity = g0 * 0.9;
+    const k = sstep(B.sweep, B.sweep + 0.28, t) * (1 - sstep(B.sweep + 0.34, B.sweep + 0.5, t));
+    $('wipe').style.opacity = k;
+    $('wipe').style.transform = `translateX(${(k * st.w * 1.05 - 10).toFixed(1)}px)`;
+  }
+  // anim / engine frame cycling (deterministic; frozen during the hold)
+  swapImg('anim', frameFor(CF.assets.act, t, B.animIn + 0.25, B.animOut - 0.15, 10), pending);
+  swapImg('engine', frameFor(CF.assets.engine, t, B.morphEngine1 + 0.2, B.engineHold1, 12), pending);
+  // beat label
+  {
+    const labels = CF.copy.labels;                        // [[step, text], …] per phase
+    const cur = labels[ph] || labels.art;
+    const li = OM.popIn(t, B[ph === 'art' ? 'artIn' : ph === 'pixel' ? 'sweep' : ph === 'anim' ? 'animIn' : 'morphEngine0'] + 0.15, {rise: 20});
+    $('label').style.opacity = st.op * li.op * (t >= B.engineOut + 0.2 ? 1 - ssstep(B.engineOut + 0.2, B.engineOut + 0.45, t) : 1);
+    $('label').innerHTML = `<span class="step">${cur[0]}</span>${cur[1]}`;
+  }
+  // build panel ticks (one tick per beat + intro line)
+  {
+    const panelIn = OM.popIn(t, B.headerIn + 0.25, {rise: 26});
+    place($('panel'), 0, panelIn.dy, panelIn.s, panelIn.op * (t >= B.engineOut ? 1 - ssstep(B.engineOut, B.engineOut + 0.3, t) : 1));
+    const tickAt = CF.copy.ticks || [];
+    LINE_DEFS.forEach((ln, i) => {
+      const tk = OM.tick(t, tickAt[i] == null ? 1e9 : tickAt[i]);
+      ln.classList.toggle('on', tk.on);
+      ln.querySelector('.bx').style.transform = `scale(${tk.s.toFixed(3)})`;
+    });
+  }
+  // staccato words, then end card
+  {
+    const w = OM.staccato(t, CF.stac);
+    const on = t >= CF.stac[0][0] && t < B.end;
+    $('stac').textContent = w.word;
+    $('stac').style.opacity = on ? 1 : 0;
+    if (w.i >= 0) {
+      const im = OM.impact(t, CF.stac[w.i][0], {sqx: 0.10, sqy: 0.14});
+      $('stac').style.transform = `scale(${im.sx.toFixed(4)},${im.sy.toFixed(4)})`;
+    }
+    $('end').style.opacity = t >= B.end ? 1 : 0;
+  }
+  // hand
+  {
+    const vis = t >= B.handIn && t < B.handOut;
+    const cu = OM.cursor(t, HAND, CLICKS);
+    $('cursor').style.opacity = vis ? 1 : 0;
+    $('cursor').style.transform = `translate(${(cu.x - 4).toFixed(1)}px,${(cu.y - 3).toFixed(1)}px) scale(${(cu.s * 1.15).toFixed(3)})`;
+  }
+  $('hud').textContent = 't=' + t.toFixed(3);
+  return Promise.all(pending);
+}
+window.__seek = async t => { await seek(t); return true; };
+window.__ready = document.fonts.ready.then(() => seek(0));
+// annotated tracking: probe/framing key off these ids (stage coordinates)
+window.__track = t => {
+  const out = {};
+  const hOp = parseFloat(headerEl.style.opacity || 0);
+  if (hOp > 0.05) {
+    const hb = headerEl.getBoundingClientRect();
+    out.header = {x: hb.left, y: hb.top, w: hb.width, h: hb.height, op: hOp};
+  }
+  const st = subjectState(t);
+  if (st.op > 0.05) out.subject = {x: st.x, y: st.y, w: st.w, h: st.h, op: st.op};
+  const labelOp = parseFloat($('label').style.opacity || 0);
+  if (labelOp > 0.05) {
+    const lb = $('label').getBoundingClientRect();
+    // key=当前节拍文案：label 身份逐拍翻转，boundary 判定才能"看见"节拍切换
+    const ph = phase(t);
+    out.label = {x: lb.left, y: lb.top, w: lb.width, h: lb.height, op: labelOp, key: (CF.copy.labels[ph] || []).join(' ')};
+  }
+  if (t >= B.handIn && t < B.handOut) {
+    const cu = OM.cursor(t, HAND, CLICKS);
+    out.hand = {x: cu.x - 15, y: cu.y - 20, w: 30, h: 40, op: 1};
+  }
+  return out;
+};
+const q = new URLSearchParams(location.search);
+if (q.has('t')) window.__ready.then(() => seek(parseFloat(q.get('t'))));
+if (q.has('hud')) $('hud').style.display = 'block';
+if (q.has('play')) window.__ready.then(() => {
+  const t0 = performance.now();
+  (function loop() { seek(((performance.now() - t0) / 1000) % DUR); requestAnimationFrame(loop); })();
+});
+</script>
+</body>
+</html>

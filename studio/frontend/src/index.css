@@ -1,0 +1,387 @@
+@import "tailwindcss";
+@import "@fontsource/outfit/400.css";
+@import "@fontsource/outfit/500.css";
+@import "@fontsource/outfit/600.css";
+@import "@fontsource/noto-serif-sc/600.css";
+@import "@fontsource/noto-serif-sc/900.css";
+@import "@fontsource/cormorant-garamond/500.css";
+@import "@fontsource/cormorant-garamond/600.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
+
+/* ============================================================
+   Forge UI 3.0 · Salon Bleu — Design Tokens
+   Mist-blue atelier: ivory work surfaces, ink-blue typography,
+   silver rules, and wax-red moments reserved for consequence.
+   ============================================================ */
+
+@theme {
+  --color-canvas: #f3f6fa;
+  --color-paper: #fbf9f4;
+  --color-surface-1: #eaf0f6;
+  --color-surface-2: #e1e8f1;
+  --color-surface-3: #d5dfeb;
+  --color-line-subtle: #e0e7f0;
+  --color-line: #cbd5e3;
+  --color-line-strong: #aebccf;
+
+  --color-ink: #25345a;
+  --color-ink-2: #394968;
+  --color-ink-3: #4e5d7b;
+  --color-ink-4: #526079;
+
+  --color-primary: #25345a;
+  --color-primary-hover: #344a78;
+  --color-primary-active: #17213d;
+  --color-primary-tint: rgba(37, 52, 90, 0.08);
+  --color-ember: #93a9c4;
+  --color-ember-ink: #4a627e;
+  --color-ember-tint: rgba(174, 191, 215, 0.26);
+  --color-success: #3e6553;
+  --color-warning: #765a2c;
+  --color-danger: #8e4657;
+  --color-info: #4f6d8b;
+
+  --color-supervisor: #4f6d8b;
+  --color-precon: #3c6a78;
+  --color-falign: #5b5d88;
+  --color-gimport: #3e6553;
+  --color-qa: #765a2c;
+  --color-memory: #64748c;
+
+  --color-stage-bg: #111a2c;
+  --color-stage-ground: #18233a;
+  --color-stage-line: #b7c8dd;
+  --color-stage-debug: #78a8b8;
+  --color-stage-text: #f4f1e9;
+
+  --font-sans: "Outfit", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-serif: "Noto Serif SC", "Songti SC", "STSong", serif;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", ui-monospace, "SFMono-Regular", Consolas,
+    "Cascadia Mono", monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+
+  --shadow-e1: 0 1px 2px rgba(37, 52, 90, 0.05), 0 6px 18px -14px rgba(37, 52, 90, 0.18);
+  --shadow-e2: 0 2px 4px rgba(37, 52, 90, 0.06), 0 12px 26px -18px rgba(37, 52, 90, 0.3);
+  --shadow-e3: 0 6px 12px -8px rgba(37, 52, 90, 0.18), 0 28px 60px -30px rgba(37, 52, 90, 0.4);
+  --shadow-glow-primary: 0 0 0 1px rgba(37, 52, 90, 0.28),
+    0 10px 30px -18px rgba(37, 52, 90, 0.38);
+
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --motion-instant: 90ms;
+  --motion-fast: 120ms;
+  --motion-base: 180ms;
+  --motion-slow: 260ms;
+  --motion-deliberate: 320ms;
+  --motion-reveal: 600ms;
+  --motion-progress: 700ms;
+  --animate-pulse-run: pulse-run 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-flow: flow 1.2s linear infinite;
+  --animate-spin-slow: spin 0.8s linear infinite;
+}
+
+@keyframes pulse-run {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 52, 90, 0.24);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(37, 52, 90, 0);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.cf-page-enter {
+  animation: page-enter var(--motion-deliberate) var(--ease-standard);
+}
+
+.cf-raise {
+  transition:
+    transform var(--motion-base) var(--ease-standard),
+    box-shadow var(--motion-base) var(--ease-standard),
+    border-color var(--motion-base) var(--ease-standard);
+}
+.cf-raise:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-e2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .cf-slip {
+    transform: none !important;
+  }
+  .cf-raise:hover {
+    transform: none;
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+    background: var(--color-canvas);
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-canvas);
+    /* 全站统一背景图：蓝雾工坊样板图，固定不随内容滚动；
+       顶部雾化渐隐，压淡原图顶端的标题字样，避免与页头标题重复 */
+    background-image:
+      linear-gradient(
+        180deg,
+        rgba(243, 246, 250, 0.94) 0%,
+        rgba(243, 246, 250, 0.6) 10%,
+        rgba(243, 246, 250, 0) 24%
+      ),
+      url("/app-background.png");
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 22px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px var(--color-paper),
+      0 0 0 4px rgba(37, 52, 90, 0.62);
+    border-radius: var(--radius-sm);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #b9c5d5;
+    border-radius: 8px;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9eacc0;
+    border: 3px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+    color: inherit;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  input,
+  textarea {
+    caret-color: var(--color-primary);
+  }
+
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+      line-height: 1.45 !important;
+    }
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cf-vertical {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.3em;
+  }
+
+  .cf-slip {
+    position: relative;
+    transform: none;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.54), transparent 42%),
+      rgba(251, 249, 244, 0.92);
+  }
+  .cf-slip::before {
+    content: "";
+    position: absolute;
+    inset: 2px auto 2px 6px;
+    width: 1px;
+    background: var(--color-line);
+    pointer-events: none;
+  }
+  .cf-slip:hover,
+  .cf-slip:focus-visible {
+    transform: translateY(-1px);
+  }
+
+  .cf-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #b9c5d5 transparent;
+  }
+
+  .cf-sheen {
+    position: relative;
+  }
+  .cf-sheen::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.48), transparent 36%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  }
+
+  .cf-display-num {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .cf-hatch {
+    background-color: rgba(251, 249, 244, 0.9);
+    background-image: radial-gradient(circle, rgba(37, 52, 90, 0.1) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+
+  .cf-vellum {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.58), transparent 52%),
+      rgba(251, 249, 244, 0.88);
+  }
+
+  .cf-folio {
+    background:
+      linear-gradient(90deg, rgba(174, 191, 215, 0.26), transparent 42%),
+      rgba(234, 240, 246, 0.78);
+  }
+
+  .cf-dossier {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.44), transparent 26%),
+      rgba(234, 240, 246, 0.88);
+  }
+
+  .cf-ticket {
+    clip-path: polygon(
+      0 0,
+      calc(100% - 8px) 0,
+      100% 8px,
+      100% 100%,
+      8px 100%,
+      0 calc(100% - 8px)
+    );
+  }
+
+  .cf-ref {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-ink-4);
+  }
+
+  .cf-rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--color-line), transparent);
+  }
+}
+
+/* React Flow light theme */
+.react-flow__controls {
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: var(--shadow-e2);
+}
+.react-flow__controls-button {
+  background: #eaf0f6;
+  border-bottom: 1px solid #e0e7f0;
+  color: #394968;
+}
+.react-flow__controls-button:hover {
+  background: #e1e8f1;
+}
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+.react-flow__attribution {
+  display: none;
+}
+.react-flow__edge-path {
+  stroke-linecap: round;
+}

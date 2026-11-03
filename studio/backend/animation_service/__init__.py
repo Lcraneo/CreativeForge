@@ -1,0 +1,1 @@
+"""Studio animation service package."""

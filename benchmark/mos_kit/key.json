@@ -1,0 +1,167 @@
+{
+  "generated_at": "2026-10-04 09:50:03",
+  "entries": [
+    {
+      "code": "M155",
+      "file": "clips/M155.mp4",
+      "group": "i2v",
+      "source": "flash_v1/walk"
+    },
+    {
+      "code": "Q502",
+      "file": "clips/Q502.mp4",
+      "group": "i2v",
+      "source": "flash_v1/run"
+    },
+    {
+      "code": "Q635",
+      "file": "clips/Q635.mp4",
+      "group": "i2v",
+      "source": "flash_v1/attack"
+    },
+    {
+      "code": "M947",
+      "file": "clips/M947.mp4",
+      "group": "i2v",
+      "source": "flash_v1/jump"
+    },
+    {
+      "code": "M587",
+      "file": "clips/M587.mp4",
+      "group": "i2v",
+      "source": "flash_v1/idle"
+    },
+    {
+      "code": "M502",
+      "file": "clips/M502.mp4",
+      "group": "i2v",
+      "source": "flash_v2/walk"
+    },
+    {
+      "code": "Z468",
+      "file": "clips/Z468.mp4",
+      "group": "i2v",
+      "source": "flash_v2/run"
+    },
+    {
+      "code": "M319",
+      "file": "clips/M319.mp4",
+      "group": "i2v",
+      "source": "flash_v2/attack"
+    },
+    {
+      "code": "K354",
+      "file": "clips/K354.mp4",
+      "group": "i2v",
+      "source": "flash_v2/jump"
+    },
+    {
+      "code": "M373",
+      "file": "clips/M373.mp4",
+      "group": "i2v",
+      "source": "flash_v2/idle"
+    },
+    {
+      "code": "X367",
+      "file": "clips/X367.mp4",
+      "group": "i2v",
+      "source": "flash_v2_ext/walk"
+    },
+    {
+      "code": "M258",
+      "file": "clips/M258.mp4",
+      "group": "i2v",
+      "source": "flash_v2_ext/run"
+    },
+    {
+      "code": "M952",
+      "file": "clips/M952.mp4",
+      "group": "i2v",
+      "source": "flash_v2_ext/attack"
+    },
+    {
+      "code": "K251",
+      "file": "clips/K251.mp4",
+      "group": "i2v",
+      "source": "flash_v2_ext/jump"
+    },
+    {
+      "code": "X537",
+      "file": "clips/X537.mp4",
+      "group": "i2v",
+      "source": "flash_v2_ext/idle"
+    },
+    {
+      "code": "M478",
+      "file": "clips/M478.mp4",
+      "group": "i2v",
+      "source": "plus_v2/walk"
+    },
+    {
+      "code": "K334",
+      "file": "clips/K334.mp4",
+      "group": "i2v",
+      "source": "plus_v2/run"
+    },
+    {
+      "code": "Q964",
+      "file": "clips/Q964.mp4",
+      "group": "i2v",
+      "source": "plus_v2/attack"
+    },
+    {
+      "code": "X808",
+      "file": "clips/X808.mp4",
+      "group": "i2v",
+      "source": "plus_v2/jump"
+    },
+    {
+      "code": "Q973",
+      "file": "clips/Q973.mp4",
+      "group": "i2v",
+      "source": "plus_v2/idle"
+    },
+    {
+      "code": "Q946",
+      "file": "clips/Q946.mp4",
+      "group": "i2v",
+      "source": "flash_v2_1080p/walk"
+    },
+    {
+      "code": "Q710",
+      "file": "clips/Q710.mp4",
+      "group": "i2v",
+      "source": "flash_v2_1080p/run"
+    },
+    {
+      "code": "Q793",
+      "file": "clips/Q793.mp4",
+      "group": "i2v",
+      "source": "flash_v2_1080p/attack"
+    },
+    {
+      "code": "K118",
+      "file": "clips/K118.mp4",
+      "group": "i2v",
+      "source": "flash_v2_1080p/jump"
+    },
+    {
+      "code": "Z441",
+      "file": "clips/Z441.mp4",
+      "group": "i2v",
+      "source": "flash_v2_1080p/idle"
+    },
+    {
+      "code": "Z291",
+      "file": "clips/Z291.gif",
+      "group": "skin_ab",
+      "source": "mesh/rigid-A"
+    },
+    {
+      "code": "M397",
+      "file": "clips/M397.gif",
+      "group": "skin_ab",
+      "source": "mesh/rigid-B"
+    }
+  ]
+}

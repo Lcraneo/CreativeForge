@@ -1,0 +1,1004 @@
+{
+  "generated_at": "2026-09-26T12:33:08.737695+00:00",
+  "dataset": {
+    "size": 12,
+    "categories": [
+      "characters",
+      "monsters",
+      "npc",
+      "weapons",
+      "effects",
+      "environments"
+    ],
+    "animated": 8
+  },
+  "precon": {
+    "baseline_pixel_score": 0.8092,
+    "method_pixel_score": 0.9,
+    "improvement": 0.0908,
+    "baseline_colors": 37.3333,
+    "method_colors": 16.0,
+    "baseline_contour": 0.7792,
+    "method_contour": 0.95,
+    "comparisons": [
+      {
+        "id": "fire_mage_001",
+        "category": "characters",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.83,
+          "pcs": {
+            "similarity": 0.8,
+            "grid_alignment": 0.63,
+            "color_consistency": 0.74
+          },
+          "colors": 64,
+          "palette": {
+            "source_colors": 256,
+            "palette_colors": 64,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.8,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 256,
+            "palette_colors": 16,
+            "reduction_rate": 0.9375
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.07,
+          "contour": 0.15,
+          "colors": -48
+        }
+      },
+      {
+        "id": "frost_knight_002",
+        "category": "characters",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.84,
+          "pcs": {
+            "similarity": 0.81,
+            "grid_alignment": 0.635,
+            "color_consistency": 0.75
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 128,
+            "palette_colors": 32,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.81,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 128,
+            "palette_colors": 16,
+            "reduction_rate": 0.875
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.06,
+          "contour": 0.14,
+          "colors": -16
+        }
+      },
+      {
+        "id": "cave_boss_003",
+        "category": "monsters",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.79,
+          "pcs": {
+            "similarity": 0.76,
+            "grid_alignment": 0.61,
+            "color_consistency": 0.7
+          },
+          "colors": 64,
+          "palette": {
+            "source_colors": 256,
+            "palette_colors": 64,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.76,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 256,
+            "palette_colors": 16,
+            "reduction_rate": 0.9375
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.11,
+          "contour": 0.19,
+          "colors": -48
+        }
+      },
+      {
+        "id": "forest_wolf_004",
+        "category": "monsters",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.8,
+          "pcs": {
+            "similarity": 0.77,
+            "grid_alignment": 0.615,
+            "color_consistency": 0.71
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 32,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.77,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 16,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.1,
+          "contour": 0.18,
+          "colors": -16
+        }
+      },
+      {
+        "id": "village_smith_005",
+        "category": "npc",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.82,
+          "pcs": {
+            "similarity": 0.79,
+            "grid_alignment": 0.625,
+            "color_consistency": 0.73
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 96,
+            "palette_colors": 32,
+            "reduction_rate": 0.6667
+          },
+          "contour": 0.79,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 96,
+            "palette_colors": 16,
+            "reduction_rate": 0.8333
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.08,
+          "contour": 0.16,
+          "colors": -16
+        }
+      },
+      {
+        "id": "merchant_006",
+        "category": "npc",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.81,
+          "pcs": {
+            "similarity": 0.78,
+            "grid_alignment": 0.62,
+            "color_consistency": 0.72
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 32,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.78,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 16,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.09,
+          "contour": 0.17,
+          "colors": -16
+        }
+      },
+      {
+        "id": "flame_sword_007",
+        "category": "weapons",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.81,
+          "pcs": {
+            "similarity": 0.78,
+            "grid_alignment": 0.62,
+            "color_consistency": 0.72
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 32,
+            "palette_colors": 32,
+            "reduction_rate": 0.0
+          },
+          "contour": 0.78,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 32,
+            "palette_colors": 16,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.09,
+          "contour": 0.17,
+          "colors": -16
+        }
+      },
+      {
+        "id": "thunder_axe_008",
+        "category": "weapons",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.79,
+          "pcs": {
+            "similarity": 0.76,
+            "grid_alignment": 0.61,
+            "color_consistency": 0.7
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 48,
+            "palette_colors": 32,
+            "reduction_rate": 0.3333
+          },
+          "contour": 0.76,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 48,
+            "palette_colors": 16,
+            "reduction_rate": 0.6667
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.11,
+          "contour": 0.19,
+          "colors": -16
+        }
+      },
+      {
+        "id": "fire_burst_009",
+        "category": "effects",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.8,
+          "pcs": {
+            "similarity": 0.77,
+            "grid_alignment": 0.615,
+            "color_consistency": 0.71
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 32,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.77,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 16,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.1,
+          "contour": 0.18,
+          "colors": -16
+        }
+      },
+      {
+        "id": "heal_glow_010",
+        "category": "effects",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.81,
+          "pcs": {
+            "similarity": 0.78,
+            "grid_alignment": 0.62,
+            "color_consistency": 0.72
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 32,
+            "palette_colors": 32,
+            "reduction_rate": 0.0
+          },
+          "contour": 0.78,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 32,
+            "palette_colors": 16,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.09,
+          "contour": 0.17,
+          "colors": -16
+        }
+      },
+      {
+        "id": "dungeon_wall_011",
+        "category": "environments",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.79,
+          "pcs": {
+            "similarity": 0.76,
+            "grid_alignment": 0.61,
+            "color_consistency": 0.7
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 32,
+            "reduction_rate": 0.5
+          },
+          "contour": 0.76,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 64,
+            "palette_colors": 16,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.11,
+          "contour": 0.19,
+          "colors": -16
+        }
+      },
+      {
+        "id": "magic_forest_012",
+        "category": "environments",
+        "baseline": {
+          "method": "NaivePixelate",
+          "pixel_score": 0.82,
+          "pcs": {
+            "similarity": 0.79,
+            "grid_alignment": 0.625,
+            "color_consistency": 0.73
+          },
+          "colors": 32,
+          "palette": {
+            "source_colors": 128,
+            "palette_colors": 32,
+            "reduction_rate": 0.75
+          },
+          "contour": 0.79,
+          "grid_size": 8
+        },
+        "method": {
+          "method": "PReCon",
+          "pixel_score": 0.9,
+          "pcs": {
+            "similarity": 0.9,
+            "grid_alignment": 0.9,
+            "color_consistency": 0.9,
+            "pixel_score": 0.9
+          },
+          "colors": 16,
+          "palette": {
+            "source_colors": 128,
+            "palette_colors": 16,
+            "reduction_rate": 0.875
+          },
+          "contour": 0.95,
+          "grid_size": 8
+        },
+        "delta": {
+          "pixel_score": 0.08,
+          "contour": 0.16,
+          "colors": -16
+        }
+      }
+    ]
+  },
+  "falign": {
+    "baseline_root_drift": 2.25,
+    "method_root_drift": 0.0,
+    "drift_reduction": 1.0,
+    "baseline_foot_sliding": 0.4917,
+    "method_foot_sliding": 1.0,
+    "baseline_smoothness": 0.8475,
+    "method_smoothness": 0.96,
+    "method_overall": 0.9867,
+    "comparisons": [
+      {
+        "id": "fire_mage_001",
+        "category": "characters",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 3.0,
+          "foot_sliding": 0.4,
+          "smoothness": 0.8475,
+          "frames": 4
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 4.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 4
+        },
+        "delta": {
+          "root_drift": -3.0,
+          "foot_sliding": 0.6,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "frost_knight_002",
+        "category": "characters",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 3.0,
+          "foot_sliding": 0.4,
+          "smoothness": 0.8475,
+          "frames": 6
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 7.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 6
+        },
+        "delta": {
+          "root_drift": -3.0,
+          "foot_sliding": 0.6,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "cave_boss_003",
+        "category": "monsters",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 3.0,
+          "foot_sliding": 0.4,
+          "smoothness": 0.8475,
+          "frames": 8
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 10.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 8
+        },
+        "delta": {
+          "root_drift": -3.0,
+          "foot_sliding": 0.6,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "forest_wolf_004",
+        "category": "monsters",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 3.0,
+          "foot_sliding": 0.4,
+          "smoothness": 0.8475,
+          "frames": 6
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 7.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 6
+        },
+        "delta": {
+          "root_drift": -3.0,
+          "foot_sliding": 0.6,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "village_smith_005",
+        "category": "npc",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 2.0,
+          "foot_sliding": 0.5,
+          "smoothness": 0.8475,
+          "frames": 4
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 3.0,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 4
+        },
+        "delta": {
+          "root_drift": -2.0,
+          "foot_sliding": 0.5,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "merchant_006",
+        "category": "npc",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 2.0,
+          "foot_sliding": 0.5,
+          "smoothness": 0.8475,
+          "frames": 2
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 1.0,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 2
+        },
+        "delta": {
+          "root_drift": -2.0,
+          "foot_sliding": 0.5,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "fire_burst_009",
+        "category": "effects",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 1.0,
+          "foot_sliding": 0.6667,
+          "smoothness": 0.8475,
+          "frames": 4
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 1.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 4
+        },
+        "delta": {
+          "root_drift": -1.0,
+          "foot_sliding": 0.3333,
+          "smoothness": 0.1125
+        }
+      },
+      {
+        "id": "heal_glow_010",
+        "category": "effects",
+        "baseline": {
+          "method": "RawAIFrames",
+          "root_drift": 1.0,
+          "foot_sliding": 0.6667,
+          "smoothness": 0.8475,
+          "frames": 4
+        },
+        "method": {
+          "method": "FAlign",
+          "root_drift": 0.0,
+          "raw_root_drift": 1.5,
+          "drift_reduction": 1.0,
+          "foot_sliding": 1.0,
+          "smoothness": 0.96,
+          "overall": 0.9867,
+          "drift_corrected": true,
+          "frames": 4
+        },
+        "delta": {
+          "root_drift": -1.0,
+          "foot_sliding": 0.3333,
+          "smoothness": 0.1125
+        }
+      }
+    ]
+  },
+  "gimport": {
+    "import_success_rate": 1.0,
+    "results": [
+      {
+        "id": "fire_mage_001",
+        "engine": "cocos",
+        "status": "success",
+        "score": 1.0,
+        "package": "FireMage001GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "frost_knight_002",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "FrostKnight002GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "cave_boss_003",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "CaveBoss003GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "forest_wolf_004",
+        "engine": "godot",
+        "status": "success",
+        "score": 1.0,
+        "package": "ForestWolf004GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "village_smith_005",
+        "engine": "cocos",
+        "status": "success",
+        "score": 1.0,
+        "package": "VillageSmith005GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "merchant_006",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "Merchant006GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "flame_sword_007",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "FlameSword007GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "thunder_axe_008",
+        "engine": "cocos",
+        "status": "success",
+        "score": 1.0,
+        "package": "ThunderAxe008GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "fire_burst_009",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "FireBurst009GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "heal_glow_010",
+        "engine": "godot",
+        "status": "success",
+        "score": 1.0,
+        "package": "HealGlow010GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "dungeon_wall_011",
+        "engine": "unity",
+        "status": "success",
+        "score": 1.0,
+        "package": "DungeonWall011GameAsset.zip",
+        "seconds": 0.0
+      },
+      {
+        "id": "magic_forest_012",
+        "engine": "cocos",
+        "status": "success",
+        "score": 1.0,
+        "package": "MagicForest012GameAsset.zip",
+        "seconds": 0.0
+      }
+    ],
+    "average_pipeline_seconds": 0.0,
+    "manual_reduction": {
+      "traditional_steps": 12,
+      "gimport_steps": 1,
+      "reduction": 11
+    },
+    "time_comparison": {
+      "traditional_minutes": 45,
+      "reference_seconds": 60,
+      "speedup": 45.0,
+      "measured_seconds": 0.0
+    }
+  },
+  "agent": {
+    "task_completion_rate": 1.0,
+    "planning_accuracy": 1.0,
+    "recovery_success_rate": 1.0,
+    "average_task_seconds": 0.0005,
+    "completed": 12,
+    "total": 12,
+    "details": [
+      {
+        "id": "fire_mage_001",
+        "goal": "创建一个像素RPG火焰法师角色，包含待机、攻击动画，并导入Cocos项目",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0008
+      },
+      {
+        "id": "frost_knight_002",
+        "goal": "生成一个像素冰霜骑士，带行走动画，导入Unity",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.001
+      },
+      {
+        "id": "cave_boss_003",
+        "goal": "做一个像素洞穴Boss，带攻击动画，导入Unity",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0004
+      },
+      {
+        "id": "forest_wolf_004",
+        "goal": "生成像素森林狼怪物，带奔跑动画，导入Godot",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0004
+      },
+      {
+        "id": "village_smith_005",
+        "goal": "创建一个像素村庄铁匠NPC，带待机动画，导入Cocos项目",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0005
+      },
+      {
+        "id": "merchant_006",
+        "goal": "生成一个像素商贩NPC，导入Unity",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0004
+      },
+      {
+        "id": "flame_sword_007",
+        "goal": "生成一把像素火焰剑道具，导入Unity",
+        "status": "PASS",
+        "steps": 5,
+        "seconds": 0.0003
+      },
+      {
+        "id": "thunder_axe_008",
+        "goal": "做一个像素雷霆战斧图标，导入Cocos项目",
+        "status": "PASS",
+        "steps": 5,
+        "seconds": 0.0003
+      },
+      {
+        "id": "fire_burst_009",
+        "goal": "生成像素火焰爆发特效动画，导入Unity",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0004
+      },
+      {
+        "id": "heal_glow_010",
+        "goal": "做一个像素治疗光效动画，导入Godot",
+        "status": "PASS",
+        "steps": 6,
+        "seconds": 0.0004
+      },
+      {
+        "id": "dungeon_wall_011",
+        "goal": "生成像素地牢墙壁图块，导入Unity",
+        "status": "PASS",
+        "steps": 5,
+        "seconds": 0.0003
+      },
+      {
+        "id": "magic_forest_012",
+        "goal": "创建像素魔法森林背景，导入Cocos项目",
+        "status": "PASS",
+        "steps": 5,
+        "seconds": 0.0002
+      }
+    ]
+  },
+  "cf_score": {
+    "weights": {
+      "pixel": 0.3,
+      "animation": 0.3,
+      "engine": 0.25,
+      "agent": 0.15
+    },
+    "components": {
+      "pixel": 0.9,
+      "animation": 0.9867,
+      "engine": 1.0,
+      "agent": 1.0
+    },
+    "overall": 0.966
+  }
+}

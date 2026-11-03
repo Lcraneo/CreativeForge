@@ -1,0 +1,43 @@
+{
+  "probed_at": "2026-10-03 21:37:12",
+  "models": {
+    "wan2.5-i2v-flash": {
+      "online": false,
+      "status": 400,
+      "error": "{\"code\":\"InvalidParameter\",\"message\":\"Model not exist.\",\"request_id\":\"f83d0a1f-59ce-9b0b-a013-c7552dcc5955\"}"
+    },
+    "wan2.5-i2v-plus": {
+      "online": false,
+      "status": 400,
+      "error": "{\"code\":\"InvalidParameter\",\"message\":\"Model not exist.\",\"request_id\":\"33cd6cc0-bc3c-9192-babb-e50865012296\"}"
+    },
+    "wan2.2-i2v-flf2v": {
+      "online": false,
+      "status": 400,
+      "error": "{\"code\":\"InvalidParameter\",\"message\":\"Model not exist.\",\"request_id\":\"cc1cb915-7a06-9e4c-a52c-90f8219bd600\"}"
+    },
+    "wan2.2-i2v-flash-audio": {
+      "online": false,
+      "status": 400,
+      "error": "{\"code\":\"InvalidParameter\",\"message\":\"Model not exist.\",\"request_id\":\"0d34ff49-4359-9ce8-8290-7694f3db1d7a\"}"
+    },
+    "wanx2.1-i2v-plus": {
+      "online": true,
+      "task_id": "db384e06-1bba-4562-855d-07a9b50e5bfb",
+      "sample": {
+        "width": 960,
+        "height": 960,
+        "fps": 30.0,
+        "total_frames": 161,
+        "duration": 5.367,
+        "sharpness": 19.099,
+        "temporal_consistency": 0.8826,
+        "color_fidelity_vs_input": 0.0931,
+        "motion_total": 445.15,
+        "motion_mean": 13.911,
+        "motion_cv": 0.5766,
+        "bytes": 25116348
+      }
+    }
+  }
+}

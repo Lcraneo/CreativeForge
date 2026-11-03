@@ -1,0 +1,33 @@
+[
+  {
+    "from": "ArtAgent",
+    "to": "AnimationAgent",
+    "type": "ASSET_READY",
+    "payload": {
+      "asset_id": "mage001",
+      "from": "ArtAgent"
+    }
+  },
+  {
+    "from": "AnimationAgent",
+    "to": "EngineAgent",
+    "type": "ASSET_READY",
+    "payload": {
+      "asset_id": "mage001",
+      "from": "AnimationAgent"
+    }
+  },
+  {
+    "from": "QAAgent",
+    "to": "SupervisorAgent",
+    "type": "QUALITY_REPORT",
+    "payload": {
+      "status": "PASS",
+      "score": {
+        "pixel": 0.9,
+        "animation": 0.9867,
+        "engine": 1.0
+      }
+    }
+  }
+]

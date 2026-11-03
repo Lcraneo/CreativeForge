@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Coin Arena · 古堡金币竞技场</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: #14131a;
+    display: grid; place-items: center;
+    font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+  }
+  #stage {
+    max-width: 100vw; max-height: 100vh;
+    aspect-ratio: 16 / 9;
+    width: min(100vw, 177.7vh);
+    image-rendering: pixelated;
+    border-radius: 8px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.6);
+  }
+</style>
+</head>
+<body>
+<canvas id="stage" width="960" height="540"></canvas>
+<script src="game.js"></script>
+</body>
+</html>

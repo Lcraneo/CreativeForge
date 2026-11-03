@@ -1,0 +1,1231 @@
+[
+  {
+    "schema_version": 1,
+    "id": "scene_785c07aa29a2",
+    "title": "幽暗虫国",
+    "prompt": "幽暗的地下虫国，青蓝色发光苔藓、残破石拱与悬挂藤蔓，冷色高对比手绘风，神秘寂静。横版多层平台与断桥，夹杂上升浮苔和长距离跳跃，约一分钟路线，避免出现具体角色和文字",
+    "status": "ready",
+    "gameplay": {
+      "type": "parkour",
+      "difficulty": "normal",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "long_jumps"
+      ],
+      "level": {
+        "seed": "539844500",
+        "width": 4748,
+        "groundY": 348,
+        "spawnX": 120,
+        "goalX": 4648,
+        "platforms": [
+          {
+            "x": 0,
+            "y": 348,
+            "width": 500,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 642,
+            "y": 348,
+            "width": 318,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 1081,
+            "y": 348,
+            "width": 450,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 1672,
+            "y": 348,
+            "width": 391,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 2205,
+            "y": 348,
+            "width": 366,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 2696,
+            "y": 282,
+            "width": 428,
+            "height": 18,
+            "kind": "floating"
+          },
+          {
+            "x": 3227,
+            "y": 231,
+            "width": 382,
+            "height": 18,
+            "kind": "floating"
+          },
+          {
+            "x": 3751,
+            "y": 231,
+            "width": 335,
+            "height": 18,
+            "kind": "floating"
+          },
+          {
+            "x": 4228,
+            "y": 231,
+            "width": 520,
+            "height": 18,
+            "kind": "floating"
+          }
+        ],
+        "coins": [
+          {
+            "id": "c1",
+            "x": 571,
+            "y": 286
+          },
+          {
+            "id": "c2",
+            "x": 756,
+            "y": 310
+          },
+          {
+            "id": "c3",
+            "x": 852,
+            "y": 310
+          },
+          {
+            "id": "c4",
+            "x": 1020,
+            "y": 286
+          },
+          {
+            "id": "c5",
+            "x": 1243,
+            "y": 310
+          },
+          {
+            "id": "c6",
+            "x": 1378,
+            "y": 310
+          },
+          {
+            "id": "c7",
+            "x": 1602,
+            "y": 286
+          },
+          {
+            "id": "c8",
+            "x": 1813,
+            "y": 310
+          },
+          {
+            "id": "c9",
+            "x": 1930,
+            "y": 310
+          },
+          {
+            "id": "c10",
+            "x": 2134,
+            "y": 286
+          },
+          {
+            "id": "c11",
+            "x": 2337,
+            "y": 310
+          },
+          {
+            "id": "c12",
+            "x": 2447,
+            "y": 310
+          },
+          {
+            "id": "c13",
+            "x": 2634,
+            "y": 220
+          },
+          {
+            "id": "c14",
+            "x": 2850,
+            "y": 244
+          },
+          {
+            "id": "c15",
+            "x": 2978,
+            "y": 244
+          },
+          {
+            "id": "c16",
+            "x": 3365,
+            "y": 193
+          },
+          {
+            "id": "c17",
+            "x": 3479,
+            "y": 193
+          },
+          {
+            "id": "c18",
+            "x": 3680,
+            "y": 169
+          },
+          {
+            "id": "c19",
+            "x": 3872,
+            "y": 193
+          },
+          {
+            "id": "c20",
+            "x": 3972,
+            "y": 193
+          }
+        ]
+      },
+      "validation": {
+        "ok": true,
+        "issues": [],
+        "max_gap": 3728,
+        "max_rise": 117
+      }
+    },
+    "theme": {
+      "summary": "神秘寂静",
+      "palette": {
+        "skyTop": "#2A3B59",
+        "skyBottom": "#1A2A4A",
+        "ground": "#3D2E2F",
+        "floating": "#4A8F9F",
+        "accent": "#7FD8FF"
+      },
+      "background_url": "/api/scenes/scene_785c07aa29a2/backgrounds/0.png",
+      "background_urls": [
+        "/api/scenes/scene_785c07aa29a2/backgrounds/0.png",
+        "/api/scenes/scene_785c07aa29a2/backgrounds/1.png",
+        "/api/scenes/scene_785c07aa29a2/backgrounds/2.png",
+        "/api/scenes/scene_785c07aa29a2/backgrounds/3.png",
+        "/api/scenes/scene_785c07aa29a2/backgrounds/4.png"
+      ]
+    },
+    "generation": {
+      "stage": "ready",
+      "warnings": [],
+      "attempts": 1,
+      "duration_ms": 41669,
+      "chat_model": "qwen3-omni-flash",
+      "image_model": "wanx2.1-t2i-turbo",
+      "background_total": 5,
+      "background_done": 5
+    },
+    "created_at": 1793416206.296245,
+    "updated_at": 1793432223.6289442,
+    "error": null,
+    "intent": {
+      "title": "幽暗虫国",
+      "summary": "神秘寂静",
+      "environment": "forest",
+      "difficulty": "normal",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "long_jumps"
+      ],
+      "palette": {
+        "skyTop": "#2A3B59",
+        "skyBottom": "#1A2A4A",
+        "ground": "#3D2E2F",
+        "floating": "#4A8F9F",
+        "accent": "#7FD8FF"
+      }
+    }
+  },
+  {
+    "schema_version": 1,
+    "id": "scene_f9b23b9260c4",
+    "title": "幽暗地下城",
+    "prompt": "幽暗地下城，潮湿石砖、残破拱门与锈蚀铁栅，墙上摇曳火把投下暖橙色光，青绿色地下水隐约发光。横版多层遗迹、断桥和上升石台交错，手绘暗黑奇幻风格，避免出现具体角色、文字和 UI。",
+    "status": "ready",
+    "gameplay": {
+      "type": "parkour",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "long_jumps"
+      ],
+      "level": {
+        "seed": "131659100",
+        "width": 4966,
+        "groundY": 348,
+        "spawnX": 120,
+        "goalX": 4866,
+        "platforms": [
+          {
+            "x": 0,
+            "y": 348,
+            "width": 500,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 633,
+            "y": 348,
+            "width": 364,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 1105,
+            "y": 348,
+            "width": 510,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 1780,
+            "y": 348,
+            "width": 465,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 2415,
+            "y": 348,
+            "width": 366,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 2951,
+            "y": 348,
+            "width": 301,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 3384,
+            "y": 348,
+            "width": 411,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 3965,
+            "y": 348,
+            "width": 329,
+            "height": 72,
+            "kind": "ground"
+          },
+          {
+            "x": 4446,
+            "y": 286,
+            "width": 520,
+            "height": 18,
+            "kind": "floating"
+          }
+        ],
+        "coins": [
+          {
+            "id": "c1",
+            "x": 566,
+            "y": 286
+          },
+          {
+            "id": "c2",
+            "x": 764,
+            "y": 310
+          },
+          {
+            "id": "c3",
+            "x": 873,
+            "y": 310
+          },
+          {
+            "id": "c4",
+            "x": 1289,
+            "y": 310
+          },
+          {
+            "id": "c5",
+            "x": 1442,
+            "y": 310
+          },
+          {
+            "id": "c6",
+            "x": 1698,
+            "y": 286
+          },
+          {
+            "id": "c7",
+            "x": 1947,
+            "y": 310
+          },
+          {
+            "id": "c8",
+            "x": 2087,
+            "y": 310
+          },
+          {
+            "id": "c9",
+            "x": 2330,
+            "y": 286
+          },
+          {
+            "id": "c10",
+            "x": 2547,
+            "y": 310
+          },
+          {
+            "id": "c11",
+            "x": 2657,
+            "y": 310
+          },
+          {
+            "id": "c12",
+            "x": 2866,
+            "y": 286
+          },
+          {
+            "id": "c13",
+            "x": 3059,
+            "y": 310
+          },
+          {
+            "id": "c14",
+            "x": 3150,
+            "y": 310
+          },
+          {
+            "id": "c15",
+            "x": 3318,
+            "y": 286
+          },
+          {
+            "id": "c16",
+            "x": 3532,
+            "y": 310
+          },
+          {
+            "id": "c17",
+            "x": 3655,
+            "y": 310
+          },
+          {
+            "id": "c18",
+            "x": 3880,
+            "y": 286
+          },
+          {
+            "id": "c19",
+            "x": 4083,
+            "y": 310
+          },
+          {
+            "id": "c20",
+            "x": 4182,
+            "y": 310
+          }
+        ]
+      },
+      "validation": {
+        "ok": true,
+        "issues": [],
+        "max_gap": 3946,
+        "max_rise": 62
+      }
+    },
+    "theme": {
+      "summary": "阴森潮湿的遗迹氛围",
+      "palette": {
+        "skyTop": "#3a2c2a",
+        "skyBottom": "#2d1f1e",
+        "ground": "#4a3f3d",
+        "floating": "#2e3b3a",
+        "accent": "#b85a2a"
+      },
+      "background_url": "/api/scenes/scene_f9b23b9260c4/backgrounds/0.png",
+      "background_urls": [
+        "/api/scenes/scene_f9b23b9260c4/backgrounds/0.png",
+        "/api/scenes/scene_f9b23b9260c4/backgrounds/1.png",
+        "/api/scenes/scene_f9b23b9260c4/backgrounds/2.png",
+        "/api/scenes/scene_f9b23b9260c4/backgrounds/3.png",
+        "/api/scenes/scene_f9b23b9260c4/backgrounds/4.png"
+      ]
+    },
+    "generation": {
+      "stage": "ready",
+      "warnings": [],
+      "attempts": 1,
+      "background_total": 5,
+      "background_done": 5,
+      "duration_ms": 53877,
+      "chat_model": "qwen3-omni-flash",
+      "image_model": "wanx2.1-t2i-turbo"
+    },
+    "created_at": 1793431346.182115,
+    "updated_at": 1793431400.0591662,
+    "error": null,
+    "intent": {
+      "title": "幽暗地下城",
+      "summary": "阴森潮湿的遗迹氛围",
+      "environment": "castle",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "long_jumps"
+      ],
+      "palette": {
+        "skyTop": "#3a2c2a",
+        "skyBottom": "#2d1f1e",
+        "ground": "#4a3f3d",
+        "floating": "#2e3b3a",
+        "accent": "#b85a2a"
+      }
+    }
+  },
+  {
+    "schema_version": 1,
+    "id": "scene_5dacaef2f50f",
+    "title": "幽光蘑菇森林",
+    "prompt": "幽光蘑菇森林：暗绿腐殖土、荧光菌毯与盘根错节的巨木",
+    "status": "ready",
+    "gameplay": {
+      "type": "pve",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "floating_platforms"
+      ],
+      "level": null,
+      "campaign": {
+        "schema_version": 2,
+        "seed": "930442992",
+        "stages": [
+          {
+            "id": "stage_1",
+            "title": "第 1 关 · 前哨清剿",
+            "kind": "minion",
+            "background_url": "/api/scenes/scene_5dacaef2f50f/backgrounds/0.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_1_enemy_1",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 429,
+                "y": 244,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_2",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 662,
+                "y": 253,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_3",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 966,
+                "y": 241,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_4",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 410,
+                "y": 349,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              }
+            ]
+          },
+          {
+            "id": "stage_2",
+            "title": "第 2 关 · 纵深围猎",
+            "kind": "minion",
+            "background_url": "/api/scenes/scene_5dacaef2f50f/backgrounds/1.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_2_enemy_1",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 416,
+                "y": 239,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_2",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 732,
+                "y": 255,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_3",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 979,
+                "y": 243,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_4",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 408,
+                "y": 348,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_5",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 689,
+                "y": 365,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_6",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 1012,
+                "y": 386,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              }
+            ]
+          },
+          {
+            "id": "stage_3",
+            "title": "第 3 关 · 守关战 · 腐心菌王",
+            "kind": "boss",
+            "background_url": "/api/scenes/scene_5dacaef2f50f/backgrounds/2.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_3_boss",
+                "profile_id": "pve_70019aa057",
+                "asset_id": "ast87416",
+                "name": "腐心菌王",
+                "kind": "boss",
+                "x": 700,
+                "y": 319,
+                "behavior": "chaser",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored"
+                ],
+                "max_hp": 24,
+                "speed": 44,
+                "damage": 2,
+                "attack_interval": 1.4,
+                "display_height": 224
+              }
+            ]
+          }
+        ]
+      },
+      "validation": {
+        "ok": true,
+        "issues": [],
+        "max_gap": 0,
+        "max_rise": 0,
+        "combat_metrics": {
+          "estimated_duration_seconds": 109.2,
+          "projectile_budget": 12,
+          "minimum_telegraph_seconds": 0.45,
+          "quality_ok": true,
+          "recommendations": []
+        }
+      }
+    },
+    "theme": {
+      "summary": "诡秘幽邃",
+      "palette": {
+        "skyTop": "#1a3a2a",
+        "skyBottom": "#0d2015",
+        "ground": "#152a10",
+        "floating": "#2d5a30",
+        "accent": "#40ff80"
+      },
+      "background_url": "/api/scenes/scene_5dacaef2f50f/backgrounds/0.png",
+      "background_urls": [
+        "/api/scenes/scene_5dacaef2f50f/backgrounds/0.png",
+        "/api/scenes/scene_5dacaef2f50f/backgrounds/1.png",
+        "/api/scenes/scene_5dacaef2f50f/backgrounds/2.png"
+      ]
+    },
+    "generation": {
+      "stage": "ready",
+      "warnings": [],
+      "attempts": 1,
+      "background_total": 3,
+      "background_done": 3,
+      "duration_ms": 42580,
+      "chat_model": "qwen3-omni-flash",
+      "image_model": "wanx2.1-t2i-turbo"
+    },
+    "created_at": 1793613283.8707843,
+    "updated_at": 1793618822.762679,
+    "error": null,
+    "intent": {
+      "title": "幽光蘑菇森林",
+      "summary": "诡秘幽邃",
+      "environment": "forest",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "floating_platforms"
+      ],
+      "palette": {
+        "skyTop": "#1a3a2a",
+        "skyBottom": "#0d2015",
+        "ground": "#152a10",
+        "floating": "#2d5a30",
+        "accent": "#40ff80"
+      }
+    }
+  },
+  {
+    "schema_version": 1,
+    "id": "scene_afdf1a061dd4",
+    "title": "熔岩深处的赤铁要塞",
+    "prompt": "熔岩深处的赤铁要塞：焦黑玄武岩、龟裂熔岩河与锈红铁架。",
+    "status": "ready",
+    "gameplay": {
+      "type": "pve",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "floating_platforms"
+      ],
+      "level": null,
+      "campaign": {
+        "schema_version": 2,
+        "seed": "541279528",
+        "stages": [
+          {
+            "id": "stage_1",
+            "title": "第 1 关 · 前哨清剿",
+            "kind": "minion",
+            "background_url": "/api/scenes/scene_afdf1a061dd4/backgrounds/0.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_1_enemy_1",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 399,
+                "y": 247,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_2",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 734,
+                "y": 266,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_3",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 1019,
+                "y": 267,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              },
+              {
+                "id": "stage_1_enemy_4",
+                "profile_id": "pve_323d6340a6",
+                "asset_id": "ast87216",
+                "name": "甲壳冲锋者",
+                "kind": "minion",
+                "x": 456,
+                "y": 371,
+                "behavior": "charger",
+                "element": "physical",
+                "projectile_color": "#e8d49d",
+                "tags": [
+                  "fast",
+                  "armored",
+                  "beast"
+                ],
+                "max_hp": 3,
+                "speed": 92,
+                "damage": 1,
+                "attack_interval": 1.9999999999999998,
+                "display_height": 92
+              }
+            ]
+          },
+          {
+            "id": "stage_2",
+            "title": "第 2 关 · 纵深围猎",
+            "kind": "minion",
+            "background_url": "/api/scenes/scene_afdf1a061dd4/backgrounds/1.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_2_enemy_1",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 423,
+                "y": 267,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_2",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 731,
+                "y": 235,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_3",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 988,
+                "y": 223,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_4",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 389,
+                "y": 359,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_5",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 687,
+                "y": 342,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              },
+              {
+                "id": "stage_2_enemy_6",
+                "profile_id": "pve_f57217e5c7",
+                "asset_id": "ast49215",
+                "name": "菌伞射手",
+                "kind": "minion",
+                "x": 1000,
+                "y": 357,
+                "behavior": "shooter",
+                "element": "toxic",
+                "projectile_color": "#9fe56f",
+                "tags": [
+                  "ranged",
+                  "armored",
+                  "toxic"
+                ],
+                "max_hp": 3,
+                "speed": 62,
+                "damage": 1,
+                "attack_interval": 2.05,
+                "display_height": 92
+              }
+            ]
+          },
+          {
+            "id": "stage_3",
+            "title": "第 3 关 · 守关战 · 熔岩构装巨兽",
+            "kind": "boss",
+            "background_url": "/api/scenes/scene_afdf1a061dd4/backgrounds/2.png",
+            "arena": {
+              "width": 1400,
+              "depth": 760,
+              "spawn_x": 700,
+              "spawn_y": 608
+            },
+            "enemies": [
+              {
+                "id": "stage_3_boss",
+                "profile_id": "pve_9134e2adb8",
+                "asset_id": "ast13614",
+                "name": "熔岩构装巨兽",
+                "kind": "boss",
+                "x": 700,
+                "y": 319,
+                "behavior": "charger",
+                "element": "fire",
+                "projectile_color": "#ff9b62",
+                "tags": [
+                  "construct",
+                  "fire",
+                  "armored"
+                ],
+                "max_hp": 24,
+                "speed": 62,
+                "damage": 2,
+                "attack_interval": 1.1,
+                "display_height": 224
+              }
+            ]
+          }
+        ]
+      },
+      "validation": {
+        "ok": true,
+        "issues": [],
+        "max_gap": 0,
+        "max_rise": 0,
+        "combat_metrics": {
+          "estimated_duration_seconds": 109.2,
+          "projectile_budget": 12,
+          "minimum_telegraph_seconds": 0.45,
+          "quality_ok": true,
+          "recommendations": []
+        }
+      }
+    },
+    "theme": {
+      "summary": "灼热压迫与工业锈蚀的压迫感",
+      "palette": {
+        "skyTop": "#FF4500",
+        "skyBottom": "#8B0000",
+        "ground": "#2F2F2F",
+        "floating": "#A52A2A",
+        "accent": "#B22222"
+      },
+      "background_url": "/api/scenes/scene_afdf1a061dd4/backgrounds/0.png",
+      "background_urls": [
+        "/api/scenes/scene_afdf1a061dd4/backgrounds/0.png",
+        "/api/scenes/scene_afdf1a061dd4/backgrounds/1.png",
+        "/api/scenes/scene_afdf1a061dd4/backgrounds/2.png"
+      ]
+    },
+    "generation": {
+      "stage": "ready",
+      "warnings": [],
+      "attempts": 1,
+      "background_total": 3,
+      "background_done": 3,
+      "duration_ms": 9553,
+      "chat_model": "qwen3-omni-flash",
+      "image_model": "wanx2.1-t2i-turbo"
+    },
+    "created_at": 1793613536.7994096,
+    "updated_at": 1793613546.351933,
+    "error": null,
+    "intent": {
+      "title": "熔岩深处的赤铁要塞",
+      "summary": "灼热压迫与工业锈蚀的压迫感",
+      "environment": "lava",
+      "difficulty": "hard",
+      "length": "medium",
+      "features": [
+        "gaps",
+        "rising_platforms",
+        "floating_platforms"
+      ],
+      "palette": {
+        "skyTop": "#FF4500",
+        "skyBottom": "#8B0000",
+        "ground": "#2F2F2F",
+        "floating": "#A52A2A",
+        "accent": "#B22222"
+      }
+    }
+  }
+]

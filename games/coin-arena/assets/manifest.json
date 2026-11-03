@@ -1,0 +1,44 @@
+{
+  "hero_idle": {
+    "file": "hero_idle.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 108,
+    "fh": 192
+  },
+  "hero_walk": {
+    "file": "hero_walk.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 113,
+    "fh": 192
+  },
+  "hero_run": {
+    "file": "hero_run.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 110,
+    "fh": 192
+  },
+  "hero_attack": {
+    "file": "hero_attack.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 123,
+    "fh": 192
+  },
+  "enemy_idle": {
+    "file": "enemy_idle.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 173,
+    "fh": 192
+  },
+  "enemy_walk": {
+    "file": "enemy_walk.png",
+    "frames": 32,
+    "fps": 12,
+    "fw": 170,
+    "fh": 192
+  }
+}

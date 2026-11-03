@@ -1,0 +1,80 @@
+{
+  "baseline": {
+    "config": {
+      "min_count": 30,
+      "duration": 1.25,
+      "fps": 12,
+      "size": 384
+    },
+    "metrics": {
+      "frames": 32,
+      "fps": 12,
+      "loop_seconds": 2.667,
+      "sharpness": 13.706,
+      "temporal_consistency": 0.9908,
+      "color_fidelity": 0.9633,
+      "dynamic_range_spread": 233.0,
+      "clip_high": 0.00609,
+      "clip_low": 0.0,
+      "motion_total": 22.41,
+      "motion_mean": 0.723,
+      "motion_cv": 0.5064,
+      "pipeline_seconds": 0.286,
+      "gif_bytes": 839714,
+      "delivery_size": 384,
+      "source_fps": 24.0,
+      "mp4_width": 384,
+      "mp4_fps": 24.0,
+      "mp4_duration": 4.792,
+      "mp4_bitrate_kbps": 34
+    },
+    "recorded_at": "2026-10-04 11:24:04"
+  },
+  "goal_loop_ratio": 1.5,
+  "tolerances": {
+    "sharpness": [
+      "ratio_min",
+      0.97
+    ],
+    "temporal_consistency": [
+      "abs_min",
+      0.02
+    ],
+    "color_fidelity": [
+      "abs_min",
+      0.01
+    ],
+    "dynamic_range_spread": [
+      "abs_min",
+      3.0
+    ],
+    "motion_total": [
+      "ratio_min",
+      0.9
+    ],
+    "motion_cv": [
+      "ratio_max",
+      1.05
+    ],
+    "delivery_size": [
+      "ratio_min",
+      0.95
+    ],
+    "source_fps": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_width": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_fps": [
+      "ratio_min",
+      0.9
+    ],
+    "mp4_duration": [
+      "ratio_min",
+      0.8
+    ]
+  }
+}

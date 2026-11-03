@@ -1,0 +1,41 @@
+{
+  "version": "1.0",
+  "asset_id": "playtest3d-fixture",
+  "available": true,
+  "error": null,
+  "mesh_url": "/api/playtest/3d/fixture.glb",
+  "bytes": 36872,
+  "sha256": "2f73058e6e116189c2f43c34d2544d6ea31287a61d34a6af80da285cfb11bd36",
+  "rig": {
+    "provider": "fixture",
+    "rigged": true
+  },
+  "clips": [
+    {
+      "name": "idle",
+      "source_clip": "Idle",
+      "loop": true
+    },
+    {
+      "name": "walk",
+      "source_clip": "Walk",
+      "loop": true
+    },
+    {
+      "name": "run",
+      "source_clip": "Run",
+      "loop": true
+    },
+    {
+      "name": "jump",
+      "source_clip": "Jump",
+      "loop": false
+    },
+    {
+      "name": "attack",
+      "source_clip": "Attack",
+      "loop": false
+    }
+  ],
+  "fallback_url": "/playtest"
+}

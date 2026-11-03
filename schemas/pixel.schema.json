@@ -1,0 +1,45 @@
+{
+  "title": "PixelState",
+  "type": "object",
+  "properties": {
+    "grid": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "integer"
+        },
+        "phase_x": {
+          "type": "integer"
+        },
+        "phase_y": {
+          "type": "integer"
+        },
+        "confidence": {
+          "type": "number"
+        }
+      }
+    },
+    "palette": {
+      "type": "object",
+      "properties": {
+        "max_colors": {
+          "type": "integer"
+        },
+        "colors": {
+          "type": "array"
+        }
+      }
+    },
+    "contour": {
+      "type": "object",
+      "properties": {
+        "thickness": {
+          "type": "integer"
+        },
+        "connectivity": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

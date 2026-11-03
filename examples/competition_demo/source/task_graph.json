@@ -1,0 +1,27 @@
+[
+  {
+    "id": "001",
+    "agent": "ArtAgent",
+    "action": "create_character",
+    "capability": "generation"
+  },
+  {
+    "id": "002",
+    "agent": "ArtAgent",
+    "action": "pixel_reconstruction",
+    "capability": "PReCon"
+  },
+  {
+    "id": "003",
+    "agent": "AnimationAgent",
+    "action": "create_animation",
+    "capability": "FAlign"
+  },
+  {
+    "id": "004",
+    "agent": "EngineAgent",
+    "action": "export_unity",
+    "capability": "GImport",
+    "engine": "unity"
+  }
+]
