@@ -206,6 +206,19 @@ class TurnaroundServiceTests(unittest.TestCase):
         self.assertIn("back", message)
         self.assertIn("侧面", message)
 
+    def test_duplicate_verdict_ignores_pixel_mean_when_structure_differs(self):
+        # 线上实际误杀样例：裁切图大面积留白，换视角后像素均值仍低于 0.03，
+        # 但 dHash 距离 24 说明结构完全不同，不能判为重复
+        self.assertFalse(svc._duplicate_verdict(0.0296, 24))
+        # 真重复：结构一致（dHash 很小），像素均值略高也仍然算重复
+        self.assertTrue(svc._duplicate_verdict(0.0348, 0))
+        # 原样返回：两项都极低
+        self.assertTrue(svc._duplicate_verdict(0.0, 0))
+        # 中等结构差异 + 像素接近：仍按重复处理
+        self.assertTrue(svc._duplicate_verdict(0.02, 8))
+        # 像素差异明显、结构也不同
+        self.assertFalse(svc._duplicate_verdict(0.20, 30))
+
     def test_near_identical_uses_pixel_and_dhash(self):
         with tempfile.TemporaryDirectory() as tmp:
             paths = []

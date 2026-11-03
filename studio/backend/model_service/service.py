@@ -1449,6 +1449,18 @@ def _dhash(image):
     return value
 
 
+def _duplicate_verdict(score, distance, threshold=0.03, hash_distance=6, different_distance=12):
+    """两个互补指标判重：像素均值差 + dHash 汉明距离。
+
+    dHash 距离明显偏大时（结构已不同），不再以像素均值定论——三视图裁切图
+    大面积留白，换视角后像素均值可能仍低于阈值（实测 diff=0.0296 而
+    dHash=24），只按均值会误杀正常生成结果。"""
+
+    if distance > different_distance:
+        return False
+    return score < threshold or distance <= hash_distance
+
+
 def _near_identical(path_a, path_b, threshold=0.03, hash_distance=6):
     """判断编辑模型是否把输入图原样返回。
 
@@ -1470,7 +1482,7 @@ def _near_identical(path_a, path_b, threshold=0.03, hash_distance=6):
             data_b = gray_b.tobytes()
             distance = bin(_dhash(handle_a) ^ _dhash(handle_b)).count("1")
         score = sum(abs(a - b) for a, b in zip(data_a, data_b)) / (255.0 * 64 * 64)
-        duplicate = score < threshold or distance <= hash_distance
+        duplicate = _duplicate_verdict(score, distance, threshold, hash_distance)
         return duplicate, "diff={:.4f}, dHash={}".format(score, distance)
     except Exception:  # noqa: BLE001
         return False, None
