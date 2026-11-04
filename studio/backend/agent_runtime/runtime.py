@@ -320,20 +320,65 @@ class AgentRuntime:
                 "asset": asset,
             }
         )
-        self._persist_history_now()
+        self._persist_history_now(asset)
 
-    def _persist_history_now(self) -> None:
-        """资产入库后立即把 history.json 推进对象存储。
+    def _persist_history_now(self, asset: dict | None) -> None:
+        """资产入库后立即把历史索引与角色图片推进对象存储。
 
         后台增量扫描是 8s 一轮，容器若在这个窗口内重启（Render 自动
         部署/休眠唤醒），刚生成的资产快照还没上传就会永久丢失——前端
-        动作补生成会因此拿到 404 unknown asset。这里同步上传（单文件
-        一次 PUT，几十 KB），失败仍由后台 worker 下一轮兜底。"""
+        动作补生成会因此拿到 404 unknown asset。这里同步上传
+        history.json、原画/三视图，并立即刷新云端清单，确保重启后能
+        完整回填；单文件失败仍由后台 worker 下一轮兜底。"""
         try:
+            import os
+
             from studio.backend import artifact_store
 
             if not artifact_store.configured():
                 return
             artifact_store.upload_file(self.history.path)
+            for path in _asset_image_paths(asset):
+                if os.path.isfile(path):
+                    artifact_store.upload_file(path)
+            # 清单落盘不能等 8s 的后台轮询：否则文件在桶里但清单没登记，
+            # 重启回填时会被当成“不存在”而跳过。
+            artifact_store.flush_manifest()
         except Exception:  # noqa: BLE001 - 上传失败不影响任务交付
             pass
+
+
+def _asset_image_paths(asset: dict | None) -> list[str]:
+    """资产快照里可能落盘的原画/三视图路径（只挑本地真实存在的）。"""
+    import os
+
+    from studio.backend.model_service.service import GENERATED_DIR
+
+    if not isinstance(asset, dict):
+        return []
+    metas = [asset.get("image"), (asset.get("source") or {}).get("ai_image")]
+    views = asset.get("design_views")
+    if isinstance(views, dict):
+        metas.extend(views.values())
+    paths: list[str] = []
+    for meta in metas:
+        if not isinstance(meta, dict):
+            continue
+        for key in ("path", "file"):
+            value = meta.get(key)
+            if value:
+                name = os.path.basename(str(value))
+                paths.append(
+                    str(value)
+                    if os.path.isabs(str(value))
+                    else os.path.join(GENERATED_DIR, name)
+                )
+        url = meta.get("url")
+        if url and not str(url).startswith(("http://", "https://")):
+            paths.append(
+                os.path.join(GENERATED_DIR, os.path.basename(str(url).split("?")[0]))
+            )
+    render = (asset.get("content") or {}).get("image_render")
+    if render:
+        paths.append(os.path.join(GENERATED_DIR, os.path.basename(str(render))))
+    return list(dict.fromkeys(paths))

@@ -31,6 +31,7 @@ __all__ = [
     "read_bytes",
     "restore_state",
     "restore_prefix",
+    "flush_manifest",
     "start_worker",
     "sync_now",
 ]
@@ -378,6 +379,18 @@ def _restore_remote(provider, rels: list[str], deadline: float) -> int:
         future.cancel()
     executor.shutdown(wait=False, cancel_futures=True)
     return restored
+
+
+def flush_manifest() -> bool:
+    """立即把状态文件清单推送到对象存储。
+
+    角色入库后会立刻上传 history.json；若清单仍等后台 8s 一轮才落盘，
+    容器在这窗口内重启就看不到新状态文件，资产照样回填不回来。"""
+    provider = _provider()[0]
+    if provider is None:
+        return False
+    _flush_manifest(provider)
+    return True
 
 
 def restore_state(deadline: float = 40.0) -> int:
