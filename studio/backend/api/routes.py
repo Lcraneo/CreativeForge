@@ -1566,6 +1566,21 @@ def build_router(runtime):
         cache_dir = os.path.join(ANIMATION_DIR, "play_cache")
         os.makedirs(cache_dir, exist_ok=True)
 
+        from studio.backend import artifact_store
+
+        def _ensure_cached(name: str) -> str:
+            """重启后容器盘被清空：条带缓存缺失时按需回源，避免整条重渲染。"""
+            path = os.path.join(cache_dir, name)
+            if not os.path.isfile(path):
+                artifact_store.ensure_local("data/animation/play_cache/" + name)
+            return path
+
+        def _ensure_frame(name: str) -> str:
+            path = os.path.join(ANIMATION_DIR, name)
+            if not os.path.isfile(path):
+                artifact_store.ensure_local("data/animation/" + name)
+            return path
+
         # v5：帧粘连修复（分区独占所有权：父段裁到膝/肘 + 裆部立柱只填洞）
         # v6：比例修复（R1 封闭洞回收限主体下半部 + 双脚分离关节点 + 膝线
         # 剖面检测 + 腿带中缝/顶部按真实双脚收窄）——渲染语义再变，旧条带作废
@@ -1667,8 +1682,8 @@ def build_router(runtime):
             for action in actions
             if action not in available_ai_strips
             and not os.path.isfile(
-                os.path.join(
-                    cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
+                _ensure_cached(
+                    "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
                 )
             )
         ]
@@ -1808,7 +1823,7 @@ def build_router(runtime):
             frame_files = []
             for url in meta.get("frame_urls") or []:
                 name = os.path.basename(url)
-                path = os.path.join(ANIMATION_DIR, name)
+                path = _ensure_frame(name)
                 frame_files.append(path if os.path.isfile(path) else None)
 
             import hashlib as _hashlib
@@ -1821,7 +1836,7 @@ def build_router(runtime):
             out_name = "play_ai_{}_{}_matte-v4.png".format(
                 _safe_label(label or meta.get("requested_action")), digest
             )
-            out_path = os.path.join(cache_dir, out_name)
+            out_path = _ensure_cached(out_name)
             if not os.path.isfile(out_path):
                 # 旧纯白底成功产物仍完全有效；复用 matte-v3，避免升级后
                 # 把整套已可播放动作重新抠图一遍。只有此前失败、没有缓存
@@ -1837,7 +1852,7 @@ def build_router(runtime):
                     _safe_label(label or meta.get("requested_action")),
                     legacy_digest,
                 )
-                legacy_path = os.path.join(cache_dir, legacy_name)
+                legacy_path = _ensure_cached(legacy_name)
                 if os.path.isfile(legacy_path):
                     out_name = legacy_name
                     out_path = legacy_path
@@ -1913,8 +1928,8 @@ def build_router(runtime):
                     previews[action] = packed["url"]
                     strips[action] = packed
                     continue
-            strip_path = os.path.join(
-                cache_dir, "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
+            strip_path = _ensure_cached(
+                "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
             )
             with PILImage.open(strip_path) as handle:
                 strip_w, strip_h = handle.size
