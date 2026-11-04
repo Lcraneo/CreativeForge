@@ -943,7 +943,7 @@ class AnimationService:
                     meta["motion_prompt"] = prompt[:400]
                 self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
                 # 生成完成即后台预热试玩条带：预览请求只读缓存，避免
-                # Render 60s 请求窗口被 32 帧抠图拖死。
+                # 托管平台的 60s 请求窗口被 32 帧抠图拖死。
                 try:
                     from studio.backend.animation_service.playtest_strip import (
                         schedule_strip,

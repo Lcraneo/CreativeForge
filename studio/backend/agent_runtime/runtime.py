@@ -325,7 +325,7 @@ class AgentRuntime:
     def _persist_history_now(self, asset: dict | None) -> None:
         """资产入库后立即把历史索引与角色图片推进对象存储。
 
-        后台增量扫描是 8s 一轮，容器若在这个窗口内重启（Render 自动
+        后台增量扫描是 8s 一轮，容器若在这个窗口内重启（云平台自动
         部署/休眠唤醒），刚生成的资产快照还没上传就会永久丢失——前端
         动作补生成会因此拿到 404 unknown asset。这里同步上传
         history.json、原画/三视图，并立即刷新云端清单，确保重启后能

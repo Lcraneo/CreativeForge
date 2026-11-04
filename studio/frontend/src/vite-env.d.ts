@@ -5,7 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_STUDIO_TOKEN?: string;
   /** dev 代理目标后端地址 */
   readonly VITE_BACKEND?: string;
-  /** 生产环境 REST/静态资源后端源站，例如 https://creativeforge-api.onrender.com */
+  /** 分离部署时的后端源站，例如 https://api.example.com */
   readonly VITE_BACKEND_URL?: string;
   /** 可选 WebSocket 源站；不设置时由 VITE_BACKEND_URL 自动转换为 ws(s) */
   readonly VITE_WS_BACKEND_URL?: string;

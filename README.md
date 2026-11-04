@@ -76,15 +76,11 @@ npm --prefix studio/frontend run dev
 Vite 会将 `/api` 和 `/ws` 请求代理到 `http://127.0.0.1:8600`。如需连接其他
 后端地址，可设置 `VITE_BACKEND`。
 
-## Vercel + Render 分离部署
+## 安全提示
 
-- Vercel 项目根目录设为 `studio/frontend`，Framework 选择 Vite。
-- Render 使用仓库根目录的 `Dockerfile.render`（或直接同步 `render.yaml`），部署为免费 Web Service。
-- Vercel 构建环境设置 `VITE_BACKEND_URL=https://<render-service>.onrender.com`。
-- Render 运行环境设置 `STUDIO_CORS_ORIGINS=https://<vercel-project>.vercel.app`；如绑定自定义域名，用逗号继续追加。
-- 生产前端不应写入 `VITE_STUDIO_TOKEN`：所有 `VITE_*` 值都会进入浏览器 bundle。需要鉴权时，由使用者在设置页输入令牌，后端通过 `STUDIO_AUTH_TOKEN` 校验。
+前端不应写入 `VITE_STUDIO_TOKEN`：所有 `VITE_*` 值都会进入浏览器 bundle。需要鉴权时，由使用者在前端设置页输入令牌，后端通过 `STUDIO_AUTH_TOKEN` 校验。
 
-REST、生成资源和 WebSocket 会使用同一个后端源站；WebSocket 不可用时，任务流会自动回退到 REST 轮询。
+REST、生成资源和 WebSocket 使用同一个后端源站；WebSocket 不可用时，任务流会自动回退到 REST 轮询。
 
 ## 开屏动画说明
 

@@ -1829,7 +1829,7 @@ def build_router(runtime):
         def _pack_ai_strip(meta, label: str | None = None):
             """AI 动画条带只读缓存：命中即刻返回；未命中转后台打包并返回
             None，由路由先用程序化/骨骼条带兜底，绝不把几十秒的抠图塞进
-            Render 的 60s 请求窗口（实测 32 帧会直接超时断连）。"""
+            托管平台的 60s 请求窗口（实测 32 帧会直接超时断连）。"""
 
             cached = _cached_ai_strip(meta)
             if cached is None:
