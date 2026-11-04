@@ -320,3 +320,20 @@ class AgentRuntime:
                 "asset": asset,
             }
         )
+        self._persist_history_now()
+
+    def _persist_history_now(self) -> None:
+        """资产入库后立即把 history.json 推进对象存储。
+
+        后台增量扫描是 8s 一轮，容器若在这个窗口内重启（Render 自动
+        部署/休眠唤醒），刚生成的资产快照还没上传就会永久丢失——前端
+        动作补生成会因此拿到 404 unknown asset。这里同步上传（单文件
+        一次 PUT，几十 KB），失败仍由后台 worker 下一轮兜底。"""
+        try:
+            from studio.backend import artifact_store
+
+            if not artifact_store.configured():
+                return
+            artifact_store.upload_file(self.history.path)
+        except Exception:  # noqa: BLE001 - 上传失败不影响任务交付
+            pass

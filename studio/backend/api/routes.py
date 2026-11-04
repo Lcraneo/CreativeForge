@@ -1070,7 +1070,10 @@ def build_router(runtime):
 
         asset = _resolve_asset(runtime, request.get("asset_id") or "")
         if asset is None:
-            raise HTTPException(status_code=404, detail="unknown asset")
+            raise HTTPException(
+                status_code=404,
+                detail="unknown asset: 角色资产已不存在（可能因服务重启丢失），请重新生成角色后再补动作",
+            )
         settings = runtime.model_settings.effective()
         if not (settings.get("enabled") and settings.get("api_key")):
             raise HTTPException(status_code=409, detail="AI 动画生成需要先启用自定义模型")

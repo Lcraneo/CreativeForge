@@ -162,6 +162,21 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
 
   const invalidateAll = assets.invalidateAll;
   const announcedBatchRef = useRef<string | null>(null);
+
+  // 批量生成期间每完成一个动作就刷新一次条带元数据：后端在动作完成时
+  // 已后台打包好该动作的 AI 条带，刷新后试玩区立即切到 AI 帧，不必
+  // 等整批结束（此前"待机已生成但试玩区还是基础小人"的根因）。
+  const lastDoneRef = useRef(0);
+  useEffect(() => {
+    if (!batchRunning) {
+      lastDoneRef.current = 0;
+      return;
+    }
+    if (batchDoneCount === 0 || batchDoneCount === lastDoneRef.current) return;
+    lastDoneRef.current = batchDoneCount;
+    invalidateAll();
+  }, [batchRunning, batchDoneCount, invalidateAll]);
+
   useEffect(() => {
     if (!batchId || !batchData || batchData.status === "running") return;
     if (announcedBatchRef.current === batchId) return;
@@ -195,6 +210,15 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
   );
   const missingCount = missingActions.length;
 
+  /** 生成请求失败提示：404 unknown asset 对用户给出可操作的说明 */
+  function describeGenerationError(cause: unknown): string {
+    const text = typeof cause === "string" ? cause : String(cause);
+    if (/unknown asset/i.test(text)) {
+      return "角色资产已在服务端丢失（后端重启所致），请重新生成角色后再补动作";
+    }
+    return text.slice(0, 160);
+  }
+
   async function generateAiAnimation(name: string) {
     if (!selected?.id || generationLockRef.current || batchRunning) return;
     generationLockRef.current = true;
@@ -214,7 +238,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         description: "约 90 秒，完成后自动刷新预览",
       });
     } catch (cause) {
-      toast({ tone: "danger", title: "AI 动画生成失败", description: String(cause).slice(0, 160) });
+      toast({ tone: "danger", title: "AI 动画生成失败", description: describeGenerationError(cause) });
     } finally {
       generationLockRef.current = false;
       setSubmittingAction(null);
@@ -242,7 +266,7 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
         description: "串行生成中（每个约 90 秒），完成后自动刷新预览",
       });
     } catch (cause) {
-      toast({ tone: "danger", title: "批量启动失败", description: String(cause).slice(0, 160) });
+      toast({ tone: "danger", title: "批量启动失败", description: describeGenerationError(cause) });
     } finally {
       generationLockRef.current = false;
       setSubmittingAction(null);
@@ -290,7 +314,19 @@ export function PlaytestContent({ selected }: { selected: CreativeAsset | null }
       : batchRunning
         ? `动作生成中 ${batchDoneCount}/${batchData?.total ?? 0}`
         : null;
-  const aiReadyCount = assets.metadataLoading ? 0 : BUILT_IN_ACTIONS.length - missingCount;
+  const aiReadyCount = (() => {
+    if (assets.metadataLoading) return 0;
+    // 计数口径：元数据里已是 AI 帧的动作 ∪ 本轮批次已完成的任务。
+    // 生成一条立即 +1，不用等整批结束后元数据刷新（此前 0/4 一直
+    // 卡到全部生成完才跳 4/4 的根因）。
+    const ready = new Set<string>(
+      BUILT_IN_ACTIONS.filter((name) => meta.strips[name]?.engine === "ai-video"),
+    );
+    for (const task of batchTasks) {
+      if (task.status === "done") ready.add(task.action);
+    }
+    return ready.size;
+  })();
 
   const statusText = !selectedAssetId
     ? "未选择试玩人物"
