@@ -7,6 +7,9 @@ studio/backend/exports/
 studio/backend/data/*
 !studio/backend/data/scenes/
 !studio/backend/data/pve_enemies.json
+# 场景索引/新背景图由对象存储回填：仓库快照会覆盖运行时新增的场景
+studio/backend/data/scenes/scenes.json
+studio/backend/data/scenes/scene_*.png
 tests/release/_tmp_runtime/
 .workbuddy/
 .zcode_tmp_*
