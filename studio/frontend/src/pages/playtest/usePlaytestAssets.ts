@@ -158,6 +158,22 @@ export function usePlaytestAssets(assetId: string | null) {
     enabled: Boolean(assetId && core.data),
   });
 
+  // AI 条带后台打包完成前先用兜底条带；短暂轮询后自动切回 AI（最多 8 次）
+  const [aiPollAttempts, setAiPollAttempts] = useState(0);
+  const deferredAi = [
+    ...(core.data?.deferred_ai ?? []),
+    ...(rest.data?.deferred_ai ?? []),
+  ].join(",");
+  useEffect(() => {
+    if (!deferredAi || aiPollAttempts >= 8) return;
+    const timer = setTimeout(() => {
+      setAiPollAttempts((count) => count + 1);
+      void core.refetch();
+      if (rest.data) void rest.refetch();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [deferredAi, aiPollAttempts, core.refetch, rest.refetch, rest.data]);
+
   const meta = useMemo(
     () => mergeMeta([core.data, rest.data]),
     [core.data, rest.data],

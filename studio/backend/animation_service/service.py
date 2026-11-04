@@ -244,6 +244,7 @@ def collect_ai_strips(
     strips: dict[str, dict] = {}
     if not asset_id:
         return strips
+    _restore_animation_metas(directory)
     for meta_path in _glob.glob(os.path.join(directory, "*.json")):
         try:
             with open(meta_path, "r", encoding="utf-8") as handle:
@@ -283,6 +284,66 @@ _SEGMENT_CACHE_TTL = 600.0
 _ACTION_BATCHES: dict[str, dict] = {}
 _ACTION_BATCHES_TTL = 3600.0  # 批次最长约 5×90 秒，1 小时 TTL 不会误删运行中批次
 _BATCH_START_LOCK = threading.Lock()
+
+# 启动回填被对象存储 deadline 截断时，动画 meta 可能没落地。扫描前按前缀
+# 补齐一次（60s 节流），否则 existing_ai_actions 会把“已生成”误判为缺失。
+_ANIMATION_META_RESTORE_LOCK = threading.Lock()
+_ANIMATION_META_RESTORE_AT = 0.0
+_ANIMATION_META_RESTORE_INTERVAL = 60.0
+
+
+def _restore_animation_metas(directory: str, deadline: float = 5.0) -> None:
+    global _ANIMATION_META_RESTORE_AT
+    now = time.time()
+    if now - _ANIMATION_META_RESTORE_AT < _ANIMATION_META_RESTORE_INTERVAL:
+        return
+    with _ANIMATION_META_RESTORE_LOCK:
+        if now - _ANIMATION_META_RESTORE_AT < _ANIMATION_META_RESTORE_INTERVAL:
+            return
+        _ANIMATION_META_RESTORE_AT = now
+    try:
+        from studio.backend import artifact_store
+
+        if not artifact_store.configured() or not os.path.isdir(directory):
+            return
+        artifact_store.restore_prefix("data/animation/", deadline=deadline)
+    except Exception:  # noqa: BLE001 - 回源失败沿用本地已恢复的部分
+        pass
+
+
+def _frames_available(directory: str, frame_urls: list, minimum: int = 4) -> bool:
+    """动作帧是否可用于交付：本地实存达到 minimum，或对象存储探测帧存在。
+
+    重启后容器盘被清空、只有 meta 被启动回填恢复；此时若坚持本地文件
+    计数，会把历史 AI 动作全部判成缺失并诱导用户重复生成、重复计费。
+    远端只探测首/中/尾少量帧，避免为了判断状态把 30+ 帧全下载一遍。"""
+    names = [os.path.basename(str(url)) for url in frame_urls if url]
+    if len(names) < minimum:
+        return False
+    local = sum(1 for name in names if os.path.isfile(os.path.join(directory, name)))
+    if local >= minimum:
+        return True
+    try:
+        from studio.backend import artifact_store
+
+        if not artifact_store.configured():
+            return False
+    except Exception:  # noqa: BLE001
+        return False
+    if len(names) <= minimum:
+        probes = names
+    else:
+        probes = [names[0], names[len(names) // 2], names[-1], names[minimum - 1]]
+    probes = list(dict.fromkeys(probes))
+    for name in probes:
+        try:
+            resolved = artifact_store.ensure_local("data/animation/" + name)
+        except Exception:  # noqa: BLE001
+            resolved = None
+        if not resolved or not os.path.isfile(resolved):
+            return False
+    return True
+
 
 # 单次视频生成任务（生成任务化）：与批次同款「模块级内存态 + TTL」——
 # POST /api/animation/tasks 立即返回 task_id 供轮询，前端刷新后凭
@@ -485,6 +546,7 @@ class AnimationService:
         if not asset_id:
             return done
         expected = expected_views or {}
+        _restore_animation_metas(self.directory)
         for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
             try:
                 with open(meta_path, "r", encoding="utf-8") as handle:
@@ -494,12 +556,7 @@ class AnimationService:
             if meta.get("source") != "video" or meta.get("asset_id") != asset_id:
                 continue
             frame_urls = meta.get("frame_urls") or []
-            local = sum(
-                1
-                for url in frame_urls
-                if os.path.isfile(os.path.join(self.directory, os.path.basename(url)))
-            )
-            if local < 4:
+            if not _frames_available(self.directory, frame_urls, 4):
                 continue
             action = meta.get("requested_action") or meta.get("action")
             if action not in ACTIONS:
@@ -522,6 +579,7 @@ class AnimationService:
 
         cells: dict[tuple[str, str], dict] = {}
         if asset_id:
+            _restore_animation_metas(self.directory)
             for meta_path in _glob.glob(os.path.join(self.directory, "*.json")):
                 try:
                     with open(meta_path, "r", encoding="utf-8") as handle:
@@ -537,12 +595,7 @@ class AnimationService:
                 if action not in ACTIONS:
                     continue
                 frame_urls = meta.get("frame_urls") or []
-                local = sum(
-                    1
-                    for url in frame_urls
-                    if os.path.isfile(os.path.join(self.directory, os.path.basename(url)))
-                )
-                if local < 2:
+                if not _frames_available(self.directory, frame_urls, 2):
                     continue
                 view = meta.get("view") or meta.get("view_bound") or "unknown"
                 grade = (meta.get("qa") or {}).get("grade")
@@ -889,6 +942,19 @@ class AnimationService:
                     meta["prompt_enhanced"] = True
                     meta["motion_prompt"] = prompt[:400]
                 self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+                # 生成完成即后台预热试玩条带：预览请求只读缓存，避免
+                # Render 60s 请求窗口被 32 帧抠图拖死。
+                try:
+                    from studio.backend.animation_service.playtest_strip import (
+                        schedule_strip,
+                    )
+
+                    schedule_strip(
+                        meta, self.directory, os.path.join(self.directory, "play_cache")
+                    )
+                except Exception:  # noqa: BLE001 - 预热失败不影响交付
+                    pass
+                self._upload_persisted(animation_id, meta.get("frame_urls"))
                 if entry:
                     entry["status"] = "done"
                     entry["stage"] = "done"
@@ -1608,6 +1674,16 @@ class AnimationService:
         # 所有追加字段就位后统一落盘一次。旧代码在写入之后才追加
         # source_cropped/subject_locked，这两个字段从未落过盘。
         self._write(f"{animation_id}.json", json.dumps(meta, ensure_ascii=False).encode("utf-8"))
+        # 单条 AI 动画同样预打包试玩条带（后台线程，不阻塞本次交付）
+        try:
+            from studio.backend.animation_service.playtest_strip import schedule_strip
+
+            schedule_strip(
+                meta, self.directory, os.path.join(self.directory, "play_cache")
+            )
+        except Exception:  # noqa: BLE001
+            pass
+        self._upload_persisted(animation_id, meta.get("frame_urls"))
         return meta
 
     def _crop_to_subject(self, source_bytes: bytes, settings: dict[str, Any]):
@@ -2082,6 +2158,38 @@ class AnimationService:
     def _write(self, name: str, payload: bytes) -> None:
         with open(os.path.join(self.directory, name), "wb") as handle:
             handle.write(payload)
+
+    def _upload_persisted(self, animation_id: str, frame_urls: list | None) -> None:
+        """把刚交付的 AI 动画（meta + 帧）尽快推到对象存储。
+
+        后台增量的扫描周期是 8s、每轮 60 个文件；一次生成 30+ 帧时，
+        容器在扫描完成前重启就会丢帧，重启后动作被误判为没生成。这里
+        用独立线程立即上传，失败仍由后台 worker 兜底。"""
+        names = [
+            f"{animation_id}.json",
+            f"{animation_id}.gif",
+            f"{animation_id}_sheet.png",
+            f"{animation_id}_thumb.png",
+            f"{animation_id}.mp4",
+        ]
+        names.extend(os.path.basename(str(url)) for url in (frame_urls or []))
+        paths = [os.path.join(self.directory, name) for name in names if name]
+
+        def _run() -> None:
+            try:
+                from studio.backend import artifact_store
+
+                if not artifact_store.configured():
+                    return
+                for path in paths:
+                    if os.path.isfile(path):
+                        artifact_store.upload_file(path)
+            except Exception:  # noqa: BLE001 - 上传失败交给后台 worker 重试
+                pass
+
+        threading.Thread(
+            target=_run, name="cf-upload-{}".format(animation_id), daemon=True
+        ).start()
 
     def path(self, name: str) -> str | None:
         # 允许一级子目录（play_cache/…），但拒绝任何目录穿越

@@ -263,7 +263,21 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
     queryKey: ["playtest-previews", selectedAssetId],
     queryFn: () => api.playtestPreviews(selectedAssetId!),
     enabled: Boolean(selectedAssetId),
+    // 服务端首帧可能较慢（重新渲染条带），但不再无限重试把页面卡死
+    retry: 1,
   });
+
+  // AI 条带在后台打包时短暂轮询：拿到缓存后自动切回 AI 帧
+  const [aiPollAttempts, setAiPollAttempts] = useState(0);
+  useEffect(() => {
+    const deferred = previews.data?.deferred_ai ?? [];
+    if (deferred.length === 0 || aiPollAttempts >= 8) return;
+    const timer = setTimeout(() => {
+      setAiPollAttempts((count) => count + 1);
+      void previews.refetch();
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [previews.data?.deferred_ai, aiPollAttempts]);
 
   // 动作表：帧数/帧率按动作各自声明，一次性动作不再借用上一个动作的帧长
   const clips: ClipTable = useMemo(
@@ -676,6 +690,7 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
           >
             {(!selectedAssetId ||
               previews.isLoading ||
+              (previews.isError && !previews.data) ||
               sceneQuery.isLoading ||
               sceneQuery.isError) && (
               <div className="absolute inset-0 z-10 grid place-items-center bg-surface-1/[.92] backdrop-blur-[2px]">
@@ -717,6 +732,26 @@ function ArcadeContent({ selected }: { selected: CreativeAsset | null }) {
                         onClick={() => setPickerOpen(true)}
                       >
                         打开人物挑选
+                      </Button>
+                    }
+                  />
+                ) : previews.isError && !previews.data ? (
+                  <EmptyState
+                    icon="alert"
+                    title="动作条带准备失败"
+                    description={
+                      previews.error instanceof Error
+                        ? previews.error.message
+                        : "服务端准备动作条带超时"
+                    }
+                    action={
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="refresh"
+                        onClick={() => void previews.refetch()}
+                      >
+                        重新准备
                       </Button>
                     }
                   />

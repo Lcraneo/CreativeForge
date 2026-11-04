@@ -30,6 +30,7 @@ __all__ = [
     "ensure_local",
     "read_bytes",
     "restore_state",
+    "restore_prefix",
     "start_worker",
     "sync_now",
 ]
@@ -345,6 +346,40 @@ def _load_manifest(provider) -> set[str]:
     return {item for item in files if isinstance(item, str)}
 
 
+def _restore_remote(provider, rels: list[str], deadline: float) -> int:
+    """并行回填状态文件：单个下载 0.2~0.5s 时串行会卡在 deadline，
+    真实故障现场就是历史库排在字母序最后、40s 内没轮到而被丢弃。"""
+    from concurrent.futures import ThreadPoolExecutor, wait
+
+    pending = []
+    for rel in rels:
+        path = abs_for(rel)
+        if path is not None and not os.path.isfile(path):
+            pending.append(rel)
+    if not pending:
+        return 0
+
+    def _restore_one(rel: str) -> int:
+        path = abs_for(rel)
+        if path is None or os.path.isfile(path):
+            return 0
+        return 1 if _download_to(provider, rel) else 0
+
+    executor = ThreadPoolExecutor(max_workers=min(8, len(pending)))
+    futures = [executor.submit(_restore_one, rel) for rel in pending]
+    done, not_done = wait(futures, timeout=deadline)
+    restored = 0
+    for future in done:
+        try:
+            restored += int(future.result() or 0)
+        except Exception:  # noqa: BLE001
+            continue
+    for future in not_done:
+        future.cancel()
+    executor.shutdown(wait=False, cancel_futures=True)
+    return restored
+
+
 def restore_state(deadline: float = 40.0) -> int:
     """把状态文件（history.json 与各类 *.json 索引）回填到本地。
 
@@ -354,8 +389,6 @@ def restore_state(deadline: float = 40.0) -> int:
     provider = _provider()[0]
     if provider is None:
         return 0
-    started = time.time()
-    restored = 0
     remote_files = _load_manifest(provider)
     if not remote_files:
         return 0
@@ -364,15 +397,44 @@ def restore_state(deadline: float = 40.0) -> int:
     with _INDEX_LOCK:
         _manifest.update(remote_files)
 
-    for rel in sorted(remote_files):
-        if time.time() - started > deadline:
-            break
-        path = abs_for(rel)
-        if path is None or os.path.isfile(path):
-            continue
-        if _download_to(provider, rel):
-            restored += 1
-    return restored
+    # 历史/场景/资产索引优先：串行时代的 40s deadline 刚好把它们饿死，
+    # 重启后工作台“资产全没了、动作却还在”。
+    def _priority(rel: str) -> int:
+        if rel.startswith("history/"):
+            return 0
+        if rel.startswith("data/scenes/"):
+            return 1
+        if rel.startswith("data/assets/"):
+            return 2
+        if rel.startswith("data/animation/"):
+            return 3
+        return 4
+
+    ordered = sorted(remote_files, key=lambda rel: (_priority(rel), rel))
+    return _restore_remote(provider, ordered, deadline)
+
+
+def restore_prefix(prefix: str, deadline: float = 20.0) -> int:
+    """按前缀补齐云端状态文件（如 ``data/animation/`` 的动画 meta）。
+
+    启动回填被 deadline 截断后，动画扫描会看不到历史 meta，误判“动作未
+    生成”让用户重做并重复计费。扫描前调用本函数把该前缀补齐。
+    """
+    provider = _provider()[0]
+    if provider is None:
+        return 0
+    with _INDEX_LOCK:
+        remote = set(_manifest)
+    if not remote:
+        remote = _load_manifest(provider)
+        with _INDEX_LOCK:
+            _manifest.update(remote)
+    rels = sorted(
+        rel
+        for rel in remote
+        if rel.startswith(prefix) and rel.endswith(_STATE_SUFFIXES)
+    )
+    return _restore_remote(provider, rels, deadline)
 
 
 # ── 后台增量同步 ────────────────────────────────────────────────────────────

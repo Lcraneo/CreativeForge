@@ -556,6 +556,8 @@ export interface PlaytestPreviews {
   fps?: number;
   source?: "rigged" | "sprite" | "procedural" | string;
   character?: PlaytestCharacter | null;
+  /** AI 条带正在后台打包，前端短暂轮询后自动切回 AI 帧 */
+  deferred_ai?: string[];
 }
 
 export interface ScenePalette {

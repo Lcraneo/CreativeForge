@@ -230,6 +230,8 @@ export const api = {
     const query = search.toString();
     return request<import("../types").PlaytestPreviews>(
       `/api/playtest/previews${query ? `?${query}` : ""}`,
+      // Render 会在 60s 掐断长请求；前端先到点报错，避免页面永久转圈
+      { timeoutMs: 60_000 },
     );
   },
 

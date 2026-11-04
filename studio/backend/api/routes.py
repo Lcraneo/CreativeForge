@@ -1677,16 +1677,33 @@ def build_router(runtime):
             if asset_id
             else {}
         )
-        pending = [
-            action
-            for action in actions
-            if action not in available_ai_strips
-            and not os.path.isfile(
-                _ensure_cached(
-                    "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
-                )
-            )
-        ]
+        from studio.backend.animation_service.playtest_strip import (
+            cache_names,
+            schedule_strip,
+        )
+
+        def _cached_ai_strip(meta):
+            """缓存命中（含对象存储回源）返回 (路径, 帧数)，否则 None。"""
+            for name, count in cache_names(meta):
+                path = _ensure_cached(name)
+                if os.path.isfile(path):
+                    return path, count
+            return None
+
+        def _procedural_name(action: str) -> str:
+            return "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
+
+        def _needs_procedural(action: str) -> bool:
+            """AI 条带尚未打包成缓存时也要准备一条程序化兜底，避免请求
+            同步等待几十秒的抠图；后台打包完成后下次刷新自动切回 AI。"""
+            if os.path.isfile(_ensure_cached(_procedural_name(action))):
+                return False
+            meta = available_ai_strips.get(action)
+            if meta is not None and _cached_ai_strip(meta) is not None:
+                return False
+            return True
+
+        pending = [action for action in actions if _needs_procedural(action)]
 
         # AI 动画帧收集（只读磁盘，需在骨架准备前完成）
         ai_strips: dict[str, dict] = {}
@@ -1697,11 +1714,6 @@ def build_router(runtime):
                 actions,
                 view_by_action=expected_views,
             )
-
-        def _safe_label(value: str) -> str:
-            import re as _re
-
-            return _re.sub(r"[^\w-]+", "_", str(value), flags=_re.UNICODE)
 
         # 第二步：真的需要渲染时才做昂贵准备 —— 一次 AI 主体分割（五动作
         # 共享同一 mask），一次骨架提取；复杂背景由分割解决，经典洪泛兜底。
@@ -1723,7 +1735,7 @@ def build_router(runtime):
                             )
 
                             segment_mask = ai_segment_subject(
-                                source, PLAYTEST_SIZE, settings, deadline=time.time() + 45.0
+                                source, PLAYTEST_SIZE, settings, deadline=time.time() + 10.0
                             )
                         except Exception:
                             segment_mask = None
@@ -1812,85 +1824,20 @@ def build_router(runtime):
         # procedural 渲染。收集已在骨架准备前完成（ai_strips）。
 
         def _pack_ai_strip(meta, label: str | None = None):
-            """把 AI 动画的本地逐帧拼成条带 PNG（与 strips 结构统一，
-            前端播放器零改动），缓存于 play_cache。
+            """AI 动画条带只读缓存：命中即刻返回；未命中转后台打包并返回
+            None，由路由先用程序化/骨骼条带兜底，绝不把几十秒的抠图塞进
+            Render 的 60s 请求窗口（实测 32 帧会直接超时断连）。"""
 
-            白底帧在打包阶段本地抠成透明（cutout_white_background），原始
-            动画目录里的帧、GIF、MP4 一律不动；任一帧抠图失败则整条 AI
-            条带返回 None，由路由回退到透明程序化/骨骼条带——绝不让白底
-            条带进舞台。"""
-
-            frame_files = []
-            for url in meta.get("frame_urls") or []:
-                name = os.path.basename(url)
-                path = _ensure_frame(name)
-                frame_files.append(path if os.path.isfile(path) else None)
-
-            import hashlib as _hashlib
-
-            # matte-v4：除纯白底外支持 i2v 常见的浅灰渐变背景；
-            # digest + 文件名双写，旧 matte-v1/v2/v3 缓存自动作废。
-            digest = _hashlib.sha1(
-                ("ai|matte-v4|{}|{}".format(meta.get("id"), len(frame_files))).encode()
-            ).hexdigest()[:10]
-            out_name = "play_ai_{}_{}_matte-v4.png".format(
-                _safe_label(label or meta.get("requested_action")), digest
-            )
-            out_path = _ensure_cached(out_name)
-            if not os.path.isfile(out_path):
-                # 旧纯白底成功产物仍完全有效；复用 matte-v3，避免升级后
-                # 把整套已可播放动作重新抠图一遍。只有此前失败、没有缓存
-                # 的帧才走 matte-v4 的中性渐变兜底。
-                legacy_digest = _hashlib.sha1(
-                    (
-                        "ai|matte-v3|{}|{}".format(
-                            meta.get("id"), len(frame_files)
-                        )
-                    ).encode()
-                ).hexdigest()[:10]
-                legacy_name = "play_ai_{}_{}_matte-v3.png".format(
-                    _safe_label(label or meta.get("requested_action")),
-                    legacy_digest,
+            cached = _cached_ai_strip(meta)
+            if cached is None:
+                schedule_strip(
+                    meta,
+                    ANIMATION_DIR,
+                    cache_dir,
+                    ensure_frame=lambda name: _ensure_frame(name),
                 )
-                legacy_path = _ensure_cached(legacy_name)
-                if os.path.isfile(legacy_path):
-                    out_name = legacy_name
-                    out_path = legacy_path
-            samples = [f for f in frame_files if f]
-            if len(samples) < 4:
                 return None
-            if not os.path.isfile(out_path):
-                from artgen.sourceanim import cutout_white_background
-
-                images = []
-                for path in samples:
-                    with PILImage.open(path) as handle:
-                        frame = cutout_white_background(handle)
-                    if frame is None:
-                        # 单帧抠图不可信（非白底/抠失败）→ 整条 AI 条带弃用
-                        return None
-                    images.append(frame)
-                # 条带帧宽封顶 288（模块衔接·内存契约）：30 帧 × 384px 的
-                # 解码内存会把五条条带推到 ~90MB；舞台展示高度 ~216px，
-                # 288px 视觉无损，内存回到 20 帧时代水平
-                if images and images[0].width > 288:
-                    target_w = 288
-                    images = [
-                        # RGBa（预乘 alpha）缩放：透明边缘不混入白边
-                        img.convert("RGBa")
-                        .resize(
-                            (target_w, max(1, int(img.height * target_w / img.width))),
-                            PILImage.LANCZOS,
-                        )
-                        .convert("RGBA")
-                        for img in images
-                    ]
-                frame_w = max(img.width for img in images)
-                frame_h = max(img.height for img in images)
-                sheet = PILImage.new("RGBA", (frame_w * len(images), frame_h), (0, 0, 0, 0))
-                for i, img in enumerate(images):
-                    sheet.paste(img, (i * frame_w + (frame_w - img.width) // 2, frame_h - img.height))
-                sheet.save(out_path, "PNG")
+            out_path, used_frames = cached
             effective_facing = meta.get("source_facing")
             if meta.get("view") == "side" and effective_facing not in ("left", "right"):
                 # 本字段上线前的侧视动作均由旧“面朝左”prompt 生成；即使
@@ -1901,10 +1848,10 @@ def build_router(runtime):
             with PILImage.open(out_path) as handle:
                 strip_w, strip_h = handle.size
             return {
-                "url": "/api/animation/play_cache/" + out_name,
-                "frames": len(samples),
+                "url": "/api/animation/play_cache/" + os.path.basename(out_path),
+                "frames": used_frames,
                 # width 必须是单帧宽（不是整条宽度）：前端与检查报告都按它换算
-                "width": max(1, strip_w // max(1, len(samples))),
+                "width": max(1, strip_w // max(1, used_frames)),
                 "height": strip_h,
                 "fps": meta.get("fps", 12),
                 "engine": "ai-video",
@@ -1915,6 +1862,7 @@ def build_router(runtime):
 
         previews: dict[str, str] = {}
         strips: dict[str, dict] = {}
+        deferred_ai: list[str] = []
         side_facing = _side_source_facing(asset)
 
         def _facing_for(action: str) -> str | None:
@@ -1928,9 +1876,9 @@ def build_router(runtime):
                     previews[action] = packed["url"]
                     strips[action] = packed
                     continue
-            strip_path = _ensure_cached(
-                "play_{}_{}.png".format(action, _digest(engine, seed_key, action))
-            )
+                # 后台正在打包：本轮先用兜底条带，前端轮询后再切回 AI
+                deferred_ai.append(action)
+            strip_path = _ensure_cached(_procedural_name(action))
             with PILImage.open(strip_path) as handle:
                 strip_w, strip_h = handle.size
             url = "/api/animation/play_cache/" + os.path.basename(strip_path)
@@ -1970,6 +1918,8 @@ def build_router(runtime):
             "fps": PLAYTEST_FPS,
             "source": engine,
             "character": character,
+            # AI 条带正在后台打包：前端据此短暂轮询，切回 AI 帧
+            "deferred_ai": deferred_ai,
         }
 
     # ------------------------------------------------------------------
